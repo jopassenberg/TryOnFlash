@@ -131,7 +131,7 @@
   .g-knob svg { width: 13px; height: 13px; }
   .map.knob-drag .g-ring { border-color: #fff; }
 
-  .dock-side { display: grid; grid-template-rows: repeat(4, 1fr); gap: 6px; width: 64px; }
+  .dock-side { display: grid; grid-template-rows: repeat(5, 1fr); gap: 6px; width: 64px; }
   .ibtn { border-radius: 12px; font-size: 11.5px; font-weight: 500; background: var(--cam-2); color: rgba(255,255,255,.7); display: grid; place-items: center; }
   .ibtn:hover { color: #fff; }
   .ibtn[aria-pressed="true"] { background: #fff; color: var(--ink); }
@@ -279,6 +279,7 @@
           <div class="dock-side">
             <button class="ibtn" id="tWrap" aria-pressed="true" title="3D-Wölbung">3D</button>
             <button class="ibtn" id="tClip" aria-pressed="true" title="Nur auf Haut">Haut</button>
+            <button class="ibtn" id="tStab" aria-pressed="false" title="Haut-Stabilisierung (Experiment)">Stabil</button>
             <button class="ibtn" id="tSkel" aria-pressed="false" title="3D-Skelett">Skelett</button>
             <button class="ibtn" id="btnReset" title="Zurücksetzen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
           </div>
@@ -380,7 +381,7 @@ const freezeCanvas = document.createElement("canvas");
 
 const state = {
   designId: null, zone: "forearm_l", size: 12, rot: 0, t: 0.55, roll: 0, opacity: 0.9,
-  wrap: true, clip: true, debug: false,
+  wrap: true, clip: true, debug: false, stab: false,
   facing: "user", srcType: null, photo: null, mirror: false, frozen: false,
   track: null, lastSeen: 0, vis: 0, lastFrame: null, lm: null,
   dc: null, designImg: null,
@@ -410,6 +411,7 @@ const F = { ax: new OneEuro(), ay: new OneEuro(), bx: new OneEuro(), by: new One
   r: new OneEuro(0.8, 0.01), fs: new OneEuro(0.5, 0) };
 const stationF = Array.from({ length: PROFILE_STATIONS }, () => ({ r: new OneEuro(0.8, 0.01), off: new OneEuro(0.8, 0.01) }));
 const resetFilters = () => {
+  resetFlow();
   Object.values(F).forEach(f => f.reset());
   stationF.forEach(s => { s.r.reset(); s.off.reset(); });
 };
@@ -565,8 +567,9 @@ function computeFrame(now) {
   const z = ZONES[state.zone];
   const dx = tr.B.x - tr.A.x, dy = tr.B.y - tr.A.y, L = Math.hypot(dx, dy);
   if (L < 8) return null;
-  const d = { x: dx / L, y: dy / L }, n = { x: d.y, y: -d.x };
-  const cx = tr.A.x + dx * state.t, cy = tr.A.y + dy * state.t;
+  let d = { x: dx / L, y: dy / L }, cx = tr.A.x + dx * state.t, cy = tr.A.y + dy * state.t;
+  if (state.stab) ({ cx, cy, d } = stabilise(cx, cy, d, L));
+  const n = { x: d.y, y: -d.x };
   // Limbs are measured on the body silhouette (works through sleeves), hands on the skin mask.
   const wMask = z.kind === "limb" ? (masks.body || masks.skin) : z.model === "hand" ? masks.skin : null;
   const maxD = L * (z.kind === "hand" ? 0.9 : 0.6);
@@ -602,7 +605,144 @@ function computeFrame(now) {
     skin /= prof.length;
   }
   const c = prof[(K - 1) / 2];
+  if (state.stab) flow.radius = Math.max(hPx / 2, r0);
   return { d, n, L, cx, cy, r: c.r, ppc, fs, hPx, prof, skin, measured: !!m0 };
+}
+
+/* ================= Skin stabilisation (optical flow, experimental) ================= */
+// Landmarks only know where the joints are, so the tattoo "swims" on the skin. Here we follow the skin
+// itself: pyramidal Lucas-Kanade on texture points under the tattoo (pores, hair, creases), estimate the
+// frame-to-frame motion (translation + rotation) and move an anchor with it. A complementary filter pulls
+// that anchor slowly back towards the landmark position: short term = skin, long term = skeleton.
+const FLOW_W = 256, FLOW_LEVELS = 3, FLOW_WIN = 4, FLOW_MAX_PTS = isMobile ? 28 : 40, FLOW_PULL = 0.08;
+const flow = { prev: null, pts: [], anchor: null, target: null, radius: 60, k: 1, snap: true, canvas: document.createElement("canvas") };
+const resetFlow = () => { flow.prev = null; flow.pts = []; flow.anchor = null; flow.snap = true; };
+
+// Called from computeFrame with the landmark-based axis point: remembers it as the target and returns
+// the stabilised anchor instead (or snaps to the target after user edits or a large jump).
+function stabilise(cx, cy, d, L) {
+  const ang = Math.atan2(d.y, d.x);
+  flow.target = { x: cx, y: cy, ang };
+  const a = flow.anchor;
+  if (!a || flow.snap || Math.hypot(a.x - cx, a.y - cy) > L * 0.25) {
+    flow.anchor = { x: cx, y: cy, ang }; flow.snap = false;
+    return { cx, cy, d };
+  }
+  return { cx: a.x, cy: a.y, d: { x: Math.cos(a.ang), y: Math.sin(a.ang) } };
+}
+
+function buildPyramid(src, W, H) {
+  const w = FLOW_W, h = Math.round(H * FLOW_W / W), cv = flow.canvas;
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const gx = cv.getContext("2d", { willReadFrequently: true });
+  gx.drawImage(src, 0, 0, w, h);
+  const px = gx.getImageData(0, 0, w, h).data, g0 = new Float32Array(w * h);
+  for (let i = 0; i < g0.length; i++) g0[i] = px[i * 4] * 0.299 + px[i * 4 + 1] * 0.587 + px[i * 4 + 2] * 0.114;
+  const levels = [{ g: g0, w, h }];
+  for (let l = 1; l < FLOW_LEVELS; l++) {
+    const p = levels[l - 1], lw = p.w >> 1, lh = p.h >> 1, g = new Float32Array(lw * lh);
+    for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) {
+      const i = 2 * y * p.w + 2 * x;
+      g[y * lw + x] = (p.g[i] + p.g[i + 1] + p.g[i + p.w] + p.g[i + p.w + 1]) / 4;
+    }
+    levels.push({ g, w: lw, h: lh });
+  }
+  for (const L of levels) { // central-difference gradients
+    const { g, w: lw, h: lh } = L, ix = new Float32Array(lw * lh), iy = new Float32Array(lw * lh);
+    for (let y = 1; y < lh - 1; y++) for (let x = 1; x < lw - 1; x++) {
+      const i = y * lw + x; ix[i] = (g[i + 1] - g[i - 1]) / 2; iy[i] = (g[i + lw] - g[i - lw]) / 2;
+    }
+    L.ix = ix; L.iy = iy;
+  }
+  flow.k = w / W;
+  return levels;
+}
+function samp(a, w, h, x, y) {
+  x = clamp(x, 0, w - 1.001); y = clamp(y, 0, h - 1.001);
+  const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * w + x0;
+  return (a[i] * (1 - fx) + a[i + 1] * fx) * (1 - fy) + (a[i + w] * (1 - fx) + a[i + w + 1] * fx) * fy;
+}
+// Pyramidal Lucas-Kanade for one point from pyramid P to pyramid C (level-0 coordinates)
+function lkTrack(P, C, x, y) {
+  let gx = 0, gy = 0;
+  const R = FLOW_WIN, n = (2 * R + 1) ** 2, ix = new Float32Array(n), iy = new Float32Array(n), iv = new Float32Array(n);
+  for (let l = P.length - 1; l >= 0; l--) {
+    const p = P[l], c = C[l], s = 1 / (1 << l), px = x * s, py = y * s;
+    let gxx = 0, gxy = 0, gyy = 0, i = 0;
+    for (let wy = -R; wy <= R; wy++) for (let wx = -R; wx <= R; wx++, i++) {
+      const a = samp(p.ix, p.w, p.h, px + wx, py + wy), b = samp(p.iy, p.w, p.h, px + wx, py + wy);
+      ix[i] = a; iy[i] = b; iv[i] = samp(p.g, p.w, p.h, px + wx, py + wy);
+      gxx += a * a; gxy += a * b; gyy += b * b;
+    }
+    const det = gxx * gyy - gxy * gxy;
+    if (det < 1e-3) return null;
+    let vx = 0, vy = 0;
+    for (let it = 0; it < 8; it++) {
+      let bx = 0, by = 0; i = 0;
+      for (let wy = -R; wy <= R; wy++) for (let wx = -R; wx <= R; wx++, i++) {
+        const diff = iv[i] - samp(c.g, c.w, c.h, px + wx + gx + vx, py + wy + gy + vy);
+        bx += diff * ix[i]; by += diff * iy[i];
+      }
+      const ex = (gyy * bx - gxy * by) / det, ey = (gxx * by - gxy * bx) / det;
+      vx += ex; vy += ey;
+      if (ex * ex + ey * ey < 1e-3) break;
+    }
+    if (l > 0) { gx = 2 * (gx + vx); gy = 2 * (gy + vy); } else { gx += vx; gy += vy; }
+  }
+  return { x: x + gx, y: y + gy };
+}
+// Shi-Tomasi corners inside the circle around the anchor (and on skin/body when a mask exists)
+function findFeatures(L, cx, cy, rad, keep) {
+  const { ix, iy, w, h } = L, cand = [], step = 6, mask = masks.skin || masks.body;
+  for (let y = Math.max(3, cy - rad); y < Math.min(h - 3, cy + rad); y += step)
+    for (let x = Math.max(3, cx - rad); x < Math.min(w - 3, cx + rad); x += step) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue;
+      if (mask && maskAt(mask, x / flow.k, y / flow.k) < 0.5) continue;
+      if (keep.some(p => Math.abs(p.x - x) < step && Math.abs(p.y - y) < step)) continue;
+      let a = 0, b = 0, c = 0;
+      for (let v = -2; v <= 2; v++) for (let u = -2; u <= 2; u++) {
+        const i = ((y | 0) + v) * w + (x | 0) + u; a += ix[i] * ix[i]; b += ix[i] * iy[i]; c += iy[i] * iy[i];
+      }
+      cand.push({ x, y, s: (a + c) / 2 - Math.sqrt(((a - c) / 2) ** 2 + b * b) });
+    }
+  cand.sort((p, q) => q.s - p.s);
+  const min = (cand[0]?.s ?? 0) * 0.05;
+  return cand.filter(p => p.s > min && p.s > 1).slice(0, FLOW_MAX_PTS - keep.length).map(({ x, y }) => ({ x, y }));
+}
+const median = a => { const s = [...a].sort((p, q) => p - q); return s[s.length >> 1]; };
+
+function flowStep(src, W, H) {
+  const cur = buildPyramid(src, W, H), a = flow.anchor, k = flow.k;
+  if (flow.prev && a && flow.pts.length) {
+    // Track forward, then back again: points that don't return to where they started are unreliable
+    const pairs = [];
+    for (const p of flow.pts) {
+      const q = lkTrack(flow.prev, cur, p.x, p.y); if (!q) continue;
+      const b = lkTrack(cur, flow.prev, q.x, q.y); if (!b || Math.hypot(b.x - p.x, b.y - p.y) > 0.7) continue;
+      pairs.push({ p, q });
+    }
+    // Drop outliers against the median motion, then fit rotation + translation (Procrustes)
+    const mdx = median(pairs.map(e => e.q.x - e.p.x)), mdy = median(pairs.map(e => e.q.y - e.p.y));
+    const inl = pairs.filter(e => Math.hypot(e.q.x - e.p.x - mdx, e.q.y - e.p.y - mdy) < 1.5 + 0.15 * Math.hypot(mdx, mdy));
+    if (inl.length >= 6) {
+      let pcx = 0, pcy = 0, qcx = 0, qcy = 0;
+      inl.forEach(({ p, q }) => { pcx += p.x; pcy += p.y; qcx += q.x; qcy += q.y; });
+      pcx /= inl.length; pcy /= inl.length; qcx /= inl.length; qcy /= inl.length;
+      let sa = 0, sb = 0;
+      inl.forEach(({ p, q }) => { const px = p.x - pcx, py = p.y - pcy, qx = q.x - qcx, qy = q.y - qcy; sa += px * qx + py * qy; sb += px * qy - py * qx; });
+      const th = Math.atan2(sb, sa), c = Math.cos(th), s = Math.sin(th);
+      const ax = a.x * k - pcx, ay = a.y * k - pcy;
+      a.x = (qcx + c * ax - s * ay) / k; a.y = (qcy + s * ax + c * ay) / k; a.ang += th;
+    }
+    flow.pts = inl.map(e => e.q);
+  } else flow.pts = [];
+  if (a && flow.target) { // complementary pull towards the landmarks
+    const t = flow.target;
+    a.x += (t.x - a.x) * FLOW_PULL; a.y += (t.y - a.y) * FLOW_PULL;
+    a.ang += Math.atan2(Math.sin(t.ang - a.ang), Math.cos(t.ang - a.ang)) * FLOW_PULL;
+  }
+  if (a && flow.pts.length < FLOW_MAX_PTS * 0.6) flow.pts.push(...findFeatures(cur[0], a.x * k, a.y * k, flow.radius * k, flow.pts));
+  flow.prev = cur;
 }
 
 /* ================= Rendering ================= */
@@ -688,6 +828,10 @@ function drawDebug(fr) {
       ctx.stroke();
     }
   }
+  if (state.stab && flow.k) { // tracked skin points
+    ctx.setLineDash([]); ctx.fillStyle = "#fff";
+    flow.pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x / flow.k, p.y / flow.k, ctx.lineWidth * 1.2, 0, 7); ctx.fill(); });
+  }
   ctx.restore();
 }
 
@@ -704,7 +848,7 @@ function loop(now) {
 
   if (modelsReady && !state.frozen) {
     if (state.srcType === "video") {
-      if (video.readyState >= 2 && video.currentTime !== lastVideoTime) { lastVideoTime = video.currentTime; detect(video); }
+      if (video.readyState >= 2 && video.currentTime !== lastVideoTime) { lastVideoTime = video.currentTime; detect(video); if (state.stab) flowStep(video, srcW(), srcH()); }
     } else if (now - lastDetect > 120) { lastDetect = now; detect(src); }
   }
 
@@ -910,6 +1054,7 @@ function sizeLabel() {
   return `${(state.size * ar).toFixed(0)} × ${state.size.toFixed(0)}`;
 }
 function syncUI() {
+  flow.snap = true; // user edits move the tattoo immediately instead of being "held" by the skin tracker
   const p = dotPos(), r = ringR(), a = state.rot * Math.PI / 180;
   const gz = $("#gizmo"); gz.style.left = p.x + "px"; gz.style.top = p.y + "px";
   $("#gRing").style.width = $("#gRing").style.height = 2 * r + "px";
@@ -923,7 +1068,8 @@ function bindToggle(id, key) {
   const b = $("#" + id);
   b.onclick = () => { state[key] = !state[key]; b.setAttribute("aria-pressed", state[key]); };
 }
-bindToggle("tWrap", "wrap"); bindToggle("tClip", "clip");
+bindToggle("tWrap", "wrap"); bindToggle("tClip", "clip"); bindToggle("tStab", "stab");
+$("#tStab").addEventListener("click", resetFlow);
 $("#tSkel").onclick = () => {
   state.skel = state.debug = !state.skel;
   $("#tSkel").setAttribute("aria-pressed", state.skel); $("#skel3d").hidden = !state.skel;
@@ -1177,7 +1323,7 @@ $("#convUse").onclick = () => {
 
 renderDesigns(); renderZones(); syncUI();
 requestAnimationFrame(loop);
-window.__tryon = { state, loadModels, loadConvFile, conv, masks };
+window.__tryon = { state, loadModels, loadConvFile, conv, masks, flow, flowStep };
 </script>
 </body>
 </html>
