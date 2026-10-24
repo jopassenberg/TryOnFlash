@@ -416,8 +416,8 @@ const DESIGNS = [];
 /* ================= Body zones ================= */
 // a/b: pose landmark indices (proximal -> distal). R: real skin radius in cm. len: typical segment length in cm.
 const ZONES = {
-  forearm_l:  { label: "Linker Unterarm",  group: "Arme",  model: "pose", kind: "limb", a: 13, b: 15, R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
-  forearm_r:  { label: "Rechter Unterarm", group: "Arme",  model: "pose", kind: "limb", a: 14, b: 16, R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
+  forearm_l:  { label: "Linker Unterarm",  group: "Arme",  model: "pose", kind: "limb", a: 13, b: 15, tw: [17, 19], R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
+  forearm_r:  { label: "Rechter Unterarm", group: "Arme",  model: "pose", kind: "limb", a: 14, b: 16, tw: [18, 20], R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
   upperarm_l: { label: "Linker Oberarm",   group: "Arme",  model: "pose", kind: "limb", a: 11, b: 13, R: 5.0, len: 30, t: 0.5,  size: 12, coach: "Schulter + Ellbogen ins Bild" },
   upperarm_r: { label: "Rechter Oberarm",  group: "Arme",  model: "pose", kind: "limb", a: 12, b: 14, R: 5.0, len: 30, t: 0.5,  size: 12, coach: "Schulter + Ellbogen ins Bild" },
   calf_l:     { label: "Linke Wade",       group: "Beine", model: "pose", kind: "limb", a: 25, b: 27, R: 5.5, len: 40, t: 0.4,  size: 14, coach: "Knie + Knöchel ins Bild" },
@@ -446,7 +446,20 @@ const state = {
 const masks = { body: null, skin: null };
 let pose = null, hands = null, segmenter = null, modelsReady = false, modelsPromise = null;
 let lastTs = 0, lastVideoTime = -1, lastDetect = 0, segTick = 0;
-const SEG_EVERY = isMobile ? 2 : 1;
+const SEG_EVERY = isMobile ? 3 : 2;
+// The models work on small inputs internally (256 px), so feeding them the full camera frame only costs
+// resize time and makes their output masks huge. Pose gets a mid-size copy for landmark precision,
+// the segmenter a small one, so reading its masks back from the GPU stays cheap.
+const POSE_IN_W = 640, SEG_IN_W = 256, SEG_DELEGATE = "GPU";
+const BG_CLASS = 0;
+const poseIn = document.createElement("canvas"), segIn = document.createElement("canvas");
+function scaledInput(src, cv, w) {
+  const W = srcW(), H = srcH(); if (W <= w) return src;
+  const h = Math.round(H * w / W);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  cv.getContext("2d").drawImage(src, 0, 0, w, h);
+  return cv;
+}
 
 /* ================= One Euro filter (jitter vs. lag) ================= */
 class OneEuro {
@@ -466,6 +479,7 @@ const F = { ax: new OneEuro(), ay: new OneEuro(), bx: new OneEuro(), by: new One
   r: new OneEuro(0.8, 0.01), fs: new OneEuro(0.5, 0) };
 const stationF = Array.from({ length: PROFILE_STATIONS }, () => ({ r: new OneEuro(0.8, 0.01), off: new OneEuro(0.8, 0.01) }));
 const resetFilters = () => {
+  resetTwist();
   resetFlow();
   Object.values(F).forEach(f => f.reset());
   stationF.forEach(s => { s.r.reset(); s.off.reset(); });
@@ -505,21 +519,21 @@ function loadModels() {
     setStatus("Lädt …", "busy");
     const { FilesetResolver, PoseLandmarker, HandLandmarker, ImageSegmenter } = await import(VISION_BUNDLE);
     const vision = await FilesetResolver.forVisionTasks(WASM);
-    const create = async (Cls, opts) => {
-      try { return await Cls.createFromOptions(vision, { ...opts, baseOptions: { ...opts.baseOptions, delegate: "GPU" } }); }
+    const create = async (Cls, opts, delegate = "GPU") => {
+      try { return await Cls.createFromOptions(vision, { ...opts, baseOptions: { ...opts.baseOptions, delegate } }); }
       catch (e) { console.warn("GPU delegate failed, falling back to CPU", e);
         return Cls.createFromOptions(vision, { ...opts, baseOptions: { ...opts.baseOptions, delegate: "CPU" } }); }
     };
     [pose, hands] = await Promise.all([
       create(PoseLandmarker, { baseOptions: { modelAssetPath: isMobile ? POSE_LITE : POSE_FULL }, runningMode: "VIDEO",
-        numPoses: 1, outputSegmentationMasks: true, minPoseDetectionConfidence: 0.5, minTrackingConfidence: 0.5 }),
+        numPoses: 1, outputSegmentationMasks: false, minPoseDetectionConfidence: 0.5, minTrackingConfidence: 0.5 }),
       create(HandLandmarker, { baseOptions: { modelAssetPath: HAND }, runningMode: "VIDEO", numHands: 1 }),
     ]);
     modelsReady = true;
     // Skin segmentation is an upgrade, not a requirement: tracking keeps working without it.
     try {
       segmenter = await create(ImageSegmenter, { baseOptions: { modelAssetPath: SKIN_SEG }, runningMode: "VIDEO",
-        outputCategoryMask: false, outputConfidenceMasks: true });
+        outputCategoryMask: true, outputConfidenceMasks: false }, SEG_DELEGATE);
     } catch (e) { console.warn("Skin segmenter unavailable", e); }
   })();
   modelsPromise.catch(e => { console.error(e); setStatus("Fehler", "idle"); modelsPromise = null; });
@@ -527,19 +541,22 @@ function loadModels() {
 }
 
 /* ================= Detection ================= */
+// Rolling per-stage timings (ms), handy for tuning on real phones: window.__tryon.state.perf
+state.perf = {};
+const perfMark = (k, t0) => { const v = performance.now() - t0; state.perf[k] = state.perf[k] == null ? v : state.perf[k] * 0.8 + v * 0.2; };
 function detect(src) {
   let ts = performance.now(); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts;
   const z = ZONES[state.zone], W = srcW(), H = srcH();
   const P = l => ({ x: l.x * W, y: l.y * H });
   let raw = null;
 
+  const t0 = performance.now();
   if (z.model === "pose") {
-    const res = pose.detectForVideo(src, ts);
-    const m = res.segmentationMasks?.[0];
-    if (m) masks.body = toMask(m, masks.body, [255, 255, 255]);
-    res.segmentationMasks?.forEach(x => x.close());
+    const res = pose.detectForVideo(scaledInput(src, poseIn, POSE_IN_W), ts);
+    perfMark("pose", t0);
     const lm = res.landmarks?.[0], wl = res.worldLandmarks?.[0];
     state.world = wl || null; state.worldKind = "pose";
+    if (state.stab && z.tw && wl) updateTwist(wl, z);
     state.lm = lm ? lm.map(P) : null;
     if (lm) {
       if (z.kind === "limb") {
@@ -552,8 +569,7 @@ function detect(src) {
       }
     }
   } else {
-    masks.body = null;
-    const res = hands.detectForVideo(src, ts);
+    const res = hands.detectForVideo(scaledInput(src, poseIn, POSE_IN_W), ts);
     const lm = res.landmarks?.[0];
     state.world = res.worldLandmarks?.[0] || null; state.worldKind = "hand";
     state.lm = lm ? lm.map(P) : null;
@@ -565,10 +581,21 @@ function detect(src) {
   }
 
   if (segmenter && ++segTick % SEG_EVERY === 0) {
-    const sres = segmenter.segmentForVideo(src, ts);
-    const cm = sres.confidenceMasks;
-    if (cm?.[SKIN_CLASS]) masks.skin = toMask(cm[SKIN_CLASS], masks.skin, [255, 255, 255]);
-    cm?.forEach(x => x.close());
+    const t2 = performance.now();
+    const sres = segmenter.segmentForVideo(scaledInput(src, segIn, SEG_IN_W), ts);
+    perfMark("seg", t2);
+    // One read-back per frame: the category mask holds the class of every pixel, from which we derive
+    // the skin mask and the body silhouette (everything that isn't background: skin, clothes, hair ...)
+    const t3 = performance.now(), cat = sres.categoryMask;
+    if (cat) {
+      const w = cat.width, h = cat.height, c = cat.getAsUint8Array();
+      const skin = new Float32Array(c.length), body = new Float32Array(c.length);
+      for (let i = 0; i < c.length; i++) { skin[i] = c[i] === SKIN_CLASS ? 1 : 0; body[i] = c[i] === BG_CLASS ? 0 : 1; }
+      masks.skin = toMask(skin, w, h, masks.skin, [255, 255, 255]);
+      masks.body = toMask(body, w, h, masks.body, [255, 255, 255]);
+      cat.close();
+    }
+    perfMark("masks", t3);
   }
 
   if (raw && raw.vis > 0.5) {
@@ -582,10 +609,9 @@ function detect(src) {
   }
 }
 
-// Copies an MPMask into {arr, w, h, canvas}. Blends with the previous frame to stop edge flicker;
+// Copies a confidence mask into {arr, w, h, canvas}. Blends with the previous frame to stop edge flicker;
 // the canvas carries the mask as alpha (for clipping) tinted with `rgb` (for the debug overlay).
-function toMask(m, prev, rgb) {
-  const w = m.width, h = m.height, src = m.getAsFloat32Array();
+function toMask(src, w, h, prev, rgb) {
   let arr;
   if (prev && prev.w === w && prev.h === h) { arr = prev.arr; for (let i = 0; i < arr.length; i++) arr[i] = arr[i] * 0.35 + src[i] * 0.65; }
   else arr = new Float32Array(src);
@@ -614,6 +640,34 @@ function measureWidth(mask, cx, cy, n, maxD) {
   while (d2 < maxD && at(cx - n.x * d2, cy - n.y * d2) >= 0.5) d2 += 2;
   if (d1 >= maxD || d2 >= maxD) return null; // limb overlaps torso -> silhouette not usable
   return { r: (d1 + d2) / 2, off: (d1 - d2) / 2 };
+}
+
+/* ================= Forearm twist (3D, part of "Stabil") ================= */
+// Turning the forearm (palm up / palm down) rolls the skin around the arm. The 3D world landmarks of
+// wrist, pinky and index knuckle tell us by how much: we measure the direction across the hand,
+// perpendicular to the forearm, as an angle around the arm (0 = facing the camera, same convention as
+// state.roll) and add its change since placement to the tattoo's roll. Near the elbow the skin barely
+// twists, so the effect fades in along the forearm.
+const twist = { f: new OneEuro(1.0, 0.05), raw: null, unwrapped: 0, value: 0, ref: null };
+function resetTwist() { twist.f.reset(); twist.raw = null; twist.ref = null; }
+function updateTwist(wl, z) {
+  const a = wl[z.a], b = wl[z.b], pk = wl[z.tw[0]], ix = wl[z.tw[1]];
+  const sub = (p, q) => ({ x: p.x - q.x, y: p.y - q.y, z: p.z - q.z }), dot = (p, q) => p.x * q.x + p.y * q.y + p.z * q.z;
+  const unit = v => { const l = Math.hypot(v.x, v.y, v.z) || 1; return { x: v.x / l, y: v.y / l, z: v.z / l }; };
+  const d = unit(sub(b, a)), perp = v => { const k = dot(v, d); return { x: v.x - d.x * k, y: v.y - d.y * k, z: v.z - d.z * k }; };
+  const v = perp(sub(ix, pk));
+  const eCam = unit(perp({ x: 0, y: 0, z: -1 })), eN = unit(perp({ x: d.y, y: -d.x, z: 0 })); // towards camera / screen normal
+  const ang = Math.atan2(dot(v, eN), dot(v, eCam));
+  if (twist.raw == null) twist.unwrapped = ang;
+  else twist.unwrapped += Math.atan2(Math.sin(ang - twist.raw), Math.cos(ang - twist.raw));
+  twist.raw = ang;
+  twist.value = twist.f.filter(twist.unwrapped, performance.now());
+  if (twist.ref == null) twist.ref = twist.value;
+}
+function effRoll() {
+  const z = ZONES[state.zone];
+  if (!state.stab || !z.tw || twist.ref == null) return state.roll;
+  return clamp(state.roll + (twist.value - twist.ref) * clamp(state.t, 0, 1), -1.6, 1.6);
 }
 
 /* ================= Surface frame ================= */
@@ -821,7 +875,7 @@ function drawTattoo(fr, alpha) {
   // Local frame: x = across the limb (n), y = along the limb (d), origin on the limb axis.
   octx.setTransform(fr.n.x, fr.n.y, fr.d.x, fr.d.y, fr.cx, fr.cy);
   const cmPerPx = state.size / DESIGN_BASE;
-  const Wcm = dc.width * cmPerPx, rollCm = state.roll * z.R;
+  const Wcm = dc.width * cmPerPx, rollCm = effRoll() * z.R;
   const rows = fr.prof.length - 1, srcRowH = dc.height / rows, rowH = fr.hPx / rows;
   const N = clamp(Math.round(dc.width / 10), 16, 64), sw = dc.width / N;
 
@@ -1120,6 +1174,7 @@ function sizeLabel() {
 }
 function syncUI() {
   flow.snap = true; // user edits move the tattoo immediately instead of being "held" by the skin tracker
+  if (twist.ref != null) twist.ref = twist.value; // ... and re-base the arm twist on the new placement
   const p = dotPos(), r = ringR(), a = state.rot * Math.PI / 180;
   const gz = $("#gizmo"); gz.style.left = p.x + "px"; gz.style.top = p.y + "px";
   const ring = $("#gRing"), ticks = $("#gTicks"), bub = $("#gBubble");
@@ -1401,7 +1456,7 @@ $("#convUse").onclick = () => {
 
 renderDesigns(); renderZones(); syncUI();
 requestAnimationFrame(loop);
-window.__tryon = { state, loadModels, loadConvFile, conv, masks, flow, flowStep };
+window.__tryon = { state, loadModels, loadConvFile, conv, masks, flow, flowStep, detect, twist, updateTwist, effRoll };
 </script>
 </body>
 </html>
