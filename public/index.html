@@ -6,325 +6,413 @@
 <title>Flash Try-On</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-1: #ececed;
-    --bg-2: #d5d5d8;
-    --text: #1c1c1e;
-    --muted: #707075;
-    --line: rgba(0,0,0,.08);
-    --glass: rgba(255,255,255,.58);
-    --glass-strong: rgba(255,255,255,.78);
-    --glass-border: rgba(255,255,255,.75);
-    --glass-dark: rgba(22,22,24,.55);
-    --ink: #151517;
-    --paper: #f4f1ea;
-    --stage: #0f0f11;
-    --ok: #46b06a;
-    --warn: #e7a93b;
-    --shadow: 0 18px 40px -18px rgba(0,0,0,.28), 0 2px 6px rgba(0,0,0,.05);
-    --rainbow: linear-gradient(90deg, #4f8fd9, #e0574a 35%, #f0c64a 65%, #69b46a);
-    --r-lg: 28px;
-    --r-md: 18px;
+    --white: #fbfaf8;
+    --ink: #1b1a19;
+    --ink-2: #6f6b66;
+    --line: rgba(27,26,25,.08);
+    --paper: #f3eee6;
+    --frost: rgba(122,119,115,.34);          /* grey frost on light ground */
+    --frost-cam: rgba(38,36,34,.42);         /* frost over the camera image */
+    --frost-cam-2: rgba(255,255,255,.16);
+    --beige: rgba(226,216,201,.62);
+    --beige-solid: #e7ddcf;
+    --key: #ecebe8;
+    --lime: #dcff3d;
+    --lime-glow: 0 0 6px rgba(220,255,61,.85), 0 0 18px rgba(220,255,61,.45);
+    --coral: #ff8574;
+    --coral-glow: 0 0 8px rgba(255,120,100,.9), 0 0 24px rgba(255,110,95,.5);
+    --a1: #f2d9c4; --a2: #dcff3d; --a3: #ff9a8a; --a4: #c9d7ff;
+    --r-xl: 40px; --r-lg: 28px; --r-md: 20px;
+    --shadow: 0 24px 60px -34px rgba(0,0,0,.35);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; color: var(--text);
-    font: 14px/1.45 Onest, system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased;
-    background: radial-gradient(120% 90% at 50% 0%, var(--bg-1) 0%, var(--bg-2) 100%); background-attachment: fixed; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--white); color: var(--ink); font: 14px/1.45 Geist, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: hidden; }
   button, input, textarea { font: inherit; color: inherit; }
   button { cursor: pointer; border: 0; background: none; }
   [hidden] { display: none !important; }
+  svg { flex: none; }
 
-  .glass { background: var(--glass); border: 1px solid var(--glass-border);
-    backdrop-filter: blur(22px) saturate(1.5); -webkit-backdrop-filter: blur(22px) saturate(1.5); box-shadow: var(--shadow); }
-  .glass-dark { background: var(--glass-dark); border: 1px solid rgba(255,255,255,.12); color: #fff;
-    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  /* Squircle corners where supported (corner-shape), generous radii elsewhere */
+  .sq { border-radius: var(--r-lg); }
+  @supports (corner-shape: squircle) { .sq { corner-shape: squircle; border-radius: calc(var(--r-lg) * 1.6); } }
 
-  /* ---------- Pills & buttons ---------- */
-  .pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px;
-    font-weight: 500; white-space: nowrap; transition: background .15s, transform .1s; }
+  /* ---------- Aura ---------- */
+  .aura { position: fixed; inset: -20vmax; z-index: -1; pointer-events: none; filter: blur(70px) saturate(1.15); opacity: .8; }
+  .aura i { position: absolute; border-radius: 50%; mix-blend-mode: multiply; animation: drift 18s ease-in-out infinite alternate, pulse 6s ease-in-out infinite; }
+  .aura i:nth-child(1) { width: 60vmax; height: 60vmax; left: 8vmax; top: 4vmax; background: radial-gradient(circle, var(--a1) 0%, transparent 65%); }
+  .aura i:nth-child(2) { width: 42vmax; height: 42vmax; right: 10vmax; top: 16vmax; background: radial-gradient(circle, var(--a2) 0%, transparent 62%); animation-duration: 22s, 7s; animation-delay: -6s, -2s; }
+  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 32vmax; bottom: 2vmax; background: radial-gradient(circle, var(--a3) 0%, transparent 62%); animation-duration: 26s, 8s; animation-delay: -12s, -4s; }
+  .aura i:nth-child(4) { width: 40vmax; height: 40vmax; left: 2vmax; bottom: 8vmax; background: radial-gradient(circle, var(--a4) 0%, transparent 62%); animation-duration: 20s, 9s; animation-delay: -3s, -1s; }
+  @keyframes drift { from { transform: translate(-4vmax, -3vmax) scale(.95); } to { transform: translate(5vmax, 4vmax) scale(1.08); } }
+  @keyframes pulse { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .aura i { animation: none; } }
+
+  /* ---------- Pills ---------- */
+  .pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 500; white-space: nowrap; transition: background .15s, transform .1s; }
   .pill:active { transform: scale(.97); }
-  .pill .lbl { color: var(--muted); font-size: 12px; }
-  .pill svg { width: 16px; height: 16px; flex: none; }
-  button.pill.glass:hover { background: var(--glass-strong); }
-  .pill.toggle[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .pill.toggle[aria-pressed="true"] .lbl { color: rgba(255,255,255,.6); }
-  .round { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none; }
-  .round.dark { background: var(--ink); color: #fff; }
-  .round.dark:hover { background: #2b2b2e; }
+  .pill .lbl { color: var(--ink-2); font-weight: 400; }
+  .pill svg { width: 16px; height: 16px; }
+  .pill.light { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.9); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); }
+  .pill.light:hover { background: rgba(255,255,255,.85); }
+  .pill.dark { background: var(--ink); color: #fff; padding-right: 6px; }
+  .plus { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.14); color: var(--lime); font-weight: 400; font-size: 17px; line-height: 1; }
+  .round { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; }
   .round svg { width: 18px; height: 18px; }
-  .kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 6px;
-    background: rgba(0,0,0,.07); font-size: 11px; color: var(--muted); }
+  .on-cam { background: var(--frost-cam); color: #fff; border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+  .on-cam:hover { background: rgba(38,36,34,.55); }
+  .on-cam[aria-pressed="true"] { background: #fff; color: var(--ink); }
 
   /* ---------- Shell ---------- */
-  .shell { height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 14px; padding: 16px 20px 20px; }
-  .top { position: relative; z-index: 20; display: flex; align-items: center; gap: 12px; }
-  .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: .02em; margin-right: auto; }
-  .logo-mark { width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; }
-  .logo small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; letter-spacing: 0; }
-  .top-center { display: flex; gap: 8px; align-items: center; }
+  .shell { height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 14px; padding: 14px 20px 20px; }
+  .top { position: relative; z-index: 20; display: flex; align-items: center; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 500; margin-right: auto; }
+  .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--coral); box-shadow: var(--coral-glow); }
+  .brand small { color: var(--ink-2); font-weight: 400; }
+  .top-center { position: absolute; left: 50%; transform: translateX(-50%); }
   .top-right { margin-left: auto; display: flex; gap: 8px; }
 
-  .work { position: relative; display: grid; grid-template-columns: 148px minmax(0, 1fr) 228px; gap: 22px; min-height: 0; }
+  .pop { position: absolute; z-index: 30; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(420px, 92vw); padding: 18px;
+    background: rgba(251,250,248,.82); border: 1px solid #fff; backdrop-filter: blur(26px) saturate(1.3); -webkit-backdrop-filter: blur(26px) saturate(1.3); box-shadow: var(--shadow); }
+  .pop h5 { margin: 14px 0 8px; font-size: 11.5px; font-weight: 500; color: var(--ink-2); }
+  .pop h5:first-child { margin-top: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 34px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,.75); border: 1px solid var(--line); font-size: 13px; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .pop .hint { margin-top: 14px; font-size: 12.5px; color: var(--ink-2); }
 
-  /* ---------- Left rail: flash cards ---------- */
-  .rail { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-  .rail-head { font-size: 12px; color: var(--muted); padding-left: 4px; }
+  .work { display: grid; grid-template-columns: 132px minmax(0, 1fr) 236px; gap: 20px; min-height: 0; }
+
+  /* ---------- Flash rail ---------- */
+  .rail { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .rail-head { font-size: 12px; color: var(--ink-2); padding-left: 4px; }
   .flashes { display: flex; flex-direction: column; gap: 12px; overflow: auto; padding: 4px; margin: -4px; scrollbar-width: none; }
   .flashes::-webkit-scrollbar { display: none; }
-  .flash { position: relative; flex: none; width: 100%; aspect-ratio: 1; border-radius: var(--r-md); background: var(--paper);
-    box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s; }
+  .flash { position: relative; flex: none; width: 100%; aspect-ratio: 1; background: var(--paper); box-shadow: var(--shadow); --r-lg: 24px; transition: transform .15s, box-shadow .15s; }
   .flash:hover { transform: translateY(-2px); }
-  .flash img { position: absolute; inset: 14px 14px 26px; width: calc(100% - 28px); height: calc(100% - 40px); object-fit: contain; }
-  .flash.add { background: var(--glass); border: 1.5px dashed rgba(0,0,0,.18); box-shadow: none; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--muted); }
-  .flash.add svg { width: 22px; height: 22px; color: var(--text); }
-  .flash .name { position: absolute; left: 8px; bottom: 8px; font-size: 11px; font-weight: 500; padding: 3px 8px;
-    border-radius: 999px; background: rgba(255,255,255,.8); backdrop-filter: blur(8px); }
-  .flash[aria-pressed="true"] { box-shadow: 0 0 0 2.5px var(--ink), var(--shadow); }
+  .flash img { position: absolute; inset: 14px 14px 30px; width: calc(100% - 28px); height: calc(100% - 44px); object-fit: contain; }
+  .flash .name { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); font-size: 11px; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.75); backdrop-filter: blur(8px); white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis; }
+  .flash[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink), var(--shadow); }
   .flash.checker { background-color: #fff; background-image: conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0); background-size: 14px 14px; }
+  .flash.add { background: rgba(255,255,255,.5); border: 1.5px dashed rgba(27,26,25,.18); box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--ink-2); backdrop-filter: blur(12px); }
+  .flash.add svg { width: 20px; height: 20px; color: var(--ink); }
 
   /* ---------- Stage ---------- */
-  .center { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-  .stage { position: relative; flex: 1; min-height: 0; border-radius: var(--r-lg); background: var(--stage); overflow: hidden;
-    box-shadow: 0 40px 70px -30px rgba(0,0,0,.45); touch-action: none; outline: none; }
+  .center { position: relative; min-height: 0; min-width: 0; display: flex; }
+  .stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #1d1b1a; --r-lg: 36px;
+    box-shadow: 0 50px 90px -50px rgba(0,0,0,.55); touch-action: none; outline: none; isolation: isolate; }
+  .stage:has(.intro:not([hidden])) { background: var(--frost); backdrop-filter: blur(30px) saturate(1.2); -webkit-backdrop-filter: blur(30px) saturate(1.2); box-shadow: inset 0 0 0 1px rgba(255,255,255,.4), var(--shadow); }
   #view { width: 100%; height: 100%; display: block; object-fit: cover; }
   #view.contain { object-fit: contain; }
   #view.mirror { transform: scaleX(-1); }
   video { display: none; }
 
-  .status { position: absolute; top: 16px; left: 16px; height: 34px; padding: 0 14px; font-size: 12.5px; border-radius: 999px;
-    display: inline-flex; align-items: center; gap: 8px; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: #9a9aa0; }
-  .status[data-state="ok"] .dot { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
-  .status[data-state="search"] .dot, .status[data-state="busy"] .dot { background: var(--warn); animation: blink .9s infinite; }
+  .hud { position: absolute; z-index: 4; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; pointer-events: none; }
+  .hud > * { pointer-events: auto; }
+  .status { height: 34px; padding: 0 13px; font-size: 12.5px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.45); }
+  .status[data-state="ok"] .dot { background: var(--coral); box-shadow: var(--coral-glow); }
+  .status[data-state="search"] .dot, .status[data-state="busy"] .dot { background: var(--lime); box-shadow: var(--lime-glow); animation: blink .9s infinite; }
   @keyframes blink { 50% { opacity: .3; } }
-  .stage-tools { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; }
-  .stage-tools .round { width: 38px; height: 38px; }
+  .stage-tools { display: flex; gap: 8px; }
 
-  .coach { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); max-width: min(90%, 420px);
-    text-align: center; padding: 10px 16px; border-radius: 16px; font-size: 13px; pointer-events: none; }
+  .coach { position: absolute; z-index: 4; left: 50%; top: 60px; transform: translateX(-50%); max-width: min(88%, 420px); text-align: center; padding: 10px 16px; border-radius: 18px; font-size: 13px; pointer-events: none; }
 
-  .intro { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; color: #fff;
-    background: radial-gradient(70% 60% at 50% 45%, #2a2a30 0%, #0f0f11 75%); }
-  .intro-card { max-width: 420px; text-align: center; }
-  .eyebrow { font-size: 11.5px; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.55); margin-bottom: 12px; }
-  .intro h1 { font-weight: 500; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; margin: 0 0 12px; letter-spacing: -.02em; }
-  .intro h1 em { font-style: normal; padding: 0 8px; border-radius: 8px; background: rgba(255,255,255,.12); }
-  .intro p { color: rgba(255,255,255,.65); margin: 0 0 24px; }
+  .intro { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 24px; color: #fff; }
+  .intro-card { max-width: 440px; text-align: center; }
+  .intro h1 { font-weight: 400; font-size: clamp(32px, 4.4vw, 54px); line-height: 1; margin: 0 0 14px; letter-spacing: -.04em; }
+  .intro h1 span { opacity: .55; }
+  .intro p { color: rgba(255,255,255,.8); margin: 0 0 26px; font-size: 15px; }
   .intro .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .btn { height: 44px; padding: 0 20px; border-radius: 999px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
-  .btn.light { background: #fff; color: var(--ink); }
-  .btn.ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.18); }
+  .btn { height: 46px; padding: 0 20px; border-radius: 999px; font-weight: 500; display: inline-flex; align-items: center; gap: 10px; }
+  .btn.white { background: #fff; color: var(--ink); padding-right: 7px; }
+  .btn.white .plus { background: var(--ink); }
+  .btn.ghost { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.3); }
   .btn.dark { background: var(--ink); color: #fff; }
-  .btn.soft { background: rgba(0,0,0,.06); }
-  .btn svg { width: 16px; height: 16px; }
-  .privacy { margin-top: 18px; font-size: 12px; color: rgba(255,255,255,.5); display: flex; gap: 6px; align-items: center; justify-content: center; }
+  .btn.soft { background: rgba(27,26,25,.06); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .privacy { margin-top: 18px; font-size: 12px; color: rgba(255,255,255,.7); display: flex; gap: 6px; align-items: center; justify-content: center; }
 
-  /* ---------- Dock ---------- */
-  .dock { position: relative; z-index: 3; width: min(680px, 94%); margin: -78px auto 0; border-radius: 24px; padding: 14px 14px 12px; overflow: hidden; }
-  .dock::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--rainbow); opacity: .9; }
-  .sliders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 16px; padding: 2px 4px 12px; }
-  .sl label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-  .sl output { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 500; }
-  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; }
-  input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: rgba(0,0,0,.12); }
-  input[type=range]::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(0,0,0,.12); }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: #fff; border: 1px solid rgba(0,0,0,.15); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
-  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 1px solid rgba(0,0,0,.15); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
-  .dock-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .dock-row .pill { height: 36px; padding: 0 13px; font-size: 13px; }
-  .dock-row .spacer { flex: 1; }
-  .pill.flat { background: rgba(255,255,255,.6); border: 1px solid rgba(0,0,0,.05); }
-  .pill.flat:hover { background: #fff; }
+  /* ---------- Dock (layout A) ---------- */
+  .dock { position: absolute; z-index: 4; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(520px, calc(100% - 28px)); padding: 8px; color: #fff; --r-lg: 28px;
+    background: var(--frost-cam); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2); }
+  .stage:has(.intro:not([hidden])) .dock { display: none; }
+  .tabs { display: flex; padding: 3px; border-radius: 999px; background: var(--frost-cam-2); }
+  .tab { flex: 1; height: 34px; border-radius: 999px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,.75); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .tab[aria-selected="true"] { background: #fff; color: var(--ink); }
+  .tab .chev { width: 12px; height: 12px; transition: transform .2s; display: none; }
+  .tab[aria-selected="true"] .chev { display: block; }
+  .dock.collapsed .tab[aria-selected="true"] .chev { transform: rotate(180deg); }
+  .panel { padding: 12px 6px 6px; }
+  .dock.collapsed .panel { display: none; }
+  .panel-row { display: flex; align-items: center; gap: 10px; }
+  .panel-note { font-size: 11.5px; color: rgba(255,255,255,.6); margin-top: 8px; text-align: center; }
+
+  /* Haut-Karte (position) */
+  .map { position: relative; flex: 1; height: 112px; overflow: hidden; touch-action: none; cursor: crosshair; --r-lg: 22px;
+    background: linear-gradient(90deg, rgba(0,0,0,.2), rgba(255,255,255,.22) 50%, rgba(0,0,0,.2)), var(--frost-cam-2); }
+  .map .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.28) 1px, transparent 1.3px); background-size: 14px 14px; }
+  .map .lbl { position: absolute; font-size: 10.5px; color: rgba(255,255,255,.7); pointer-events: none; }
+  .map .l-top { top: 7px; left: 50%; transform: translateX(-50%); }
+  .map .l-bot { bottom: 7px; left: 50%; transform: translateX(-50%); }
+  .map .l-left { left: 10px; top: 50%; transform: translateY(-50%); }
+  .map .l-right { right: 10px; top: 50%; transform: translateY(-50%); }
+  .map .mdot { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 6px rgba(255,255,255,.18); pointer-events: none; }
+  .map .mdot::after { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--lime); box-shadow: var(--lime-glow); }
+  .side-btns { display: flex; flex-direction: column; gap: 8px; }
+
+  /* Pill slider + stepper (size, opacity) */
+  .pslider { position: relative; flex: 1; height: 50px; border-radius: 999px; background: var(--frost-cam-2); overflow: hidden; cursor: ew-resize; touch-action: none; }
+  .pslider .fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: linear-gradient(90deg, rgba(255,255,255,.3), rgba(255,255,255,.9)); }
+  .pslider .ticks { position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, transparent 0 13px, rgba(255,255,255,.22) 13px 14px); -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+  .pslider .txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 15px; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.55), 0 0 2px rgba(0,0,0,.35); pointer-events: none; }
+  .step { width: 50px; height: 50px; border-radius: 50%; background: var(--key); color: var(--ink); font-size: 22px; font-weight: 300; box-shadow: 0 6px 14px -6px rgba(0,0,0,.4), inset 0 1px 0 #fff; }
+  .step:active { transform: scale(.94); }
+
+  /* Drehring (rotation) */
+  .ring { position: relative; width: 124px; height: 124px; border-radius: 50%; flex: none; touch-action: none; cursor: grab;
+    background: conic-gradient(rgba(255,255,255,.1), rgba(255,255,255,.28), rgba(255,255,255,.1)); }
+  .ring::before { content: ""; position: absolute; inset: 18px; border-radius: 50%; background: rgba(20,19,18,.35); box-shadow: inset 0 2px 10px rgba(0,0,0,.3); }
+  .ring svg { position: absolute; inset: 0; }
+  .ring .handle { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.35); pointer-events: none; }
+  .ring .val { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22px; font-weight: 500; pointer-events: none; }
+  .ring .val small { font-size: 10.5px; font-weight: 400; opacity: .65; }
+  .quick { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .qbtn { height: 34px; border-radius: 999px; background: var(--frost-cam-2); font-size: 12.5px; }
+  .qbtn:hover { background: rgba(255,255,255,.26); }
+
+  .toggles { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .tog { height: 34px; padding: 0 13px; border-radius: 999px; font-size: 12.5px; background: var(--frost-cam-2); color: rgba(255,255,255,.85); }
+  .tog[aria-pressed="true"] { background: #fff; color: var(--ink); }
 
   /* ---------- Right side ---------- */
-  .side { display: flex; flex-direction: column; gap: 14px; min-height: 0; justify-content: flex-end; }
-  .card { border-radius: 22px; padding: 14px; }
-  .card h4 { margin: 0 0 10px; font-size: 12px; font-weight: 500; color: var(--muted); display: flex; justify-content: space-between; }
-  .summary-line { display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .side { display: flex; flex-direction: column; gap: 14px; justify-content: flex-end; min-height: 0; }
+  .card { padding: 16px; background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.95); backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3); box-shadow: var(--shadow); --r-lg: 26px; }
+  .card h4 { margin: 0 0 8px; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .summary-line { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; }
   .summary-line:first-of-type { border-top: 0; }
-  .summary-line span { color: var(--muted); }
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .tile { height: 64px; border-radius: 16px; padding: 10px 12px; text-align: left; font-size: 13px; font-weight: 500;
-    display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 1px 0 rgba(255,255,255,.4); transition: transform .12s, filter .12s; }
-  .tile:hover { filter: brightness(1.05); transform: translateY(-1px); }
-  .tile svg { width: 16px; height: 16px; opacity: .8; flex: none; }
-  .tile span { white-space: nowrap; }
-  .t-green { background: linear-gradient(160deg, #8cc47e, #5e9f57); color: #fff; }
-  .t-blue  { background: linear-gradient(160deg, #3c9fd0, #1f6f9e); color: #fff; }
-  .t-grey  { background: linear-gradient(160deg, #f4f4f5, #cfcfd3); color: var(--text); }
-  .t-peach { background: linear-gradient(160deg, #f8c79a, #ec9b5f); color: #3a2010; }
+  .summary-line span { color: var(--ink-2); }
+  .summary-line b { font-weight: 500; text-align: right; }
+  .act { width: 100%; display: flex; align-items: center; justify-content: space-between; height: 46px; padding: 0 6px 0 16px; border-radius: 999px; background: var(--frost); color: #fff; font-weight: 500; margin-top: 8px; backdrop-filter: blur(16px); }
+  .act:first-of-type { margin-top: 0; }
+  .act:hover { background: rgba(98,96,93,.55); }
+  .act .plus { background: rgba(0,0,0,.22); color: #fff; }
+  .act.primary { background: var(--ink); }
+  .act.primary .plus { color: var(--lime); background: rgba(255,255,255,.12); }
 
-  /* ---------- Popover ---------- */
-  .pop { position: absolute; z-index: 30; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(420px, 92vw); border-radius: 22px; padding: 16px; background: var(--glass-strong); }
-  .pop h5 { margin: 12px 0 8px; font-size: 11.5px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-  .pop h5:first-child { margin-top: 0; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { height: 34px; padding: 0 13px; border-radius: 999px; background: rgba(255,255,255,.7); border: 1px solid rgba(0,0,0,.06); font-size: 13px; }
-  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
-  .pop .hint { margin-top: 14px; font-size: 12.5px; color: var(--muted); }
-
-  .toast { position: fixed; z-index: 50; top: 18px; left: 50%; transform: translate(-50%, -8px); max-width: min(420px, 92vw); padding: 10px 16px;
-    border-radius: 999px; font-size: 13px; opacity: 0; transition: .25s; pointer-events: none; background: var(--ink); color: #fff; }
+  .toast { position: fixed; z-index: 50; top: 16px; left: 50%; transform: translate(-50%, -8px); max-width: min(440px, 92vw); padding: 10px 16px; border-radius: 999px; font-size: 13px; opacity: 0; transition: .25s; pointer-events: none; background: var(--ink); color: #fff; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   /* ---------- Dialogs ---------- */
-  dialog { border: 1px solid var(--glass-border); border-radius: 28px; padding: 0; color: var(--text);
-    background: rgba(246,246,247,.86); backdrop-filter: blur(30px) saturate(1.4); -webkit-backdrop-filter: blur(30px) saturate(1.4); box-shadow: 0 40px 80px -20px rgba(0,0,0,.4); }
-  dialog::backdrop { background: rgba(30,30,34,.35); backdrop-filter: blur(4px); }
-  .dlg-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px 0; }
-  .dlg-head h2 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
-  .dlg-head p { margin: 2px 0 0; color: var(--muted); font-size: 12.5px; }
-  .dlg-head .round { margin-left: auto; width: 36px; height: 36px; background: rgba(0,0,0,.06); }
+  dialog { border: 1px solid #fff; padding: 0; color: var(--ink); --r-lg: 32px; background: rgba(251,250,248,.86); backdrop-filter: blur(30px) saturate(1.3); -webkit-backdrop-filter: blur(30px) saturate(1.3); box-shadow: 0 40px 90px -30px rgba(0,0,0,.45); }
+  dialog::backdrop { background: rgba(40,38,36,.3); backdrop-filter: blur(6px); }
+  .dlg-head { display: flex; align-items: flex-start; gap: 12px; padding: 22px 22px 0; }
+  .dlg-head h2 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
+  .dlg-head p { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; }
+  .dlg-head .round { margin-left: auto; background: rgba(27,26,25,.06); flex: none; }
 
   #convDlg { width: min(1080px, 95vw); }
-  .conv { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px 20px; }
-  .pane { position: relative; border-radius: 20px; overflow: hidden; height: min(52vh, 460px); display: grid; place-items: center; }
-  .pane-label { position: absolute; top: 10px; left: 10px; z-index: 2; font-size: 11.5px; padding: 4px 10px; border-radius: 999px; }
-  .pane.src { background: #e4e4e7; }
-  .pane.out { background-color: #fff; background-image: conic-gradient(#ececee 25%, #fff 0 50%, #ececee 0 75%, #fff 0); background-size: 18px 18px; }
+  .conv { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 22px; }
+  .pane { position: relative; overflow: hidden; height: min(50vh, 440px); display: grid; place-items: center; --r-lg: 24px; }
+  .pane-label { position: absolute; top: 10px; left: 10px; z-index: 2; font-size: 11.5px; padding: 5px 11px; border-radius: 999px; background: rgba(255,255,255,.75); backdrop-filter: blur(10px); }
+  .pane.src { background: #e6e3de; }
+  .pane.out { background-color: #fff; background-image: conic-gradient(#efedea 25%, #fff 0 50%, #efedea 0 75%, #fff 0); background-size: 18px 18px; }
   .pane canvas { max-width: 100%; max-height: 100%; display: block; }
   #cvSrc { cursor: crosshair; touch-action: none; }
-  .drop { position: absolute; inset: 10px; border: 1.5px dashed rgba(0,0,0,.2); border-radius: 16px; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 20px; }
-  .drop b { display: block; color: var(--text); font-weight: 500; margin: 8px 0 4px; }
+  .drop { position: absolute; inset: 10px; border: 1.5px dashed rgba(27,26,25,.2); border-radius: 18px; display: grid; place-items: center; text-align: center; color: var(--ink-2); padding: 20px; cursor: pointer; }
+  .drop b { display: block; color: var(--ink); font-weight: 500; margin: 8px 0 4px; }
   .drop.over { border-color: var(--ink); background: rgba(255,255,255,.5); }
-  .conv-controls { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 0 20px 18px; }
-  .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(0,0,0,.06); }
-  .seg button { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--muted); }
-  .seg button[aria-pressed="true"] { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-  .conv-controls .sl { width: 160px; }
+  .conv-controls { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 0 22px 18px; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(27,26,25,.06); }
+  .seg button { height: 34px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+  .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .sl { width: 170px; }
+  .sl label { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); }
+  .sl output { color: var(--ink); font-weight: 500; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; }
+  input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: rgba(27,26,25,.14); }
+  input[type=range]::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(27,26,25,.14); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7px; border-radius: 50%; background: #fff; border: 1px solid rgba(0,0,0,.12); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 1px solid rgba(0,0,0,.12); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  .pill.flat { height: 36px; background: rgba(27,26,25,.06); font-size: 13px; }
+  .pill.flat[aria-pressed="true"] { background: var(--ink); color: #fff; }
   .conv-controls .actions { margin-left: auto; display: flex; gap: 8px; }
-  .conv-foot { padding: 0 20px 18px; font-size: 12px; color: var(--muted); }
+  .conv-foot { padding: 0 22px 20px; font-size: 12px; color: var(--ink-2); }
 
   #bookDlg { width: min(440px, 92vw); }
-  .book { padding: 16px 20px 20px; }
-  .book img { width: 100%; border-radius: 18px; margin-bottom: 12px; max-height: 240px; object-fit: cover; }
-  .book input, .book textarea { width: 100%; padding: 11px 14px; border-radius: 14px; border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.8); margin-bottom: 8px; }
+  .book { padding: 16px 22px 22px; }
+  .book img { width: 100%; border-radius: 20px; margin-bottom: 12px; max-height: 240px; object-fit: cover; }
+  .book input, .book textarea { width: 100%; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.85); margin-bottom: 8px; }
   .book .row { display: flex; gap: 8px; }
 
   /* ---------- Responsive ---------- */
   @media (max-width: 1100px) {
-    .work { grid-template-columns: 120px minmax(0, 1fr); }
+    .work { grid-template-columns: 112px minmax(0, 1fr); }
     .side { display: none; }
     .top-right .hide-md { display: none; }
   }
   @media (max-width: 760px) {
-    .shell { padding: 10px 12px 16px; gap: 10px; height: auto; min-height: 100dvh; }
+    .shell { padding: 10px 12px 14px; gap: 10px; grid-template-rows: auto minmax(0, 1fr); }
+    .brand small { display: none; }
+    .top-center { position: static; transform: none; order: 3; width: 100%; }
     .top { flex-wrap: wrap; }
-    .logo small { display: none; }
-    .top-center { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-    .top-center::-webkit-scrollbar { display: none; }
-    .top-right { margin-left: 0; }
-    .work { display: flex; flex-direction: column; gap: 14px; }
-    .center { order: 1; }
-    .stage { flex: none; height: 62dvh; border-radius: 24px; }
-    .dock { width: 100%; margin: 12px 0 0; }
-    .sliders { grid-template-columns: 1fr 1fr; }
-    .rail { order: 2; }
+    .top-center .pill { width: 100%; justify-content: center; }
+    .work { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .center { flex: 1; min-height: 0; }
+    .stage { --r-lg: 30px; }
+    .rail { order: 2; flex: none; }
+    .rail-head { display: none; }
     .flashes { flex-direction: row; overflow-x: auto; }
-    .flash { width: 104px; }
-    .side { display: flex; order: 3; }
-    .dock-row .hide-sm { display: none; }
+    .flash { width: 76px; --r-lg: 18px; }
+    .flash img { inset: 8px 8px 20px; width: calc(100% - 16px); height: calc(100% - 28px); }
+    .flash .name { font-size: 9.5px; bottom: 5px; padding: 2px 6px; }
+    .flash.add { font-size: 0; }
+    .dock { bottom: 10px; width: calc(100% - 20px); }
+    .map { height: 84px; }
+    .ring { width: 100px; height: 100px; }
+    .ring .val { font-size: 18px; }
+    .panel { padding-top: 10px; }
+    .panel-note { display: none; }
+    .tab { font-size: 12.5px; height: 32px; }
+    .pslider, .step { height: 44px; }
+    .step { width: 44px; }
     .conv { grid-template-columns: 1fr; }
-    .pane { height: 34vh; }
+    .pane { height: 32vh; }
     .conv-controls .actions { margin-left: 0; width: 100%; }
     .conv-controls .actions .btn { flex: 1; justify-content: center; }
   }
 </style>
 </head>
 <body>
+<div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
 <div class="shell">
   <header class="top">
-    <div class="logo">
-      <div class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v6M12 16v6M2 12h6M16 12h6M5 5l4 4M15 15l4 4M19 5l-4 4M9 15l-4 4"/></svg></div>
-      <div>Black Moth<small>Flash Try-On</small></div>
-    </div>
+    <div class="brand"><span class="brand-dot"></span>Black Moth <small>Flash Try-On</small></div>
     <div class="top-center">
-      <button class="pill glass" id="zonePill" aria-haspopup="true"><span class="lbl">Stelle</span><span id="zoneLabel">–</span>
+      <button class="pill light" id="zonePill" aria-haspopup="true"><span class="lbl">Stelle</span><span id="zoneLabel">–</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="pill glass"><span class="lbl">Motiv</span><span id="sumDesign">–</span></div>
-      <div class="pill glass"><span class="lbl">Größe</span><span id="sumSize">–</span></div>
-      <button class="pill glass round" id="btnReset" title="Platzierung zurücksetzen" style="padding:0;width:40px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
     </div>
-    <div class="pop glass" id="zonePop" hidden>
+    <div class="pop sq" id="zonePop" hidden>
       <div id="zoneGroups"></div>
       <div class="hint" id="zoneHint"></div>
     </div>
     <div class="top-right">
-      <button class="pill glass hide-md" id="btnConvTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Flash → PNG</button>
-      <button class="pill toggle glass" id="btnBookTop" aria-pressed="true">Termin anfragen</button>
+      <button class="pill light hide-md" id="btnConvTop">Flash → PNG</button>
+      <button class="pill dark" id="btnBookTop">Termin <span class="plus">+</span></button>
     </div>
   </header>
 
   <main class="work">
     <aside class="rail">
-      <div class="rail-head">Flash-Sheet</div>
+      <div class="rail-head">Flash</div>
       <div class="flashes" id="designGrid"></div>
     </aside>
 
     <section class="center">
-      <div class="stage" id="stage" tabindex="0" aria-label="Kamera-Vorschau. Ziehen verschiebt, Pinch skaliert und dreht.">
+      <div class="stage sq" id="stage" tabindex="0" aria-label="Kamera-Vorschau. Ziehen verschiebt, Pinch skaliert und dreht.">
         <video id="video" playsinline muted></video>
         <canvas id="view"></canvas>
-        <div class="status glass-dark" id="pill" data-state="idle"><span class="dot"></span><span id="pillText">Kamera aus</span></div>
-        <div class="stage-tools" id="stageTools" hidden>
-          <button class="round glass-dark" id="btnFlip" title="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3l-2-3H9L7 7H4v12h16z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2"/></svg></button>
-          <button class="round glass-dark" id="btnClose" title="Kamera beenden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+
+        <div class="hud">
+          <div class="status on-cam" id="pill" data-state="idle"><span class="dot"></span><span id="pillText">Kamera aus</span></div>
+          <div class="stage-tools" id="stageTools" hidden>
+            <button class="round on-cam" id="btnFreeze" aria-pressed="false" title="Bild einfrieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+            <button class="round on-cam" id="btnShot" title="Bild speichern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+            <button class="round on-cam" id="btnFlip" title="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3l-2-3H9L7 7H4v12h16z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2"/></svg></button>
+            <button class="round on-cam" id="btnClose" title="Kamera beenden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          </div>
         </div>
-        <div class="coach glass-dark" id="coach" hidden></div>
+        <div class="coach on-cam" id="coach" hidden></div>
 
         <div class="intro" id="intro">
           <div class="intro-card">
-            <div class="eyebrow">Flash Try-On</div>
-            <h1>Sieh dein Tattoo, <em>bevor</em> es bleibt.</h1>
-            <p>Wähle ein Flash, halte die Stelle in die Kamera – das Motiv legt sich auf deine Haut und bewegt sich mit.</p>
+            <h1>Dein Tattoo,<br><span>bevor es bleibt.</span></h1>
+            <p>Wähl ein Flash, halte die Stelle in die Kamera – das Motiv legt sich auf deine Haut und bewegt sich mit.</p>
             <div class="row">
-              <button class="btn light" id="btnStart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>Kamera starten</button>
+              <button class="btn white" id="btnStart">Kamera starten <span class="plus">+</span></button>
               <button class="btn ghost" id="btnPhoto">Foto verwenden</button>
             </div>
             <div class="privacy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Läuft lokal auf deinem Gerät – kein Upload.</div>
           </div>
         </div>
         <input type="file" id="photoInput" accept="image/*" hidden>
-      </div>
 
-      <div class="dock glass">
-        <div class="sliders">
-          <div class="sl"><label for="rSize">Größe <output id="oSize"></output></label><input type="range" id="rSize" min="3" max="30" step="0.5"></div>
-          <div class="sl"><label for="rRot">Drehung <output id="oRot"></output></label><input type="range" id="rRot" min="-180" max="180" step="1"></div>
-          <div class="sl"><label for="rOpacity">Deckkraft <output id="oOpacity"></output></label><input type="range" id="rOpacity" min="0.4" max="1" step="0.01"></div>
-          <div class="sl"><label for="rT">Position <output id="oT"></output></label><input type="range" id="rT" min="-0.3" max="1.3" step="0.01"></div>
-          <div class="sl"><label for="rRoll">Um Stelle drehen <output id="oRoll"></output></label><input type="range" id="rRoll" min="-1.5" max="1.5" step="0.01"></div>
-        </div>
-        <div class="dock-row">
-          <button class="pill flat toggle" id="tWrap" aria-pressed="true" title="Motiv legt sich um Arm/Bein">3D-Wrap</button>
-          <button class="pill flat toggle" id="tClip" aria-pressed="true" title="Tattoo nur auf erkannter Haut zeigen – verschwindet unter Kleidung">Nur Haut</button>
-          <button class="pill flat toggle hide-sm" id="tDebug" aria-pressed="false" title="Skelett & gemessene Breite">Tracking</button>
-          <span class="spacer"></span>
-          <button class="pill flat" id="btnFreeze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span id="freezeLabel">Einfrieren</span></button>
-          <button class="round dark" id="btnShot" title="Bild speichern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+        <div class="dock sq" id="dock">
+          <div class="tabs" role="tablist">
+            <button class="tab" role="tab" data-panel="pos" aria-selected="true">Position <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 15 6-6 6 6"/></svg></button>
+            <button class="tab" role="tab" data-panel="size" aria-selected="false">Größe <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 15 6-6 6 6"/></svg></button>
+            <button class="tab" role="tab" data-panel="rot" aria-selected="false">Drehen <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 15 6-6 6 6"/></svg></button>
+            <button class="tab" role="tab" data-panel="more" aria-selected="false">Mehr <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 15 6-6 6 6"/></svg></button>
+          </div>
+
+          <div class="panel" data-panel="pos">
+            <div class="panel-row">
+              <div class="map sq" id="map" aria-label="Position auf der Haut">
+                <div class="grid"></div>
+                <span class="lbl l-top" id="mapTop">Ellbogen</span><span class="lbl l-bot" id="mapBot">Handgelenk</span>
+                <span class="lbl l-left">◂</span><span class="lbl l-right">▸</span>
+                <div class="mdot" id="mapDot"></div>
+              </div>
+              <div class="side-btns">
+                <button class="round on-cam" id="btnReset" title="Platzierung zurücksetzen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+              </div>
+            </div>
+            <div class="panel-note">Hoch/runter = entlang · links/rechts = um die Stelle herum</div>
+          </div>
+
+          <div class="panel" data-panel="size" hidden>
+            <div class="panel-row">
+              <button class="step" id="sizeMinus" aria-label="Kleiner">−</button>
+              <div class="pslider" id="sizeSlider" aria-label="Größe"><div class="fill" id="sizeFill"></div><div class="ticks"></div><div class="txt" id="sizeTxt"></div></div>
+              <button class="step" id="sizePlus" aria-label="Größer">+</button>
+            </div>
+            <div class="panel-note">Wischen für schnell · ± für halbe Zentimeter · im Bild: zwei Finger</div>
+          </div>
+
+          <div class="panel" data-panel="rot" hidden>
+            <div class="panel-row">
+              <div class="ring" id="ring" aria-label="Drehung">
+                <svg viewBox="0 0 124 124" id="ringTicks"></svg>
+                <div class="val" id="ringVal"></div>
+                <div class="handle" id="ringHandle"></div>
+              </div>
+              <div class="quick">
+                <button class="qbtn" data-rot="-90">−90°</button>
+                <button class="qbtn" data-rot="0">Gerade</button>
+                <button class="qbtn" data-rot="90">+90°</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" data-panel="more" hidden>
+            <div class="pslider" id="opSlider" aria-label="Deckkraft"><div class="fill" id="opFill"></div><div class="ticks"></div><div class="txt" id="opTxt"></div></div>
+            <div class="toggles">
+              <button class="tog" id="tWrap" aria-pressed="true" title="Motiv legt sich um Arm/Bein">3D-Wrap</button>
+              <button class="tog" id="tClip" aria-pressed="true" title="Tattoo nur auf erkannter Haut zeigen – verschwindet unter Kleidung">Nur Haut</button>
+              <button class="tog" id="tDebug" aria-pressed="false" title="Skelett, Haut und gemessenes Profil anzeigen">Tracking</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
     <aside class="side">
-      <div class="card glass">
-        <h4>Auswahl <span class="kbd">↵</span></h4>
-        <div class="summary-line"><span>Motiv</span><b id="sumDesign2">–</b></div>
+      <div class="card sq">
+        <h4>Auswahl</h4>
+        <div class="summary-line"><span>Motiv</span><b id="sumDesign">–</b></div>
         <div class="summary-line"><span>Stelle</span><b id="sumZone">–</b></div>
-        <div class="summary-line"><span>Größe</span><b id="sumSize2">–</b></div>
+        <div class="summary-line"><span>Größe</span><b id="sumSize">–</b></div>
       </div>
-      <div class="card glass">
-        <h4>Werkzeuge</h4>
-        <div class="tiles">
-          <button class="tile t-green" id="tileCam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg><span>Kamera</span></button>
-          <button class="tile t-blue" id="tilePhoto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg><span>Foto</span></button>
-          <button class="tile t-grey" id="tileConv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h11M11 3l4 4-4 4M20 17H9M13 13l-4 4 4 4"/></svg><span>Flash → PNG</span></button>
-          <button class="tile t-peach" id="tileBook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg><span>Termin</span></button>
-        </div>
+      <div class="card sq">
+        <button class="act" id="tileCam">Kamera <span class="plus">+</span></button>
+        <button class="act" id="tilePhoto">Foto verwenden <span class="plus">+</span></button>
+        <button class="act" id="tileConv">Flash → PNG <span class="plus">+</span></button>
+        <button class="act primary" id="tileBook">Termin anfragen <span class="plus">+</span></button>
       </div>
     </aside>
   </main>
@@ -333,14 +421,14 @@
 <div class="toast" id="toast"></div>
 
 <!-- Flash → PNG converter -->
-<dialog id="convDlg">
+<dialog id="convDlg" class="sq">
   <div class="dlg-head">
     <div><h2>Flash → PNG</h2><p>Foto oder Scan vom Flash-Sheet hochladen – Papier wird entfernt, Linien & Farben bleiben.</p></div>
     <button class="round" id="convClose" title="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="conv">
-    <div class="pane src" id="paneSrc">
-      <span class="pane-label glass">Original · Motiv aufziehen zum Zuschneiden</span>
+    <div class="pane src sq" id="paneSrc">
+      <span class="pane-label">Original · Motiv aufziehen zum Zuschneiden</span>
       <canvas id="cvSrc" hidden></canvas>
       <label class="drop" id="drop">
         <div>
@@ -351,8 +439,8 @@
         <input type="file" id="convInput" accept="image/*" hidden>
       </label>
     </div>
-    <div class="pane out">
-      <span class="pane-label glass">Transparentes PNG</span>
+    <div class="pane out sq">
+      <span class="pane-label">Transparentes PNG</span>
       <canvas id="cvOut"></canvas>
     </div>
   </div>
@@ -363,7 +451,7 @@
     </div>
     <div class="sl"><label for="cThr">Papier entfernen <output id="oThr"></output></label><input type="range" id="cThr" min="0" max="0.5" step="0.01" value="0.14"></div>
     <div class="sl"><label for="cStr">Tintendeckung <output id="oStr"></output></label><input type="range" id="cStr" min="0.6" max="2.5" step="0.05" value="1.35"></div>
-    <button class="pill flat toggle" id="cFlat" aria-pressed="true" title="Gleicht Schatten und ungleichmäßiges Licht auf dem Papier aus">Schatten ausgleichen</button>
+    <button class="pill flat" id="cFlat" aria-pressed="true" title="Gleicht Schatten und ungleichmäßiges Licht auf dem Papier aus">Schatten ausgleichen</button>
     <div class="actions">
       <button class="btn soft" id="convDownload" disabled>PNG speichern</button>
       <button class="btn dark" id="convUse" disabled>Anprobieren</button>
@@ -372,7 +460,7 @@
   <div class="conv-foot" id="convInfo">Tipp: Flash flach hinlegen, gleichmäßiges Licht, von oben fotografieren.</div>
 </dialog>
 
-<dialog id="bookDlg">
+<dialog id="bookDlg" class="sq">
   <div class="dlg-head">
     <div><h2>Termin anfragen</h2><p>Vorschau, Stelle und Größe gehen direkt ans Studio.</p></div>
     <button class="round" id="bookClose" title="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -907,7 +995,7 @@ setInterval(() => { if (designDirty) { designDirty = false; buildDesignCanvas();
 
 const pointers = new Map(); let pinch = null;
 stage.addEventListener("pointerdown", e => {
-  if (e.target.closest("button, .intro") || !state.srcType) return;
+  if (e.target.closest("button, .intro, .dock, .hud") || !state.srcType) return;
   stage.setPointerCapture(e.pointerId); pointers.set(e.pointerId, toCanvas(e)); startPinch();
 });
 stage.addEventListener("pointermove", e => {
@@ -928,7 +1016,7 @@ function startPinch() {
   pinch = { dist: Math.max(dist(a, b), 1), ang: Math.atan2(b.y - a.y, b.x - a.x), size: state.size, rot: state.rot };
 }
 stage.addEventListener("wheel", e => {
-  if (!state.srcType) return; e.preventDefault();
+  if (!state.srcType || e.target.closest(".dock")) return; e.preventDefault();
   if (e.shiftKey) setRot(state.rot + (e.deltaY || e.deltaX) * 0.15);
   else setSize(state.size * Math.exp(-e.deltaY * 0.0015));
 }, { passive: false });
@@ -946,13 +1034,14 @@ stage.addEventListener("keydown", e => {
 function renderDesigns() {
   const grid = $("#designGrid"); grid.innerHTML = "";
   const add = document.createElement("button");
-  add.className = "flash add";
+  add.className = "flash add sq";
   add.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Flash hochladen`;
+  add.setAttribute("aria-label", "Flash hochladen");
   add.onclick = openConverter;
   grid.appendChild(add);
   DESIGNS.forEach(d => {
     const b = document.createElement("button");
-    b.className = "flash" + (d.png ? " checker" : ""); b.setAttribute("aria-pressed", d.id === state.designId);
+    b.className = "flash sq" + (d.png ? " checker" : ""); b.setAttribute("aria-pressed", d.id === state.designId);
     b.innerHTML = `<img alt="" src="${d.url}"><span class="name">${d.name}</span>`;
     b.onclick = () => selectDesign(d.id);
     grid.appendChild(b);
@@ -965,6 +1054,13 @@ async function selectDesign(id) {
   state.designImg = img; buildDesignCanvas(); renderDesigns(); syncUI();
 }
 
+// What the top and bottom edge of the Haut-Karte mean for each zone
+const ZONE_ENDS = {
+  forearm_l: ["Ellbogen", "Handgelenk"], forearm_r: ["Ellbogen", "Handgelenk"],
+  upperarm_l: ["Schulter", "Ellbogen"], upperarm_r: ["Schulter", "Ellbogen"],
+  calf_l: ["Knie", "Knöchel"], calf_r: ["Knie", "Knöchel"],
+  chest: ["Schultern", "Bauch"], hand: ["Handgelenk", "Knöchel"], forearm_close: ["Ellbogen", "Handgelenk"],
+};
 function renderZones() {
   const wrap = $("#zoneGroups"); wrap.innerHTML = "";
   const groups = {};
@@ -982,6 +1078,7 @@ function renderZones() {
   $("#zoneHint").textContent = z.model === "hand"
     ? "Nahaufnahme nutzt Hand-Tracking (21 Punkte) – ideal, wenn nicht der ganze Körper ins Bild passt."
     : "Ganzkörper-Tracking (33 Punkte + Silhouette) misst die echte Breite von Arm oder Bein.";
+  [$("#mapTop").textContent, $("#mapBot").textContent] = ZONE_ENDS[state.zone];
 }
 function selectZone(id) {
   state.zone = id; const z = ZONES[id];
@@ -996,33 +1093,83 @@ $("#zonePop").onclick = e => e.stopPropagation();
 document.addEventListener("click", () => $("#zonePop").hidden = true);
 $("#btnReset").onclick = () => { const z = ZONES[state.zone]; state.t = z.t; state.roll = 0; state.size = z.size; setRot(0); };
 
-const sliders = {
-  rSize: ["size", () => sizeLabel()],
-  rRot: ["rot", v => `${Math.round(v)}°`],
-  rT: ["t", v => `${Math.round(v * 100)} %`],
-  rRoll: ["roll", v => `${Math.round(v * 57.3)}°`],
-  rOpacity: ["opacity", v => `${Math.round(v * 100)} %`],
-};
+/* ----- Dock: tabs collapse when the active one is tapped again ----- */
+const dock = $("#dock");
+document.querySelectorAll("#dock .tab").forEach(tab => tab.onclick = () => {
+  if (tab.getAttribute("aria-selected") === "true") { dock.classList.toggle("collapsed"); return; }
+  dock.classList.remove("collapsed");
+  document.querySelectorAll("#dock .tab").forEach(t => t.setAttribute("aria-selected", t === tab));
+  document.querySelectorAll("#dock .panel").forEach(p => p.hidden = p.dataset.panel !== tab.dataset.panel);
+});
+
+function dragOn(el, fn) {
+  el.addEventListener("pointerdown", e => {
+    el.setPointerCapture(e.pointerId); fn(e);
+    const mv = ev => fn(ev), up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); };
+    el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  });
+}
+const relX = (el, e) => { const b = el.getBoundingClientRect(); return clamp((e.clientX - b.left) / b.width, 0, 1); };
+const relY = (el, e) => { const b = el.getBoundingClientRect(); return clamp((e.clientY - b.top) / b.height, 0, 1); };
+
+// Haut-Karte: the limb unrolled. Vertical = along the limb, horizontal = around it.
+const ROLL_MAX = 1.5;
+dragOn($("#map"), e => { state.t = relY($("#map"), e); state.roll = (relX($("#map"), e) * 2 - 1) * ROLL_MAX; syncUI(); });
+
+// Size: pill slider + hold-to-repeat stepper
+const SIZE_MIN = 3, SIZE_MAX = 30;
+dragOn($("#sizeSlider"), e => setSize(SIZE_MIN + relX($("#sizeSlider"), e) * (SIZE_MAX - SIZE_MIN)));
+function holdRepeat(btn, fn) {
+  let tm, iv;
+  btn.addEventListener("pointerdown", () => { fn(); tm = setTimeout(() => iv = setInterval(fn, 70), 380); });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => btn.addEventListener(ev, () => { clearTimeout(tm); clearInterval(iv); }));
+}
+holdRepeat($("#sizeMinus"), () => setSize(Math.round((state.size - 0.5) * 2) / 2));
+holdRepeat($("#sizePlus"), () => setSize(Math.round((state.size + 0.5) * 2) / 2));
+
+// Opacity
+dragOn($("#opSlider"), e => { state.opacity = 0.4 + relX($("#opSlider"), e) * 0.6; syncUI(); });
+
+// Drehring: snaps to 0 / ±90 / 180, double-tap resets
+{
+  let t = "";
+  for (let i = 0; i < 48; i++) {
+    const a = i * 7.5 * Math.PI / 180, big = i % 12 === 0, r1 = 60, r2 = big ? 51 : 56;
+    t += `<line x1="${62 + Math.sin(a) * r1}" y1="${62 - Math.cos(a) * r1}" x2="${62 + Math.sin(a) * r2}" y2="${62 - Math.cos(a) * r2}" stroke="rgba(255,255,255,${big ? .7 : .3})" stroke-width="${big ? 2 : 1}"/>`;
+  }
+  $("#ringTicks").innerHTML = t;
+  const ring = $("#ring");
+  dragOn(ring, e => {
+    const b = ring.getBoundingClientRect();
+    let a = Math.atan2(e.clientX - b.left - b.width / 2, -(e.clientY - b.top - b.height / 2)) * 180 / Math.PI;
+    for (const s of [-180, -90, 0, 90, 180]) if (Math.abs(a - s) < 5) a = s;
+    setRot(a);
+  });
+  ring.addEventListener("dblclick", () => setRot(0));
+  document.querySelectorAll(".qbtn").forEach(b => b.onclick = () => setRot(b.dataset.rot === "0" ? 0 : state.rot + +b.dataset.rot));
+}
+
 function sizeLabel() {
   const img = state.designImg; const ar = img ? (img.naturalWidth || 1) / (img.naturalHeight || 1) : 1;
   return `${(state.size * ar).toFixed(0)} × ${state.size.toFixed(0)} cm`;
 }
-Object.entries(sliders).forEach(([id, [key]]) => {
-  $("#" + id).addEventListener("input", e => {
-    const v = parseFloat(e.target.value);
-    if (key === "rot") setRot(v); else { state[key] = v; syncUI(); }
-  });
-});
 function syncUI() {
-  Object.entries(sliders).forEach(([id, [key, fmt]]) => {
-    const el = $("#" + id); if (document.activeElement !== el) el.value = state[key];
-    $("#o" + id.slice(1)).textContent = fmt(state[key]);
-  });
-  const name = DESIGNS.find(x => x.id === state.designId)?.name ?? "–";
-  $("#sumDesign").textContent = $("#sumDesign2").textContent = name;
+  const md = $("#mapDot");
+  md.style.left = ((clamp(state.roll / ROLL_MAX, -1, 1) + 1) / 2 * 100) + "%";
+  md.style.top = (clamp(state.t, 0, 1) * 100) + "%";
+  $("#sizeFill").style.width = ((state.size - SIZE_MIN) / (SIZE_MAX - SIZE_MIN) * 100) + "%";
+  $("#sizeTxt").textContent = sizeLabel();
+  $("#opFill").style.width = ((state.opacity - 0.4) / 0.6 * 100) + "%";
+  $("#opTxt").textContent = `Deckkraft ${Math.round(state.opacity * 100)} %`;
+  const a = state.rot * Math.PI / 180, rr = $("#ring").offsetWidth / 2 - 9;
+  $("#ringHandle").style.transform = `translate(${Math.sin(a) * rr}px, ${-Math.cos(a) * rr}px)`;
+  $("#ringVal").innerHTML = `${Math.round(state.rot)}°<small>Drehung</small>`;
+  $("#sumDesign").textContent = DESIGNS.find(x => x.id === state.designId)?.name ?? "–";
   $("#zoneLabel").textContent = $("#sumZone").textContent = ZONES[state.zone].label;
-  $("#sumSize").textContent = $("#sumSize2").textContent = sizeLabel();
+  $("#sumSize").textContent = sizeLabel();
 }
+// The ring's handle radius depends on its rendered size (smaller on phones)
+new ResizeObserver(() => syncUI()).observe($("#ring"));
 function bindToggle(id, key) {
   const b = $("#" + id);
   b.onclick = () => { state[key] = !state[key]; b.setAttribute("aria-pressed", state[key]); };
@@ -1035,7 +1182,10 @@ $("#photoInput").onchange = e => e.target.files[0] && usePhoto(e.target.files[0]
 $("#btnFlip").onclick = () => { state.facing = state.facing === "user" ? "environment" : "user"; startCamera(); };
 $("#btnClose").onclick = closeSource;
 
-function updateFreezeUI() { $("#freezeLabel").textContent = state.frozen ? "Weiter" : "Einfrieren"; }
+function updateFreezeUI() {
+  const b = $("#btnFreeze");
+  b.setAttribute("aria-pressed", state.frozen); b.title = state.frozen ? "Weiter" : "Bild einfrieren";
+}
 $("#btnFreeze").onclick = () => {
   if (!state.frozen) {
     const src = srcEl(); if (!src) return toast("Starte zuerst die Kamera oder lade ein Foto.");
