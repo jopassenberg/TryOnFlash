@@ -2,6 +2,7 @@
 
 Interaktiver Tattoo-Try-On-Prototyp: Flash-Motiv wählen, Kamera an, das Motiv wird per Body-Tracking (MediaPipe Pose + Hand) auf die Haut gelegt. Enthält einen Konverter, der Fotos von Flash-Sheets in transparente PNGs verwandelt.
 
+- Tracking: MediaPipe Pose/Hand für das Skelett, Körpersilhouette für das Arm-Profil (9 Messpunkte über die Tattoo-Höhe), Multiclass-Segmenter für Haut. Das Motiv erscheint nur auf Haut und verschwindet unter Kleidung.
 - Alles läuft im Browser auf dem Gerät, keine Bilder verlassen das Handy.
 - Kein Build-Schritt: `public/index.html` ist die ganze App.
 

@@ -301,7 +301,7 @@
         </div>
         <div class="dock-row">
           <button class="pill flat toggle" id="tWrap" aria-pressed="true" title="Motiv legt sich um Arm/Bein">3D-Wrap</button>
-          <button class="pill flat toggle" id="tClip" aria-pressed="true" title="Nichts ragt über den Körper hinaus">Kontur</button>
+          <button class="pill flat toggle" id="tClip" aria-pressed="true" title="Tattoo nur auf erkannter Haut zeigen – verschwindet unter Kleidung">Nur Haut</button>
           <button class="pill flat toggle hide-sm" id="tDebug" aria-pressed="false" title="Skelett & gemessene Breite">Tracking</button>
           <span class="spacer"></span>
           <button class="pill flat" id="btnFreeze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span id="freezeLabel">Einfrieren</span></button>
@@ -387,12 +387,16 @@
 </dialog>
 
 <script type="module">
-import { FilesetResolver, PoseLandmarker, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+import { FilesetResolver, PoseLandmarker, HandLandmarker, ImageSegmenter } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const POSE_FULL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
 const POSE_LITE = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 const HAND = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+// Multiclass selfie segmenter: 0 background, 1 hair, 2 body skin, 3 face skin, 4 clothes, 5 accessories
+const SKIN_SEG = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
+const SKIN_CLASS = 2;
+const PROFILE_STATIONS = 9; // width measurements along the limb across the tattoo's height
 const isMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
 const DESIGN_BASE = 600; // unrotated design height in px inside the design canvas
 
@@ -490,7 +494,6 @@ const $ = s => document.querySelector(s);
 const stage = $("#stage"), view = $("#view"), ctx = view.getContext("2d");
 const video = $("#video");
 const overlay = document.createElement("canvas"), octx = overlay.getContext("2d");
-const maskCanvas = document.createElement("canvas"), mctx = maskCanvas.getContext("2d");
 const freezeCanvas = document.createElement("canvas");
 
 const state = {
@@ -500,9 +503,12 @@ const state = {
   track: null, lastSeen: 0, vis: 0, lastFrame: null, lm: null,
   dc: null, designImg: null,
 };
-let maskArr = null, maskW = 0, maskH = 0;
-let pose = null, hands = null, modelsReady = false, modelsPromise = null;
-let lastTs = 0, lastVideoTime = -1, lastDetect = 0;
+// body: person silhouette from the pose model (measures limb width, also through sleeves)
+// skin: body-skin class from the multiclass segmenter (tattoo is only drawn here)
+const masks = { body: null, skin: null };
+let pose = null, hands = null, segmenter = null, modelsReady = false, modelsPromise = null;
+let lastTs = 0, lastVideoTime = -1, lastDetect = 0, segTick = 0;
+const SEG_EVERY = isMobile ? 2 : 1;
 
 /* ================= One Euro filter (jitter vs. lag) ================= */
 class OneEuro {
@@ -519,8 +525,12 @@ class OneEuro {
   }
 }
 const F = { ax: new OneEuro(), ay: new OneEuro(), bx: new OneEuro(), by: new OneEuro(),
-  r: new OneEuro(0.8, 0.01), off: new OneEuro(0.8, 0.01), fs: new OneEuro(0.5, 0) };
-const resetFilters = () => Object.values(F).forEach(f => f.reset());
+  r: new OneEuro(0.8, 0.01), fs: new OneEuro(0.5, 0) };
+const stationF = Array.from({ length: PROFILE_STATIONS }, () => ({ r: new OneEuro(0.8, 0.01), off: new OneEuro(0.8, 0.01) }));
+const resetFilters = () => {
+  Object.values(F).forEach(f => f.reset());
+  stationF.forEach(s => { s.r.reset(); s.off.reset(); });
+};
 
 /* ================= Helpers ================= */
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -566,6 +576,11 @@ function loadModels() {
       create(HandLandmarker, { baseOptions: { modelAssetPath: HAND }, runningMode: "VIDEO", numHands: 1 }),
     ]);
     modelsReady = true;
+    // Skin segmentation is an upgrade, not a requirement: tracking keeps working without it.
+    try {
+      segmenter = await create(ImageSegmenter, { baseOptions: { modelAssetPath: SKIN_SEG }, runningMode: "VIDEO",
+        outputCategoryMask: false, outputConfidenceMasks: true });
+    } catch (e) { console.warn("Skin segmenter unavailable", e); }
   })();
   modelsPromise.catch(e => { console.error(e); setStatus("Modelle konnten nicht geladen werden", "idle"); modelsPromise = null; });
   return modelsPromise;
@@ -581,7 +596,7 @@ function detect(src) {
   if (z.model === "pose") {
     const res = pose.detectForVideo(src, ts);
     const m = res.segmentationMasks?.[0];
-    if (m) updateMask(m);
+    if (m) masks.body = toMask(m, masks.body, [255, 255, 255]);
     res.segmentationMasks?.forEach(x => x.close());
     const lm = res.landmarks?.[0], wl = res.worldLandmarks?.[0];
     state.lm = lm ? lm.map(P) : null;
@@ -596,7 +611,7 @@ function detect(src) {
       }
     }
   } else {
-    maskArr = null;
+    masks.body = null;
     const res = hands.detectForVideo(src, ts);
     const lm = res.landmarks?.[0];
     state.lm = lm ? lm.map(P) : null;
@@ -605,6 +620,13 @@ function detect(src) {
       if (z.kind === "hand") raw = { A: wr, B: mc, vis: 1, rHint: width * 0.56, worldLen: 0 };
       else raw = { A: { x: wr.x + (wr.x - mc.x) * 2.4, y: wr.y + (wr.y - mc.y) * 2.4 }, B: wr, vis: 1, rHint: width * 0.5, worldLen: 0 };
     }
+  }
+
+  if (segmenter && ++segTick % SEG_EVERY === 0) {
+    const sres = segmenter.segmentForVideo(src, ts);
+    const cm = sres.confidenceMasks;
+    if (cm?.[SKIN_CLASS]) masks.skin = toMask(cm[SKIN_CLASS], masks.skin, [90, 200, 120]);
+    cm?.forEach(x => x.close());
   }
 
   if (raw && raw.vis > 0.5) {
@@ -618,25 +640,32 @@ function detect(src) {
   }
 }
 
-function updateMask(m) {
-  maskW = m.width; maskH = m.height;
-  maskArr = new Float32Array(m.getAsFloat32Array());
-  if (maskCanvas.width !== maskW || maskCanvas.height !== maskH) { maskCanvas.width = maskW; maskCanvas.height = maskH; }
-  const img = mctx.createImageData(maskW, maskH), d = img.data;
-  for (let i = 0; i < maskArr.length; i++) {
-    const v = maskArr[i];
-    d[i * 4 + 3] = v < 0.35 ? 0 : v > 0.65 ? 255 : ((v - 0.35) / 0.3) * 255;
+// Copies an MPMask into {arr, w, h, canvas}. Blends with the previous frame to stop edge flicker;
+// the canvas carries the mask as alpha (for clipping) tinted with `rgb` (for the debug overlay).
+function toMask(m, prev, rgb) {
+  const w = m.width, h = m.height, src = m.getAsFloat32Array();
+  let arr;
+  if (prev && prev.w === w && prev.h === h) { arr = prev.arr; for (let i = 0; i < arr.length; i++) arr[i] = arr[i] * 0.35 + src[i] * 0.65; }
+  else arr = new Float32Array(src);
+  const canvas = prev?.canvas ?? document.createElement("canvas");
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  const gx = canvas.getContext("2d"), img = gx.createImageData(w, h), d = img.data;
+  for (let i = 0; i < arr.length; i++) {
+    const v = arr[i], o = i * 4;
+    d[o] = rgb[0]; d[o + 1] = rgb[1]; d[o + 2] = rgb[2];
+    d[o + 3] = v < 0.35 ? 0 : v > 0.65 ? 255 : ((v - 0.35) / 0.3) * 255;
   }
-  mctx.putImageData(img, 0, 0);
+  gx.putImageData(img, 0, 0);
+  return { arr, w, h, canvas };
+}
+function maskAt(mask, x, y) {
+  const mx = (x * mask.w / view.width) | 0, my = (y * mask.h / view.height) | 0;
+  return (mx < 0 || my < 0 || mx >= mask.w || my >= mask.h) ? 0 : mask.arr[my * mask.w + mx];
 }
 
-// March outward from the limb axis across the segmentation mask to measure the real silhouette width.
-function measureWidth(cx, cy, n, maxD) {
-  const sx = maskW / view.width, sy = maskH / view.height;
-  const at = (x, y) => {
-    const mx = (x * sx) | 0, my = (y * sy) | 0;
-    return (mx < 0 || my < 0 || mx >= maskW || my >= maskH) ? 0 : maskArr[my * maskW + mx];
-  };
+// March outward from the limb axis across a mask to measure the real silhouette width.
+function measureWidth(mask, cx, cy, n, maxD) {
+  const at = (x, y) => maskAt(mask, x, y);
   if (at(cx, cy) < 0.5) return null;
   let d1 = 0, d2 = 0;
   while (d1 < maxD && at(cx + n.x * d1, cy + n.y * d1) >= 0.5) d1 += 2;
@@ -652,19 +681,43 @@ function computeFrame(now) {
   const dx = tr.B.x - tr.A.x, dy = tr.B.y - tr.A.y, L = Math.hypot(dx, dy);
   if (L < 8) return null;
   const d = { x: dx / L, y: dy / L }, n = { x: d.y, y: -d.x };
-  let cx = tr.A.x + dx * state.t, cy = tr.A.y + dy * state.t;
-  let r = tr.rHint ?? L * z.R / z.len, off = 0;
-  if (z.kind === "limb" && maskArr) {
-    const m = measureWidth(cx, cy, n, L * 0.6);
-    if (m) { r = m.r; off = m.off; }
-  }
-  r = F.r.filter(r, now); off = F.off.filter(off, now);
-  cx += n.x * off; cy += n.y * off;
-  const ppc = r / z.R; // pixels per cm across the limb
+  const cx = tr.A.x + dx * state.t, cy = tr.A.y + dy * state.t;
+  // Limbs are measured on the body silhouette (works through sleeves), hands on the skin mask.
+  const wMask = z.kind === "limb" ? (masks.body || masks.skin) : z.model === "hand" ? masks.skin : null;
+  const maxD = L * (z.kind === "hand" ? 0.9 : 0.6);
+
+  // The centre width fixes the real-world scale (px per cm) ...
+  const m0 = wMask ? measureWidth(wMask, cx, cy, n, maxD) : null;
+  const r0 = F.r.filter(m0 ? m0.r : (tr.rHint ?? L * z.R / z.len), now);
+  const ppc = r0 / z.R;
   let fs = 1; // foreshortening along the limb (3D world length vs. projected 2D length)
   if (tr.worldLen > 0.05) fs = clamp((L / ppc) / (tr.worldLen * 100), 0.35, 1);
   fs = F.fs.filter(fs, now);
-  return { d, n, L, cx, cy, r, ppc, fs };
+  const Hcm = state.dc ? state.dc.height * state.size / DESIGN_BASE : state.size;
+  const hPx = Hcm * ppc * fs;
+
+  // ... and stations across the tattoo's height give the real profile: tapering, bulges, slight bends.
+  const K = PROFILE_STATIONS, raw = [];
+  for (let k = 0; k < K; k++) {
+    const y = -hPx / 2 + k * hPx / (K - 1);
+    const m = wMask ? measureWidth(wMask, cx + d.x * y, cy + d.y * y, n, maxD) : null;
+    const ok = m && m.r > r0 * 0.5 && m.r < r0 * 1.6; // reject merges with torso / other limbs
+    raw.push({ y, r: stationF[k].r.filter(ok ? m.r : r0, now), off: stationF[k].off.filter(ok ? m.off : (m0?.off ?? 0), now) });
+  }
+  const prof = raw.map((p, k) => {
+    const a = raw[Math.max(0, k - 1)], b = raw[Math.min(K - 1, k + 1)];
+    return { y: p.y, r: (a.r + 2 * p.r + b.r) / 4, off: (a.off + 2 * p.off + b.off) / 4 };
+  });
+
+  // How much of the tattoo's centre line is visible skin (null = no skin model)
+  let skin = null;
+  if (masks.skin) {
+    skin = 0;
+    for (const p of prof) skin += maskAt(masks.skin, cx + d.x * p.y + n.x * p.off, cy + d.y * p.y + n.y * p.off);
+    skin /= prof.length;
+  }
+  const c = prof[(K - 1) / 2];
+  return { d, n, L, cx, cy, r: c.r, ppc, fs, hPx, prof, skin, measured: !!m0 };
 }
 
 /* ================= Rendering ================= */
@@ -688,28 +741,37 @@ function drawTattoo(fr, alpha) {
   // Local frame: x = across the limb (n), y = along the limb (d), origin on the limb axis.
   octx.setTransform(fr.n.x, fr.n.y, fr.d.x, fr.d.y, fr.cx, fr.cy);
   const cmPerPx = state.size / DESIGN_BASE;
-  const Wcm = dc.width * cmPerPx, Hcm = dc.height * cmPerPx;
-  const hPx = Hcm * fr.ppc * fr.fs, R = z.R;
+  const Wcm = dc.width * cmPerPx, rollCm = state.roll * z.R;
+  const rows = fr.prof.length - 1, srcRowH = dc.height / rows, rowH = fr.hPx / rows;
+  const N = clamp(Math.round(dc.width / 10), 16, 64), sw = dc.width / N;
 
-  if (!state.wrap) {
-    octx.drawImage(dc, (-Wcm / 2 + state.roll * R) * fr.ppc, -hPx / 2, Wcm * fr.ppc, hPx);
-  } else {
-    // Cylinder projection: each vertical strip is placed at r·sin(θ) and shaded by cos(θ).
-    const N = clamp(Math.round(dc.width / 10), 16, 64), sw = dc.width / N;
+  // One band per pair of profile stations. Inside a band the limb is a cylinder with that band's
+  // measured radius and centre; the design keeps its true width in cm along the skin (arc length),
+  // so it wraps further around thin parts (wrist) than around thick ones (muscle).
+  for (let j = 0; j < rows; j++) {
+    const p = fr.prof[j], q = fr.prof[j + 1];
+    const r = (p.r + q.r) / 2, off = (p.off + q.off) / 2, Rj = r / fr.ppc;
+    const sy = j * srcRowH, y0 = p.y, h = rowH + 0.6;
+    if (!state.wrap) {
+      octx.globalAlpha = 1;
+      octx.drawImage(dc, 0, sy, dc.width, srcRowH, off + (-Wcm / 2 + rollCm) * fr.ppc, y0, Wcm * fr.ppc, h);
+      continue;
+    }
     for (let i = 0; i < N; i++) {
       const u0 = -Wcm / 2 + i * Wcm / N, u1 = u0 + Wcm / N;
-      const t0 = u0 / R + state.roll, t1 = u1 / R + state.roll, c = Math.cos((t0 + t1) / 2);
+      const t0 = (u0 + rollCm) / Rj, t1 = (u1 + rollCm) / Rj, c = Math.cos((t0 + t1) / 2);
       if (c <= 0.03) continue;
-      const x0 = fr.r * Math.sin(t0), x1 = fr.r * Math.sin(t1);
+      const x0 = off + r * Math.sin(t0), x1 = off + r * Math.sin(t1);
       octx.globalAlpha = Math.pow(c, 0.45);
-      octx.drawImage(dc, i * sw, 0, sw, dc.height, x0, -hPx / 2, x1 - x0 + 0.6, hPx);
+      octx.drawImage(dc, i * sw, sy, sw, srcRowH, x0, y0, x1 - x0 + 0.6, h);
     }
   }
 
   octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalAlpha = 1;
-  if (state.clip && maskArr && z.model === "pose") {
+  const clipMask = state.clip ? (masks.skin || masks.body) : null;
+  if (clipMask) {
     octx.globalCompositeOperation = "destination-in";
-    octx.drawImage(maskCanvas, 0, 0, W, H);
+    octx.drawImage(clipMask.canvas, 0, 0, W, H);
     octx.globalCompositeOperation = "source-over";
   }
   // Multiply = ink sits *in* the skin (picks up skin tone, shadows, hair). A little normal blend keeps colours readable.
@@ -722,6 +784,7 @@ function drawTattoo(fr, alpha) {
 function drawDebug(fr) {
   ctx.save();
   ctx.lineWidth = Math.max(2, view.width / 400);
+  if (masks.skin) { ctx.globalAlpha = 0.28; ctx.drawImage(masks.skin.canvas, 0, 0, view.width, view.height); ctx.globalAlpha = 1; }
   if (state.lm) {
     ctx.fillStyle = "rgba(95,191,122,.9)";
     state.lm.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, ctx.lineWidth * 1.6, 0, 7); ctx.fill(); });
@@ -729,13 +792,14 @@ function drawDebug(fr) {
   if (state.track && fr) {
     const { A, B } = state.track;
     ctx.strokeStyle = "#e8b54a"; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+    // Measured profile: red rungs at each station, dashed outline along both edges
+    const pt = (p, s) => ({ x: fr.cx + fr.d.x * p.y + fr.n.x * (p.off + s * p.r), y: fr.cy + fr.d.y * p.y + fr.n.y * (p.off + s * p.r) });
     ctx.strokeStyle = "#e0574a";
-    ctx.beginPath(); ctx.moveTo(fr.cx - fr.n.x * fr.r, fr.cy - fr.n.y * fr.r); ctx.lineTo(fr.cx + fr.n.x * fr.r, fr.cy + fr.n.y * fr.r); ctx.stroke();
-    ctx.setLineDash([6, 6]); ctx.strokeStyle = "rgba(255,255,255,.6)";
+    for (const p of fr.prof) { const a = pt(p, -1), b = pt(p, 1); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+    ctx.setLineDash([6, 6]); ctx.strokeStyle = "rgba(255,255,255,.75)";
     for (const s of [-1, 1]) {
       ctx.beginPath();
-      ctx.moveTo(fr.cx + s * fr.n.x * fr.r - fr.d.x * 60, fr.cy + s * fr.n.y * fr.r - fr.d.y * 60);
-      ctx.lineTo(fr.cx + s * fr.n.x * fr.r + fr.d.x * 60, fr.cy + s * fr.n.y * fr.r + fr.d.y * 60);
+      fr.prof.forEach((p, k) => { const a = pt(p, s); k ? ctx.lineTo(a.x, a.y) : ctx.moveTo(a.x, a.y); });
       ctx.stroke();
     }
   }
@@ -772,7 +836,11 @@ function loop(now) {
   const z = ZONES[state.zone];
   if (!modelsReady) { setStatus("Lade Tracking-Modelle …", "busy"); setCoach(""); }
   else if (state.frozen) { setStatus("Eingefroren · " + z.label, "ok"); setCoach(""); }
-  else if (seen) { setStatus("Tracking · " + z.label, "ok"); setCoach(""); }
+  else if (seen) {
+    setStatus("Tracking · " + z.label, "ok");
+    setCoach(state.clip && fr?.skin != null && fr.skin < 0.4 && state.vis > 0.5
+      ? "Die Stelle ist verdeckt – Ärmel hochschieben oder „Nur Haut“ ausschalten." : "");
+  }
   else { setStatus("Suche " + z.label + " …", "search"); setCoach(z.coach); }
 }
 
@@ -918,7 +986,7 @@ function renderZones() {
 function selectZone(id) {
   state.zone = id; const z = ZONES[id];
   state.t = z.t; state.size = z.size; state.roll = 0;
-  state.track = null; state.lastFrame = null; resetFilters(); maskArr = null;
+  state.track = null; state.lastFrame = null; resetFilters(); masks.body = masks.skin = null;
   if (z.model === "hand" && state.srcType === "video" && state.facing === "user" && isMobile)
     toast("Für Nahaufnahmen am besten die Rückkamera nutzen.");
   renderZones(); syncUI();
@@ -1193,7 +1261,7 @@ $("#convUse").onclick = () => {
 
 renderDesigns(); renderZones(); selectDesign(state.designId); syncUI();
 requestAnimationFrame(loop);
-window.__tryon = { state, loadModels, loadConvFile, conv };
+window.__tryon = { state, loadModels, loadConvFile, conv, masks };
 </script>
 </body>
 </html>
