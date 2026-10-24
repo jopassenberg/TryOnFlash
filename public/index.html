@@ -135,11 +135,11 @@
   .map .lbl { color: rgba(255,255,255,.55); letter-spacing: .02em; }
   .map .l-top { top: 7px; left: 50%; transform: translateX(-50%); }
   .map .l-bot { bottom: 7px; left: 50%; transform: translateX(-50%); }
-  .map .l-left { left: 13px; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); }
-  .map .l-right { right: 13px; top: 50%; transform: translate(50%, -50%) rotate(90deg); }
+  .map .l-left { left: 14px; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); }
+  .map .l-right { right: 14px; top: 50%; transform: translate(50%, -50%) rotate(90deg); }
   .map .read { color: var(--lime); line-height: 16px; padding: 1px 7px; border-radius: 7px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); }
-  .map .r-size { top: 6px; right: 8px; }
-  .map .r-rot { bottom: 6px; right: 8px; }
+  .map .r-size { top: 5px; right: 30px; }
+  .map .r-rot { bottom: 5px; right: 30px; }
 
   /* Gizmo: glass disc with a lime sector for the current rotation, a grip on its rim,
      and a degree scale + value bubble that spring open while the grip is held. */
@@ -177,10 +177,11 @@
   @media (prefers-reduced-motion: reduce) { .g-dot { animation: none; } }
 
   /* Toolbar: one rail, buttons press in and the active ones light up */
-  .toolbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; padding: 3px; border-radius: 16px; background: var(--cam-2); }
-  .ibtn { position: relative; height: 46px; border-radius: 13px; font-size: 14px; font-weight: 300; color: rgba(255,255,255,.65); display: grid; place-items: center;
+  .toolbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .ibtn { position: relative; height: 46px; border-radius: 14px; font-size: 14px; font-weight: 300; color: rgba(255,255,255,.7); display: grid; place-items: center;
+    background: var(--cam-2); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
     transition: background .28s cubic-bezier(.3,1.4,.5,1), color .2s, transform .12s ease-out; }
-  .ibtn:hover { color: #fff; background: rgba(255,255,255,.06); }
+  .ibtn:hover { color: #fff; background: rgba(255,255,255,.18); }
   .ibtn:active { transform: scale(.9); }
   .ibtn[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,.3); }
   .ibtn svg { width: 18px; height: 18px; transition: transform .4s cubic-bezier(.3,1.4,.5,1); }
