@@ -54,6 +54,7 @@
       <canvas id="live"></canvas>
       <div class="status" id="status" data-s="idle"><span class="dot"></span><span id="statusText">Bereit</span></div>
       <div class="tools" id="tools" hidden>
+        <button class="round" id="next" title="Nächste Lens" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button>
         <button class="round" id="flip" title="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3l-2-3H9L7 7H4v12h16z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2"/></svg></button>
       </div>
       <div class="empty" id="empty"><button class="btn" id="start">Kamera starten</button></div>
@@ -62,7 +63,7 @@
     <form class="form" id="cfg" autocomplete="off">
       <div class="field"><label for="token">API Token (Staging)</label><input id="token" type="password" placeholder="eyJh…" required></div>
       <div class="field"><label for="group">Lens Group ID</label><input id="group" placeholder="Lens Group ID" required></div>
-      <div class="field"><label for="lens">Lens ID</label><input id="lens" placeholder="Lens ID" required></div>
+      <div class="field"><label for="lens">Lens ID (optional)</label><input id="lens" placeholder="leer = ganze Gruppe"></div>
       <button class="btn" type="submit">Speichern</button>
     </form>
     <div class="err" id="err" hidden></div>
@@ -92,7 +93,7 @@ $("#cfg").addEventListener("submit", e => {
   $("#err").hidden = true; status("Gespeichert", "idle");
 });
 
-let ck, session, stream, facing = "user";
+let ck, session, stream, facing = "user", lenses = [], lensIdx = 0;
 // The SDK keeps retrying on auth errors instead of rejecting, so every network step gets a deadline.
 const withTimeout = (p, ms, msg) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(msg)), ms))]);
 const AUTH_HINT = "Keine Antwort von Snap (meist 401: Token ungültig oder nicht der Staging-Token).";
@@ -110,7 +111,7 @@ async function startSource() {
 
 $("#start").onclick = async () => {
   const c = load();
-  if (!c.token || !c.group || !c.lens) return fail("Bitte zuerst API Token, Lens Group ID und Lens ID eintragen und speichern.");
+  if (!c.token || !c.group) return fail("Bitte zuerst API Token und Lens Group ID eintragen und speichern.");
   $("#err").hidden = true; $("#start").disabled = true;
   try {
     status("Lädt Camera Kit …", "busy");
@@ -121,21 +122,31 @@ $("#start").onclick = async () => {
     status("Kamera …", "busy");
     await startSource();
     status("Lädt Lens …", "busy");
-    const lens = await withTimeout(ck.lensRepository.loadLens(c.lens, c.group), 20000, "Lens nicht geladen – Lens ID, Lens Group ID oder Token prüfen.");
-    await session.applyLens(lens);
+    // One lens by ID, or the whole group (e.g. Snap's demo group) to flip through
+    lenses = c.lens
+      ? [await withTimeout(ck.lensRepository.loadLens(c.lens, c.group), 20000, "Lens nicht geladen – Lens ID, Lens Group ID oder Token prüfen.")]
+      : (await withTimeout(ck.lensRepository.loadLensGroups([c.group]), 20000, "Lens Group nicht geladen – Lens Group ID oder Token prüfen.")).lenses;
+    if (!lenses?.length) throw new Error("Lens nicht geladen – die Gruppe ist leer.");
+    await session.applyLens(lenses[0]);
+    $("#next").hidden = lenses.length < 2;
     await session.play("live");
     $("#empty").hidden = true; $("#tools").hidden = false;
-    status("Body Mesh aktiv", "ok");
+    status(lenses[0].name || "Lens aktiv", "ok");
   } catch (e) {
     $("#start").disabled = false;
     const m = String(e?.message || e);
-    fail(m.startsWith("Keine Antwort") || m.startsWith("Lens nicht geladen") ? m :
+    fail(m.startsWith("Keine Antwort") || m.startsWith("Lens") ? m :
          /401|unauthor/i.test(m) ? "Token abgelehnt (401). Staging-Token aus dem Camera Kit Portal verwenden." :
          e?.name === "NotAllowedError" || /NotAllowed|Permission denied/i.test(m) ? "Kein Kamerazugriff – im Browser erlauben." :
          /lens/i.test(m) ? "Lens nicht gefunden – Lens ID und Lens Group ID prüfen." : "Start fehlgeschlagen: " + m, e);
   }
 };
 
+$("#next").onclick = async () => {
+  lensIdx = (lensIdx + 1) % lenses.length;
+  try { await session.applyLens(lenses[lensIdx]); status(`${lenses[lensIdx].name || "Lens"} · ${lensIdx + 1}/${lenses.length}`, "ok"); }
+  catch (e) { fail("Lens konnte nicht gewechselt werden.", e); }
+};
 $("#flip").onclick = async () => {
   facing = facing === "user" ? "environment" : "user";
   try { await startSource(); } catch (e) { fail("Kamera konnte nicht gewechselt werden.", e); }
