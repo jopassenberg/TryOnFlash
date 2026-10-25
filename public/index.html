@@ -63,7 +63,7 @@
   .on-cam[aria-pressed="true"] { background: #fff; color: var(--ink); }
 
   /* ---------- Shell ---------- */
-  .shell { height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 48px minmax(0, 1fr); gap: var(--s4); padding: var(--s4) var(--s5) var(--s5); }
+  .shell { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 48px auto; gap: var(--s4); padding: var(--s4) var(--s5) var(--s5); }
   .top { position: relative; z-index: 20; display: flex; align-items: center; }
   .brand { font-weight: 300; font-size: 16px; letter-spacing: .01em; margin-right: auto; }
   .top-center { position: absolute; left: 50%; transform: translateX(-50%); }
@@ -77,7 +77,7 @@
   .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
 
   /* One dark glass frame around camera and controls */
-  .work { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: var(--s2); min-height: 0; width: 100%; max-width: 980px; margin: 0 auto;
+  .work { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: var(--s2); width: 100%; max-width: min(980px, calc((100dvh - 430px) * 4 / 3 + 16px)); min-width: min(100%, 440px); margin: 0 auto; align-self: start;
     padding: var(--s2); --r-lg: 30px; color: #fff; background: rgba(22,22,24,.86); box-shadow: var(--shadow-lg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
 
   /* ---------- Flash rail ---------- */
@@ -92,8 +92,8 @@
   .flash.add svg { width: 20px; height: 20px; }
 
   /* ---------- Stage ---------- */
-  .center { position: relative; min-height: 0; min-width: 0; display: flex; }
-  .stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #111; --r-lg: 22px; touch-action: none; outline: none; isolation: isolate; }
+  .center { position: relative; min-width: 0; }
+  .stage { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: #111; --r-lg: 22px; touch-action: none; outline: none; isolation: isolate; }
   .stage:has(.intro:not([hidden])) { background: rgba(255,255,255,.06); }
   .intro .btn.dark { background: #fff; color: var(--ink); }
   .intro .btn.dark svg { color: var(--ink); }
@@ -265,7 +265,8 @@
 
   /* ---------- Phones ---------- */
   @media (max-width: 760px) {
-    .shell { padding: var(--s3); gap: var(--s3); grid-template-rows: 40px minmax(0, 1fr); }
+    .shell { padding: var(--s3); gap: var(--s3); grid-template-rows: 40px auto; }
+    .work { max-width: none; min-width: 0; }
     .top-center { position: static; transform: none; }
     .top-center .pill { height: 36px; padding: 0 var(--s3); }
     .work { gap: var(--s2); }
@@ -1030,7 +1031,7 @@ async function startCamera() {
   stopCamera();
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: state.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      video: { facingMode: state.facing, width: { ideal: 1280 }, height: { ideal: 960 }, aspectRatio: { ideal: 4 / 3 } }, audio: false });
     video.srcObject = stream; await video.play();
   } catch (e) {
     console.error(e);
