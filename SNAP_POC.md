@@ -62,3 +62,12 @@ Fehlermeldungen auf der Seite:
 - `@snap/camera-kit` 1.22.0 über esm.sh (gebündelt, weil das SDK CommonJS-Abhängigkeiten hat).
 - Kamera in 4:3 (1280×960), Frontkamera gespiegelt, Kamera-Wechsel oben rechts.
 - Unterstützt laut Snap: Chrome ≥ 95, Safari ≥ 16, Edge ≥ 79 (Firefox noch nicht offiziell).
+
+## Ergebnis (09.11.2026): verworfen
+
+- **Upper Body Mesh** hat keine Unterarme (nur Kopf, Hals, Torso, Schulterkappen) → für Unterarm-Tattoos unbrauchbar.
+- **Full Body Mesh** deckt Arme ab, ist dort aber sehr grob (6 Flächen Umfang, 2 Ringe Ellbogen→Handgelenk).
+  Test-Lens mit Rose auf der Unterarm-Innenseite (`lens/forearm_rose.png`, gebacken aus Snaps Referenz-UV):
+  Tracking am Unterarm in Lens Studio (Webcam) **und** am Handy (Snapchat, Preview Lens) schlecht –
+  nicht besser als unser MediaPipe-Ansatz. Drehung des Unterarms wird kaum abgebildet.
+- Daher keine Lens veröffentlicht, keine Lens Group. `/snap` bleibt als PoC-Seite, wird aber nicht weiterverfolgt.
