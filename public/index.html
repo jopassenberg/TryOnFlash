@@ -353,7 +353,7 @@
       <div class="toolbar">
         <button class="ibtn" id="tWrap" aria-pressed="true" title="3D-Wölbung">3D</button>
         <button class="ibtn" id="tClip" aria-pressed="true" title="Nur auf Haut">Haut</button>
-        <button class="ibtn" id="tStab" aria-pressed="false" title="Haut-Stabilisierung (Experiment)">Stabil</button>
+        <button class="ibtn" id="tStab" aria-pressed="true" title="Haut-Stabilisierung (Experiment)">Stabil</button>
         <button class="ibtn" id="tSkel" aria-pressed="false" title="3D-Skelett">Skelett</button>
         <button class="ibtn" id="btnReset" title="Zurücksetzen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
       </div>
@@ -411,7 +411,7 @@ const HAND = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/ha
 // Multiclass selfie segmenter: 0 background, 1 hair, 2 body skin, 3 face skin, 4 clothes, 5 accessories
 const SKIN_SEG = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 const SKIN_CLASS = 2;
-const PROFILE_STATIONS = 9; // width measurements along the limb across the tattoo's height
+const PROFILE_STATIONS = 15; // width measurements along the limb across the tattoo's height
 const isMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
 // The "full" pose model is noticeably steadier than "lite". Desktops and iPhones handle it fine;
 // on Android we only take it with enough cores and memory.
@@ -445,7 +445,7 @@ const freezeCanvas = document.createElement("canvas");
 
 const state = {
   designId: null, zone: "forearm_l", size: 12, rot: 0, t: 0.55, roll: 0, opacity: 0.9,
-  wrap: true, clip: true, debug: false, stab: false,
+  wrap: true, clip: true, debug: false, stab: true,
   facing: "user", srcType: null, photo: null, mirror: false, frozen: false,
   track: null, lastSeen: 0, vis: 0, lastFrame: null, lm: null,
   dc: null, designImg: null,
@@ -484,7 +484,8 @@ class OneEuro {
     return this.x = al * x + (1 - al) * this.x;
   }
 }
-const F = { ax: new OneEuro(), ay: new OneEuro(), bx: new OneEuro(), by: new OneEuro(),
+// Higher beta than the default: same calm at rest, but much less lag once the arm moves.
+const F = { ax: new OneEuro(1.0, 0.04), ay: new OneEuro(1.0, 0.04), bx: new OneEuro(1.0, 0.04), by: new OneEuro(1.0, 0.04),
   r: new OneEuro(0.8, 0.01), fs: new OneEuro(0.5, 0) };
 const stationF = Array.from({ length: PROFILE_STATIONS }, () => ({ r: new OneEuro(0.8, 0.01), off: new OneEuro(0.8, 0.01) }));
 const resetFilters = () => {
@@ -757,7 +758,7 @@ function computeFrame(now) {
 // itself: pyramidal Lucas-Kanade on texture points under the tattoo (pores, hair, creases), estimate the
 // frame-to-frame motion (translation + rotation) and move an anchor with it. A complementary filter pulls
 // that anchor slowly back towards the landmark position: short term = skin, long term = skeleton.
-const FLOW_W = 256, FLOW_LEVELS = 3, FLOW_WIN = 4, FLOW_MAX_PTS = isMobile ? 28 : 40, FLOW_PULL = 0.08;
+const FLOW_W = isMobile ? 256 : 384, FLOW_LEVELS = 3, FLOW_WIN = 4, FLOW_MAX_PTS = isMobile ? 28 : 40, FLOW_PULL = 0.08;
 const flow = { prev: null, pts: [], anchor: null, target: null, radius: 60, k: 1, snap: true, canvas: document.createElement("canvas") };
 const resetFlow = () => { flow.prev = null; flow.pts = []; flow.anchor = null; flow.snap = true; };
 
@@ -840,7 +841,8 @@ function findFeatures(L, cx, cy, rad, keep) {
   for (let y = Math.max(3, cy - rad); y < Math.min(h - 3, cy + rad); y += step)
     for (let x = Math.max(3, cx - rad); x < Math.min(w - 3, cx + rad); x += step) {
       if ((x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue;
-      if (mask && maskAt(mask, x / flow.k, y / flow.k) < 0.5) continue;
+      // only points well inside the skin: corners on the limb's outline slide along it instead of moving with the skin
+      if (mask && [[0, 0], [8, 0], [-8, 0], [0, 8], [0, -8]].some(([u, v]) => maskAt(mask, (x + u) / flow.k, (y + v) / flow.k) < 0.5)) continue;
       if (keep.some(p => Math.abs(p.x - x) < step && Math.abs(p.y - y) < step)) continue;
       let a = 0, b = 0, c = 0;
       for (let v = -2; v <= 2; v++) for (let u = -2; u <= 2; u++) {
@@ -911,7 +913,7 @@ function drawTattoo(fr, alpha) {
   const cmPerPx = state.size / DESIGN_BASE;
   const Wcm = dc.width * cmPerPx, rollCm = effRoll() * z.R;
   const rows = fr.prof.length - 1, srcRowH = dc.height / rows, rowH = fr.hPx / rows;
-  const N = clamp(Math.round(dc.width / 10), 16, 64), sw = dc.width / N;
+  const N = clamp(Math.round(dc.width / 6), 24, 96), sw = dc.width / N;
 
   // One band per pair of profile stations. Inside a band the limb is a cylinder with that band's
   // measured radius and centre; the design keeps its true width in cm along the skin (arc length),
@@ -1031,7 +1033,7 @@ async function startCamera() {
   stopCamera();
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: state.facing, width: { ideal: 1280 }, height: { ideal: 960 }, aspectRatio: { ideal: 4 / 3 } }, audio: false });
+      video: { facingMode: state.facing, width: { ideal: 1280 }, height: { ideal: 960 }, aspectRatio: { ideal: 4 / 3 }, frameRate: { ideal: 60 } }, audio: false });
     video.srcObject = stream; await video.play();
   } catch (e) {
     console.error(e);
