@@ -425,6 +425,7 @@ const DESIGNS = [];
 /* ================= Body zones ================= */
 // a/b: pose landmark indices (proximal -> distal). R: real skin radius in cm. len: typical segment length in cm.
 const ZONES = {
+  marker:     { label: "Markierung (X)",   group: "Präzision", model: "marker", kind: "marker", R: 4.0, t: 0.5, size: 8, coach: "X auf die Haut malen und antippen" },
   forearm_l:  { label: "Linker Unterarm",  group: "Arme",  model: "pose", kind: "limb", a: 13, b: 15, tw: [17, 19], R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
   forearm_r:  { label: "Rechter Unterarm", group: "Arme",  model: "pose", kind: "limb", a: 14, b: 16, tw: [18, 20], R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
   upperarm_l: { label: "Linker Oberarm",   group: "Arme",  model: "pose", kind: "limb", a: 11, b: 13, R: 5.0, len: 30, t: 0.5,  size: 12, coach: "Schulter + Ellbogen ins Bild" },
@@ -585,7 +586,7 @@ function detect(src) {
           worldLen: wl ? dist3(mid(wl[11], wl[12]), mid(wl[23], wl[24])) : 0, rHint: dist(P(ls), P(rs)) / 2 };
       }
     }
-  } else {
+  } else if (z.model === "hand") {
     const res = hands.detectForVideo(scaledInput(src, poseIn, POSE_IN_W), ts);
     const lm = res.landmarks?.[0];
     state.world = res.worldLandmarks?.[0] || null; state.worldKind = "hand";
@@ -595,7 +596,7 @@ function detect(src) {
       if (z.kind === "hand") raw = { A: wr, B: mc, vis: 1, rHint: width * 0.56, worldLen: 0 };
       else raw = { A: { x: wr.x + (wr.x - mc.x) * 2.4, y: wr.y + (wr.y - mc.y) * 2.4 }, B: wr, vis: 1, rHint: width * 0.5, worldLen: 0 };
     }
-  }
+  } else { state.lm = state.handLm = null; state.world = null; } // marker: no skeleton needed
 
   if (segmenter && ++segTick % SEG_EVERY === 0) {
     const t2 = performance.now();
@@ -608,6 +609,7 @@ function detect(src) {
       const w = cat.width, h = cat.height, c = cat.getAsUint8Array();
       const skin = new Float32Array(c.length), body = new Float32Array(c.length);
       for (let i = 0; i < c.length; i++) { skin[i] = c[i] === SKIN_CLASS ? 1 : 0; body[i] = c[i] === BG_CLASS ? 0 : 1; }
+      fillInk(c, skin, w, h);
       masks.skin = toMask(skin, w, h, masks.skin, [255, 255, 255]);
       masks.body = toMask(body, w, h, masks.body, [255, 255, 255]);
       cat.close();
@@ -623,6 +625,24 @@ function detect(src) {
       B: { x: F.bx.filter(raw.B.x, now), y: F.by.filter(raw.B.y, now) },
       rHint: raw.rHint, worldLen: raw.worldLen,
     };
+  }
+}
+
+// Existing tattoos: the segmenter tends to call inked skin "clothes" or "accessories", which punched holes
+// into the new tattoo. Small islands of those classes that don't reach the frame edge (a sleeve or shirt
+// always does) are counted as skin. Face and hair are never touched.
+const INK_CLASSES = new Set([4, 5]), INK_MAX_AREA = 0.03;
+function fillInk(c, skin, w, h) {
+  const seen = new Uint8Array(c.length), stack = [], maxA = c.length * INK_MAX_AREA;
+  for (let i0 = 0; i0 < c.length; i0++) {
+    if (seen[i0] || !INK_CLASSES.has(c[i0])) continue;
+    const comp = []; let edge = false; stack.push(i0); seen[i0] = 1;
+    while (stack.length) {
+      const i = stack.pop(), x = i % w, y = (i / w) | 0; comp.push(i);
+      if (x === 0 || y === 0 || x === w - 1 || y === h - 1) { edge = true; continue; }
+      for (const j of [i - 1, i + 1, i - w, i + w]) if (!seen[j] && INK_CLASSES.has(c[j])) { seen[j] = 1; stack.push(j); }
+    }
+    if (!edge && comp.length < maxA) for (const i of comp) skin[i] = 1;
   }
 }
 
@@ -775,8 +795,8 @@ function stabilise(cx, cy, d, L) {
   return { cx: a.x, cy: a.y, d: { x: Math.cos(a.ang), y: Math.sin(a.ang) } };
 }
 
-function buildPyramid(src, W, H) {
-  const w = FLOW_W, h = Math.round(H * FLOW_W / W), cv = flow.canvas;
+function buildPyramid(src, W, H, outW = FLOW_W, cv = flow.canvas) {
+  const w = outW, h = Math.round(H * outW / W);
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
   const gx = cv.getContext("2d", { willReadFrequently: true });
   gx.drawImage(src, 0, 0, w, h);
@@ -798,7 +818,7 @@ function buildPyramid(src, W, H) {
     }
     L.ix = ix; L.iy = iy;
   }
-  flow.k = w / W;
+  levels.k = w / W;
   return levels;
 }
 function samp(a, w, h, x, y) {
@@ -857,7 +877,8 @@ function findFeatures(L, cx, cy, rad, keep) {
 const median = a => { const s = [...a].sort((p, q) => p - q); return s[s.length >> 1]; };
 
 function flowStep(src, W, H) {
-  const cur = buildPyramid(src, W, H), a = flow.anchor, k = flow.k;
+  const cur = buildPyramid(src, W, H); flow.k = cur.k;
+  const a = flow.anchor, k = flow.k;
   if (flow.prev && a && flow.pts.length) {
     // Track forward, then back again: points that don't return to where they started are unreliable
     const pairs = [];
@@ -888,6 +909,168 @@ function flowStep(src, W, H) {
   }
   if (a && flow.pts.length < FLOW_MAX_PTS * 0.6) flow.pts.push(...findFeatures(cur[0], a.x * k, a.y * k, flow.radius * k, flow.pts));
   flow.prev = cur;
+}
+
+/* ================= Marker mode: a pen X on the skin ================= */
+// The person draws a small X (or a dot) on the skin and taps it. Instead of a skeleton we follow the skin
+// texture around the mark: pyramidal Lucas-Kanade (as above, but finer) fitted as a similarity transform
+// (move, turn, zoom), so the tattoo stays centred on the X while the body part moves, turns in the image
+// or comes closer. A small template of the X re-centres the anchor every frame (no drift) and finds the
+// mark again after it was lost. Works on any skin: arm, leg, chest, back, neck ...
+const MK_W = isMobile ? 360 : 480, MK_RAD = 0.07, MK_PTS = isMobile ? 36 : 56, MK_TPL = 10, MK_TPL1 = 6;
+const MK_SPAN = 6; // cm of offset from the X to each edge of the position map
+const mk = { locked: false, pending: null, lost: 0, x: 0, y: 0, ang: 0, s: 1, ppc0: 10, pts: [], prev: null, tpl: null, k: 1,
+  cv: document.createElement("canvas"), out: null,
+  f: { x: new OneEuro(2.0, 0.05), y: new OneEuro(2.0, 0.05), a: new OneEuro(1.5, 0.05), s: new OneEuro(1.0, 0.02) } };
+function resetMarker() {
+  Object.assign(mk, { locked: false, pending: null, lost: 0, pts: [], prev: null, tpl: null, out: null });
+  Object.values(mk.f).forEach(f => f.reset());
+}
+function lockMarker(p) {
+  resetMarker(); mk.locked = true; mk.pending = p;
+  state.t = 0.5; state.roll = 0; syncUI();
+}
+// Corner points (Shi-Tomasi) around (cx, cy) on pyramid level 0, without a mask: the pen lines are the best features
+function mkFeatures(L, cx, cy, rad, keep, max) {
+  const { ix, iy, w, h } = L, cand = [], step = 4;
+  for (let y = Math.max(3, cy - rad); y < Math.min(h - 3, cy + rad); y += step)
+    for (let x = Math.max(3, cx - rad); x < Math.min(w - 3, cx + rad); x += step) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue;
+      if (keep.some(p => Math.abs(p.x - x) < step && Math.abs(p.y - y) < step)) continue;
+      let a = 0, b = 0, c = 0;
+      for (let v = -2; v <= 2; v++) for (let u = -2; u <= 2; u++) {
+        const i = ((y | 0) + v) * w + (x | 0) + u; a += ix[i] * ix[i]; b += ix[i] * iy[i]; c += iy[i] * iy[i];
+      }
+      cand.push({ x, y, s: (a + c) / 2 - Math.sqrt(((a - c) / 2) ** 2 + b * b) });
+    }
+  cand.sort((p, q) => q.s - p.s);
+  const min = (cand[0]?.s ?? 0) * 0.04;
+  return cand.filter(p => p.s > min && p.s > 1).slice(0, Math.max(0, max - keep.length)).map(({ x, y }) => ({ x, y }));
+}
+// Patch around (x, y), sampled in the X's own frame (turned by ang, zoomed by sc), so that it can be
+// compared with the template taken when the X was locked, however the body part has turned since.
+function grabPatch(L, x, y, T = MK_TPL, ang = 0, sc = 1) {
+  const out = new Float32Array((2 * T + 1) ** 2), c = Math.cos(ang) * sc, s = Math.sin(ang) * sc; let i = 0;
+  for (let v = -T; v <= T; v++) for (let u = -T; u <= T; u++) out[i++] = samp(L.g, L.w, L.h, x + c * u - s * v, y + s * u + c * v);
+  return out;
+}
+// Normalised cross-correlation of the X template around (x, y), radius r (pyramid level 0)
+function matchTpl(L, x, y, r, step, t = mk.tpl, T = MK_TPL, ang = mk.ang, sc = mk.s) {
+  if (!t) return null;
+  const n = t.length; let tm = 0; for (let i = 0; i < n; i++) tm += t[i]; tm /= n;
+  let tv = 0; for (let i = 0; i < n; i++) tv += (t[i] - tm) ** 2;
+  let best = null;
+  for (let dy = -r; dy <= r; dy += step) for (let dx = -r; dx <= r; dx += step) {
+    const p = grabPatch(L, x + dx, y + dy, T, ang, sc);
+    let pm = 0; for (let i = 0; i < n; i++) pm += p[i]; pm /= n;
+    let cv = 0, pv = 0; for (let i = 0; i < n; i++) { const a = p[i] - pm; cv += a * (t[i] - tm); pv += a * a; }
+    const ncc = cv / Math.sqrt(pv * tv + 1e-6);
+    if (!best || ncc > best.ncc) best = { x: x + dx, y: y + dy, ncc, ang };
+  }
+  return best;
+}
+// Real-world scale at the X: half the narrowest chord of the body silhouette, read as a ~4 cm limb radius.
+// Only a starting value (the size can be changed); on the torso, where no chord fits, a default.
+function estimatePpc(x, y, W) {
+  const m = masks.body; let best = null;
+  if (m) for (let k = 0; k < 8; k++) {
+    const a = k * Math.PI / 8, r = measureWidth(m, x, y, { x: Math.cos(a), y: Math.sin(a) }, W * 0.3);
+    if (r && (!best || r.r < best)) best = r.r;
+  }
+  return clamp(best ? best / 4 : W / 45, W / 140, W / 12);
+}
+// A finger never hits the X exactly: snap the tap onto the pen mark (centroid of the darkest pixels nearby)
+function darkCentre(L, x, y, R) {
+  const vals = [];
+  for (let v = -R; v <= R; v++) for (let u = -R; u <= R; u++) if (u * u + v * v <= R * R) vals.push({ u, v, g: samp(L.g, L.w, L.h, x + u, y + v) });
+  const sorted = vals.map(e => e.g).sort((a, b) => a - b), lo = sorted[0], med = sorted[sorted.length >> 1];
+  if (med - lo < 25) return { x, y }; // no clear mark: keep the tap
+  const thr = lo + (med - lo) * 0.35; let sx = 0, sy = 0, n = 0;
+  for (const e of vals) if (e.g < thr) { sx += e.u; sy += e.v; n++; }
+  return n >= 4 ? { x: x + sx / n, y: y + sy / n } : { x, y };
+}
+function markerStep(src, W, H) {
+  if (!mk.locked) return;
+  const cur = buildPyramid(src, W, H, MK_W, mk.cv), k = cur.k, L0 = cur[0]; mk.k = k;
+  if (mk.pending) {
+    const c0 = darkCentre(L0, mk.pending.x * k, mk.pending.y * k, MK_TPL * 2), px = c0.x, py = c0.y;
+    mk.x = px / k; mk.y = py / k; mk.ang = 0; mk.s = 1; mk.lost = 0;
+    mk.tpl = grabPatch(L0, px, py); mk.tpl1 = grabPatch(cur[1], px / 2, py / 2, MK_TPL1);
+    mk.pts = mkFeatures(L0, px, py, MK_RAD * L0.w, [], MK_PTS);
+    mk.ppc0 = estimatePpc(mk.x, mk.y, W);
+    mk.pending = null; mk.prev = cur; return;
+  }
+  let ax = mk.x * k, ay = mk.y * k, ok = false;
+  if (mk.prev && mk.pts.length) {
+    const pairs = [];
+    for (const p of mk.pts) {
+      const q = lkTrack(mk.prev, cur, p.x, p.y); if (!q) continue;
+      const b = lkTrack(cur, mk.prev, q.x, q.y); if (!b || Math.hypot(b.x - p.x, b.y - p.y) > 0.7) continue;
+      pairs.push({ p, q });
+    }
+    const mdx = median(pairs.map(e => e.q.x - e.p.x)), mdy = median(pairs.map(e => e.q.y - e.p.y));
+    const inl = pairs.filter(e => Math.hypot(e.q.x - e.p.x - mdx, e.q.y - e.p.y - mdy) < 1.5 + 0.2 * Math.hypot(mdx, mdy));
+    if (inl.length >= 5) {
+      // Similarity fit (Umeyama / Procrustes with scale)
+      let pcx = 0, pcy = 0, qcx = 0, qcy = 0;
+      inl.forEach(({ p, q }) => { pcx += p.x; pcy += p.y; qcx += q.x; qcy += q.y; });
+      pcx /= inl.length; pcy /= inl.length; qcx /= inl.length; qcy /= inl.length;
+      let sa = 0, sb = 0, pp = 0;
+      inl.forEach(({ p, q }) => { const px = p.x - pcx, py = p.y - pcy, qx = q.x - qcx, qy = q.y - qcy; sa += px * qx + py * qy; sb += px * qy - py * qx; pp += px * px + py * py; });
+      const th = Math.atan2(sb, sa), sc = clamp(Math.hypot(sa, sb) / (pp || 1), 0.92, 1.08), c = Math.cos(th), s = Math.sin(th);
+      const dx = ax - pcx, dy = ay - pcy;
+      ax = qcx + sc * (c * dx - s * dy); ay = qcy + sc * (s * dx + c * dy);
+      mk.ang += th; mk.s = clamp(mk.s * sc, 0.3, 4); ok = true;
+    }
+    mk.pts = inl.map(e => e.q);
+  }
+  // Re-centre on the X itself. When lost: coarse search on the half-size level in a radius that grows the
+  // longer the mark is gone, then refine at full size.
+  let m;
+  if (ok) m = matchTpl(L0, ax, ay, 5, 1);
+  else {
+    const r1 = Math.min(10 + mk.lost * 6, cur[1].w * 0.3) | 0;
+    let c1 = null; // the body part may have turned while the X was hidden: try a few angles
+    for (const da of [0, -0.3, 0.3]) {
+      const c = matchTpl(cur[1], ax / 2, ay / 2, r1, 2, mk.tpl1, MK_TPL1, mk.ang + da);
+      if (c && (!c1 || c.ncc > c1.ncc)) c1 = c;
+    }
+    m = c1 && c1.ncc > 0.45 ? matchTpl(L0, c1.x * 2, c1.y * 2, 4, 1, mk.tpl, MK_TPL, c1.ang) : null;
+    if (m) { // fine angle search at the found spot
+      for (const da of [-0.16, -0.12, -0.08, -0.04, 0.04, 0.08, 0.12, 0.16]) {
+        const c = matchTpl(L0, m.x, m.y, 1, 1, mk.tpl, MK_TPL, c1.ang + da);
+        if (c && c.ncc > m.ncc) m = c;
+      }
+      mk.ang = m.ang;
+    }
+  }
+  if (m && m.ncc > (ok ? 0.55 : 0.6)) {
+    const w = ok ? 0.35 : 1; ax += (m.x - ax) * w; ay += (m.y - ay) * w;
+    if (!ok) mk.pts = [];
+    ok = true;
+    if (m.ncc > 0.85) { const p = grabPatch(L0, ax, ay, MK_TPL, mk.ang, mk.s); for (let i = 0; i < p.length; i++) mk.tpl[i] = mk.tpl[i] * 0.95 + p[i] * 0.05; }
+  }
+  if (ok) {
+    mk.lost = 0; mk.x = ax / k; mk.y = ay / k;
+    if (mk.pts.length < MK_PTS * 0.6) mk.pts.push(...mkFeatures(L0, ax, ay, MK_RAD * L0.w * Math.min(mk.s, 2), mk.pts, MK_PTS));
+  } else mk.lost++;
+  mk.prev = cur;
+}
+function drawMarkerTattoo(now, alpha) {
+  const dc = state.dc; if (!dc || !mk.locked || mk.pending || alpha < 0.01) return;
+  const W = view.width, H = view.height;
+  const x = mk.f.x.filter(mk.x, now), y = mk.f.y.filter(mk.y, now), a = mk.f.a.filter(mk.ang, now), s = mk.f.s.filter(mk.s, now);
+  const ppc = mk.ppc0 * s, c = Math.cos(a), si = Math.sin(a);
+  const ox = state.roll / ROLL_MAX * MK_SPAN * ppc, oy = (state.t - 0.5) * 2 * MK_SPAN * ppc;
+  const cx = x + c * ox - si * oy, cy = y + si * ox + c * oy;
+  mk.out = { x, y, a, ppc };
+  const hPx = dc.height * state.size / DESIGN_BASE * ppc, wPx = dc.width / dc.height * hPx;
+  octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalCompositeOperation = "source-over"; octx.globalAlpha = 1;
+  octx.clearRect(0, 0, W, H);
+  octx.setTransform(c, si, -si, c, cx, cy);
+  octx.drawImage(dc, -wPx / 2, -hPx / 2, wPx, hPx);
+  // Clip to the person, not just to "skin": existing tattoos and the pen mark must not cut holes
+  compositeOverlay(state.clip ? (masks.body || masks.skin) : null, alpha);
 }
 
 /* ================= Rendering ================= */
@@ -937,8 +1120,11 @@ function drawTattoo(fr, alpha) {
     }
   }
 
+  compositeOverlay(state.clip ? (masks.skin || masks.body) : null, alpha);
+}
+function compositeOverlay(clipMask, alpha) {
+  const W = view.width, H = view.height;
   octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalAlpha = 1;
-  const clipMask = state.clip ? (masks.skin || masks.body) : null;
   if (clipMask) {
     octx.globalCompositeOperation = "destination-in";
     octx.drawImage(clipMask.canvas, 0, 0, W, H);
@@ -954,6 +1140,11 @@ function drawTattoo(fr, alpha) {
 function drawDebug(fr) {
   ctx.save();
   ctx.lineWidth = Math.max(2, view.width / 400);
+  if (ZONES[state.zone].kind === "marker" && mk.locked) {
+    ctx.fillStyle = "#d9ff4a";
+    mk.pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x / mk.k, p.y / mk.k, ctx.lineWidth * 1.2, 0, 7); ctx.fill(); });
+    ctx.strokeStyle = "#fff"; ctx.beginPath(); ctx.arc(mk.x, mk.y, MK_TPL / mk.k, 0, 7); ctx.stroke();
+  }
   if (masks.skin) { ctx.globalAlpha = 0.16; ctx.drawImage(masks.skin.canvas, 0, 0, view.width, view.height); ctx.globalAlpha = 1; }
   if (state.handLm) {
     ctx.fillStyle = "#d9ff4a";
@@ -995,26 +1186,39 @@ function loop(now) {
   const W = srcW(), H = srcH(); if (!W || !H) return;
   resize(W, H);
 
-  if (modelsReady && !state.frozen) {
+  const isMk = ZONES[state.zone].kind === "marker";
+  // The marker needs no model (only the segmenter for clipping), so it tracks while MediaPipe still loads.
+  if (!state.frozen) {
     if (state.srcType === "video") {
-      if (video.readyState >= 2 && video.currentTime !== lastVideoTime) { lastVideoTime = video.currentTime; detect(video); if (state.stab) flowStep(video, srcW(), srcH()); }
-    } else if (now - lastDetect > 120) { lastDetect = now; detect(src); }
+      if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+        lastVideoTime = video.currentTime;
+        if (modelsReady) detect(video);
+        if (isMk) markerStep(video, W, H); else if (modelsReady && state.stab) flowStep(video, W, H);
+      }
+    } else if (now - lastDetect > 120) { lastDetect = now; if (modelsReady) detect(src); if (isMk) markerStep(src, W, H); }
   }
 
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
   ctx.drawImage(state.frozen ? freezeCanvas : src, 0, 0, W, H);
 
-  const seen = state.frozen || now - state.lastSeen < 400;
-  state.vis += ((seen ? 1 : 0) - state.vis) * 0.18;
-  const fr = state.frozen ? state.lastFrame : computeFrame(now);
-  if (fr) state.lastFrame = fr;
-  drawTattoo(fr, state.vis);
+  const seen = isMk ? state.frozen || (mk.locked && !mk.pending && mk.lost < 6) : state.frozen || now - state.lastSeen < 400;
+  state.vis += ((seen ? 1 : 0) - state.vis) * (isMk ? 0.35 : 0.18);
+  let fr = null;
+  if (isMk) drawMarkerTattoo(now, state.vis);
+  else {
+    fr = state.frozen ? state.lastFrame : computeFrame(now);
+    if (fr) state.lastFrame = fr;
+    drawTattoo(fr, state.vis);
+  }
   if (state.debug) drawDebug(fr);
   if (state.skel) drawSkeleton3D(now);
 
   const z = ZONES[state.zone];
-  if (!modelsReady) { setStatus("Lädt …", "busy"); setCoach(""); }
+  if (!modelsReady && !isMk) { setStatus("Lädt …", "busy"); setCoach(""); }
   else if (state.frozen) { setStatus("Pausiert", "ok"); setCoach(""); }
+  else if (isMk && !mk.locked) { setStatus("X antippen", "search"); setCoach(z.coach); }
+  else if (isMk && !seen) { setStatus("Suche X …", "search"); setCoach("X wieder ins Bild halten · Doppeltipp setzt neu"); }
+  else if (isMk) { setStatus(z.label, "ok"); setCoach(""); }
   else if (seen) {
     setStatus(z.label, "ok");
     setCoach(state.clip && fr?.skin != null && fr.skin < 0.4 && state.vis > 0.5
@@ -1058,6 +1262,12 @@ function toCanvas(e) {
   return { x, y };
 }
 function moveBy(dx, dy) {
+  if (ZONES[state.zone].kind === "marker") { // drag in the X's own frame, in cm
+    const o = mk.out; if (!o) return;
+    const c = Math.cos(o.a), s = Math.sin(o.a), lx = (dx * c + dy * s) / o.ppc, ly = (-dx * s + dy * c) / o.ppc;
+    state.roll = clamp(state.roll + lx / MK_SPAN * ROLL_MAX, -ROLL_MAX, ROLL_MAX);
+    state.t = clamp(state.t + ly / (2 * MK_SPAN), 0, 1); syncUI(); return;
+  }
   const fr = state.lastFrame; if (!fr) return;
   state.t = clamp(state.t + (dx * fr.d.x + dy * fr.d.y) / fr.L, -0.3, 1.3);
   state.roll = clamp(state.roll + (dx * fr.n.x + dy * fr.n.y) / fr.r, -1.5, 1.5);
@@ -1071,6 +1281,7 @@ setInterval(() => { if (designDirty) { designDirty = false; buildDesignCanvas();
 const pointers = new Map(); let pinch = null;
 stage.addEventListener("pointerdown", e => {
   if (e.target.closest("button, .intro, .dock, .hud") || !state.srcType) return;
+  if (ZONES[state.zone].kind === "marker" && !mk.locked) { lockMarker(toCanvas(e)); return; }
   stage.setPointerCapture(e.pointerId); pointers.set(e.pointerId, toCanvas(e)); startPinch();
 });
 stage.addEventListener("pointermove", e => {
@@ -1082,6 +1293,10 @@ stage.addEventListener("pointermove", e => {
     setSize(pinch.size * dist(a, b) / pinch.dist);
     setRot(pinch.rot + (Math.atan2(b.y - a.y, b.x - a.x) - pinch.ang) * 180 / Math.PI);
   }
+});
+stage.addEventListener("dblclick", e => {
+  if (e.target.closest("button, .intro, .dock, .hud") || !state.srcType || ZONES[state.zone].kind !== "marker") return;
+  lockMarker(toCanvas(e));
 });
 const endPointer = e => { pointers.delete(e.pointerId); startPinch(); };
 stage.addEventListener("pointerup", endPointer); stage.addEventListener("pointercancel", endPointer);
@@ -1132,6 +1347,7 @@ $("#noFlash").onclick = () => openConverter();
 
 // What the top and bottom edge of the position map mean for each zone
 const ZONE_ENDS = {
+  marker: ["oben", "unten"],
   forearm_l: ["Ellbogen", "Handgelenk"], forearm_r: ["Ellbogen", "Handgelenk"],
   upperarm_l: ["Schulter", "Ellbogen"], upperarm_r: ["Schulter", "Ellbogen"],
   calf_l: ["Knie", "Knöchel"], calf_r: ["Knie", "Knöchel"],
@@ -1155,14 +1371,14 @@ function renderZones() {
 function selectZone(id) {
   state.zone = id; const z = ZONES[id];
   state.t = z.t; state.size = z.size; state.roll = 0;
-  state.track = null; state.lastFrame = null; resetFilters(); masks.body = masks.skin = null;
+  state.track = null; state.lastFrame = null; resetFilters(); resetMarker(); masks.body = masks.skin = null;
   if (z.model === "hand" && state.srcType === "video" && state.facing === "user" && isMobile) toast("Rückkamera empfohlen");
   renderZones(); syncUI();
 }
 $("#zonePill").onclick = e => { e.stopPropagation(); $("#zonePop").hidden = !$("#zonePop").hidden; };
 $("#zonePop").onclick = e => e.stopPropagation();
 document.addEventListener("click", () => $("#zonePop").hidden = true);
-$("#btnReset").onclick = () => { const z = ZONES[state.zone]; state.t = z.t; state.roll = 0; state.size = z.size; setRot(0); };
+$("#btnReset").onclick = () => { const z = ZONES[state.zone]; if (z.kind === "marker") resetMarker(); state.t = z.t; state.roll = 0; state.size = z.size; setRot(0); };
 
 /* ----- Dock: one map for position, rotation and size ----- */
 // The map is the limb unrolled (vertical = along it, horizontal = around it). The dot is the
@@ -1500,7 +1716,7 @@ $("#convUse").onclick = () => {
 
 renderDesigns(); renderZones(); syncUI();
 requestAnimationFrame(loop);
-window.__tryon = { state, loadModels, loadConvFile, conv, masks, flow, flowStep, detect, twist, updateTwist, effRoll, fusedHand };
+window.__tryon = { state, loadModels, loadConvFile, conv, masks, flow, flowStep, detect, twist, updateTwist, effRoll, fusedHand, mk, lockMarker, markerStep, selectZone, selectDesign, DESIGNS };
 </script>
 </body>
 </html>
