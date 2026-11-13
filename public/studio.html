@@ -60,6 +60,9 @@
   .btn.lime { background: var(--lime); color: var(--ink); box-shadow: var(--lime-glow); }
   .btn.ghost { background: var(--cam-2); color: #fff; }
   .btn:disabled { opacity: .4; cursor: default; box-shadow: none; }
+  #ai[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: none; }
+  #ai.busy svg { animation: spin 1.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .status { position: absolute; top: 12px; left: 12px; z-index: 3; height: 32px; padding: 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px;
     font-size: 12.5px; background: var(--cam); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
@@ -145,6 +148,7 @@
       <button class="chip" id="cmp" aria-pressed="false">Vergleich</button>
       <span class="grow"></span>
       <button class="btn ghost" id="edit">Bearbeiten</button>
+      <button class="btn lime" id="ai" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>KI-Finish</button>
       <button class="btn white" id="save">Speichern</button>
     </div>
   </main>
@@ -174,7 +178,7 @@ const S = {
   axis: 0, armPx: 0, // arm direction (rad) and width in render px
   motifs: [], motif: null,
   anchor: null, rot: 0, sizeCm: 10, view: "photo",
-  inked: null, mode: "healed", compare: 0.5, comparing: false,
+  inked: null, local: null, ai: null, inkBox: null, inkAlpha: null, mode: "healed", compare: 0.5, comparing: false,
 };
 
 /* ---------- UI helpers ---------- */
@@ -625,8 +629,51 @@ async function stechen() {
   const res = document.createElement("canvas"); res.width = W; res.height = H;
   const rg = res.getContext("2d"); rg.drawImage(S.photo, 0, 0); rg.putImageData(skinImg, x0, y0);
   await needleReveal(res, { x0, y0, w: bw, h: bh });
-  S.inked = res; status(fresh ? "Frisch gestochen" : "Verheilt", "ok"); redraw();
+  S.local = S.inked = res; S.ai = null; S.inkBox = { x0, y0, w: bw, h: bh }; S.inkAlpha = alpha;
+  $("#ai").setAttribute("aria-pressed", false); status(fresh ? "Frisch gestochen" : "Verheilt", "ok"); redraw();
 }
+
+/* ---------- KI-Finish: refine the inked crop with an image-editing model (server side) ---------- */
+// Only the area around the tattoo is sent, plus the original flash. The result is blended back
+// through a soft mask around the ink, so everything outside the tattoo stays pixel-identical.
+async function aiFinish() {
+  if (!S.local || !S.inkBox) return;
+  if (S.ai) { // already refined: just toggle
+    S.inked = S.inked === S.ai ? S.local : S.ai; $("#ai").setAttribute("aria-pressed", S.inked === S.ai); redraw(); return;
+  }
+  const b = S.inkBox, W = view.width, H = view.height, px = Math.round(Math.max(b.w, b.h) * .35);
+  const cx0 = Math.max(0, b.x0 - px), cy0 = Math.max(0, b.y0 - px), cx1 = Math.min(W, b.x0 + b.w + px), cy1 = Math.min(H, b.y0 + b.h + px), cw = cx1 - cx0, ch = cy1 - cy0;
+  const k = Math.min(1, 1024 / Math.max(cw, ch)), crop = document.createElement("canvas");
+  crop.width = Math.round(cw * k); crop.height = Math.round(ch * k);
+  crop.getContext("2d").drawImage(S.local, cx0, cy0, cw, ch, 0, 0, crop.width, crop.height);
+  const dk = Math.min(1, 512 / Math.max(S.motif.canvas.width, S.motif.canvas.height)), design = document.createElement("canvas");
+  design.width = Math.round(S.motif.canvas.width * dk); design.height = Math.round(S.motif.canvas.height * dk);
+  const dg = design.getContext("2d"); dg.fillStyle = "#fff"; dg.fillRect(0, 0, design.width, design.height); dg.drawImage(S.motif.canvas, 0, 0, design.width, design.height);
+
+  const btn = $("#ai"); btn.disabled = true; btn.classList.add("busy"); status("KI veredelt …");
+  try {
+    const r = await fetch("/api/ink", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: crop.toDataURL("image/jpeg", .92), design: design.toDataURL("image/jpeg", .9), mode: S.mode }) });
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.error === "no_key" ? "KI nicht eingerichtet" : e.error === "rate_limited" ? "Kurz warten, zu viele Anfragen" : "KI fehlgeschlagen");
+    }
+    const bmp = await createImageBitmap(await r.blob());
+    const aiCrop = document.createElement("canvas"); aiCrop.width = cw; aiCrop.height = ch;
+    aiCrop.getContext("2d").drawImage(bmp, 0, 0, cw, ch);
+    // soft mask: the ink area, grown and feathered so the transition into untouched skin is invisible
+    const grow = blurField(S.inkAlpha, b.w, b.h, Math.max(4, Math.round(W / 220)));
+    const mask = new Float32Array(cw * ch);
+    for (let y = 0; y < b.h; y++) for (let x = 0; x < b.w; x++) mask[(y + b.y0 - cy0) * cw + (x + b.x0 - cx0)] = clamp(grow[y * b.w + x] * 3, 0, 1);
+    const base = S.local.getContext("2d").getImageData(cx0, cy0, cw, ch), ai = aiCrop.getContext("2d").getImageData(0, 0, cw, ch), bd = base.data, ad = ai.data;
+    for (let i = 0; i < mask.length; i++) { const m = mask[i]; if (!m) continue; for (let c = 0; c < 3; c++) bd[i * 4 + c] = bd[i * 4 + c] * (1 - m) + ad[i * 4 + c] * m; }
+    const res = document.createElement("canvas"); res.width = W; res.height = H;
+    const rg = res.getContext("2d"); rg.drawImage(S.local, 0, 0); rg.putImageData(base, cx0, cy0);
+    S.ai = S.inked = res; btn.setAttribute("aria-pressed", true); status("KI-Finish", "ok"); redraw();
+  } catch (e) { console.error(e); status(e.message || "KI fehlgeschlagen", "err"); }
+  finally { btn.disabled = false; btn.classList.remove("busy"); }
+}
+$("#ai").onclick = aiFinish;
 function hash(i) { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math.floor(s); }
 // The needle travels over the motif in quick strokes while the ink appears behind it
 function needleReveal(res, box) {
@@ -647,7 +694,7 @@ function needleReveal(res, box) {
   });
 }
 $("#ink").onclick = stechen;
-$("#edit").onclick = () => { S.inked = null; S.comparing = false; $("#compare").hidden = true; setStep(3); status(""); redraw(); };
+$("#edit").onclick = () => { S.inked = S.local = S.ai = null; S.comparing = false; $("#compare").hidden = true; setStep(3); status(""); redraw(); };
 $("#fresh").onclick = () => setMode("fresh"); $("#healed").onclick = () => setMode("healed");
 function setMode(m) { S.mode = m; $("#fresh").setAttribute("aria-pressed", m === "fresh"); $("#healed").setAttribute("aria-pressed", m === "healed"); if (S.step === 4) stechen(); }
 $("#cmp").onclick = () => {
