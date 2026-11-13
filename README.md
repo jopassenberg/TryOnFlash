@@ -17,3 +17,20 @@ Dann http://localhost:5173 öffnen.
 ## Deployment
 
 Der Cloudflare Worker `tryonflash` ist mit diesem Repo verbunden (Workers Builds). Er liefert nur die statischen Dateien aus `public/` aus, konfiguriert in `wrangler.jsonc`. Jeder Push auf `main` wird automatisch veröffentlicht.
+
+## Studio (`/studio`) und KI-Finish
+
+`/studio`: Foto vom Arm hochladen → Tiefe (Depth Anything V2) + Haut (MediaPipe) → Motiv oberflächentreu
+platzieren → „Stechen“ (lokales Rendering). Alles im Browser.
+
+„KI-Finish“ schickt nur den Bildausschnitt ums Tattoo plus das Flash an `POST /api/ink` (`src/worker.js`),
+der Worker ruft fal.ai (`fal-ai/nano-banana-2/edit`) auf. Das Ergebnis wird im Studio nur im Tattoo-Bereich
+eingeblendet.
+
+Einrichtung:
+1. Account auf https://fal.ai, Guthaben aufladen, unter *Keys* einen API-Key anlegen.
+2. Cloudflare → Workers & Pages → `tryonflash` → Settings → Variables and Secrets → **Add**:
+   Typ **Secret**, Name `FAL_KEY`, Wert = der fal-Key → Deploy.
+3. Ohne Key antwortet `/api/ink` mit `503 {"error":"no_key"}`, das Studio zeigt „KI nicht eingerichtet“.
+
+Schutz: Rate-Limit 5 Anfragen pro Minute und IP (`INK_LIMIT` in `wrangler.jsonc`).
