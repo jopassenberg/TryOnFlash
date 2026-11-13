@@ -233,14 +233,46 @@ function fitOverlay() {
 new ResizeObserver(() => { if (S.photo) { fitOverlay(); drawGizmo(); } }).observe(view);
 
 /* ---------- 2 · Analysis ---------- */
-let depthPipe = null, segmenter = null;
+let depthPipe = null, depthDevice = null, segmenter = null;
+// GPU (WebGPU, half precision) when the graphics chip supports it, otherwise the quantised model on
+// the CPU. Some GPUs only fail once they actually run the model, so runDepth() falls back as well.
+async function makeDepth(device) {
+  const { pipeline } = await import(TRANSFORMERS);
+  depthDevice = device;
+  return pipeline("depth-estimation", DEPTH_MODEL, device === "webgpu" ? { device: "webgpu", dtype: "fp16" } : { dtype: "q8" });
+}
 async function getDepth() {
   if (depthPipe) return depthPipe;
-  const { pipeline } = await import(TRANSFORMERS);
-  const gpu = !!navigator.gpu && !!(await navigator.gpu.requestAdapter?.().catch(() => null));
-  try { depthPipe = await pipeline("depth-estimation", DEPTH_MODEL, gpu ? { device: "webgpu", dtype: "fp16" } : { dtype: "q8" }); }
-  catch (e) { console.warn("WebGPU depth failed, using WASM", e); depthPipe = await pipeline("depth-estimation", DEPTH_MODEL, { dtype: "q8" }); }
-  return depthPipe;
+  const adapter = navigator.gpu ? await navigator.gpu.requestAdapter().catch(() => null) : null;
+  if (adapter?.features?.has("shader-f16")) {
+    try { return (depthPipe = await makeDepth("webgpu")); } catch (e) { console.warn("WebGPU depth unavailable, using CPU", e); }
+  }
+  return (depthPipe = await makeDepth("wasm"));
+}
+async function runDepth(url) {
+  const dp = await getDepth();
+  try { return await dp(url); }
+  catch (e) {
+    if (depthDevice !== "webgpu") throw e;
+    console.warn("WebGPU depth failed while running, retrying on CPU", e);
+    depthPipe = await makeDepth("wasm");
+    return depthPipe(url);
+  }
+}
+// Model output can arrive as float32, float16 or raw half-float bits (Uint16) depending on the backend
+function depthValues(t) {
+  const d = t.data;
+  if (d instanceof Float32Array || d instanceof Float64Array) return d;
+  if (typeof Float16Array !== "undefined" && d instanceof Float16Array) return Float32Array.from(d);
+  if (d instanceof Uint16Array) {
+    const out = new Float32Array(d.length);
+    for (let i = 0; i < d.length; i++) {
+      const h = d[i], s = h & 0x8000 ? -1 : 1, e = (h >> 10) & 31, f = h & 1023;
+      out[i] = s * (e === 0 ? f * 2 ** -24 : e === 31 ? (f ? NaN : Infinity) : (1 + f / 1024) * 2 ** (e - 15));
+    }
+    return out;
+  }
+  return Float32Array.from(d, Number);
 }
 async function getSegmenter() {
   if (segmenter) return segmenter;
@@ -254,10 +286,10 @@ async function analyse() {
   setStep(2); scanStart();
   try {
     status("Lädt Modelle …");
-    const [dp, seg] = await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]);
+    const [, seg] = await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]);
     status("Tiefe …");
     const url = await new Promise(r => S.proc.toBlob(b => r(URL.createObjectURL(b)), "image/jpeg", .92));
-    const out = await dp(url);
+    const out = await runDepth(url);
     S.pw = S.proc.width; S.ph = S.proc.height;
     S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph);
     status("Haut …");
@@ -270,11 +302,16 @@ async function analyse() {
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
     if (!S.motif) status("Motiv hochladen", "ok");
-  } catch (e) { console.error(e); scanStop(); status("Analyse fehlgeschlagen", "err"); }
+  } catch (e) {
+    console.error(e); scanStop();
+    const m = String(e?.message || e);
+    status(/Kein Arm/.test(m) ? m : /fetch|network|Failed to load/i.test(m) ? "Modelle nicht geladen – Internet prüfen" :
+      /memory|allocation|OOM/i.test(m) ? "Zu wenig Speicher – Foto kleiner oder anderen Browser" : "Analyse fehlgeschlagen: " + m.slice(0, 90), "err");
+  }
 }
 
 function resizeTensor(t, w, h) {
-  const dims = t.dims, th = dims[dims.length - 2], tw = dims[dims.length - 1], d = t.data, out = new Float32Array(w * h);
+  const dims = t.dims, th = dims[dims.length - 2], tw = dims[dims.length - 1], d = depthValues(t), out = new Float32Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const fx = clamp((x + .5) * tw / w - .5, 0, tw - 1.001), fy = clamp((y + .5) * th / h - .5, 0, th - 1.001);
     const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * tw + x0;
@@ -335,6 +372,7 @@ function buildGeometry() {
   const w = S.pw, h = S.ph, m = S.skin, d = S.disp;
   let n = 0, mx = 0, my = 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = m[y * w + x]; if (v > .5) { n++; mx += x; my += y; } }
+  if (n < 50) throw new Error("Kein Arm erkannt – Arm größer und gut beleuchtet ins Bild");
   mx /= n; my /= n;
   let sxx = 0, syy = 0, sxy = 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (m[y * w + x] > .5) { const dx = x - mx, dy = y - my; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; }
