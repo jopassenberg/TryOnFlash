@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flash Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@200..400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3f0; --ink: #161616; --muted: #8a8a86;
+    --lime: #d9ff4a; --lime-glow: 0 0 8px rgba(217,255,74,.55);
+    --cam: rgba(16,16,16,.56); --cam-2: rgba(255,255,255,.12);
+    --frame: rgba(22,22,24,.88);
+    --a1: #f2d9c4; --a2: #e4ff8a; --a3: #ffb3a6; --a4: #cfdcff;
+    --shadow-lg: 0 2px 4px rgba(0,0,0,.04), 0 30px 60px -24px rgba(0,0,0,.28);
+    --r-lg: 24px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 300 14px/1.4 Geist, system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  [hidden] { display: none !important; }
+  .sq { border-radius: var(--r-lg); }
+  @supports (corner-shape: squircle) { .sq { corner-shape: squircle; border-radius: calc(var(--r-lg) * 1.6); } }
+
+  .aura { position: fixed; inset: -20vmax; z-index: -1; pointer-events: none; filter: blur(70px); opacity: .7; }
+  .aura i { position: absolute; border-radius: 50%; mix-blend-mode: multiply; animation: drift 18s ease-in-out infinite alternate; }
+  .aura i:nth-child(1) { width: 60vmax; height: 60vmax; left: 8vmax; top: 4vmax; background: radial-gradient(circle, var(--a1) 0%, transparent 65%); }
+  .aura i:nth-child(2) { width: 42vmax; height: 42vmax; right: 10vmax; top: 16vmax; background: radial-gradient(circle, var(--a2) 0%, transparent 62%); animation-duration: 22s; }
+  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 32vmax; bottom: 2vmax; background: radial-gradient(circle, var(--a3) 0%, transparent 62%); animation-duration: 26s; }
+  .aura i:nth-child(4) { width: 40vmax; height: 40vmax; left: 2vmax; bottom: 8vmax; background: radial-gradient(circle, var(--a4) 0%, transparent 62%); animation-duration: 20s; }
+  @keyframes drift { from { transform: translate(-4vmax, -3vmax) scale(.95); } to { transform: translate(5vmax, 4vmax) scale(1.08); } }
+  @media (prefers-reduced-motion: reduce) { .aura i { animation: none; } }
+
+  .shell { max-width: 1000px; margin: 0 auto; padding: 16px 20px 28px; display: grid; gap: 14px; }
+  .top { display: flex; align-items: center; gap: 12px; height: 44px; }
+  .brand { font-size: 16px; letter-spacing: .01em; margin-right: auto; }
+  .steps { display: flex; gap: 6px; }
+  .step { height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; color: var(--muted);
+    background: rgba(255,255,255,.55); box-shadow: 0 1px 2px rgba(0,0,0,.05); backdrop-filter: blur(14px); }
+  .step i { font-style: normal; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; background: rgba(0,0,0,.06); }
+  .step.on { color: var(--ink); background: #fff; }
+  .step.on i { background: var(--ink); color: var(--lime); }
+  .step.done i { background: var(--lime); color: var(--ink); }
+
+  .frame { display: grid; gap: 8px; padding: 8px; color: #fff; --r-lg: 30px; background: var(--frame); box-shadow: var(--shadow-lg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+  .stage { position: relative; overflow: hidden; background: #111; --r-lg: 22px; min-height: 360px; display: grid; place-items: center; touch-action: none; }
+  .stage canvas { display: block; max-width: 100%; max-height: min(70vh, 720px); }
+  #view { position: relative; }
+  #overlay { position: absolute; pointer-events: none; }
+  .drop { display: grid; place-items: center; gap: 14px; padding: 60px 20px; text-align: center; }
+  .drop.over { background: rgba(217,255,74,.06); }
+  .hint { font-size: 12.5px; color: rgba(255,255,255,.55); }
+  .btn { height: 44px; padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn svg { width: 16px; height: 16px; }
+  .btn.white { background: #fff; color: var(--ink); }
+  .btn.lime { background: var(--lime); color: var(--ink); box-shadow: var(--lime-glow); }
+  .btn.ghost { background: var(--cam-2); color: #fff; }
+  .btn:disabled { opacity: .4; cursor: default; box-shadow: none; }
+
+  .status { position: absolute; top: 12px; left: 12px; z-index: 3; height: 32px; padding: 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; background: var(--cam); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+  .status[data-s="busy"] .dot { animation: blink .9s infinite; }
+  .status[data-s="ok"] .dot { background: var(--lime); box-shadow: var(--lime-glow); }
+  .status[data-s="err"] .dot { background: #ff7a6b; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .views { position: absolute; top: 12px; right: 12px; z-index: 3; display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--cam); backdrop-filter: blur(16px); }
+  .views button { height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; color: rgba(255,255,255,.7); }
+  .views button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  .tagv { position: absolute; bottom: 12px; right: 12px; z-index: 3; font-size: 11px; color: var(--lime); padding: 1px 8px; border-radius: 7px; background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.14); }
+
+  .panel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 2px; min-height: 52px; }
+  .panel .grow { flex: 1; }
+  .thumbs { display: flex; gap: 6px; }
+  .thumb { width: 46px; height: 46px; border-radius: 12px; background: #fff; display: grid; place-items: center; overflow: hidden; }
+  .thumb img { max-width: 80%; max-height: 80%; }
+  .thumb[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--lime); }
+  .thumb.add { background: var(--cam-2); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+  .chip { height: 36px; padding: 0 14px; border-radius: 999px; background: var(--cam-2); font-size: 13px; color: rgba(255,255,255,.75); }
+  .chip[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  .field { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 6px 0 12px; border-radius: 999px; background: var(--cam-2); font-size: 12.5px; color: rgba(255,255,255,.7); }
+  .field input { width: 52px; height: 26px; border: 0; border-radius: 999px; background: rgba(0,0,0,.35); color: #fff; text-align: center; }
+
+  .needle { position: absolute; z-index: 4; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 6px rgba(217,255,74,.2), var(--lime-glow); pointer-events: none; }
+  .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,.5); cursor: ew-resize; pointer-events: auto; }
+  .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+
+  @media (max-width: 680px) {
+    .shell { padding: 12px; }
+    .steps .step span { display: none; }
+    .step { padding: 0 8px; }
+    .stage { min-height: 300px; }
+  }
+</style>
+</head>
+<body>
+<div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="shell">
+  <header class="top">
+    <div class="brand">Black Moth</div>
+    <nav class="steps" aria-label="Schritte">
+      <div class="step" data-step="1"><i>1</i><span>Foto</span></div>
+      <div class="step" data-step="2"><i>2</i><span>Analyse</span></div>
+      <div class="step" data-step="3"><i>3</i><span>Platzieren</span></div>
+      <div class="step" data-step="4"><i>4</i><span>Stechen</span></div>
+    </nav>
+  </header>
+
+  <main class="frame sq">
+    <div class="stage sq" id="stage">
+      <div class="drop" id="drop">
+        <button class="btn white" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Foto vom Arm</button>
+        <div class="hint">Arm ruhig, gutes Licht, Stelle gut sichtbar</div>
+      </div>
+      <div id="viewWrap" hidden style="position:relative">
+        <canvas id="view"></canvas>
+        <canvas id="overlay"></canvas>
+        <div class="compare" id="compare" hidden></div>
+        <div class="needle" id="needle" hidden></div>
+      </div>
+      <div class="status" id="status" hidden data-s="idle"><span class="dot"></span><span id="statusText"></span></div>
+      <div class="views" id="views" hidden>
+        <button data-view="photo" aria-pressed="true">Foto</button>
+        <button data-view="depth" aria-pressed="false">Tiefe</button>
+        <button data-view="mesh" aria-pressed="false">3D</button>
+      </div>
+      <div class="tagv" id="tagSize" hidden></div>
+    </div>
+
+    <div class="panel" id="panelPlace" hidden>
+      <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hochladen" aria-label="Motiv hochladen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+      <label class="field">Armbreite <input id="armCm" type="number" min="4" max="20" step="0.5" value="7.5"> cm</label>
+      <span class="grow"></span>
+      <button class="btn ghost" id="newPhoto">Neues Foto</button>
+      <button class="btn lime" id="ink" disabled>Stechen</button>
+    </div>
+
+    <div class="panel" id="panelDone" hidden>
+      <button class="chip" id="fresh" aria-pressed="false">Frisch</button>
+      <button class="chip" id="healed" aria-pressed="true">Verheilt</button>
+      <button class="chip" id="cmp" aria-pressed="false">Vergleich</button>
+      <span class="grow"></span>
+      <button class="btn ghost" id="edit">Bearbeiten</button>
+      <button class="btn white" id="save">Speichern</button>
+    </div>
+  </main>
+  <input type="file" id="photoInput" accept="image/*" hidden>
+  <input type="file" id="motifInput" accept="image/*" hidden>
+</div>
+
+<script type="module">
+// Flash Studio: photo -> depth + skin analysis -> surface-true placement -> "stechen" render.
+// Everything runs in the browser; the photo never leaves the device.
+const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js";
+const DEPTH_MODEL = "onnx-community/depth-anything-v2-small";
+const VISION = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/vision_bundle.mjs";
+const VISION_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm";
+const SEG_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
+const SKIN_CLASS = 2;
+const RENDER_MAX = 1600, PROC_MAX = 640, PREVIEW_MAX = 900;
+
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const view = $("#view"), vctx = view.getContext("2d", { willReadFrequently: true });
+const overlay = $("#overlay"), octx = overlay.getContext("2d");
+
+const S = {
+  step: 1, photo: null, proc: null, // render-res and model-res canvases
+  disp: null, skin: null, height: null, pw: 0, ph: 0, // model-res maps
+  axis: 0, armPx: 0, // arm direction (rad) and width in render px
+  motifs: [], motif: null,
+  anchor: null, rot: 0, sizeCm: 10, view: "photo",
+  inked: null, mode: "healed", compare: 0.5, comparing: false,
+};
+
+/* ---------- UI helpers ---------- */
+function setStep(n) {
+  S.step = n;
+  document.querySelectorAll(".step").forEach(el => {
+    const k = +el.dataset.step; el.classList.toggle("on", k === n); el.classList.toggle("done", k < n);
+  });
+  $("#panelPlace").hidden = n !== 3; $("#panelDone").hidden = n !== 4;
+  $("#views").hidden = n < 3 && !S.disp;
+  $("#tagSize").hidden = n !== 3 || !S.motif;
+}
+function status(text, s = "busy") {
+  $("#status").hidden = !text; $("#statusText").textContent = text || ""; $("#status").dataset.s = s;
+}
+setStep(1);
+
+/* ---------- 1 · Photo ---------- */
+$("#pick").onclick = () => $("#photoInput").click();
+$("#newPhoto").onclick = () => $("#photoInput").click();
+$("#photoInput").onchange = e => e.target.files[0] && loadPhoto(e.target.files[0]);
+const stage = $("#stage");
+["dragenter", "dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); $("#drop").classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); $("#drop").classList.remove("over"); }));
+stage.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (!f) return; (S.step >= 3 ? loadMotif : loadPhoto)(f); });
+
+function scaled(img, max) {
+  const k = Math.min(1, max / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round((img.naturalWidth || img.width) * k); c.height = Math.round((img.naturalHeight || img.height) * k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+function loadPhoto(file) {
+  const img = new Image();
+  img.onload = () => {
+    S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX);
+    S.disp = S.skin = S.height = null; S.inked = null; S.anchor = null;
+    view.width = S.photo.width; view.height = S.photo.height;
+    $("#drop").hidden = true; $("#viewWrap").hidden = false;
+    fitOverlay(); S.view = "photo"; syncViews(); redraw();
+    analyse();
+  };
+  img.onerror = () => status("Bild nicht lesbar", "err");
+  img.src = URL.createObjectURL(file);
+}
+function fitOverlay() {
+  overlay.width = view.clientWidth * devicePixelRatio; overlay.height = view.clientHeight * devicePixelRatio;
+  overlay.style.width = view.clientWidth + "px"; overlay.style.height = view.clientHeight + "px";
+  overlay.style.left = view.offsetLeft + "px"; overlay.style.top = view.offsetTop + "px";
+}
+new ResizeObserver(() => { if (S.photo) { fitOverlay(); drawGizmo(); } }).observe(view);
+
+/* ---------- 2 · Analysis ---------- */
+let depthPipe = null, segmenter = null;
+async function getDepth() {
+  if (depthPipe) return depthPipe;
+  const { pipeline } = await import(TRANSFORMERS);
+  const gpu = !!navigator.gpu && !!(await navigator.gpu.requestAdapter?.().catch(() => null));
+  try { depthPipe = await pipeline("depth-estimation", DEPTH_MODEL, gpu ? { device: "webgpu", dtype: "fp16" } : { dtype: "q8" }); }
+  catch (e) { console.warn("WebGPU depth failed, using WASM", e); depthPipe = await pipeline("depth-estimation", DEPTH_MODEL, { dtype: "q8" }); }
+  return depthPipe;
+}
+async function getSegmenter() {
+  if (segmenter) return segmenter;
+  const { FilesetResolver, ImageSegmenter } = await import(VISION);
+  const fs = await FilesetResolver.forVisionTasks(VISION_WASM);
+  segmenter = await ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL }, runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: false });
+  return segmenter;
+}
+
+async function analyse() {
+  setStep(2); scanStart();
+  try {
+    status("Lädt Modelle …");
+    const [dp, seg] = await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]);
+    status("Tiefe …");
+    const url = await new Promise(r => S.proc.toBlob(b => r(URL.createObjectURL(b)), "image/jpeg", .92));
+    const out = await dp(url);
+    S.pw = S.proc.width; S.ph = S.proc.height;
+    S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph);
+    status("Haut …");
+    S.skin = seg ? skinMask(seg) : null;
+    if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
+    buildGeometry();
+    status("3D …");
+    await scanFinish();
+    status("");
+    S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
+    S.view = "photo"; syncViews(); setStep(3); redraw();
+    if (!S.motif) status("Motiv hochladen", "ok");
+  } catch (e) { console.error(e); scanStop(); status("Analyse fehlgeschlagen", "err"); }
+}
+
+function resizeTensor(t, w, h) {
+  const dims = t.dims, th = dims[dims.length - 2], tw = dims[dims.length - 1], d = t.data, out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const fx = clamp((x + .5) * tw / w - .5, 0, tw - 1.001), fy = clamp((y + .5) * th / h - .5, 0, th - 1.001);
+    const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * tw + x0;
+    out[y * w + x] = (d[i] * (1 - ax) + d[i + 1] * ax) * (1 - ay) + (d[i + tw] * (1 - ax) + d[i + tw + 1] * ax) * ay;
+  }
+  return out;
+}
+function skinMask(seg) {
+  const res = seg.segment(S.proc), cat = res.categoryMask, c = cat.getAsUint8Array(), m = new Float32Array(S.pw * S.ph);
+  const cw = cat.width, ch = cat.height;
+  for (let y = 0; y < S.ph; y++) for (let x = 0; x < S.pw; x++) {
+    const v = c[Math.min(ch - 1, (y * ch / S.ph) | 0) * cw + Math.min(cw - 1, (x * cw / S.pw) | 0)];
+    m[y * S.pw + x] = v === SKIN_CLASS ? 1 : 0;
+  }
+  cat.close(); res.close?.();
+  return blurField(m, S.pw, S.ph, 2);
+}
+// Fallback: the arm is usually the nearest large thing in the photo. Split near/far with Otsu's
+// threshold on the depth histogram, then keep only the region connected to the nearest point.
+function depthMask(d) {
+  const w = S.pw, h = S.ph;
+  let lo = Infinity, hi = -Infinity; for (const v of d) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const bins = 128, hist = new Float64Array(bins), bin = v => Math.min(bins - 1, ((v - lo) / (hi - lo || 1) * bins) | 0);
+  for (const v of d) hist[bin(v)]++;
+  let total = d.length, sum = 0; for (let i = 0; i < bins; i++) sum += i * hist[i];
+  let wB = 0, sB = 0, best = 0, thrBin = bins / 2;
+  for (let i = 0; i < bins; i++) {
+    wB += hist[i]; if (!wB || wB === total) continue; sB += i * hist[i];
+    const mB = sB / wB, mF = (sum - sB) / (total - wB), between = wB * (total - wB) * (mB - mF) ** 2;
+    if (between > best) { best = between; thrBin = i; }
+  }
+  const near = new Uint8Array(d.length); let seed = 0;
+  for (let i = 0; i < d.length; i++) { near[i] = bin(d[i]) > thrBin ? 1 : 0; if (d[i] > d[seed]) seed = i; }
+  const m = new Float32Array(d.length), stack = [seed]; m[seed] = 1;
+  while (stack.length) { // flood fill from the nearest pixel
+    const i = stack.pop(), x = i % w, y = (i / w) | 0;
+    for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1])
+      if (j >= 0 && near[j] && !m[j]) { m[j] = 1; stack.push(j); }
+  }
+  return blurField(m, w, h, 2);
+}
+const coverage = m => { let s = 0; for (let i = 0; i < m.length; i++) s += m[i] > .5; return s / m.length; };
+function blurField(a, w, h, r) { // separable box blur, two passes ~ gaussian
+  let src = a, tmp = new Float32Array(a.length), out = new Float32Array(a.length);
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < h; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += src[y * w + clamp(x, 0, w - 1)];
+      for (let x = 0; x < w; x++) { tmp[y * w + x] = acc / (2 * r + 1); acc += src[y * w + Math.min(w - 1, x + r + 1)] - src[y * w + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += tmp[clamp(y, 0, h - 1) * w + x];
+      for (let y = 0; y < h; y++) { out[y * w + x] = acc / (2 * r + 1); acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; } }
+    src = out; out = pass === 0 ? new Float32Array(a.length) : out;
+  }
+  return src;
+}
+
+// Height field: relative depth inside the skin, scaled so the arm's cross-section is about as deep
+// as it is wide (a forearm is roughly round). Arm axis and width come from the skin mask's PCA.
+function buildGeometry() {
+  const w = S.pw, h = S.ph, m = S.skin, d = S.disp;
+  let n = 0, mx = 0, my = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = m[y * w + x]; if (v > .5) { n++; mx += x; my += y; } }
+  mx /= n; my /= n;
+  let sxx = 0, syy = 0, sxy = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (m[y * w + x] > .5) { const dx = x - mx, dy = y - my; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; }
+  sxx /= n; syy /= n; sxy /= n;
+  const tr = sxx + syy, det = sxx * syy - sxy * sxy, l1 = tr / 2 + Math.sqrt(tr * tr / 4 - det), l2 = tr / 2 - Math.sqrt(tr * tr / 4 - det);
+  S.axis = Math.atan2(l1 - sxx, sxy || 1e-6); // direction of the largest spread = along the arm
+  const k = S.photo.width / w;
+  S.armPx = Math.sqrt(12 * Math.max(l2, 1)) * k; // a band of width W has variance W²/12 across it
+  S.armCenter = { x: mx * k, y: my * k };
+  // normalise disparity inside the skin (robust percentiles)
+  const vals = []; for (let i = 0; i < d.length; i++) if (m[i] > .5) vals.push(d[i]);
+  vals.sort((a, b) => a - b);
+  const lo = vals[(vals.length * .02) | 0], hi = vals[(vals.length * .98) | 0] || lo + 1;
+  const relief = 0.5 * S.armPx / k; // in model px
+  const H = new Float32Array(w * h);
+  for (let i = 0; i < H.length; i++) H[i] = clamp((d[i] - lo) / (hi - lo), 0, 1.2) * relief;
+  S.height = blurField(H, w, h, 1);
+}
+// Height in render px at a render-px position (bilinear from the model-res field)
+function heightAt(x, y) {
+  const k = S.pw / S.photo.width, fx = clamp(x * k, 0, S.pw - 1.001), fy = clamp(y * k, 0, S.ph - 1.001);
+  const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * S.pw + x0, H = S.height, w = S.pw;
+  return ((H[i] * (1 - ax) + H[i + 1] * ax) * (1 - ay) + (H[i + w] * (1 - ax) + H[i + w + 1] * ax) * ay) / k;
+}
+function skinAt(x, y) {
+  const k = S.pw / S.photo.width, xi = clamp((x * k) | 0, 0, S.pw - 1), yi = clamp((y * k) | 0, 0, S.ph - 1);
+  return S.skin[yi * S.pw + xi];
+}
+
+/* ---------- scan animation (analysis feedback) ---------- */
+let scanRaf = 0, scanT0 = 0, scanDone = null;
+function scanStart() { scanT0 = performance.now(); cancelAnimationFrame(scanRaf); const loop = t => { if (drawScan(t)) scanRaf = requestAnimationFrame(loop); }; scanRaf = requestAnimationFrame(loop); }
+function scanStop() { cancelAnimationFrame(scanRaf); scanDone = null; octx.clearRect(0, 0, overlay.width, overlay.height); }
+function scanFinish() { return new Promise(r => { scanDone = { t0: performance.now(), r }; }); }
+function drawScan(t) {
+  const W = overlay.width, H = overlay.height; octx.clearRect(0, 0, W, H);
+  if (scanDone) { // reveal the mesh once, then hand over
+    const p = (t - scanDone.t0) / 1400;
+    drawMesh(octx, W, H, clamp(p * 1.3, 0, 1), 1 - clamp((p - .8) * 5, 0, 1));
+    if (p > 1) { octx.clearRect(0, 0, W, H); const r = scanDone.r; scanDone = null; r(); return false; }
+    return true;
+  }
+  const y = ((t - scanT0) / 1600 % 1) * H;
+  const g = octx.createLinearGradient(0, y - 60 * devicePixelRatio, 0, y);
+  g.addColorStop(0, "rgba(217,255,74,0)"); g.addColorStop(1, "rgba(217,255,74,.28)");
+  octx.fillStyle = g; octx.fillRect(0, y - 60 * devicePixelRatio, W, 60 * devicePixelRatio);
+  octx.fillStyle = "#d9ff4a"; octx.fillRect(0, y, W, 1.5 * devicePixelRatio);
+  return true; // keep scanning until scanFinish()
+}
+// Contour mesh of the height field: lines along and across the arm, shaded by surface slope
+function drawMesh(ctx, W, H, reveal, alpha) {
+  if (!S.height) return;
+  const sx = W / S.photo.width, sy = H / S.photo.height, ca = Math.cos(S.axis), sa = Math.sin(S.axis);
+  const L = Math.hypot(S.photo.width, S.photo.height), step = Math.max(10, S.armPx / 10);
+  ctx.save(); ctx.globalAlpha = alpha; ctx.lineWidth = devicePixelRatio;
+  for (const across of [false, true]) {
+    for (let o = -L; o <= L; o += step) {
+      ctx.beginPath(); let pen = false;
+      for (let s = -L; s <= L; s += 6) {
+        const u = across ? o : s, v = across ? s : o; // u along the arm, v across
+        const x = S.armCenter.x + u * ca - v * sa, y = S.armCenter.y + u * sa + v * ca;
+        if (x < 0 || y < 0 || x >= S.photo.width || y >= S.photo.height || skinAt(x, y) < .5 || y / S.photo.height > reveal) { pen = false; continue; }
+        const lift = heightAt(x, y) * .25; // draw the surface slightly "lifted" so the relief reads as 3D
+        const px = x * sx, py = (y - lift) * sy;
+        if (pen) ctx.lineTo(px, py); else { ctx.moveTo(px, py); pen = true; }
+      }
+      ctx.strokeStyle = across ? "rgba(217,255,74,.55)" : "rgba(255,255,255,.35)"; ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+/* ---------- views ---------- */
+document.querySelectorAll("#views button").forEach(b => b.onclick = () => { S.view = b.dataset.view; syncViews(); redraw(); });
+function syncViews() { document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === S.view)); $("#views").hidden = !S.disp; }
+let depthCanvas = null;
+function depthImage() {
+  if (depthCanvas) return depthCanvas;
+  const c = document.createElement("canvas"); c.width = S.pw; c.height = S.ph;
+  const g = c.getContext("2d"), img = g.createImageData(S.pw, S.ph);
+  let lo = Infinity, hi = -Infinity; for (const v of S.disp) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  for (let i = 0; i < S.disp.length; i++) {
+    const v = (S.disp[i] - lo) / (hi - lo || 1), sk = S.skin[i];
+    img.data[i * 4] = 40 + v * (217 - 40) * (.4 + .6 * sk); img.data[i * 4 + 1] = 40 + v * (255 - 40) * (.4 + .6 * sk);
+    img.data[i * 4 + 2] = 40 + v * (74 - 40) * sk + v * 120 * (1 - sk); img.data[i * 4 + 3] = 255;
+  }
+  g.putImageData(img, 0, 0); return (depthCanvas = c);
+}
+
+/* ---------- 3 · Motif ---------- */
+$("#addMotif").onclick = () => $("#motifInput").click();
+$("#motifInput").onchange = e => e.target.files[0] && loadMotif(e.target.files[0]);
+function loadMotif(file) {
+  const img = new Image();
+  img.onload = () => {
+    const c = scaled(img, 1024), g = c.getContext("2d"), d = g.getImageData(0, 0, c.width, c.height);
+    // No transparency (a photo/scan of a flash)? Treat paper as transparent: ink = darkness.
+    let opaque = true; for (let i = 3; i < d.data.length; i += 16) if (d.data[i] < 250) { opaque = false; break; }
+    if (opaque) {
+      for (let i = 0; i < d.data.length; i += 4) {
+        const r = d.data[i], gg = d.data[i + 1], b = d.data[i + 2], a0 = 1 - Math.min(r, gg, b) / 255, a = clamp((a0 - .12) / .88 * 1.3, 0, 1);
+        if (a <= 0) { d.data[i + 3] = 0; continue; }
+        const inv = 1 - a0, q = 255 / Math.max(a0, .05);
+        d.data[i] = clamp((r / 255 - inv) * q, 0, 255); d.data[i + 1] = clamp((gg / 255 - inv) * q, 0, 255); d.data[i + 2] = clamp((b / 255 - inv) * q, 0, 255); d.data[i + 3] = a * 255;
+      }
+      g.putImageData(d, 0, 0);
+    }
+    const m = { id: Date.now(), canvas: c, data: g.getImageData(0, 0, c.width, c.height), url: c.toDataURL() };
+    S.motifs.push(m); selectMotif(m);
+  };
+  img.src = URL.createObjectURL(file);
+}
+function selectMotif(m) {
+  S.motif = m; S.inked = null; renderThumbs(); $("#ink").disabled = false; status(""); setStep(3); schedule();
+}
+function renderThumbs() {
+  const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
+  S.motifs.forEach(m => {
+    const b = document.createElement("button"); b.className = "thumb"; b.setAttribute("aria-pressed", m === S.motif);
+    b.innerHTML = `<img alt="" src="${m.url}">`; b.onclick = () => selectMotif(m); box.appendChild(b);
+  });
+}
+$("#armCm").oninput = () => schedule();
+
+/* ---------- surface-true mapping ---------- */
+// For every pixel near the anchor we need tattoo coordinates (u, v) measured as arc length over the
+// skin surface, not over the flat photo. In the tattoo's own frame (e1 = its x-axis, e2 = its y-axis,
+// both rotated in the image) we integrate sqrt(1 + dh²) along rows for u and along columns for v.
+// Where the arm curves away from the camera the arc length grows faster than the image distance,
+// so the motif compresses exactly like a real tattoo seen at an angle.
+function pxPerCm() { return S.armPx / clamp(+$("#armCm").value || 7.5, 4, 20); }
+function motifSizePx(k) { const m = S.motif.canvas, hpx = S.sizeCm * pxPerCm() * k; return { w: hpx * m.width / m.height, h: hpx }; }
+function warp(k) { // k = output px per render px
+  const outW = Math.round(S.photo.width * k), outH = Math.round(S.photo.height * k);
+  const { w: Wpx, h: Hpx } = motifSizePx(k), th = S.rot * Math.PI / 180;
+  const e1 = { x: Math.cos(th), y: Math.sin(th) }, e2 = { x: -Math.sin(th), y: Math.cos(th) };
+  const P = { x: S.anchor.x * k, y: S.anchor.y * k }, R = Math.ceil(Math.hypot(Wpx, Hpx) * .75), N = 2 * R + 1;
+  const hk = (x, y) => heightAt(x / k, y / k) * k;
+  const U = new Float32Array(N * N), V = new Float32Array(N * N);
+  for (let bi = 0; bi < N; bi++) { // u: along e1, row by row
+    const b = bi - R, bx = P.x + b * e2.x, by = P.y + b * e2.y, row = bi * N;
+    for (const dir of [1, -1]) {
+      let prev = hk(bx, by), acc = 0;
+      for (let a = 1; a <= R; a++) { const x = bx + dir * a * e1.x, y = by + dir * a * e1.y, hh = hk(x, y); acc += Math.sqrt(1 + (hh - prev) ** 2); prev = hh; U[row + R + dir * a] = dir * acc; }
+    }
+  }
+  for (let ai = 0; ai < N; ai++) { // v: along e2, column by column
+    const a = ai - R, ax = P.x + a * e1.x, ay = P.y + a * e1.y;
+    for (const dir of [1, -1]) {
+      let prev = hk(ax, ay), acc = 0;
+      for (let b = 1; b <= R; b++) { const x = ax + dir * b * e2.x, y = ay + dir * b * e2.y, hh = hk(x, y); acc += Math.sqrt(1 + (hh - prev) ** 2); prev = hh; V[(R + dir * b) * N + ai] = dir * acc; }
+    }
+  }
+  const md = S.motif.data, mw = md.width, mh = md.height, src = md.data;
+  const x0 = Math.max(0, Math.floor(P.x - R)), x1 = Math.min(outW - 1, Math.ceil(P.x + R)), y0 = Math.max(0, Math.floor(P.y - R)), y1 = Math.min(outH - 1, Math.ceil(P.y + R));
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, out = new Uint8ClampedArray(bw * bh * 4);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const dx = x - P.x, dy = y - P.y, a = dx * e1.x + dy * e1.y, b = dx * e2.x + dy * e2.y;
+    const ai = Math.round(a) + R, bi = Math.round(b) + R;
+    if (ai < 0 || bi < 0 || ai >= N || bi >= N) continue;
+    const u = U[bi * N + ai] / Wpx + .5, v = V[bi * N + ai] / Hpx + .5;
+    if (u < 0 || v < 0 || u >= 1 || v >= 1) continue;
+    const fx = u * (mw - 1), fy = v * (mh - 1), mx = fx | 0, my = fy | 0, tx = fx - mx, ty = fy - my;
+    const i00 = (my * mw + mx) * 4, i10 = i00 + 4, i01 = i00 + mw * 4, i11 = i01 + 4, o = ((y - y0) * bw + (x - x0)) * 4;
+    const sk = skinAt(x / k, y / k);
+    for (let c = 0; c < 4; c++) {
+      let val = (src[i00 + c] * (1 - tx) + src[Math.min(i10, src.length - 4) + c] * tx) * (1 - ty) + (src[Math.min(i01, src.length - 4) + c] * (1 - tx) + src[Math.min(i11, src.length - 4) + c] * tx) * ty;
+      out[o + c] = c === 3 ? val * clamp(sk * 1.4 - .2, 0, 1) : val;
+    }
+  }
+  return { x0, y0, w: bw, h: bh, data: out };
+}
+
+/* ---------- drawing ---------- */
+let dirty = false;
+function schedule() { if (!dirty) { dirty = true; requestAnimationFrame(() => { dirty = false; redraw(); }); } }
+function redraw() {
+  if (!S.photo) return;
+  vctx.globalCompositeOperation = "source-over"; vctx.globalAlpha = 1;
+  if (S.step === 4 && S.inked) {
+    vctx.drawImage(S.inked, 0, 0);
+    if (S.comparing) { const cx = S.compare * view.width; vctx.save(); vctx.beginPath(); vctx.rect(0, 0, cx, view.height); vctx.clip(); vctx.drawImage(S.photo, 0, 0); vctx.restore(); }
+  } else if (S.view === "depth" && S.disp) {
+    vctx.drawImage(depthImage(), 0, 0, view.width, view.height);
+  } else {
+    vctx.drawImage(S.photo, 0, 0);
+    if (S.view === "mesh" && S.height) drawMesh(vctx, view.width, view.height, 1, 1);
+    if (S.step === 3 && S.motif && S.anchor) previewTattoo();
+  }
+  drawGizmo();
+}
+function previewTattoo() {
+  const k = Math.min(1, PREVIEW_MAX / Math.max(S.photo.width, S.photo.height));
+  const L = warp(k), c = document.createElement("canvas"); c.width = L.w; c.height = L.h;
+  c.getContext("2d").putImageData(new ImageData(L.data, L.w, L.h), 0, 0);
+  vctx.save(); vctx.imageSmoothingQuality = "high";
+  vctx.globalCompositeOperation = "multiply"; vctx.globalAlpha = .92;
+  vctx.drawImage(c, L.x0 / k, L.y0 / k, L.w / k, L.h / k);
+  vctx.restore();
+  const { w, h } = motifSizePx(1);
+  $("#tagSize").hidden = false; $("#tagSize").textContent = `${(w / pxPerCm()).toFixed(0)} × ${(h / pxPerCm()).toFixed(0)} cm · ${Math.round(((S.rot % 360) + 540) % 360 - 180)}°`;
+}
+
+/* ---------- gizmo: drag to move, grip on the ring to rotate + scale ---------- */
+function toOverlay(p) { return { x: p.x * overlay.width / view.width, y: p.y * overlay.height / view.height }; }
+function ringR() { return Math.max(24, motifSizePx(1).h * .55) * overlay.width / view.width; }
+function knobPos() { const c = toOverlay(S.anchor), r = ringR(), a = S.rot * Math.PI / 180; return { x: c.x + Math.sin(a) * r, y: c.y - Math.cos(a) * r }; }
+function drawGizmo() {
+  octx.clearRect(0, 0, overlay.width, overlay.height);
+  if (S.step !== 3 || !S.anchor || !S.motif) return;
+  const c = toOverlay(S.anchor), r = ringR(), k = knobPos(), dp = devicePixelRatio;
+  octx.save();
+  octx.fillStyle = "rgba(255,255,255,.10)"; octx.strokeStyle = "rgba(255,255,255,.7)"; octx.lineWidth = 1.5 * dp;
+  octx.beginPath(); octx.arc(c.x, c.y, r, 0, 7); octx.fill(); octx.stroke();
+  octx.fillStyle = "#d9ff4a"; octx.shadowColor = "rgba(217,255,74,.7)"; octx.shadowBlur = 8 * dp;
+  octx.beginPath(); octx.arc(c.x, c.y, 6 * dp, 0, 7); octx.fill();
+  octx.shadowBlur = 0; octx.fillStyle = "#fff"; octx.beginPath(); octx.arc(k.x, k.y, 13 * dp, 0, 7); octx.fill();
+  octx.strokeStyle = "#161616"; octx.lineWidth = 2 * dp; octx.beginPath(); octx.arc(k.x, k.y, 6 * dp, -2.2, 2); octx.stroke();
+  octx.restore();
+}
+const toRender = e => { const b = view.getBoundingClientRect(); return { x: (e.clientX - b.left) * view.width / b.width, y: (e.clientY - b.top) * view.height / b.height }; };
+let drag = null;
+view.addEventListener("pointerdown", e => {
+  if (S.step === 4 && S.comparing) return;
+  if (S.step !== 3 || !S.motif) return;
+  view.setPointerCapture(e.pointerId);
+  const p = toRender(e), k = knobPos(), po = toOverlay(p);
+  if (Math.hypot(po.x - k.x, po.y - k.y) < 22 * devicePixelRatio) drag = { mode: "knob" };
+  else drag = { mode: "move", dx: S.anchor.x - p.x, dy: S.anchor.y - p.y };
+});
+view.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const p = toRender(e);
+  if (drag.mode === "move") S.anchor = { x: clamp(p.x + drag.dx, 0, view.width), y: clamp(p.y + drag.dy, 0, view.height) };
+  else {
+    const dx = p.x - S.anchor.x, dy = p.y - S.anchor.y;
+    let a = Math.atan2(dx, -dy) * 180 / Math.PI; for (const s of [-180, -90, 0, 90, 180]) if (Math.abs(a - s) < 4) a = s;
+    S.rot = a; S.sizeCm = clamp(Math.hypot(dx, dy) / .55 / pxPerCm(), 2, 40);
+  }
+  schedule();
+});
+["pointerup", "pointercancel"].forEach(ev => view.addEventListener(ev, () => drag = null));
+view.addEventListener("wheel", e => {
+  if (S.step !== 3 || !S.motif) return; e.preventDefault();
+  if (e.shiftKey) S.rot += (e.deltaY || e.deltaX) * .15; else S.sizeCm = clamp(S.sizeCm * Math.exp(-e.deltaY * .0015), 2, 40);
+  schedule();
+}, { passive: false });
+
+/* ---------- 4 · Stechen: ink under the skin ---------- */
+// Ink sits in the dermis, below the epidermis: it darkens the skin like a filter (multiply), its colours
+// are muted and shifted slightly cool, its edges are a touch diffuse, and the skin's own texture and
+// highlights stay on top of it. "Frisch" adds a light redness halo and a little sheen.
+function inkColour(r, g, b) {
+  const l = .299 * r + .587 * g + .114 * b, sat = .82;
+  let R = l + (r - l) * sat, G = l + (g - l) * sat, B = l + (b - l) * sat;
+  R = R * .9 + 8; G = G * .93 + 10; B = B * .97 + 14; // black reads blue-black, colours slightly cool
+  return [R / 255, G / 255, B / 255];
+}
+async function stechen() {
+  if (!S.motif || !S.anchor) return;
+  setStep(4); status("Sticht …"); drawGizmo();
+  const L = warp(1), W = view.width, H = view.height;
+  const pad = 14, x0 = Math.max(0, L.x0 - pad), y0 = Math.max(0, L.y0 - pad), x1 = Math.min(W, L.x0 + L.w + pad), y1 = Math.min(H, L.y0 + L.h + pad), bw = x1 - x0, bh = y1 - y0;
+  const skinImg = S.photo.getContext("2d").getImageData(x0, y0, bw, bh), sd = skinImg.data;
+  const n = bw * bh, alpha = new Float32Array(n), col = new Float32Array(n * 3);
+  for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
+    const i = (y * L.w + x) * 4, j = (y + L.y0 - y0) * bw + (x + L.x0 - x0), a = L.data[i + 3] / 255;
+    if (a <= 0) continue;
+    alpha[j] = a; const c = inkColour(L.data[i], L.data[i + 1], L.data[i + 2]); col[j * 3] = c[0]; col[j * 3 + 1] = c[1]; col[j * 3 + 2] = c[2];
+  }
+  const fresh = S.mode === "fresh", soft = Math.max(1, Math.round(W / 1400));
+  const aSoft = blurField(alpha, bw, bh, fresh ? soft : soft + 1); // diffuse edges (healed lines spread a bit)
+  const halo = fresh ? blurField(alpha, bw, bh, Math.round(W / 160)) : null; // redness around fresh lines
+  const lum = new Float32Array(n); for (let j = 0; j < n; j++) lum[j] = (.299 * sd[j * 4] + .587 * sd[j * 4 + 1] + .114 * sd[j * 4 + 2]) / 255;
+  const lumBlur = blurField(lum, bw, bh, Math.max(2, Math.round(W / 400)));
+  const density = fresh ? .95 : .86;
+  // colours bleed a little more than the alpha edge, so blur them where ink is
+  const cr = blurField(col.filter((_, i) => i % 3 === 0), bw, bh, soft), cg = blurField(col.filter((_, i) => i % 3 === 1), bw, bh, soft), cb = blurField(col.filter((_, i) => i % 3 === 2), bw, bh, soft);
+  for (let j = 0; j < n; j++) {
+    let R = sd[j * 4] / 255, G = sd[j * 4 + 1] / 255, B = sd[j * 4 + 2] / 255;
+    if (halo && halo[j] > .01) { const h = clamp(halo[j] * 1.6, 0, 1) * .32 * (1 - aSoft[j] * .5); G *= 1 - h * .45; B *= 1 - h * .5; R *= 1 + h * .04; }
+    const a = clamp(aSoft[j], 0, 1) * density * (1 - .06 * hash(j));
+    if (a > .002) {
+      const ci = alpha[j] > .05 ? 1 : 0, ir = ci ? col[j * 3] : cr[j] / Math.max(aSoft[j], .05), ig = ci ? col[j * 3 + 1] : cg[j] / Math.max(aSoft[j], .05), ib = ci ? col[j * 3 + 2] : cb[j] / Math.max(aSoft[j], .05);
+      const tR = 1 - a + a * clamp(ir, 0, 1), tG = 1 - a + a * clamp(ig, 0, 1), tB = 1 - a + a * clamp(ib, 0, 1);
+      const detail = (lum[j] - lumBlur[j]); // pores, hair, fine shading stay visible through the ink
+      const spec = Math.max(0, lum[j] - lumBlur[j] - .04) * 1.8 + (fresh ? .035 * a : 0); // highlights sit on top
+      R = R * tR + detail * a * .55 + spec; G = G * tG + detail * a * .55 + spec; B = B * tB + detail * a * .55 + spec;
+    }
+    sd[j * 4] = clamp(R * 255, 0, 255); sd[j * 4 + 1] = clamp(G * 255, 0, 255); sd[j * 4 + 2] = clamp(B * 255, 0, 255);
+  }
+  const res = document.createElement("canvas"); res.width = W; res.height = H;
+  const rg = res.getContext("2d"); rg.drawImage(S.photo, 0, 0); rg.putImageData(skinImg, x0, y0);
+  await needleReveal(res, { x0, y0, w: bw, h: bh });
+  S.inked = res; status(fresh ? "Frisch gestochen" : "Verheilt", "ok"); redraw();
+}
+function hash(i) { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math.floor(s); }
+// The needle travels over the motif in quick strokes while the ink appears behind it
+function needleReveal(res, box) {
+  return new Promise(resolve => {
+    const nd = $("#needle"), b = view.getBoundingClientRect(), wrap = $("#viewWrap").getBoundingClientRect();
+    const sx = b.width / view.width, sy = b.height / view.height, rows = 9, T = 1600, t0 = performance.now();
+    nd.hidden = false;
+    const step = t => {
+      const p = clamp((t - t0) / T, 0, 1), row = Math.min(rows - 1, Math.floor(p * rows)), rp = p * rows - row;
+      const yTop = box.y0 + box.h * row / rows, yBot = box.y0 + box.h * (row + 1) / rows;
+      const xNeedle = box.x0 + box.w * (row % 2 ? 1 - rp : rp);
+      vctx.drawImage(S.photo, 0, 0);
+      vctx.save(); vctx.beginPath(); vctx.rect(box.x0, box.y0, box.w, yTop - box.y0); vctx.rect(row % 2 ? xNeedle : box.x0, yTop, row % 2 ? box.x0 + box.w - xNeedle : xNeedle - box.x0, yBot - yTop); vctx.clip(); vctx.drawImage(res, 0, 0); vctx.restore();
+      nd.style.left = (b.left - wrap.left + xNeedle * sx) + "px"; nd.style.top = (b.top - wrap.top + (yTop + yBot) / 2 * sy + Math.sin(t / 18) * 2) + "px";
+      if (p < 1) requestAnimationFrame(step); else { nd.hidden = true; resolve(); }
+    };
+    requestAnimationFrame(step);
+  });
+}
+$("#ink").onclick = stechen;
+$("#edit").onclick = () => { S.inked = null; S.comparing = false; $("#compare").hidden = true; setStep(3); status(""); redraw(); };
+$("#fresh").onclick = () => setMode("fresh"); $("#healed").onclick = () => setMode("healed");
+function setMode(m) { S.mode = m; $("#fresh").setAttribute("aria-pressed", m === "fresh"); $("#healed").setAttribute("aria-pressed", m === "healed"); if (S.step === 4) stechen(); }
+$("#cmp").onclick = () => {
+  S.comparing = !S.comparing; $("#cmp").setAttribute("aria-pressed", S.comparing); $("#compare").hidden = !S.comparing; placeCompare(); redraw();
+};
+function placeCompare() { const c = $("#compare"); c.style.left = (view.offsetLeft + S.compare * view.clientWidth) + "px"; c.style.top = view.offsetTop + "px"; c.style.height = view.clientHeight + "px"; }
+$("#compare").addEventListener("pointerdown", e => {
+  const c = $("#compare"); c.setPointerCapture(e.pointerId);
+  const mv = ev => { const b = view.getBoundingClientRect(); S.compare = clamp((ev.clientX - b.left) / b.width, 0, 1); placeCompare(); redraw(); };
+  const up = () => { c.removeEventListener("pointermove", mv); c.removeEventListener("pointerup", up); };
+  c.addEventListener("pointermove", mv); c.addEventListener("pointerup", up);
+});
+$("#save").onclick = () => S.inked?.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "tattoo-vorschau.png"; a.click(); }, "image/png");
+
+window.__studio = { S, loadPhoto, loadMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep };
+</script>
+</body>
+</html>
