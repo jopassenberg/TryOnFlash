@@ -92,8 +92,24 @@
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,.5); cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
 
+  .age { display: inline-flex; align-items: center; gap: 10px; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--cam-2); font-size: 12px; color: rgba(255,255,255,.5); }
+  .age b { font-weight: 300; color: #fff; min-width: 96px; font-size: 12.5px; }
+  .age input { -webkit-appearance: none; appearance: none; width: 150px; height: 2px; border-radius: 2px; background: rgba(255,255,255,.25); margin: 0; }
+  .age input::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); cursor: grab; }
+  .age input::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+
+  .cut { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: rgba(12,12,12,.42);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: fadein .25s ease; }
+  @keyframes fadein { from { opacity: 0; } }
+  .cutbox { width: min(940px, 100%); }
+  .cutstage { position: relative; overflow: hidden; background: #111; --r-lg: 22px; display: grid; place-items: center; min-height: 280px; }
+  #cutCanvas { display: block; max-width: 100%; max-height: 70vh; touch-action: none; cursor: crosshair; }
+  .cutstage .status { pointer-events: none; }
+
   @media (max-width: 680px) {
     .shell { padding: 12px; }
+    .age input { width: 100px; }
+    .age b { min-width: 0; }
     .steps .step span { display: none; }
     .step { padding: 0 8px; }
     .stage { min-height: 300px; }
@@ -143,8 +159,7 @@
     </div>
 
     <div class="panel" id="panelDone" hidden>
-      <button class="chip" id="fresh" aria-pressed="false">Frisch</button>
-      <button class="chip" id="healed" aria-pressed="true">Verheilt</button>
+      <label class="age"><span>Frisch</span><input type="range" id="age" min="0" max="100" value="40" aria-label="Alter des Tattoos"><span>Alt</span><b id="ageLabel">Verheilt</b></label>
       <button class="chip" id="cmp" aria-pressed="false">Vergleich</button>
       <span class="grow"></span>
       <button class="btn ghost" id="edit">Bearbeiten</button>
@@ -152,6 +167,21 @@
       <button class="btn white" id="save">Speichern</button>
     </div>
   </main>
+  <div class="cut" id="cut" hidden>
+    <div class="frame sq cutbox">
+      <div class="cutstage sq">
+        <canvas id="cutCanvas"></canvas>
+        <div class="status" data-s="ok"><span class="dot"></span><span id="cutHint">Tattoo umfahren</span></div>
+      </div>
+      <div class="panel">
+        <button class="chip" id="cutBg" aria-pressed="true">Hintergrund entfernen</button>
+        <button class="chip" id="cutAll">Ganzes Bild</button>
+        <span class="grow"></span>
+        <button class="btn ghost" id="cutCancel">Abbrechen</button>
+        <button class="btn lime" id="cutOk">Übernehmen</button>
+      </div>
+    </div>
+  </div>
   <input type="file" id="photoInput" accept="image/*" hidden>
   <input type="file" id="motifInput" accept="image/*" hidden>
 </div>
@@ -165,7 +195,10 @@ const VISION = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/visio
 const VISION_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm";
 const SEG_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 const SKIN_CLASS = 2;
-const RENDER_MAX = 1600, PROC_MAX = 640, PREVIEW_MAX = 900;
+// render = output image, proc = segmenter input, geo = depth input and resolution of the 3D surface
+const RENDER_MAX = 1600, PROC_MAX = 640, GEO_MAX = 1024, PREVIEW_MAX = 900;
+// Depth model input side: the GPU gets ~1.6x the model's default 518 px for finer relief
+const DEPTH_SIDE = { webgpu: 812, wasm: 518 };
 
 const $ = s => document.querySelector(s);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -173,12 +206,13 @@ const view = $("#view"), vctx = view.getContext("2d", { willReadFrequently: true
 const overlay = $("#overlay"), octx = overlay.getContext("2d");
 
 const S = {
-  step: 1, photo: null, proc: null, // render-res and model-res canvases
-  disp: null, skin: null, height: null, pw: 0, ph: 0, // model-res maps
+  step: 1, photo: null, proc: null, geo: null, // render-res, segmenter-res and geometry-res canvases
+  disp: null, dispN: null, skin: null, height: null, relief: null, lum: null, nrm: null, nrmF: null, pw: 0, ph: 0, // geo-res maps
+  light: [-.35, -.55, .76], mesh: null, ink: null, age: .4,
   axis: 0, armPx: 0, // arm direction (rad) and width in render px
   motifs: [], motif: null,
   anchor: null, rot: 0, sizeCm: 10, view: "photo",
-  inked: null, local: null, ai: null, inkBox: null, inkAlpha: null, mode: "healed", compare: 0.5, comparing: false,
+  inked: null, local: null, ai: null, inkBox: null, inkAlpha: null, compare: 0.5, comparing: false,
 };
 
 /* ---------- UI helpers ---------- */
@@ -215,8 +249,8 @@ function scaled(img, max) {
 function loadPhoto(file) {
   const img = new Image();
   img.onload = () => {
-    S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX);
-    S.disp = S.skin = S.height = null; S.inked = null; S.anchor = null;
+    S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
+    S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = null; S.inked = null; S.anchor = null; depthCanvas = null;
     view.width = S.photo.width; view.height = S.photo.height;
     $("#drop").hidden = true; $("#viewWrap").hidden = false;
     fitOverlay(); S.view = "photo"; syncViews(); redraw();
@@ -242,7 +276,21 @@ async function makeDepth(device) {
   // cross-domain download redirect. Local dev servers have no worker, so they load from Hugging Face.
   if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) env.remoteHost = location.origin + "/hf/";
   depthDevice = device;
-  return pipeline("depth-estimation", DEPTH_MODEL, device === "webgpu" ? { device: "webgpu", dtype: "fp16" } : { dtype: "q8" });
+  const opts = device === "webgpu" ? { device: "webgpu", dtype: "fp16" } : { dtype: "q8" };
+  return pipeline("depth-estimation", DEPTH_MODEL, { ...opts, progress_callback: onProgress });
+}
+// Download progress over all model files, shown in the status pill on the first visit
+const loadProg = {};
+function onProgress(p) {
+  if (p.status !== "progress" || !p.total) return;
+  loadProg[p.file] = [p.loaded, p.total];
+  let a = 0, b = 0; for (const [l, t] of Object.values(loadProg)) { a += l; b += t; }
+  if (S.step === 2 && b > 1e6 && a < b) status(`Lädt Modell ${Math.round(a / b * 100)} %`);
+}
+function sizeDepth(dp) {
+  const ip = dp.processor?.image_processor, s = DEPTH_SIDE[depthDevice] || 518;
+  if (ip?.size) ip.size = { width: s, height: s };
+  return dp;
 }
 async function getDepth() {
   if (depthPipe) return depthPipe;
@@ -254,13 +302,13 @@ async function getDepth() {
 }
 // The photo is handed over as pixels (no blob URL round trip, which some browsers refuse to fetch)
 async function runDepth(canvas) {
-  const dp = await getDepth(), { RawImage } = await import(TRANSFORMERS);
+  const dp = sizeDepth(await getDepth()), { RawImage } = await import(TRANSFORMERS);
   const input = RawImage.fromCanvas ? RawImage.fromCanvas(canvas) : await new Promise(r => canvas.toBlob(b => r(URL.createObjectURL(b)), "image/jpeg", .92));
   try { return await dp(input); }
   catch (e) {
     if (depthDevice !== "webgpu") throw e;
     console.warn("WebGPU depth failed while running, retrying on CPU", e);
-    depthPipe = await makeDepth("wasm");
+    depthPipe = sizeDepth(await makeDepth("wasm"));
     return depthPipe(input);
   }
 }
@@ -294,15 +342,15 @@ async function analyse() {
     status("Lädt Modelle …");
     const [, seg] = await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]);
     status("Tiefe …"); stage = "Tiefe berechnen";
-    const out = await runDepth(S.proc);
+    const out = await runDepth(S.geo);
     stage = "Haut erkennen";
-    S.pw = S.proc.width; S.ph = S.proc.height;
-    S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph);
+    S.pw = S.geo.width; S.ph = S.geo.height;
+    S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph); S.dispN = normalised(S.disp); // the point cloud shows from here
     status("Haut …");
-    S.skin = seg ? skinMask(seg) : null;
+    await frame(); S.skin = seg ? skinMask(seg) : null;
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
-    stage = "3D-Modell"; buildGeometry();
-    status("3D …");
+    stage = "3D-Modell"; status("3D-Modell …");
+    await frame(); refineDepth(); buildGeometry(); buildMesh();
     await scanFinish();
     status("");
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
@@ -395,7 +443,70 @@ function buildGeometry() {
   const relief = 0.5 * S.armPx / k; // in model px
   const H = new Float32Array(w * h);
   for (let i = 0; i < H.length; i++) H[i] = clamp((d[i] - lo) / (hi - lo), 0, 1.2) * relief;
-  S.height = blurField(H, w, h, 1);
+  S.height = blurField(H, w, h, 1); // smooth surface: used for mapping the motif
+  // Fine relief for display and lighting: skin micro texture (pores, folds, veins) as tiny bumps,
+  // darker = slightly deeper. Kept out of S.height so it cannot wobble the motif.
+  const lb = blurField(S.lum, w, h, 3), F = new Float32Array(w * h), amp = relief * .3;
+  for (let i = 0; i < F.length; i++) F[i] = S.height[i] + (S.lum[i] - lb[i]) * amp * clamp(m[i] * 1.5 - .25, 0, 1);
+  S.relief = F;
+  S.nrm = normals(S.height, w, h); S.nrmF = normals(F, w, h);
+  S.light = estimateLight();
+}
+const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+function normalised(a) {
+  let lo = Infinity, hi = -Infinity; for (const v of a) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  const o = new Float32Array(a.length), k = 1 / (hi - lo || 1); for (let i = 0; i < a.length; i++) o[i] = (a[i] - lo) * k;
+  return o;
+}
+// Guided filter (He et al.): sharpens the depth map along the photo's real edges and recovers
+// detail the depth model smoothed away, without inventing structure where the photo is flat.
+function refineDepth() {
+  const w = S.pw, h = S.ph, n = w * h, px = S.geo.getContext("2d").getImageData(0, 0, w, h).data;
+  const I = new Float32Array(n); for (let i = 0; i < n; i++) I[i] = (.299 * px[i * 4] + .587 * px[i * 4 + 1] + .114 * px[i * 4 + 2]) / 255;
+  S.lum = I;
+  const p = S.dispN, r = Math.max(3, Math.round(w / 170)), eps = .0015;
+  const II = new Float32Array(n), IP = new Float32Array(n); for (let i = 0; i < n; i++) { II[i] = I[i] * I[i]; IP[i] = I[i] * p[i]; }
+  const mI = blurField(I, w, h, r), mP = blurField(p, w, h, r), mII = blurField(II, w, h, r), mIP = blurField(IP, w, h, r);
+  const A = new Float32Array(n), B = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const va = mII[i] - mI[i] * mI[i]; A[i] = (mIP[i] - mI[i] * mP[i]) / (va + eps); B[i] = mP[i] - A[i] * mI[i]; }
+  const mA = blurField(A, w, h, r), mB = blurField(B, w, h, r), q = new Float32Array(n);
+  for (let i = 0; i < n; i++) q[i] = mA[i] * I[i] + mB[i];
+  S.disp = q;
+}
+function normals(Hf, w, h) {
+  const N = new Float32Array(w * h * 3);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, gx = (Hf[y * w + Math.min(w - 1, x + 1)] - Hf[y * w + Math.max(0, x - 1)]) / 2, gy = (Hf[Math.min(h - 1, y + 1) * w + x] - Hf[Math.max(0, y - 1) * w + x]) / 2;
+    const l = Math.hypot(gx, gy, 1); N[i * 3] = -gx / l; N[i * 3 + 1] = -gy / l; N[i * 3 + 2] = 1 / l;
+  }
+  return N;
+}
+// Where does the light in the photo come from? Fit brightness ≈ c0 + c·n over the skin (least squares).
+// The fitted c points towards the light; it drives the 3D shading and the sheen of fresh lines.
+function estimateLight() {
+  const w = S.pw, h = S.ph, N = S.nrm, L = blurField(S.lum, w, h, 4), m = S.skin;
+  const A = [0, 1, 2, 3].map(() => new Float64Array(4)), b = new Float64Array(4);
+  for (let y = 1; y < h - 1; y += 2) for (let x = 1; x < w - 1; x += 2) {
+    const i = y * w + x; if (m[i] < .8) continue;
+    const f = [1, N[i * 3], N[i * 3 + 1], N[i * 3 + 2]];
+    for (let a = 0; a < 4; a++) { b[a] += f[a] * L[i]; for (let c = 0; c < 4; c++) A[a][c] += f[a] * f[c]; }
+  }
+  const tr = A[0][0] + A[1][1] + A[2][2] + A[3][3]; for (let a = 0; a < 4; a++) A[a][a] += tr * 1e-4;
+  const c = solve4(A, b); if (!c) return [-.35, -.55, .76];
+  let l = [c[1], c[2], Math.max(Math.abs(c[3]), 1e-6)], n = Math.hypot(...l);
+  if (!isFinite(n) || n < 1e-6) return [-.35, -.55, .76];
+  l = l.map(v => v / n);
+  if (l[2] < .4) { const s = Math.sqrt((1 - .16) / (l[0] ** 2 + l[1] ** 2 || 1)); l = [l[0] * s, l[1] * s, .4]; }
+  return l;
+}
+function solve4(A, b) {
+  const M = A.map((r, i) => [...r, b[i]]);
+  for (let c = 0; c < 4; c++) {
+    let p = c; for (let r = c + 1; r < 4; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    if (Math.abs(M[p][c]) < 1e-12) return null; [M[c], M[p]] = [M[p], M[c]];
+    for (let r = 0; r < 4; r++) if (r !== c) { const f = M[r][c] / M[c][c]; for (let k = c; k < 5; k++) M[r][k] -= f * M[c][k]; }
+  }
+  return M.map((r, i) => r[4] / r[i]);
 }
 // Height in render px at a render-px position (bilinear from the model-res field)
 function heightAt(x, y) {
@@ -409,44 +520,131 @@ function skinAt(x, y) {
 }
 
 /* ---------- scan animation (analysis feedback) ---------- */
+// While the models load: a dot lattice with a sweeping beam. As soon as the depth map exists the dots
+// become a point cloud (near = bright lime, lifted). When the 3D model is ready, the lit surface and
+// its mesh grow outwards from the arm's centre like a sonar ping, hold, then fade into the photo.
 let scanRaf = 0, scanT0 = 0, scanDone = null;
 function scanStart() { scanT0 = performance.now(); cancelAnimationFrame(scanRaf); const loop = t => { if (drawScan(t)) scanRaf = requestAnimationFrame(loop); }; scanRaf = requestAnimationFrame(loop); }
 function scanStop() { cancelAnimationFrame(scanRaf); scanDone = null; octx.clearRect(0, 0, overlay.width, overlay.height); }
 function scanFinish() { return new Promise(r => { scanDone = { t0: performance.now(), r }; }); }
+const ease = p => 1 - (1 - clamp(p, 0, 1)) ** 3;
 function drawScan(t) {
-  const W = overlay.width, H = overlay.height; octx.clearRect(0, 0, W, H);
-  if (scanDone) { // reveal the mesh once, then hand over
-    const p = (t - scanDone.t0) / 1400;
-    drawMesh(octx, W, H, clamp(p * 1.3, 0, 1), 1 - clamp((p - .8) * 5, 0, 1));
-    if (p > 1) { octx.clearRect(0, 0, W, H); const r = scanDone.r; scanDone = null; r(); return false; }
+  const W = overlay.width, H = overlay.height, el = (t - scanT0) / 1000; octx.clearRect(0, 0, W, H);
+  if (scanDone) {
+    const p = (t - scanDone.t0) / 3000, fade = 1 - clamp((p - .86) / .14, 0, 1);
+    drawCloud(el, (1 - clamp(p / .4, 0, 1)) * fade, W, H);
+    if (S.mesh) drawMesh3D(octx, W / view.width, H / view.height, S.mesh.maxR * 1.04 * ease(p / .62), fade, true);
+    drawBrackets(el, W, H, fade);
+    if (p >= 1) { octx.clearRect(0, 0, W, H); const r = scanDone.r; scanDone = null; r(); return false; }
     return true;
   }
-  const y = ((t - scanT0) / 1600 % 1) * H;
-  const g = octx.createLinearGradient(0, y - 60 * devicePixelRatio, 0, y);
-  g.addColorStop(0, "rgba(217,255,74,0)"); g.addColorStop(1, "rgba(217,255,74,.28)");
-  octx.fillStyle = g; octx.fillRect(0, y - 60 * devicePixelRatio, W, 60 * devicePixelRatio);
-  octx.fillStyle = "#d9ff4a"; octx.fillRect(0, y, W, 1.5 * devicePixelRatio);
+  drawCloud(el, 1, W, H); drawBeam(el, W, H); drawBrackets(el, W, H, 1);
   return true; // keep scanning until scanFinish()
 }
-// Contour mesh of the height field: lines along and across the arm, shaded by surface slope
-function drawMesh(ctx, W, H, reveal, alpha) {
-  if (!S.height) return;
-  const sx = W / S.photo.width, sy = H / S.photo.height, ca = Math.cos(S.axis), sa = Math.sin(S.axis);
-  const L = Math.hypot(S.photo.width, S.photo.height), step = Math.max(10, S.armPx / 10);
-  ctx.save(); ctx.globalAlpha = alpha; ctx.lineWidth = devicePixelRatio;
-  for (const across of [false, true]) {
-    for (let o = -L; o <= L; o += step) {
-      ctx.beginPath(); let pen = false;
-      for (let s = -L; s <= L; s += 6) {
-        const u = across ? o : s, v = across ? s : o; // u along the arm, v across
-        const x = S.armCenter.x + u * ca - v * sa, y = S.armCenter.y + u * sa + v * ca;
-        if (x < 0 || y < 0 || x >= S.photo.width || y >= S.photo.height || skinAt(x, y) < .5 || y / S.photo.height > reveal) { pen = false; continue; }
-        const lift = heightAt(x, y) * .25; // draw the surface slightly "lifted" so the relief reads as 3D
-        const px = x * sx, py = (y - lift) * sy;
-        if (pen) ctx.lineTo(px, py); else { ctx.moveTo(px, py); pen = true; }
-      }
-      ctx.strokeStyle = across ? "rgba(217,255,74,.55)" : "rgba(255,255,255,.35)"; ctx.stroke();
+function drawCloud(el, a, W, H) {
+  if (a <= .01) return;
+  const dp = devicePixelRatio, sp = 15 * dp, D = S.dispN, by = beamY(el, H);
+  const kx = D ? S.pw / W : 0, ky = D ? S.ph / H : 0;
+  octx.save();
+  for (let gy = sp / 2; gy < H; gy += sp) for (let gx = sp / 2; gx < W; gx += sp) {
+    const beam = Math.exp(-(((gy - by) / (46 * dp)) ** 2));
+    if (D) {
+      const d = D[Math.min(S.ph - 1, (gy * ky) | 0) * S.pw + Math.min(S.pw - 1, (gx * kx) | 0)], d2 = d * d;
+      const lift = d2 * 14 * dp * (.7 + .3 * Math.sin(el * 2.4 + gx * .012 + gy * .008)), r = (.6 + 2.1 * d2) * dp;
+      octx.globalAlpha = a * clamp(.06 + .8 * d2 + beam * .3, 0, 1);
+      octx.fillStyle = d > .5 ? "#d9ff4a" : "#ffffff";
+      octx.fillRect(gx - r, gy - r - lift, 2 * r, 2 * r);
+    } else {
+      const tw = .5 + .5 * Math.sin(el * 3 + gx * .05 + gy * .07), r = (.8 + beam * .8) * dp;
+      octx.globalAlpha = a * (.08 + .1 * tw + beam * .75);
+      octx.fillStyle = beam > .3 ? "#d9ff4a" : "#ffffff";
+      octx.fillRect(gx - r, gy - r, 2 * r, 2 * r);
     }
+  }
+  octx.restore();
+}
+const beamY = (el, H) => ((el / 2.1) % 1) * (H + 160 * devicePixelRatio) - 80 * devicePixelRatio;
+function drawBeam(el, W, H) {
+  const dp = devicePixelRatio, y = beamY(el, H), g = octx.createLinearGradient(0, y - 90 * dp, 0, y + 6 * dp);
+  g.addColorStop(0, "rgba(217,255,74,0)"); g.addColorStop(.92, "rgba(217,255,74,.16)"); g.addColorStop(1, "rgba(217,255,74,0)");
+  octx.fillStyle = g; octx.fillRect(0, y - 90 * dp, W, 96 * dp);
+  octx.save(); octx.shadowColor = "rgba(217,255,74,.9)"; octx.shadowBlur = 14 * dp; octx.fillStyle = "#e9ff9a"; octx.fillRect(0, y - .75 * dp, W, 1.5 * dp); octx.restore();
+}
+function drawBrackets(el, W, H, a) {
+  const dp = devicePixelRatio, m = 14 * dp + Math.sin(el * 2.2) * 3 * dp, L = 26 * dp;
+  octx.save(); octx.globalAlpha = .9 * a; octx.strokeStyle = "#d9ff4a"; octx.lineWidth = 2 * dp; octx.lineCap = "round";
+  octx.shadowColor = "rgba(217,255,74,.6)"; octx.shadowBlur = 8 * dp; octx.beginPath();
+  for (const [x, y, sx, sy] of [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]]) { octx.moveTo(x, y + sy * L); octx.lineTo(x, y); octx.lineTo(x + sx * L, y); }
+  octx.stroke(); octx.restore();
+}
+
+// Mesh cache: lit surface image (geo res) plus mesh lines along and across the arm (render px),
+// each point stored with its distance to the arm centre so the reveal can grow outwards.
+function buildMesh() {
+  const w = S.pw, h = S.ph, m = S.skin, N = S.nrmF, l = S.light, k = S.photo.width / w;
+  const shade = document.createElement("canvas"); shade.width = w; shade.height = h;
+  const sg = shade.getContext("2d"), img = sg.createImageData(w, h), px = img.data;
+  // display light: a studio key light from the upper left, nudged towards the light found in the photo
+  let lv = [-.55 + .4 * l[0], -.6 + .4 * l[1], .45 + .4 * l[2]]; const ln = Math.hypot(...lv); lv = lv.map(v => v / ln);
+  for (let i = 0; i < w * h; i++) {
+    if (m[i] < .05) continue;
+    const nx = N[i * 3], ny = N[i * 3 + 1], nz = N[i * 3 + 2];
+    const lit = Math.max(0, nx * lv[0] + ny * lv[1] + nz * lv[2]) ** 2.2, rim = clamp((1 - nz) * 2.2 - .15, 0, 1) ** 2;
+    px[i * 4] = clamp(12 + lit * 170 + rim * 190, 0, 255);
+    px[i * 4 + 1] = clamp(14 + lit * 182 + rim * 235, 0, 255);
+    px[i * 4 + 2] = clamp(13 + lit * 150 + rim * 70, 0, 255);
+    px[i * 4 + 3] = clamp(m[i] * 1.2 - .1, 0, 1) * 240;
+  }
+  sg.putImageData(img, 0, 0);
+  // mesh lines: u along the arm, v across it; sampled finely and lifted by height so they bulge in 3D
+  const ca = Math.cos(S.axis), sa = Math.sin(S.axis), c = S.armCenter;
+  let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+  for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) if (m[y * w + x] > .5) {
+    const dx = x * k - c.x, dy = y * k - c.y, u = dx * ca + dy * sa, v = -dx * sa + dy * ca;
+    u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v);
+  }
+  const sp = Math.max(6, S.armPx / 15), ds = Math.max(2, S.armPx / 90), lines = [[], []]; let maxR = 0;
+  for (const across of [0, 1]) {
+    const [o0, o1, s0, s1] = across ? [u0, u1, v0, v1] : [v0, v1, u0, u1];
+    for (let o = Math.ceil(o0 / sp) * sp; o <= o1; o += sp) {
+      let cur = [];
+      const flush = () => { if (cur.length >= 9) lines[across].push(Float32Array.from(cur)); cur = []; };
+      for (let s = s0; s <= s1; s += ds) {
+        const u = across ? o : s, v = across ? s : o, x = c.x + u * ca - v * sa, y = c.y + u * sa + v * ca;
+        if (x < 0 || y < 0 || x >= S.photo.width || y >= S.photo.height || skinAt(x, y) < .5) { flush(); continue; }
+        const r = Math.hypot(x - c.x, y - c.y); maxR = Math.max(maxR, r);
+        cur.push(x, y - heightAt(x, y) * .14, r);
+      }
+      flush();
+    }
+  }
+  S.mesh = { shade, lines, maxR };
+}
+// R = reveal radius in render px (Infinity = everything)
+function drawMesh3D(ctx, sx, sy, R, alpha, ring) {
+  const M = S.mesh; if (!M || alpha <= 0) return;
+  const W = S.photo.width * sx, H = S.photo.height * sy, c = S.armCenter, open = !isFinite(R);
+  ctx.save(); ctx.globalAlpha = alpha * .92;
+  if (!open) { ctx.beginPath(); ctx.arc(c.x * sx, c.y * sy, Math.max(0, R) * sx, 0, 7); ctx.clip(); }
+  ctx.imageSmoothingQuality = "high"; ctx.drawImage(M.shade, 0, 0, W, H);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = alpha; ctx.lineWidth = Math.max(.7, sx * (open ? 1 : 1.1)) * (open ? Math.max(1, S.photo.width / 1400) : 1);
+  for (const across of [0, 1]) {
+    ctx.beginPath();
+    for (const P of M.lines[across]) {
+      let pen = false;
+      for (let i = 0; i < P.length; i += 3) {
+        if (P[i + 2] > R) { pen = false; continue; }
+        const x = P[i] * sx, y = P[i + 1] * sy;
+        if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; }
+      }
+    }
+    ctx.strokeStyle = across ? "rgba(217,255,74,.7)" : "rgba(255,255,255,.22)"; ctx.stroke();
+  }
+  if (ring && !open && R < M.maxR) { // the growing front
+    ctx.globalAlpha = alpha * .9; ctx.strokeStyle = "#e9ff9a"; ctx.lineWidth = 2 * devicePixelRatio;
+    ctx.shadowColor = "rgba(217,255,74,.9)"; ctx.shadowBlur = 18 * devicePixelRatio;
+    ctx.beginPath(); ctx.arc(c.x * sx, c.y * sy, Math.max(0, R) * sx, 0, 7); ctx.stroke();
   }
   ctx.restore();
 }
@@ -455,44 +653,164 @@ function drawMesh(ctx, W, H, reveal, alpha) {
 document.querySelectorAll("#views button").forEach(b => b.onclick = () => { S.view = b.dataset.view; syncViews(); redraw(); });
 function syncViews() { document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === S.view)); $("#views").hidden = !S.disp; }
 let depthCanvas = null;
+// Depth view: refined depth as a lime-to-graphite ramp, with the fine relief as hill shading on top
 function depthImage() {
   if (depthCanvas) return depthCanvas;
   const c = document.createElement("canvas"); c.width = S.pw; c.height = S.ph;
-  const g = c.getContext("2d"), img = g.createImageData(S.pw, S.ph);
-  let lo = Infinity, hi = -Infinity; for (const v of S.disp) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
-  for (let i = 0; i < S.disp.length; i++) {
-    const v = (S.disp[i] - lo) / (hi - lo || 1), sk = S.skin[i];
-    img.data[i * 4] = 40 + v * (217 - 40) * (.4 + .6 * sk); img.data[i * 4 + 1] = 40 + v * (255 - 40) * (.4 + .6 * sk);
-    img.data[i * 4 + 2] = 40 + v * (74 - 40) * sk + v * 120 * (1 - sk); img.data[i * 4 + 3] = 255;
+  const g = c.getContext("2d"), img = g.createImageData(S.pw, S.ph), D = normalised(S.disp), N = S.nrmF, l = S.light;
+  for (let i = 0; i < D.length; i++) {
+    const v = clamp(D[i], 0, 1), sk = S.skin[i];
+    const hs = N ? clamp(.55 + .9 * (N[i * 3] * l[0] + N[i * 3 + 1] * l[1] + N[i * 3 + 2] * l[2] - .7), .35, 1.25) : 1;
+    img.data[i * 4] = clamp((22 + v * 195 * (.35 + .65 * sk)) * hs, 0, 255);
+    img.data[i * 4 + 1] = clamp((24 + v * 231 * (.35 + .65 * sk)) * hs, 0, 255);
+    img.data[i * 4 + 2] = clamp((26 + v * 50 * sk + v * 110 * (1 - sk)) * hs, 0, 255); img.data[i * 4 + 3] = 255;
   }
   g.putImageData(img, 0, 0); return (depthCanvas = c);
 }
 
-/* ---------- 3 · Motif ---------- */
+/* ---------- 3 · Motif: upload, lasso cutout, background removal ---------- */
+// Every upload opens the cutter. Draw around the tattoo (e.g. in a screenshot); "Hintergrund entfernen"
+// turns paper or skin around the lines transparent and keeps the ink with its real colours.
 $("#addMotif").onclick = () => $("#motifInput").click();
-$("#motifInput").onchange = e => e.target.files[0] && loadMotif(e.target.files[0]);
+$("#motifInput").onchange = e => { e.target.files[0] && loadMotif(e.target.files[0]); e.target.value = ""; };
+const cutC = $("#cutCanvas"), cutG = cutC.getContext("2d");
+const CUT = { img: null, path: null, drawing: false, bg: true, opaque: true, preview: null, raf: 0 };
 function loadMotif(file) {
   const img = new Image();
-  img.onload = () => {
-    const c = scaled(img, 1024), g = c.getContext("2d"), d = g.getImageData(0, 0, c.width, c.height);
-    // No transparency (a photo/scan of a flash)? Treat paper as transparent: ink = darkness.
-    let opaque = true; for (let i = 3; i < d.data.length; i += 16) if (d.data[i] < 250) { opaque = false; break; }
-    if (opaque) {
-      for (let i = 0; i < d.data.length; i += 4) {
-        const r = d.data[i], gg = d.data[i + 1], b = d.data[i + 2], a0 = 1 - Math.min(r, gg, b) / 255, a = clamp((a0 - .12) / .88 * 1.3, 0, 1);
-        if (a <= 0) { d.data[i + 3] = 0; continue; }
-        const inv = 1 - a0, q = 255 / Math.max(a0, .05);
-        d.data[i] = clamp((r / 255 - inv) * q, 0, 255); d.data[i + 1] = clamp((gg / 255 - inv) * q, 0, 255); d.data[i + 2] = clamp((b / 255 - inv) * q, 0, 255); d.data[i + 3] = a * 255;
-      }
-      g.putImageData(d, 0, 0);
-    }
-    const m = { id: Date.now(), canvas: c, data: g.getImageData(0, 0, c.width, c.height), url: c.toDataURL() };
-    S.motifs.push(m); selectMotif(m);
-  };
+  img.onload = () => openCut(scaled(img, 1600));
+  img.onerror = () => status("Bild nicht lesbar", "err");
   img.src = URL.createObjectURL(file);
 }
+function openCut(c) {
+  Object.assign(CUT, { img: c, path: null, preview: null, drawing: false, opaque: isOpaque(c) });
+  cutC.width = c.width; cutC.height = c.height;
+  $("#cutBg").hidden = !CUT.opaque; $("#cutBg").setAttribute("aria-pressed", CUT.bg); $("#cutHint").textContent = "Tattoo umfahren";
+  $("#cut").hidden = false;
+  cancelAnimationFrame(CUT.raf);
+  const loop = t => { if ($("#cut").hidden) return; drawCut(t); CUT.raf = requestAnimationFrame(loop); };
+  CUT.raf = requestAnimationFrame(loop);
+}
+function closeCut() { $("#cut").hidden = true; cancelAnimationFrame(CUT.raf); }
+function isOpaque(c) { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 16) if (d[i] < 250) return false; return true; }
+const trace = (g, P, dx = 0, dy = 0) => { g.moveTo(P[0].x - dx, P[0].y - dy); for (let i = 1; i < P.length; i++) g.lineTo(P[i].x - dx, P[i].y - dy); };
+function drawCut(t) {
+  const c = CUT.img, g = cutG, P = CUT.path, lw = Math.max(1.5, c.width / 520);
+  g.clearRect(0, 0, c.width, c.height); g.drawImage(c, 0, 0);
+  if (!P || P.length < 2) return;
+  g.save();
+  if (!CUT.drawing) {
+    g.beginPath(); g.rect(0, 0, c.width, c.height); trace(g, P); g.closePath(); g.fillStyle = "rgba(10,10,10,.66)"; g.fill("evenodd");
+    if (CUT.preview) { // what will become the motif: extracted ink on paper
+      const pv = CUT.preview; g.save(); g.beginPath(); trace(g, P); g.closePath(); g.clip();
+      g.fillStyle = "#f4f3f0"; g.fillRect(pv.x, pv.y, pv.canvas.width, pv.canvas.height); g.drawImage(pv.canvas, pv.x, pv.y); g.restore();
+    }
+  }
+  g.beginPath(); trace(g, P); if (!CUT.drawing) g.closePath();
+  g.lineJoin = "round"; g.lineWidth = lw * 2.4; g.strokeStyle = "rgba(0,0,0,.55)"; g.stroke();
+  g.lineWidth = lw; g.strokeStyle = "#d9ff4a"; g.setLineDash([lw * 5, lw * 4]); g.lineDashOffset = -t / 30; g.stroke();
+  g.restore();
+}
+const cutPt = e => { const b = cutC.getBoundingClientRect(); return { x: clamp((e.clientX - b.left) * cutC.width / b.width, 0, cutC.width), y: clamp((e.clientY - b.top) * cutC.height / b.height, 0, cutC.height) }; };
+cutC.addEventListener("pointerdown", e => { cutC.setPointerCapture(e.pointerId); CUT.drawing = true; CUT.path = [cutPt(e)]; CUT.preview = null; });
+cutC.addEventListener("pointermove", e => {
+  if (!CUT.drawing) return;
+  const p = cutPt(e), q = CUT.path[CUT.path.length - 1];
+  if (Math.hypot(p.x - q.x, p.y - q.y) > cutC.width / 500) CUT.path.push(p);
+});
+["pointerup", "pointercancel"].forEach(ev => cutC.addEventListener(ev, () => {
+  if (!CUT.drawing) return; CUT.drawing = false;
+  const P = CUT.path; let area = 0; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; area += a.x * b.y - b.x * a.y; }
+  if (P.length < 3 || Math.abs(area / 2) < cutC.width * cutC.height * .001) { CUT.path = null; $("#cutHint").textContent = "Tattoo umfahren"; return; }
+  $("#cutHint").textContent = "Neu ziehen zum Ändern"; updatePreview();
+}));
+function updatePreview() { CUT.preview = CUT.path && CUT.bg && CUT.opaque ? extract(CUT.img, CUT.path, true) : null; }
+$("#cutBg").onclick = () => { CUT.bg = !CUT.bg; $("#cutBg").setAttribute("aria-pressed", CUT.bg); updatePreview(); };
+$("#cutAll").onclick = () => { CUT.path = null; CUT.preview = null; $("#cutHint").textContent = "Tattoo umfahren"; };
+$("#cutCancel").onclick = closeCut;
+$("#cutOk").onclick = () => {
+  const r = extract(CUT.img, CUT.path, CUT.bg && CUT.opaque), t = trim(r.canvas); closeCut();
+  if (!t) return status("Auswahl ist leer", "err");
+  addMotif(t);
+};
+// Crop to the lasso, optionally remove the background, then mask with the (anti-aliased) lasso shape
+function extract(img, P, removeBg) {
+  let x0 = 0, y0 = 0, x1 = img.width, y1 = img.height;
+  if (P) {
+    x0 = Infinity; y0 = Infinity; x1 = -Infinity; y1 = -Infinity;
+    for (const p of P) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+    x0 = Math.max(0, Math.floor(x0) - 2); y0 = Math.max(0, Math.floor(y0) - 2); x1 = Math.min(img.width, Math.ceil(x1) + 2); y1 = Math.min(img.height, Math.ceil(y1) + 2);
+  }
+  const w = x1 - x0, h = y1 - y0, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, -x0, -y0);
+  const id = g.getImageData(0, 0, w, h);
+  if (removeBg) inkFromBackground(c, id);
+  if (P) {
+    const mc = document.createElement("canvas"); mc.width = w; mc.height = h;
+    const mg = mc.getContext("2d"); mg.fillStyle = "#fff"; mg.beginPath(); trace(mg, P, x0, y0); mg.closePath(); mg.fill();
+    const md = mg.getImageData(0, 0, w, h).data;
+    for (let i = 3; i < id.data.length; i += 4) id.data[i] = id.data[i] * md[i] / 255;
+  }
+  g.putImageData(id, 0, 0);
+  return { canvas: c, x: x0, y: y0 };
+}
+// Background = the brighter of the two brightness clusters (Otsu), averaged locally so uneven light
+// on paper or skin is followed. Each pixel is then un-mixed: how much ink (alpha) over that
+// background explains its colour, and which ink colour it is.
+function inkFromBackground(c, id) {
+  const sm = scaled(c, 240), sw = sm.width, sh = sm.height, sd = sm.getContext("2d").getImageData(0, 0, sw, sh).data, n = sw * sh;
+  const Ls = new Float32Array(n); for (let i = 0; i < n; i++) Ls[i] = (.299 * sd[i * 4] + .587 * sd[i * 4 + 1] + .114 * sd[i * 4 + 2]) / 255;
+  const thr = otsu(Ls) * .97;
+  const wt = new Float32Array(n), wr = new Float32Array(n), wg = new Float32Array(n), wb = new Float32Array(n);
+  let gr = 0, gg = 0, gb = 0, gn = 0;
+  for (let i = 0; i < n; i++) if (Ls[i] > thr) { wt[i] = 1; wr[i] = sd[i * 4] / 255; wg[i] = sd[i * 4 + 1] / 255; wb[i] = sd[i * 4 + 2] / 255; gr += wr[i]; gg += wg[i]; gb += wb[i]; gn++; }
+  gn = gn || 1; const glob = [gr / gn, gg / gn, gb / gn];
+  const r = Math.max(4, Math.round(Math.max(sw, sh) * .06));
+  const Bw = blurField(wt, sw, sh, r), Br = blurField(wr, sw, sh, r), Bg = blurField(wg, sw, sh, r), Bb = blurField(wb, sw, sh, r);
+  const bg = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const f = clamp(Bw[i] * 8, 0, 1), k = Bw[i] > 1e-4 ? 1 / Bw[i] : 0; // few background pixels nearby: lean on the global colour
+    bg[i * 3] = Br[i] * k * f + glob[0] * (1 - f); bg[i * 3 + 1] = Bg[i] * k * f + glob[1] * (1 - f); bg[i * 3 + 2] = Bb[i] * k * f + glob[2] * (1 - f);
+  }
+  const { width: w, height: h, data: d } = id, fx = sw / w, fy = sh / h;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const sx = clamp((x + .5) * fx - .5, 0, sw - 1.001), sy = clamp((y + .5) * fy - .5, 0, sh - 1.001), x0 = sx | 0, y0 = sy | 0, ax = sx - x0, ay = sy - y0;
+    const i00 = (y0 * sw + x0) * 3, i10 = i00 + 3, i01 = i00 + sw * 3, i11 = i01 + 3, o = (y * w + x) * 4;
+    const b = [0, 1, 2].map(ch => (bg[i00 + ch] * (1 - ax) + bg[i10 + ch] * ax) * (1 - ay) + (bg[i01 + ch] * (1 - ax) + bg[i11 + ch] * ax) * ay);
+    const R = d[o] / 255, G = d[o + 1] / 255, B = d[o + 2] / 255, L = .299 * R + .587 * G + .114 * B, lb = Math.max(.05, .299 * b[0] + .587 * b[1] + .114 * b[2]);
+    const a0 = clamp(Math.max(1 - L / lb, Math.hypot(R - b[0], G - b[1], B - b[2]) / 1.1), 0, 1), a = clamp((a0 - .07) / .5, 0, 1);
+    if (a <= 0) { d[o + 3] = 0; continue; }
+    const k = 1 / Math.max(a0, .1);
+    d[o] = clamp((R - (1 - a0) * b[0]) * k, 0, 1) * 255; d[o + 1] = clamp((G - (1 - a0) * b[1]) * k, 0, 1) * 255; d[o + 2] = clamp((B - (1 - a0) * b[2]) * k, 0, 1) * 255;
+    d[o + 3] = d[o + 3] * a;
+  }
+}
+function otsu(v) {
+  const bins = 64, hist = new Float64Array(bins); for (const x of v) hist[Math.min(bins - 1, (clamp(x, 0, 1) * bins) | 0)]++;
+  let sum = 0; for (let i = 0; i < bins; i++) sum += i * hist[i];
+  let wB = 0, sB = 0, best = -1, t = bins / 2;
+  for (let i = 0; i < bins; i++) {
+    wB += hist[i]; if (!wB || wB === v.length) continue; sB += i * hist[i];
+    const mB = sB / wB, mF = (sum - sB) / (v.length - wB), btw = wB * (v.length - wB) * (mB - mF) ** 2;
+    if (btw > best) { best = btw; t = i; }
+  }
+  return (t + 1) / bins;
+}
+function trim(c) {
+  const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 10) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < 0) return null;
+  x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(c.width - 1, x1 + 2); y1 = Math.min(c.height - 1, y1 + 2);
+  const o = document.createElement("canvas"); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext("2d").drawImage(c, -x0, -y0);
+  return o;
+}
+function addMotif(src) {
+  const c = scaled(src, 1024), g = c.getContext("2d", { willReadFrequently: true });
+  const m = { id: Date.now(), canvas: c, data: g.getImageData(0, 0, c.width, c.height), url: c.toDataURL() };
+  S.motifs.push(m); selectMotif(m);
+}
 function selectMotif(m) {
-  S.motif = m; S.inked = null; renderThumbs(); $("#ink").disabled = false; status(""); setStep(3); schedule();
+  S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; status(""); setStep(3); schedule();
 }
 function renderThumbs() {
   const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
@@ -565,7 +883,7 @@ function redraw() {
     vctx.drawImage(depthImage(), 0, 0, view.width, view.height);
   } else {
     vctx.drawImage(S.photo, 0, 0);
-    if (S.view === "mesh" && S.height) drawMesh(vctx, view.width, view.height, 1, 1);
+    if (S.view === "mesh" && S.mesh) { vctx.fillStyle = "rgba(8,9,8,.62)"; vctx.fillRect(0, 0, view.width, view.height); drawMesh3D(vctx, 1, 1, Infinity, 1, false); }
     if (S.step === 3 && S.motif && S.anchor) previewTattoo();
   }
   drawGizmo();
@@ -628,54 +946,128 @@ view.addEventListener("wheel", e => {
 }, { passive: false });
 
 /* ---------- 4 · Stechen: ink under the skin ---------- */
-// Ink sits in the dermis, below the epidermis: it darkens the skin like a filter (multiply), its colours
-// are muted and shifted slightly cool, its edges are a touch diffuse, and the skin's own texture and
-// highlights stay on top of it. "Frisch" adds a light redness halo and a little sheen.
-function inkColour(r, g, b) {
-  const l = .299 * r + .587 * g + .114 * b, sat = .82;
-  let R = l + (r - l) * sat, G = l + (g - l) * sat, B = l + (b - l) * sat;
-  R = R * .9 + 8; G = G * .93 + 10; B = B * .97 + 14; // black reads blue-black, colours slightly cool
-  return [R / 255, G / 255, B / 255];
+// Physical model, computed in linear light:
+// 1. Split the skin into diffuse colour and specular highlight (dichromatic model: highlights are
+//    white, skin's diffuse colour has a nearly constant blue/red ratio). Ink can only change the
+//    diffuse part; highlights, sweat and sheen stay on top, which is what makes ink look "under" the skin.
+// 2. Ink sits in the dermis, under a thin scattering layer: it filters the diffuse light like a
+//    coloured glass (multiply), with a faint skin-coloured veil over it.
+// 3. Age (slider): fresh = crisp, saturated, deep black, red swollen halo, raised lines that catch the
+//    light. Healed = edges spread a little, colours calmer. Years = lines blur and soften, black drifts
+//    to blue-green grey, colours fade.
+const LIN = Float32Array.from({ length: 256 }, (_, i) => { const c = i / 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; });
+const SRGB = Uint8ClampedArray.from({ length: 4096 }, (_, i) => { const v = i / 4095; return 255 * (v <= .0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - .055); });
+const toS = v => SRGB[v <= 0 ? 0 : v >= 1 ? 4095 : (v * 4095 + .5) | 0];
+function vnoise(x, y, s) { // smooth value noise, cell size s px
+  x /= s; y /= s; const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+  const h = (a, b) => hash(a * 157 + b * 311 + 7);
+  return (h(xi, yi) * (1 - u) + h(xi + 1, yi) * u) * (1 - v) + (h(xi, yi + 1) * (1 - u) + h(xi + 1, yi + 1) * u) * v;
 }
-async function stechen() {
-  if (!S.motif || !S.anchor) return;
-  setStep(4); status("Sticht …"); drawGizmo();
-  const L = warp(1), W = view.width, H = view.height;
-  const pad = 14, x0 = Math.max(0, L.x0 - pad), y0 = Math.max(0, L.y0 - pad), x1 = Math.min(W, L.x0 + L.w + pad), y1 = Math.min(H, L.y0 + L.h + pad), bw = x1 - x0, bh = y1 - y0;
-  const skinImg = S.photo.getContext("2d").getImageData(x0, y0, bw, bh), sd = skinImg.data;
-  const n = bw * bh, alpha = new Float32Array(n), col = new Float32Array(n * 3);
+function ageLabel(t) { return t < .12 ? "Frisch gestochen" : t < .28 ? "Nach ein paar Tagen" : t < .55 ? "Verheilt" : t < .8 ? "Nach ein paar Jahren" : "Nach 10+ Jahren"; }
+
+// Placement-dependent part (runs once per "Stechen"): warped motif, skin layers, surface normals
+function prepareInk() {
+  const L = warp(1), W = view.width, H = view.height, pad = Math.round(W / 45) + 6;
+  const x0 = Math.max(0, L.x0 - pad), y0 = Math.max(0, L.y0 - pad), x1 = Math.min(W, L.x0 + L.w + pad), y1 = Math.min(H, L.y0 + L.h + pad), bw = x1 - x0, bh = y1 - y0, n = bw * bh;
+  const sd = S.photo.getContext("2d").getImageData(x0, y0, bw, bh).data;
+  const alpha = new Float32Array(n), pr = new Float32Array(n), pg = new Float32Array(n), pb = new Float32Array(n);
   for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
     const i = (y * L.w + x) * 4, j = (y + L.y0 - y0) * bw + (x + L.x0 - x0), a = L.data[i + 3] / 255;
     if (a <= 0) continue;
-    alpha[j] = a; const c = inkColour(L.data[i], L.data[i + 1], L.data[i + 2]); col[j * 3] = c[0]; col[j * 3 + 1] = c[1]; col[j * 3 + 2] = c[2];
+    alpha[j] = a; pr[j] = a * LIN[L.data[i]]; pg[j] = a * LIN[L.data[i + 1]]; pb[j] = a * LIN[L.data[i + 2]];
   }
-  const fresh = S.mode === "fresh", soft = Math.max(1, Math.round(W / 1400));
-  const aSoft = blurField(alpha, bw, bh, fresh ? soft : soft + 1); // diffuse edges (healed lines spread a bit)
-  const halo = fresh ? blurField(alpha, bw, bh, Math.round(W / 160)) : null; // redness around fresh lines
-  const lum = new Float32Array(n); for (let j = 0; j < n; j++) lum[j] = (.299 * sd[j * 4] + .587 * sd[j * 4 + 1] + .114 * sd[j * 4 + 2]) / 255;
-  const lumBlur = blurField(lum, bw, bh, Math.max(2, Math.round(W / 400)));
-  const density = fresh ? .95 : .86;
-  // colours bleed a little more than the alpha edge, so blur them where ink is
-  const cr = blurField(col.filter((_, i) => i % 3 === 0), bw, bh, soft), cg = blurField(col.filter((_, i) => i % 3 === 1), bw, bh, soft), cb = blurField(col.filter((_, i) => i % 3 === 2), bw, bh, soft);
+  const R = new Float32Array(n), G = new Float32Array(n), B = new Float32Array(n);
+  for (let j = 0; j < n; j++) { R[j] = LIN[sd[j * 4]]; G[j] = LIN[sd[j * 4 + 1]]; B[j] = LIN[sd[j * 4 + 2]]; }
+  // specular estimate from the local diffuse chroma
+  const r2 = Math.max(6, Math.round(W / 90)), Rb = blurField(R, bw, bh, r2), Bb = blurField(B, bw, bh, r2), sp = new Float32Array(n);
   for (let j = 0; j < n; j++) {
-    let R = sd[j * 4] / 255, G = sd[j * 4 + 1] / 255, B = sd[j * 4 + 2] / 255;
-    if (halo && halo[j] > .01) { const h = clamp(halo[j] * 1.6, 0, 1) * .32 * (1 - aSoft[j] * .5); G *= 1 - h * .45; B *= 1 - h * .5; R *= 1 + h * .04; }
-    const a = clamp(aSoft[j], 0, 1) * density * (1 - .06 * hash(j));
-    if (a > .002) {
-      const ci = alpha[j] > .05 ? 1 : 0, ir = ci ? col[j * 3] : cr[j] / Math.max(aSoft[j], .05), ig = ci ? col[j * 3 + 1] : cg[j] / Math.max(aSoft[j], .05), ib = ci ? col[j * 3 + 2] : cb[j] / Math.max(aSoft[j], .05);
-      const tR = 1 - a + a * clamp(ir, 0, 1), tG = 1 - a + a * clamp(ig, 0, 1), tB = 1 - a + a * clamp(ib, 0, 1);
-      const detail = (lum[j] - lumBlur[j]); // pores, hair, fine shading stay visible through the ink
-      const spec = Math.max(0, lum[j] - lumBlur[j] - .04) * 1.8 + (fresh ? .035 * a : 0); // highlights sit on top
-      R = R * tR + detail * a * .55 + spec; G = G * tG + detail * a * .55 + spec; B = B * tB + detail * a * .55 + spec;
-    }
-    sd[j * 4] = clamp(R * 255, 0, 255); sd[j * 4 + 1] = clamp(G * 255, 0, 255); sd[j * 4 + 2] = clamp(B * 255, 0, 255);
+    const q = clamp(Bb[j] / Math.max(Rb[j], 1e-4), .15, .9), s = (B[j] - q * R[j]) / (1 - q) - .012;
+    sp[j] = clamp(s, 0, Math.min(R[j], G[j], B[j]) * .92);
   }
-  const res = document.createElement("canvas"); res.width = W; res.height = H;
-  const rg = res.getContext("2d"); rg.drawImage(S.photo, 0, 0); rg.putImageData(skinImg, x0, y0);
-  await needleReveal(res, { x0, y0, w: bw, h: bh });
-  S.local = S.inked = res; S.ai = null; S.inkBox = { x0, y0, w: bw, h: bh }; S.inkAlpha = alpha;
-  $("#ai").setAttribute("aria-pressed", false); status(fresh ? "Frisch gestochen" : "Verheilt", "ok"); redraw();
+  const spec = blurField(sp, bw, bh, 1);
+  // base surface normal per pixel (from the smooth 3D surface)
+  const nrm = new Float32Array(n * 3), kx = S.pw / W;
+  for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
+    const gi = Math.min(S.ph - 1, ((y + y0) * kx) | 0) * S.pw + Math.min(S.pw - 1, ((x + x0) * kx) | 0), j = y * bw + x;
+    nrm[j * 3] = S.nrm[gi * 3]; nrm[j * 3 + 1] = S.nrm[gi * 3 + 1]; nrm[j * 3 + 2] = S.nrm[gi * 3 + 2];
+  }
+  S.ink = { x0, y0, bw, bh, alpha, pr, pg, pb, R, G, B, spec, nrm };
+  S.inkBox = { x0, y0, w: bw, h: bh }; S.inkAlpha = alpha;
 }
+function renderInk(t) {
+  const I = S.ink, { bw, bh } = I, n = bw * bh, W = view.width, unit = Math.max(1, W / 1400);
+  const fresh = clamp(1 - t / .3, 0, 1), aged = clamp((t - .45) / .55, 0, 1);
+  // ink spread: crisp needle lines when fresh, slowly diffusing in the dermis over the years,
+  // with slightly irregular edges (ink never sits in a perfect vector line)
+  const a1 = blurField(I.alpha, bw, bh, 1), rough = .25 + .6 * t;
+  for (let j = 0; j < n; j++) { const v = a1[j], e = 4 * v * (1 - v); if (e > .02) a1[j] = clamp(v + (vnoise(j % bw, (j / bw) | 0, 2.2 * unit) - .5) * rough * e, 0, 1); }
+  const spr = Math.round(unit * (.4 + 1.1 * t + 1.3 * aged));
+  const a = spr > 0 ? blurField(a1, bw, bh, spr) : a1;
+  const cb = spr + 1, cr = blurField(I.pr, bw, bh, cb), cg = blurField(I.pg, bw, bh, cb), cbl = blurField(I.pb, bw, bh, cb), ca = blurField(I.alpha, bw, bh, cb);
+  const halo = fresh > 0 ? blurField(I.alpha, bw, bh, Math.round(W / 95)) : null;
+  const bump = fresh > 0 ? blurField(I.alpha, bw, bh, Math.max(1, Math.round(unit * 1.6))) : null;
+  const l = S.light, hl = Math.hypot(l[0], l[1], l[2] + 1), hv = [l[0] / hl, l[1] / hl, (l[2] + 1) / hl];
+  const sat = 1 - .15 * t - .2 * aged, dens = .97 - .05 * t - .07 * aged, veil = .02 + .05 * t + .05 * aged;
+  // Light the ink layer scatters back on its own (it is not a perfect absorber): neutral to slightly
+  // blue, and bluer/greener with age (Tyndall effect, why old black tattoos look blue-grey).
+  // Scaled by the local light level (skin brightness / typical skin albedo), not tinted by the skin.
+  const tyn = [.018 + .03 * aged, .021 + .045 * aged, .028 + .058 * aged];
+  const out = new ImageData(bw, bh), od = out.data;
+  for (let j = 0; j < n; j++) {
+    const s = I.spec[j]; let R = I.R[j] - s, G = I.G[j] - s, B = I.B[j] - s;
+    if (halo) { const hh = clamp(halo[j] * 2, 0, 1) * .6 * fresh * (1 - clamp(a[j], 0, 1) * .7); R *= 1 + hh * .05; G *= 1 - hh * .4; B *= 1 - hh * .44; }
+    const aj = clamp(a[j], 0, 1) * dens;
+    if (aj > .002) {
+      const inv = 1 / Math.max(ca[j], .02);
+      let ir = clamp(cr[j] * inv, 0, 1), ig = clamp(cg[j] * inv, 0, 1), ib = clamp(cbl[j] * inv, 0, 1);
+      const il = .2126 * ir + .7152 * ig + .0722 * ib;
+      ir = il + (ir - il) * sat; ig = il + (ig - il) * sat; ib = il + (ib - il) * sat;
+      const E = (.2126 * R + .7152 * G + .0722 * B) / .4 * aj * (1 - veil);
+      R = R * (veil + (1 - veil) * (1 - aj + aj * ir)) + E * tyn[0];
+      G = G * (veil + (1 - veil) * (1 - aj + aj * ig)) + E * tyn[1];
+      B = B * (veil + (1 - veil) * (1 - aj + aj * ib)) + E * tyn[2];
+    }
+    let gloss = 0;
+    if (bump) { // fresh lines are slightly raised: tilt the surface normal by the ink's slope and light it
+      const b = bump[j];
+      if (b > .02 && b < .98) {
+        const x = j % bw, y = (j / bw) | 0, gx = (bump[j + (x < bw - 1 ? 1 : 0)] - bump[j - (x > 0 ? 1 : 0)]) * 2.2, gy = (bump[j + (y < bh - 1 ? bw : 0)] - bump[j - (y > 0 ? bw : 0)]) * 2.2;
+        let nx = I.nrm[j * 3] - gx, ny = I.nrm[j * 3 + 1] - gy, nz = I.nrm[j * 3 + 2]; const nl = Math.hypot(nx, ny, nz);
+        const d = Math.max(0, (nx * hv[0] + ny * hv[1] + nz * hv[2]) / nl);
+        gloss = d ** 36 * .3 * fresh * clamp(Math.hypot(gx, gy) * 3, 0, 1);
+      }
+    }
+    R += s + gloss; G += s + gloss; B += s + gloss;
+    od[j * 4] = toS(R); od[j * 4 + 1] = toS(G); od[j * 4 + 2] = toS(B); od[j * 4 + 3] = 255;
+  }
+  return out;
+}
+function composeInk() {
+  const I = S.ink, res = document.createElement("canvas"); res.width = view.width; res.height = view.height;
+  const rg = res.getContext("2d"); rg.drawImage(S.photo, 0, 0); rg.putImageData(renderInk(S.age), I.x0, I.y0);
+  return res;
+}
+async function stechen() {
+  if (!S.motif || !S.anchor) return;
+  setStep(4); status("Sticht …"); drawGizmo(); await frame();
+  prepareInk();
+  const res = composeInk();
+  await needleReveal(res, S.inkBox);
+  S.local = S.inked = res; S.ai = null;
+  $("#ai").setAttribute("aria-pressed", false); status(ageLabel(S.age), "ok"); redraw();
+}
+// Age slider: re-render the ink only (no needle), throttled to one render per frame
+let ageBusy = false;
+$("#age").oninput = e => {
+  S.age = e.target.value / 100; $("#ageLabel").textContent = ageLabel(S.age).replace(" gestochen", "");
+  if (S.step !== 4 || !S.ink || ageBusy) return;
+  ageBusy = true;
+  requestAnimationFrame(() => {
+    ageBusy = false; S.local = S.inked = composeInk(); S.ai = null; $("#ai").setAttribute("aria-pressed", false);
+    status(ageLabel(S.age), "ok"); redraw();
+  });
+};
+$("#ageLabel").textContent = ageLabel(S.age).replace(" gestochen", "");
 
 /* ---------- KI-Finish: refine the inked crop with an image-editing model (server side) ---------- */
 // Only the area around the tattoo is sent, plus the original flash. The result is blended back
@@ -697,7 +1089,7 @@ async function aiFinish() {
   const btn = $("#ai"); btn.disabled = true; btn.classList.add("busy"); status("KI veredelt …");
   try {
     const r = await fetch("/api/ink", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: crop.toDataURL("image/jpeg", .92), design: design.toDataURL("image/jpeg", .9), mode: S.mode }) });
+      body: JSON.stringify({ image: crop.toDataURL("image/jpeg", .92), design: design.toDataURL("image/jpeg", .9), mode: S.age < .2 ? "fresh" : "healed" }) });
     if (!r.ok) {
       const e = await r.json().catch(() => ({}));
       throw new Error(e.error === "no_key" ? "KI nicht eingerichtet" : e.error === "rate_limited" ? "Kurz warten, zu viele Anfragen" : "KI fehlgeschlagen");
@@ -738,9 +1130,7 @@ function needleReveal(res, box) {
   });
 }
 $("#ink").onclick = stechen;
-$("#edit").onclick = () => { S.inked = S.local = S.ai = null; S.comparing = false; $("#compare").hidden = true; setStep(3); status(""); redraw(); };
-$("#fresh").onclick = () => setMode("fresh"); $("#healed").onclick = () => setMode("healed");
-function setMode(m) { S.mode = m; $("#fresh").setAttribute("aria-pressed", m === "fresh"); $("#healed").setAttribute("aria-pressed", m === "healed"); if (S.step === 4) stechen(); }
+$("#edit").onclick = () => { S.inked = S.local = S.ai = S.ink = null; S.comparing = false; $("#compare").hidden = true; setStep(3); status(""); redraw(); };
 $("#cmp").onclick = () => {
   S.comparing = !S.comparing; $("#cmp").setAttribute("aria-pressed", S.comparing); $("#compare").hidden = !S.comparing; placeCompare(); redraw();
 };
@@ -753,7 +1143,7 @@ $("#compare").addEventListener("pointerdown", e => {
 });
 $("#save").onclick = () => S.inked?.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "tattoo-vorschau.png"; a.click(); }, "image/png");
 
-window.__studio = { S, loadPhoto, loadMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep };
+window.__studio = { S, loadPhoto, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>
