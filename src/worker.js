@@ -8,6 +8,7 @@ const MAX_DATA_URI = 4_000_000; // ~3 MB per image
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    if (url.pathname.startsWith("/hf/")) return modelFile(url);
     if (url.pathname === "/api/ink") {
       if (req.method !== "POST") return json({ error: "method" }, 405);
       return ink(req, env);
@@ -15,6 +16,19 @@ export default {
     return env.ASSETS.fetch(req);
   },
 };
+
+// Same-origin mirror for the studio's depth model. Hugging Face redirects file downloads to another
+// domain, which Safari can refuse ("Load failed"); fetching here and streaming it back avoids that.
+// Only this one model may pass, so the route is not an open proxy. Cloudflare caches the files.
+const MODEL_PREFIX = "onnx-community/depth-anything-v2-small/resolve/";
+async function modelFile(url) {
+  const path = url.pathname.slice("/hf/".length);
+  if (!path.startsWith(MODEL_PREFIX) || path.includes("..")) return json({ error: "not_allowed" }, 404);
+  const r = await fetch(`https://huggingface.co/${path}`, { redirect: "follow", cf: { cacheEverything: true, cacheTtl: 2592000 } });
+  const headers = new Headers({ "Content-Type": r.headers.get("content-type") || "application/octet-stream", "Cache-Control": "public, max-age=2592000" });
+  const len = r.headers.get("content-length"); if (len) headers.set("Content-Length", len);
+  return new Response(r.body, { status: r.status, headers });
+}
 
 async function ink(req, env) {
   if (!env.FAL_KEY) return json({ error: "no_key" }, 503);

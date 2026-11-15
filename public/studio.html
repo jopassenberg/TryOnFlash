@@ -237,7 +237,10 @@ let depthPipe = null, depthDevice = null, segmenter = null;
 // GPU (WebGPU, half precision) when the graphics chip supports it, otherwise the quantised model on
 // the CPU. Some GPUs only fail once they actually run the model, so runDepth() falls back as well.
 async function makeDepth(device) {
-  const { pipeline } = await import(TRANSFORMERS);
+  const { pipeline, env } = await import(TRANSFORMERS);
+  // Model files come through our own domain (worker route /hf/): Safari can refuse Hugging Face's
+  // cross-domain download redirect. Local dev servers have no worker, so they load from Hugging Face.
+  if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) env.remoteHost = location.origin + "/hf/";
   depthDevice = device;
   return pipeline("depth-estimation", DEPTH_MODEL, device === "webgpu" ? { device: "webgpu", dtype: "fp16" } : { dtype: "q8" });
 }
@@ -249,14 +252,16 @@ async function getDepth() {
   }
   return (depthPipe = await makeDepth("wasm"));
 }
-async function runDepth(url) {
-  const dp = await getDepth();
-  try { return await dp(url); }
+// The photo is handed over as pixels (no blob URL round trip, which some browsers refuse to fetch)
+async function runDepth(canvas) {
+  const dp = await getDepth(), { RawImage } = await import(TRANSFORMERS);
+  const input = RawImage.fromCanvas ? RawImage.fromCanvas(canvas) : await new Promise(r => canvas.toBlob(b => r(URL.createObjectURL(b)), "image/jpeg", .92));
+  try { return await dp(input); }
   catch (e) {
     if (depthDevice !== "webgpu") throw e;
     console.warn("WebGPU depth failed while running, retrying on CPU", e);
     depthPipe = await makeDepth("wasm");
-    return depthPipe(url);
+    return depthPipe(input);
   }
 }
 // Model output can arrive as float32, float16 or raw half-float bits (Uint16) depending on the backend
@@ -284,18 +289,19 @@ async function getSegmenter() {
 
 async function analyse() {
   setStep(2); scanStart();
+  let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
     status("Lädt Modelle …");
     const [, seg] = await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]);
-    status("Tiefe …");
-    const url = await new Promise(r => S.proc.toBlob(b => r(URL.createObjectURL(b)), "image/jpeg", .92));
-    const out = await runDepth(url);
+    status("Tiefe …"); stage = "Tiefe berechnen";
+    const out = await runDepth(S.proc);
+    stage = "Haut erkennen";
     S.pw = S.proc.width; S.ph = S.proc.height;
     S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph);
     status("Haut …");
     S.skin = seg ? skinMask(seg) : null;
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
-    buildGeometry();
+    stage = "3D-Modell"; buildGeometry();
     status("3D …");
     await scanFinish();
     status("");
@@ -305,8 +311,8 @@ async function analyse() {
   } catch (e) {
     console.error(e); scanStop();
     const m = String(e?.message || e);
-    status(/Kein Arm/.test(m) ? m : /fetch|network|Failed to load/i.test(m) ? "Modelle nicht geladen – Internet prüfen" :
-      /memory|allocation|OOM/i.test(m) ? "Zu wenig Speicher – Foto kleiner oder anderen Browser" : "Analyse fehlgeschlagen: " + m.slice(0, 90), "err");
+    status(/Kein Arm/.test(m) ? m : `${stage}: ` + (/fetch|network|Failed to load|Load failed/i.test(m) ? "Download fehlgeschlagen" :
+      /memory|allocation|OOM/i.test(m) ? "zu wenig Speicher" : m.slice(0, 80)), "err");
   }
 }
 
