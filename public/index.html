@@ -42,34 +42,30 @@
   @keyframes drift { from { transform: translate(-4vmax, -3vmax) scale(.95); } to { transform: translate(5vmax, 4vmax) scale(1.08); } }
   @media (prefers-reduced-motion: reduce) { .aura i { animation: none; } }
 
-  /* ---------- layout ---------- */
-  .shell { max-width: 1040px; margin: 0 auto; padding: var(--s5); display: grid; gap: var(--s4); }
-  .top { display: flex; align-items: center; justify-content: space-between; height: var(--h); }
+  /* ---------- layout: one large photo card with a light margin, controls float on it ---------- */
+  .shell { height: 100vh; height: 100dvh; padding: 0 var(--s5) var(--s5); display: grid; grid-template-rows: 64px 1fr; }
+  .card { position: relative; min-height: 0; overflow: hidden; color: #fff; background: #0e0e0e; border-radius: var(--r-frame);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 24px 48px -36px rgba(0,0,0,.45); }
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); }
   .brand { display: inline-flex; align-items: center; gap: var(--s2); font-size: 18px; font-weight: 500; letter-spacing: var(--track); }
   .brand svg { width: 22px; height: 22px; }
+  /* steps: one glass pill with the current step, "Platzieren · 3 / 4" */
+  .steps { height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; border-radius: var(--r-sm); font-size: 12px; background: rgba(0,0,0,.05); }
+  .step { display: none; align-items: center; gap: var(--s2); }
+  .step.on { display: inline-flex; }
+  .step::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
+  .step span { order: 1; }
+  .step i { order: 2; font-style: normal; color: var(--muted); }
+  .step i::after { content: " / 4"; }
 
-  /* steps: quiet text tabs, the current one marked with a red dot */
-  .steps { display: flex; gap: var(--s5); }
-  .step { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); transition: color .2s; }
-  .step i { display: none; font-style: normal; }
-  .step::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .35; transition: background .2s, opacity .2s; }
-  .step.done { color: #5d5b59; }
-  .step.on { color: var(--ink); font-weight: 500; }
-  .step.on::before { background: var(--red); opacity: 1; }
-
-  .frame { display: grid; gap: var(--s2); padding: var(--s2); color: #fff; background: var(--frame); border-radius: var(--r-frame);
-    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 16px 40px -28px rgba(0,0,0,.35); }
-  .stage { position: relative; overflow: hidden; background: #0e0e0e; border-radius: var(--r-stage); min-height: 420px; display: grid; place-items: center; touch-action: none; }
-  .stage canvas { display: block; max-width: 100%; max-height: min(68vh, 720px); }
-  #view { position: relative; }
+  .stage { position: absolute; inset: 0; padding: 56px var(--s4) 88px; display: grid; place-items: center; touch-action: none; }
+  .stage canvas { display: block; max-width: calc(100vw - 80px); max-height: calc(100vh - 232px); max-height: calc(100dvh - 232px); }
+  #view { position: relative; border-radius: var(--r); }
   #overlay { position: absolute; pointer-events: none; }
 
   /* empty state */
   .drop { display: grid; justify-items: center; gap: var(--s4); padding: var(--s7) var(--s5); text-align: center; }
-  .drop .mark { width: 32px; height: 32px; color: #fff; margin-bottom: var(--s2); }
-  .drop h1 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 500; letter-spacing: var(--track); }
-  .drop p { margin: 0; color: var(--text-dim); max-width: 34ch; text-wrap: balance; }
-  .drop .btn { margin-top: var(--s2); }
+  .drop .mark { width: 32px; height: 32px; color: #fff; opacity: .9; }
   .drop.over { background: rgba(255,255,255,.04); }
 
   /* ---------- controls ---------- */
@@ -91,6 +87,10 @@
 
   .panel { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
   .group { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+  /* dock: the step's controls float in one glass bar at the bottom of the card */
+  .card > .panel { position: absolute; z-index: 5; left: 50%; bottom: var(--s4); transform: translateX(-50%); flex-wrap: nowrap; max-width: calc(100% - 32px);
+    padding: var(--s2); border-radius: 20px; background: rgba(22,22,22,.62); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+  .card > .panel .group + .group { padding-left: var(--s2); border-left: 1px solid rgba(255,255,255,.12); }
   .thumbs { display: flex; gap: var(--s2); }
   .thumb { width: var(--h); background: #fff; display: grid; place-items: center; overflow: hidden; transition: box-shadow .15s; }
   .thumb img { max-width: 76%; max-height: 76%; }
@@ -105,18 +105,18 @@
   .field em { font-style: normal; padding-right: var(--s2); }
 
 
-  /* on-image overlays: same inset (12), height (32) and radius (10) */
-  .status, .views, .tagv { position: absolute; z-index: 3; border-radius: var(--r-sm); background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-  .status { top: var(--s3); left: var(--s3); height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; gap: var(--s2); font-size: 12px; }
+  /* on-image overlays: inset 16, height 32, radius 10 */
+  .status, .views, .tagv { position: absolute; z-index: 4; border-radius: var(--r-sm); background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .status { top: var(--s4); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; gap: var(--s2); font-size: 12px; white-space: nowrap; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
   .status[data-s="busy"] .dot { background: var(--red-2); animation: blink .9s infinite; }
   .status[data-s="ok"] .dot { background: var(--red-2); }
   .status[data-s="err"] .dot { background: #ffb020; }
   @keyframes blink { 50% { opacity: .25; } }
-  .views { top: var(--s3); right: var(--s3); display: flex; gap: 2px; padding: 3px; }
-  .views button { height: 26px; padding: 0 var(--s3); border-radius: 7px; font-size: 12px; color: var(--text-dim); }
+  .views { right: var(--s4); top: 50%; transform: translateY(-50%); display: grid; gap: 2px; padding: 3px; }
+  .views button { height: 32px; padding: 0 var(--s3); border-radius: 7px; font-size: 12px; color: var(--text-dim); }
   .views button[aria-pressed="true"] { background: #fff; color: var(--ink); }
-  .tagv { bottom: var(--s3); right: var(--s3); height: 24px; padding: 0 var(--s2); display: grid; place-items: center; font-size: 11px; border-radius: 8px; }
+  .tagv { right: var(--s4); bottom: 96px; height: 24px; padding: 0 var(--s2); display: grid; place-items: center; font-size: 11px; border-radius: 8px; }
 
   .needle { position: absolute; z-index: 4; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--red-2); box-shadow: 0 0 0 5px rgba(255,255,255,.22); pointer-events: none; }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,.3); cursor: ew-resize; pointer-events: auto; }
@@ -126,14 +126,16 @@
   .cut { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: var(--s4); background: rgba(20,20,20,.4);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: fadein .25s ease; }
   @keyframes fadein { from { opacity: 0; } }
-  .cutbox { width: min(940px, 100%); }
+  .cutbox { width: min(940px, 100%); display: grid; gap: var(--s2); padding: var(--s2); color: #fff; background: var(--frame); border-radius: var(--r-frame); }
+  .cutstage .status { left: var(--s3); top: var(--s3); transform: none; }
   .cutstage { position: relative; overflow: hidden; background: #0e0e0e; border-radius: var(--r-stage); display: grid; place-items: center; min-height: 280px; }
   #cutCanvas { display: block; max-width: 100%; max-height: 70vh; touch-action: none; cursor: crosshair; }
   .cutstage .status { pointer-events: none; }
 
   @supports (corner-shape: squircle) {
-    .frame, .stage, .cutstage, .btn, .chip, .field, .thumb, .status, .views, .tagv { corner-shape: squircle; }
-    .frame { border-radius: calc(var(--r-frame) * 1.6); } .stage, .cutstage { border-radius: calc(var(--r-stage) * 1.6); }
+    .card, .cutbox, .cutstage, .btn, .chip, .field, .thumb, .status, .views, .tagv { corner-shape: squircle; }
+    .siri, .siri i, .siri i::before { corner-shape: squircle; }
+    .card, .cutbox { border-radius: calc(var(--r-frame) * 1.6); } .cutstage { border-radius: calc(var(--r-stage) * 1.6); }
     .btn, .chip, .field, .thumb { border-radius: calc(var(--r) * 1.6); } .status, .views { border-radius: calc(var(--r-sm) * 1.6); }
   }
 
@@ -152,7 +154,7 @@
   @property --p3 { syntax: "<percentage>"; inherits: true; initial-value: 60%; }
   @property --p4 { syntax: "<percentage>"; inherits: true; initial-value: 80%; }
   @property --p5 { syntax: "<percentage>"; inherits: true; initial-value: 100%; }
-  .siri { position: absolute; pointer-events: none; z-index: 2; border-radius: 14px; opacity: 0;
+  .siri { position: absolute; inset: 0; pointer-events: none; z-index: 3; border-radius: inherit; opacity: 0;
     transition: opacity .6s ease, --c0 1s ease-in-out, --c1 1s ease-in-out, --c2 1s ease-in-out, --c3 1s ease-in-out, --c4 1s ease-in-out, --c5 1s ease-in-out,
       --p0 1s ease-in-out, --p1 1s ease-in-out, --p2 1s ease-in-out, --p3 1s ease-in-out, --p4 1s ease-in-out, --p5 1s ease-in-out; }
   .siri.on { opacity: 1; }
@@ -167,17 +169,23 @@
   .siri i:nth-child(4) { --w: 15px; --b: 15px; }
   @media (prefers-reduced-motion: reduce) { .siri { transition: opacity .6s ease; } }
 
-  /* ---------- phones ---------- */
+  /* ---------- phones: the card becomes the whole screen ---------- */
   @media (max-width: 680px) {
-    .shell { padding: var(--s4); gap: var(--s3); }
-    .steps { gap: 0; }
-    .step:not(.on) { display: none; }
-    .step.on i { display: inline; color: var(--muted); font-weight: 400; }
-    .step.on i::after { content: " / 4 ·"; }
-    .stage { min-height: 320px; }
-    .panel { gap: var(--s2); }
-    .panel > .group { width: 100%; }
-    .panel > .group.end > .btn:not(.icon) { flex: 1; }
+    .shell { padding: 0 var(--s2) var(--s2); grid-template-rows: 56px 1fr; }
+    .top { padding: 0 var(--s2); }
+    .card { border-radius: 24px; }
+    @supports (corner-shape: squircle) { .card { border-radius: 38px; } }
+    .status { top: var(--s3); }
+    .stage { padding: 56px 0 136px; }
+    .stage canvas { max-width: calc(100vw - 16px); max-height: calc(100vh - 264px); max-height: calc(100dvh - 264px); }
+    #view { border-radius: 0; }
+    .views { right: var(--s3); }
+    .tagv { right: var(--s3); bottom: 148px; }
+    .card > .panel { left: var(--s3); right: var(--s3); bottom: var(--s3); transform: none; max-width: none; flex-wrap: wrap; border-radius: 24px; }
+    .card > .panel .group { width: 100%; }
+    .card > .panel .group + .group { padding-left: 0; border-left: 0; }
+    .card > .panel .group.end > .btn:not(.icon) { flex: 1; }
+    .cut { padding: var(--s2); }
   }
 </style>
 </head>
@@ -193,19 +201,16 @@
       <div class="step" data-step="4"><i>4</i><span>Stechen</span></div>
     </nav>
   </header>
-
-  <main class="frame">
+  <main class="card">
+    <div class="siri" id="siri" hidden><i></i><i></i><i></i><i></i></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop">
         <svg viewBox="0 0 32 32" aria-hidden="true" class="mark"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>
-        <h1>Dein Tattoo, auf deiner Haut</h1>
-        <p>Foto vom Arm hochladen, Motiv platzieren, stechen.</p>
         <button class="btn white" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Foto wählen</button>
       </div>
       <div id="viewWrap" hidden style="position:relative">
         <canvas id="view"></canvas>
         <canvas id="overlay"></canvas>
-        <div class="siri" id="siri" hidden><i></i><i></i><i></i><i></i></div>
         <div class="compare" id="compare" hidden></div>
         <div class="needle" id="needle" hidden></div>
       </div>
@@ -242,7 +247,7 @@
   </main>
 
   <div class="cut" id="cut" hidden>
-    <div class="frame cutbox">
+    <div class="cutbox">
       <div class="cutstage">
         <canvas id="cutCanvas"></canvas>
         <div class="status" data-s="ok"><span class="dot"></span><span id="cutHint">Tattoo umfahren</span></div>
@@ -340,7 +345,6 @@ function fitOverlay() {
   overlay.width = view.clientWidth * devicePixelRatio; overlay.height = view.clientHeight * devicePixelRatio;
   overlay.style.width = view.clientWidth + "px"; overlay.style.height = view.clientHeight + "px";
   overlay.style.left = view.offsetLeft + "px"; overlay.style.top = view.offsetTop + "px";
-  Object.assign($("#siri").style, { left: overlay.style.left, top: overlay.style.top, width: overlay.style.width, height: overlay.style.height });
 }
 new ResizeObserver(() => { if (S.photo) { fitOverlay(); drawGizmo(); } }).observe(view);
 
