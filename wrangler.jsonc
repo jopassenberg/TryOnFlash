@@ -1,14 +1,9 @@
 {
-  // Cloudflare Worker: liefert die statische Seite aus public/ aus und hat einen
-  // Endpunkt /api/ink für den KI-Durchgang im Studio (Schlüssel als Secret FAL_KEY).
+  // Cloudflare Worker: serves the static app from public/ and mirrors the depth model under /hf/*.
   "name": "tryonflash",
   "main": "src/worker.js",
   "compatibility_date": "2025-09-01",
-  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/hf/*"] },
-  // Begrenzt KI-Anfragen pro Besucher, damit niemand das Guthaben leer klickt
-  "ratelimits": [
-    { "name": "INK_LIMIT", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } }
-  ],
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/hf/*"] },
   "workers_dev": true,
   "preview_urls": true
 }
