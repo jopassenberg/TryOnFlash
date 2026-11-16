@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit · Layout-Optionen</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Three layout options for the main screen (step "Platzieren"), same tokens as the app:
+     8 px grid, 40 px controls, neutral greys, no red. Desktop 1200x760 and phone 390x844 each. */
+  :root { --bg: #f4f3f1; --ink: #141414; --muted: #8a8886; --line: rgba(0,0,0,.08); --dark: #161616;
+    --on-dark: rgba(255,255,255,.08); --dim: rgba(255,255,255,.6); --h: 40px; --r: 12px; --track: -.05em; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e7e5e2; color: var(--ink); font: 400 13px/1.4 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.012em; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; letter-spacing: inherit; border: 0; background: none; padding: 0; }
+  .page { max-width: 1680px; margin: 0 auto; padding: 48px 32px 80px; display: grid; gap: 64px; }
+  .page > header h1 { margin: 0; font-size: 28px; font-weight: 500; letter-spacing: var(--track); }
+  .page > header p { margin: 8px 0 0; color: var(--muted); }
+  section { display: grid; gap: 24px; }
+  .label { display: flex; align-items: baseline; gap: 8px 24px; flex-wrap: wrap; }
+  .label h2 { white-space: nowrap; }
+  .label h2 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: var(--track); }
+  .label p { margin: 0; color: var(--muted); max-width: 70ch; }
+  .row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+  .desk { width: 1200px; height: 760px; flex: none; overflow: hidden; border-radius: 20px; background: var(--bg); box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 24px 48px -32px rgba(0,0,0,.3); position: relative; }
+  .phone { width: 390px; height: 844px; flex: none; overflow: hidden; border-radius: 44px; background: var(--bg); box-shadow: 0 0 0 10px #111, 0 24px 48px -24px rgba(0,0,0,.4); position: relative; }
+  .scale { transform-origin: top left; }
+  .desk { zoom: var(--zd, 1); } .phone { zoom: var(--zp, 1); }
+
+  /* shared bits */
+  .logo { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; letter-spacing: var(--track); }
+  .logo svg { width: 22px; height: 22px; }
+  .photo { position: relative; overflow: hidden; background: linear-gradient(135deg, #3a3f46, #1d2024); }
+  .photo::before { content: ""; position: absolute; left: 50%; top: -20%; width: 34%; height: 140%; transform: translateX(-50%) rotate(-20deg);
+    background: linear-gradient(90deg, #5e3f2f, #c99779 25%, #f3d0b6 42%, #e9c0a3 50%, #d4a586 62%, #5e3f2f); border-radius: 999px; }
+  .photo .tat { position: absolute; left: 50%; top: 50%; width: 22%; transform: translate(-50%, -50%) rotate(-20deg); opacity: .85; mix-blend-mode: multiply; }
+  .ring { position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 1.5px solid rgba(255,255,255,.7); background: rgba(255,255,255,.08); }
+  .ring::after { content: ""; position: absolute; left: 50%; top: -8px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: #fff; }
+  .btn { height: var(--h); padding: 0 16px; border-radius: var(--r); display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 500; white-space: nowrap; }
+  .btn.ink { background: var(--ink); color: #fff; }
+  .btn.white { background: #fff; color: var(--ink); }
+  .btn.soft { background: rgba(0,0,0,.05); }
+  .btn.glass { background: rgba(255,255,255,.12); color: #fff; }
+  .btn.icon { width: var(--h); padding: 0; }
+  .btn svg { width: 16px; height: 16px; }
+  .thumb { width: var(--h); height: var(--h); border-radius: var(--r); background: #fff; display: grid; place-items: center; }
+  .thumb svg { width: 60%; }
+  .thumb.on { box-shadow: 0 0 0 1.5px var(--ink); }
+  .thumb.add { background: rgba(0,0,0,.05); }
+  .chip { height: 32px; padding: 0 12px; border-radius: 10px; display: inline-flex; align-items: center; font-size: 12px; }
+
+  /* ---------- A · Studio mit Seitenleiste ---------- */
+  .A { display: grid; grid-template-columns: 1fr 320px; height: 100%; }
+  .A .canvas { padding: 24px; display: grid; grid-template-rows: 40px 1fr; gap: 16px; }
+  .A .canvas .photo { border-radius: 20px; }
+  .A .side { background: #fff; border-left: 1px solid var(--line); padding: 24px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 32px; }
+  .A .steps { display: grid; gap: 4px; }
+  .A .steps div { height: 36px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border-radius: 10px; color: var(--muted); }
+  .A .steps div b { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-weight: 500; background: rgba(0,0,0,.05); }
+  .A .steps div.on { background: var(--bg); color: var(--ink); font-weight: 500; }
+  .A .steps div.on b { background: var(--ink); color: #fff; }
+  .A h3 { margin: 0 0 12px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .A .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .A .grid .thumb { width: auto; height: auto; aspect-ratio: 1; background: var(--bg); }
+  .A .fields { display: grid; gap: 8px; align-content: start; }
+  .A .f { height: var(--h); border-radius: var(--r); background: var(--bg); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; }
+  .A .f span { color: var(--muted); }
+  .A .actions { display: grid; gap: 8px; }
+  .A .actions .btn { width: 100%; }
+  .A .viewseg { justify-self: start; display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(0,0,0,.05); }
+  .A .viewseg span { height: 26px; padding: 0 12px; border-radius: 7px; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+  .A .viewseg span.on { background: #fff; color: var(--ink); }
+  /* phone: photo on top, sheet below */
+  .Am { display: grid; grid-template-rows: 56px 1fr auto; height: 100%; padding-top: 44px; }
+  .Am .bar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+  .Am .photo { margin: 0 16px; border-radius: 20px; }
+  .Am .sheet { margin-top: 16px; background: #fff; border-radius: 24px 24px 0 0; padding: 16px 16px 40px; display: grid; gap: 16px; }
+  .Am .sheet .handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.12); justify-self: center; }
+  .Am .tray { display: flex; gap: 8px; }
+  .Am .tray .thumb { background: var(--bg); }
+
+  /* ---------- B · Vollbild mit schwebendem Dock ---------- */
+  .B { position: relative; height: 100%; }
+  .B .photo { position: absolute; inset: 0; }
+  .B .top { position: absolute; left: 24px; right: 24px; top: 24px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+  .B .pill { height: 32px; padding: 0 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #fff;
+    background: rgba(20,20,20,.5); backdrop-filter: blur(16px); }
+  .B .pill i { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+  .B .dock { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 20px;
+    background: rgba(20,20,20,.55); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); color: #fff; }
+  .B .dock .sep { width: 1px; height: 24px; background: rgba(255,255,255,.15); margin: 0 4px; }
+  .B .dock .thumb { background: rgba(255,255,255,.92); }
+  .B .dock .thumb.add { background: rgba(255,255,255,.12); color: #fff; }
+  .B .dock .thumb.on { box-shadow: 0 0 0 1.5px #fff; }
+  .B .dock .val { height: var(--h); padding: 0 12px; border-radius: var(--r); background: rgba(255,255,255,.08); display: flex; align-items: center; gap: 8px; color: var(--dim); }
+  .B .dock .val b { color: #fff; font-weight: 500; }
+  .B .side-tools { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); display: grid; gap: 8px; }
+  .B .side-tools .btn { background: rgba(20,20,20,.5); color: #fff; backdrop-filter: blur(16px); }
+  .Bm .top { left: 16px; right: 16px; top: 56px; }
+  .Bm .dock { left: 16px; right: 16px; transform: none; bottom: 32px; display: grid; gap: 8px; border-radius: 24px; }
+  .Bm .dock .r { display: flex; gap: 8px; align-items: center; }
+  .Bm .dock .r .grow { flex: 1; }
+  .Bm .side-tools { right: 16px; }
+
+  /* ---------- C · Hell und redaktionell ---------- */
+  .C { display: grid; grid-template-rows: 72px 1fr 88px; height: 100%; padding: 0 48px; }
+  .C .head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  .C .nav { display: flex; gap: 24px; color: var(--muted); }
+  .C .nav .on { color: var(--ink); }
+  .C .body { display: grid; grid-template-columns: 280px 1fr; gap: 48px; padding: 40px 0; min-height: 0; }
+  .C .intro { display: grid; align-content: space-between; }
+  .C .intro small { color: var(--muted); }
+  .C .intro h2 { margin: 8px 0 12px; font-size: 44px; line-height: 48px; font-weight: 500; letter-spacing: var(--track); }
+  .C .intro p { margin: 0; color: var(--muted); max-width: 28ch; }
+  .C .meta { display: grid; gap: 0; border-top: 1px solid var(--line); }
+  .C .meta div { height: 44px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  .C .meta span { color: var(--muted); }
+  .C .photo { border-radius: 4px; }
+  .C .foot { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); }
+  .C .tray { display: flex; gap: 8px; }
+  .C .tray .thumb { border: 1px solid var(--line); }
+  .Cm { display: grid; grid-template-rows: 100px auto 1fr auto; height: 100%; padding: 44px 20px 0; }
+  .Cm .head { display: flex; align-items: center; justify-content: space-between; }
+  .Cm h2 { margin: 0 0 16px; font-size: 32px; line-height: 36px; font-weight: 500; letter-spacing: var(--track); }
+  .Cm small { color: var(--muted); display: block; margin-bottom: 4px; }
+  .Cm .photo { border-radius: 4px; }
+  .Cm .foot { padding: 16px 0 40px; display: grid; gap: 12px; }
+  .Cm .foot .r { display: flex; gap: 8px; }
+  .Cm .foot .r .btn.ink { flex: 1; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="logo" viewBox="0 0 32 32"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26" cy="16" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16" cy="26" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6" cy="16" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16" cy="6" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></symbol>
+  <symbol id="star" viewBox="-250 -250 500 500"><path d="M0-240 47-65 228-74 76 24 141 194 0 80-141 194-76 24-228-74-47-65Z" fill="none" stroke="#111" stroke-width="16" stroke-linejoin="round"/></symbol>
+  <symbol id="rose" viewBox="0 0 100 100"><g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"><circle cx="50" cy="42" r="18"/><path d="M50 60v30M50 74c-10-2-16-8-18-14M50 80c10-2 15-7 17-13"/></g></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="cam" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></g></symbol>
+  <symbol id="cube" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></g></symbol>
+  <symbol id="layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 4l9 5-9 5-9-5z"/><path d="M3 14l9 5 9-5"/></g></symbol>
+</svg>
+
+<div class="page">
+  <header>
+    <h1>Hauptscreen · drei Layout-Optionen</h1>
+    <p>Gezeigt ist jeweils der Schritt „Platzieren“ auf Desktop und Handy. Gleiche Bausteine, 8-px-Raster, kein Rot.</p>
+  </header>
+
+  <!-- A -->
+  <section>
+    <div class="label"><h2>A · Studio mit Seitenleiste</h2><p>Bild links so groß wie möglich, alle Werkzeuge rechts in einer hellen Leiste mit Schritten als Liste. Wirkt wie ein Werkzeug (Figma, Lightroom). Auf dem Handy wird die Leiste zum Sheet unten.</p></div>
+    <div class="row">
+      <div class="desk"><div class="A">
+        <div class="canvas">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="logo"><svg><use href="#logo"/></svg>Stencit</span>
+            <div class="viewseg"><span class="on">Foto</span><span>Tiefe</span><span>3D</span></div></div>
+          <div class="photo"><svg class="tat"><use href="#star"/></svg><div class="ring"></div></div>
+        </div>
+        <aside class="side">
+          <div class="steps"><div><b>1</b>Foto</div><div><b>2</b>Analyse</div><div class="on"><b>3</b>Platzieren</div><div><b>4</b>Stechen</div></div>
+          <div><h3>Motiv</h3><div class="grid"><button class="thumb add"><svg width="16" height="16"><use href="#plus"/></svg></button><button class="thumb on"><svg><use href="#star"/></svg></button><button class="thumb"><svg><use href="#rose"/></svg></button></div></div>
+          <div class="fields"><h3 style="margin:0 0 4px">Maße</h3><div class="f"><span>Armbreite</span>7,5 cm</div><div class="f"><span>Größe</span>9 × 9 cm</div><div class="f"><span>Drehung</span>−20°</div></div>
+          <div class="actions"><button class="btn ink">Stechen</button><button class="btn soft">Neues Foto</button></div>
+        </aside>
+      </div></div>
+      <div class="phone"><div class="Am">
+        <div class="bar"><span class="logo"><svg><use href="#logo"/></svg>Stencit</span><span style="color:var(--muted)">3 / 4 · Platzieren</span></div>
+        <div class="photo"><svg class="tat"><use href="#star"/></svg><div class="ring"></div></div>
+        <div class="sheet"><div class="handle"></div>
+          <div class="tray"><button class="thumb add"><svg width="16" height="16"><use href="#plus"/></svg></button><button class="thumb on"><svg><use href="#star"/></svg></button><button class="thumb"><svg><use href="#rose"/></svg></button></div>
+          <div style="display:flex;gap:8px"><div class="btn soft" style="flex:1;justify-content:space-between;font-weight:400"><span style="color:var(--muted)">Armbreite</span>7,5 cm</div><div class="btn soft" style="flex:1;justify-content:space-between;font-weight:400"><span style="color:var(--muted)">Größe</span>9 cm</div></div>
+          <div style="display:flex;gap:8px"><button class="btn soft icon"><svg><use href="#cam"/></svg></button><button class="btn ink" style="flex:1">Stechen</button></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- B -->
+  <section>
+    <div class="label"><h2>B · Vollbild mit schwebendem Dock</h2><p>Das Foto füllt den ganzen Screen, Bedienung schwebt als Glas-Dock unten, Ansichten als Werkzeugleiste rechts. Am immersivsten, fühlt sich wie eine Kamera-App an. Am besten fürs Handy.</p></div>
+    <div class="row">
+      <div class="desk"><div class="B">
+        <div class="photo"><svg class="tat"><use href="#star"/></svg><div class="ring"></div></div>
+        <div class="top"><span class="logo"><svg><use href="#logo"/></svg>Stencit</span><span class="pill"><i></i>Platzieren · 3 / 4</span></div>
+        <div class="side-tools"><button class="btn icon"><svg><use href="#cube"/></svg></button><button class="btn icon"><svg><use href="#layers"/></svg></button><button class="btn icon"><svg><use href="#cam"/></svg></button></div>
+        <div class="dock">
+          <button class="thumb add"><svg width="16" height="16"><use href="#plus"/></svg></button><button class="thumb on"><svg><use href="#star"/></svg></button><button class="thumb"><svg><use href="#rose"/></svg></button>
+          <span class="sep"></span>
+          <div class="val">Arm <b>7,5 cm</b></div><div class="val">Größe <b>9 cm</b></div>
+          <span class="sep"></span>
+          <button class="btn white">Stechen</button>
+        </div>
+      </div></div>
+      <div class="phone"><div class="B Bm">
+        <div class="photo"><svg class="tat"><use href="#star"/></svg><div class="ring"></div></div>
+        <div class="top"><span class="logo"><svg><use href="#logo"/></svg>Stencit</span><span class="pill"><i></i>3 / 4</span></div>
+        <div class="side-tools"><button class="btn icon"><svg><use href="#cube"/></svg></button><button class="btn icon"><svg><use href="#layers"/></svg></button></div>
+        <div class="dock">
+          <div class="r"><button class="thumb add"><svg width="16" height="16"><use href="#plus"/></svg></button><button class="thumb on"><svg><use href="#star"/></svg></button><button class="thumb"><svg><use href="#rose"/></svg></button><span class="grow"></span><div class="val">Arm <b>7,5</b></div></div>
+          <div class="r"><button class="btn glass icon"><svg><use href="#cam"/></svg></button><button class="btn white" style="flex:1">Stechen</button></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- C -->
+  <section>
+    <div class="label"><h2>C · Hell und redaktionell</h2><p>Alles hell, große Typo für den aktuellen Schritt, Maße als ruhige Liste, dünne Linien statt Flächen. Wirkt wie eine Galerie oder ein Magazin, sehr ruhig. Passt zur minimalistischen Galerie-Inspiration.</p></div>
+    <div class="row">
+      <div class="desk"><div class="C">
+        <div class="head"><span class="logo"><svg><use href="#logo"/></svg>Stencit</span><nav class="nav"><span>Foto</span><span>Analyse</span><span class="on">Platzieren</span><span>Stechen</span></nav></div>
+        <div class="body">
+          <div class="intro">
+            <div><small>Schritt 3 von 4</small><h2>Platzieren</h2><p>Ziehen zum Verschieben, am Griff drehen und skalieren.</p></div>
+            <div class="meta"><div><span>Armbreite</span>7,5 cm</div><div><span>Größe</span>9 × 9 cm</div><div><span>Drehung</span>−20°</div></div>
+          </div>
+          <div class="photo"><svg class="tat"><use href="#star"/></svg><div class="ring"></div></div>
+        </div>
+        <div class="foot">
+          <div class="tray"><button class="thumb add"><svg width="16" height="16"><use href="#plus"/></svg></button><button class="thumb on"><svg><use href="#star"/></svg></button><button class="thumb"><svg><use href="#rose"/></svg></button></div>
+          <div style="display:flex;gap:8px"><button class="btn soft">Neues Foto</button><button class="btn ink">Stechen</button></div>
+        </div>
+      </div></div>
+      <div class="phone"><div class="Cm">
+        <div class="head"><span class="logo"><svg><use href="#logo"/></svg>Stencit</span><span style="color:var(--muted)">3 / 4</span></div>
+        <div><small>Schritt 3 von 4</small><h2>Platzieren</h2></div>
+        <div class="photo"><svg class="tat"><use href="#star"/></svg><div class="ring"></div></div>
+        <div class="foot">
+          <div class="r"><button class="thumb add"><svg width="16" height="16"><use href="#plus"/></svg></button><button class="thumb on" style="border:1px solid var(--line)"><svg><use href="#star"/></svg></button><button class="thumb" style="border:1px solid var(--line)"><svg><use href="#rose"/></svg></button></div>
+          <div class="r"><button class="btn soft icon"><svg><use href="#cam"/></svg></button><button class="btn ink">Stechen</button></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+</div>
+<script>
+  // Fit desktop + phone mock side by side (or stacked on narrow screens)
+  function fit() {
+    const w = document.querySelector(".page").clientWidth - 64, side = w > 1100;
+    const zd = Math.min(1, (side ? w - 32 - 390 * .8 : w) / 1200), zp = side ? Math.min(1, zd * 1.05) : Math.min(1, w / 410, .8);
+    document.documentElement.style.setProperty("--zd", zd.toFixed(3)); document.documentElement.style.setProperty("--zp", zp.toFixed(3));
+  }
+  fit(); addEventListener("resize", fit);
+</script>
+</body>
+</html>

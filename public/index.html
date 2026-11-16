@@ -73,19 +73,19 @@
   .drop.over { background: rgba(255,255,255,.04); }
 
   /* ---------- controls ---------- */
-  .btn, .chip, .field, .age, .thumb { height: var(--h); border-radius: var(--r); }
+  .btn, .chip, .field, .thumb { height: var(--h); border-radius: var(--r); }
   .btn { padding: 0 var(--s4); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); font-weight: 500; white-space: nowrap;
     transition: transform .12s ease, filter .15s ease, background .15s ease; }
   .btn:active { transform: scale(.97); }
   .btn svg { width: 16px; height: 16px; }
   .btn.icon { width: var(--h); padding: 0; }
   .btn.white { background: #fff; color: var(--ink); }
-  .btn.red { background: var(--red); color: #fff; }
-  .btn.red:hover { filter: brightness(1.08); }
+  .btn.primary { background: #fff; color: var(--ink); }
+  .btn.primary:hover { background: #ececea; }
   .btn.ghost { background: var(--on-dark); color: #fff; }
   .btn.ghost:hover { background: var(--on-dark-2); }
   .btn:disabled { opacity: .35; cursor: default; }
-  #ai[aria-pressed="true"] { background: #fff; color: var(--red); }
+  #ai[aria-pressed="true"] { background: var(--on-dark-2); color: #fff; }
   #ai.busy svg { animation: spin 1.2s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -104,12 +104,6 @@
   .field input { width: 48px; height: var(--h-sm); border: 0; border-radius: 8px; background: rgba(0,0,0,.35); color: #fff; text-align: center; }
   .field em { font-style: normal; padding-right: var(--s2); }
 
-  /* age slider: one track, one label */
-  .age { display: inline-flex; align-items: center; gap: var(--s3); padding: 0 var(--s4); background: var(--on-dark); }
-  .age b { font-weight: 500; min-width: 84px; }
-  .age input { -webkit-appearance: none; appearance: none; width: 144px; height: 2px; border-radius: 2px; margin: 0; background: rgba(255,255,255,.3); }
-  .age input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); cursor: grab; }
-  .age input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
 
   /* on-image overlays: same inset (12), height (32) and radius (10) */
   .status, .views, .tagv { position: absolute; z-index: 3; border-radius: var(--r-sm); background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
@@ -138,9 +132,9 @@
   .cutstage .status { pointer-events: none; }
 
   @supports (corner-shape: squircle) {
-    .frame, .stage, .cutstage, .btn, .chip, .field, .age, .thumb, .status, .views, .tagv { corner-shape: squircle; }
+    .frame, .stage, .cutstage, .btn, .chip, .field, .thumb, .status, .views, .tagv { corner-shape: squircle; }
     .frame { border-radius: calc(var(--r-frame) * 1.6); } .stage, .cutstage { border-radius: calc(var(--r-stage) * 1.6); }
-    .btn, .chip, .field, .age, .thumb { border-radius: calc(var(--r) * 1.6); } .status, .views { border-radius: calc(var(--r-sm) * 1.6); }
+    .btn, .chip, .field, .thumb { border-radius: calc(var(--r) * 1.6); } .status, .views { border-radius: calc(var(--r-sm) * 1.6); }
   }
 
   /* Siri-style edge glow (after the open-source SwiftUI recreation "AppleIntelligenceGlowEffect"):
@@ -184,7 +178,6 @@
     .panel { gap: var(--s2); }
     .panel > .group { width: 100%; }
     .panel > .group.end > .btn:not(.icon) { flex: 1; }
-    .age { flex: 1; } .age input { width: auto; flex: 1; } .age b { min-width: 0; }
   }
 </style>
 </head>
@@ -232,19 +225,18 @@
       </div>
       <div class="group end">
         <button class="btn ghost icon" id="newPhoto" title="Neues Foto" aria-label="Neues Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
-        <button class="btn red" id="ink" disabled>Stechen</button>
+        <button class="btn primary" id="ink" disabled>Stechen</button>
       </div>
     </div>
 
     <div class="panel" id="panelDone" hidden>
       <div class="group">
-        <label class="age"><input type="range" id="age" min="0" max="100" value="40" aria-label="Alter des Tattoos"><b id="ageLabel">Verheilt</b></label>
         <button class="chip" id="cmp" aria-pressed="false">Vergleich</button>
       </div>
       <div class="group end">
         <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
         <button class="btn ghost icon" id="save" title="Bild speichern" aria-label="Bild speichern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
-        <button class="btn red" id="ai" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>KI-Finish</button>
+        <button class="btn primary" id="ai" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>KI-Finish</button>
       </div>
     </div>
   </main>
@@ -262,7 +254,7 @@
         </div>
         <div class="group end">
           <button class="btn ghost" id="cutCancel">Abbrechen</button>
-          <button class="btn red" id="cutOk">Übernehmen</button>
+          <button class="btn primary" id="cutOk">Übernehmen</button>
         </div>
       </div>
     </div>
@@ -1059,7 +1051,6 @@ function vnoise(x, y, s) { // smooth value noise, cell size s px
   const h = (a, b) => hash(a * 157 + b * 311 + 7);
   return (h(xi, yi) * (1 - u) + h(xi + 1, yi) * u) * (1 - v) + (h(xi, yi + 1) * (1 - u) + h(xi + 1, yi + 1) * u) * v;
 }
-function ageLabel(t) { return t < .12 ? "Frisch" : t < .28 ? "Nach Tagen" : t < .55 ? "Verheilt" : t < .8 ? "Nach Jahren" : "10+ Jahre"; }
 
 // Placement-dependent part (runs once per "Stechen"): warped motif, skin layers, surface normals
 function prepareInk() {
@@ -1152,18 +1143,7 @@ async function stechen() {
   S.local = S.inked = res; S.ai = null;
   $("#ai").setAttribute("aria-pressed", false); status(""); redraw();
 }
-// Age slider: re-render the ink only (no needle), throttled to one render per frame
-let ageBusy = false;
-$("#age").oninput = e => {
-  S.age = e.target.value / 100; $("#ageLabel").textContent = ageLabel(S.age);
-  if (S.step !== 4 || !S.ink || ageBusy) return;
-  ageBusy = true;
-  requestAnimationFrame(() => {
-    ageBusy = false; S.local = S.inked = composeInk(); S.ai = null; $("#ai").setAttribute("aria-pressed", false);
-    redraw();
-  });
-};
-$("#ageLabel").textContent = ageLabel(S.age);
+// Age is fixed at "healed" (S.age); the renderer still supports fresh to aged (renderInk(t)).
 
 /* ---------- KI-Finish: refine the inked crop with an image-editing model (server side) ---------- */
 // Only the area around the tattoo is sent, plus the original flash. The result is blended back
