@@ -1,2 +1,2 @@
 /*
-  Permissions-Policy: camera=()
+  Permissions-Policy: camera=(self)

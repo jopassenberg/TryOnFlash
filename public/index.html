@@ -58,13 +58,24 @@
   .step i { order: 2; font-style: normal; color: var(--muted); }
   .step i::after { content: " / 4"; }
 
-  .stage { position: absolute; inset: 0; padding: 56px var(--s4) 88px; display: grid; place-items: center; touch-action: none; }
-  .stage canvas { display: block; max-width: calc(100vw - 80px); max-height: calc(100vh - 232px); max-height: calc(100dvh - 232px); }
-  #view { position: relative; border-radius: var(--r); }
+  .stage { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; touch-action: none; }
+  /* the photo always covers the whole card (sized in fitView), centred, overflow cut by the card */
+  #viewWrap { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  #view { display: block; position: relative; }
+  #cam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #0e0e0e; }
+  #cam.mirror { transform: scaleX(-1); }
+  .shot { position: absolute; inset: 0; z-index: 6; background: #fff; opacity: 0; pointer-events: none; }
+  .shot.go { animation: shot .45s ease-out; }
+  @keyframes shot { 0% { opacity: .85; } 100% { opacity: 0; } }
+  .shutter { width: 56px; height: 56px; border-radius: 50%; border: 2px solid #fff; padding: 4px; }
+  .shutter::after { content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; transition: transform .15s ease; }
+  .shutter:active::after { transform: scale(.88); }
+  #panelCam .group { gap: var(--s5); padding: 0 var(--s2); }
   #overlay { position: absolute; pointer-events: none; }
 
   /* empty state */
   .drop { display: grid; justify-items: center; gap: var(--s4); padding: var(--s7) var(--s5); text-align: center; }
+  .drop .row { display: flex; gap: var(--s2); }
   .drop .mark { width: 32px; height: 32px; color: #fff; opacity: .9; }
   .drop.over { background: rgba(255,255,255,.04); }
 
@@ -176,9 +187,7 @@
     .card { border-radius: 24px; }
     @supports (corner-shape: squircle) { .card { border-radius: 38px; } }
     .status { top: var(--s3); }
-    .stage { padding: 56px 0 136px; }
-    .stage canvas { max-width: calc(100vw - 16px); max-height: calc(100vh - 264px); max-height: calc(100dvh - 264px); }
-    #view { border-radius: 0; }
+    #panelCam .group { justify-content: space-between; padding: 0 var(--s3); }
     .views { right: var(--s3); }
     .tagv { right: var(--s3); bottom: 148px; }
     .card > .panel { left: var(--s3); right: var(--s3); bottom: var(--s3); transform: none; max-width: none; flex-wrap: wrap; border-radius: 24px; }
@@ -206,9 +215,14 @@
     <div class="stage" id="stage">
       <div class="drop" id="drop">
         <svg viewBox="0 0 32 32" aria-hidden="true" class="mark"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>
-        <button class="btn white" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Foto wählen</button>
+        <div class="row">
+          <button class="btn white" id="camBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Kamera</button>
+          <button class="btn ghost" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Hochladen</button>
+        </div>
       </div>
-      <div id="viewWrap" hidden style="position:relative">
+      <video id="cam" playsinline muted autoplay hidden></video>
+      <div class="shot" id="shot"></div>
+      <div id="viewWrap" hidden>
         <canvas id="view"></canvas>
         <canvas id="overlay"></canvas>
         <div class="compare" id="compare" hidden></div>
@@ -221,6 +235,14 @@
         <button data-view="mesh" aria-pressed="false">3D</button>
       </div>
       <div class="tagv" id="tagSize" hidden></div>
+    </div>
+
+    <div class="panel" id="panelCam" hidden>
+      <div class="group">
+        <button class="btn ghost icon" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9.5" cy="9.5" r="1.5"/><path d="M20 15l-4-4-8 8"/></svg></button>
+        <button class="shutter" id="shoot" title="Foto aufnehmen" aria-label="Foto aufnehmen"></button>
+        <button class="btn ghost icon" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg></button>
+      </div>
     </div>
 
     <div class="panel" id="panelPlace" hidden>
@@ -278,9 +300,12 @@ const VISION_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/
 const SEG_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 const SKIN_CLASS = 2;
 // render = output image, proc = segmenter input, geo = depth input and resolution of the 3D surface
-const RENDER_MAX = 1600, PROC_MAX = 640, GEO_MAX = 1024, PREVIEW_MAX = 900;
-// Depth model input side: the GPU gets ~1.6x the model's default 518 px for finer relief
-const DEPTH_SIDE = { webgpu: 812, wasm: 518 };
+// Phones get a smaller budget: iOS reloads the tab when a page uses too much memory, and the depth
+// model's attention grows with the square of its input size.
+const MOBILE = matchMedia("(pointer: coarse)").matches || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const RENDER_MAX = MOBILE ? 1280 : 1600, PROC_MAX = 640, GEO_MAX = MOBILE ? 768 : 1024, PREVIEW_MAX = MOBILE ? 720 : 900;
+// Depth model input side: desktop GPUs get ~1.6x the model's default 518 px for finer relief
+const DEPTH_SIDE = { webgpu: MOBILE ? 518 : 812, wasm: MOBILE ? 434 : 518 };
 
 const $ = s => document.querySelector(s);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -314,8 +339,10 @@ setStep(1);
 
 /* ---------- 1 · Photo ---------- */
 $("#pick").onclick = () => $("#photoInput").click();
-$("#newPhoto").onclick = () => $("#photoInput").click();
-$("#photoInput").onchange = e => e.target.files[0] && loadPhoto(e.target.files[0]);
+$("#camGallery").onclick = () => $("#photoInput").click();
+$("#camBtn").onclick = () => openCam();
+$("#newPhoto").onclick = () => backToStart(true);
+$("#photoInput").onchange = e => { e.target.files[0] && loadPhoto(e.target.files[0]); e.target.value = ""; };
 const stage = $("#stage");
 ["dragenter", "dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); $("#drop").classList.add("over"); }));
 ["dragleave", "drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); $("#drop").classList.remove("over"); }));
@@ -329,24 +356,69 @@ function scaled(img, max) {
   return c;
 }
 function loadPhoto(file) {
-  const img = new Image();
-  img.onload = () => {
-    S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
-    S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = null; S.inked = null; S.anchor = null; depthCanvas = null;
-    view.width = S.photo.width; view.height = S.photo.height;
-    $("#drop").hidden = true; $("#viewWrap").hidden = false;
-    fitOverlay(); S.view = "photo"; syncViews(); redraw();
-    analyse();
-  };
-  img.onerror = () => status("Bild nicht lesbar", "err");
-  img.src = URL.createObjectURL(file);
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => { URL.revokeObjectURL(url); usePhoto(img); };
+  img.onerror = () => { URL.revokeObjectURL(url); status("Bild nicht lesbar", "err"); };
+  img.src = url;
+}
+function usePhoto(img) {
+  closeCam();
+  S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
+  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = null; S.inked = null; S.anchor = null; depthCanvas = null;
+  view.width = S.photo.width; view.height = S.photo.height;
+  $("#drop").hidden = true; $("#viewWrap").hidden = false;
+  fitView(); S.view = "photo"; syncViews(); redraw();
+  analyse();
+}
+function backToStart(cam) {
+  scanStop(); setStep(1); status("");
+  $("#viewWrap").hidden = true; $("#views").hidden = true; $("#tagSize").hidden = true;
+  if (cam) openCam(); else $("#drop").hidden = false;
+}
+
+/* ---------- camera: live picture right in the card, cropped to the card when taken ---------- */
+let camStream = null, camFacing = "environment";
+async function openCam() {
+  $("#drop").hidden = true; $("#panelCam").hidden = false;
+  try {
+    camStream?.getTracks().forEach(t => t.stop());
+    camStream = await navigator.mediaDevices.getUserMedia({ audio: false,
+      video: { facingMode: camFacing, width: { ideal: 1920 }, height: { ideal: 1440 } } });
+  } catch (e) {
+    closeCam(); $("#drop").hidden = false;
+    status(e?.name === "NotAllowedError" ? "Kein Kamerazugriff – im Browser erlauben" : "Kamera nicht verfügbar", "err"); return;
+  }
+  const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false;
+  v.play().catch(() => {}); status("");
+}
+function closeCam() {
+  camStream?.getTracks().forEach(t => t.stop()); camStream = null;
+  const v = $("#cam"); v.srcObject = null; v.hidden = true; $("#panelCam").hidden = true;
+}
+$("#camFlip").onclick = () => { camFacing = camFacing === "user" ? "environment" : "user"; openCam(); };
+$("#shoot").onclick = () => {
+  const v = $("#cam"), vw = v.videoWidth, vh = v.videoHeight; if (!vw) return;
+  const r = stage.clientWidth / stage.clientHeight; let cw = vw, ch = vw / r; if (ch > vh) { ch = vh; cw = vh * r; }
+  const c = document.createElement("canvas"); c.width = Math.round(cw); c.height = Math.round(ch);
+  const g = c.getContext("2d"); if (camFacing === "user") { g.translate(c.width, 0); g.scale(-1, 1); }
+  g.drawImage(v, (vw - cw) / 2, (vh - ch) / 2, cw, ch, 0, 0, c.width, c.height);
+  const s = $("#shot"); s.classList.remove("go"); void s.offsetWidth; s.classList.add("go");
+  usePhoto(c);
+};
+// The photo covers the card completely (like object-fit: cover); edges outside the card are cut off
+function fitView() {
+  if (!S.photo) return;
+  const W = stage.clientWidth, H = stage.clientHeight, a = view.width / view.height;
+  let w = W, h = W / a; if (h < H) { h = H; w = H * a; }
+  view.style.width = w + "px"; view.style.height = h + "px";
+  fitOverlay(); drawGizmo(); if (S.comparing) placeCompare();
 }
 function fitOverlay() {
   overlay.width = view.clientWidth * devicePixelRatio; overlay.height = view.clientHeight * devicePixelRatio;
   overlay.style.width = view.clientWidth + "px"; overlay.style.height = view.clientHeight + "px";
   overlay.style.left = view.offsetLeft + "px"; overlay.style.top = view.offsetTop + "px";
 }
-new ResizeObserver(() => { if (S.photo) { fitOverlay(); drawGizmo(); } }).observe(view);
+new ResizeObserver(fitView).observe(stage);
 
 /* ---------- 2 · Analysis ---------- */
 let depthPipe = null, depthDevice = null, segmenter = null;
@@ -376,7 +448,8 @@ function sizeDepth(dp) {
 }
 async function getDepth() {
   if (depthPipe) return depthPipe;
-  const adapter = navigator.gpu ? await navigator.gpu.requestAdapter().catch(() => null) : null;
+  // phones: the CPU path (quantised model) is slower but far lighter on memory than a WebGPU session
+  const adapter = navigator.gpu && !MOBILE ? await navigator.gpu.requestAdapter().catch(() => null) : null;
   if (adapter?.features?.has("shader-f16")) {
     try { return (depthPipe = await makeDepth("webgpu")); } catch (e) { console.warn("WebGPU depth unavailable, using CPU", e); }
   }
@@ -1290,7 +1363,7 @@ $("#compare").addEventListener("pointerdown", e => {
 });
 $("#save").onclick = () => S.inked?.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "tattoo-vorschau.png"; a.click(); }, "image/png");
 
-window.__studio = { S, loadPhoto, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
+window.__studio = { S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>
