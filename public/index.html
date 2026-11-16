@@ -3,290 +3,188 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Stencit Live</title>
+<title>Stencit Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  /* Stencit · design system
+     spacing: 4 · 8 · 12 · 16 · 24 · 32 · 48     control height: 40 (on-image overlays: 32)
+     radii nest: frame 28 = stage 20 + frame padding 8; controls 12; overlays 10
+     type: 13 body · 12 small · 22 title; Plus Jakarta Sans 400/500, tracking -1.2 % (-5 % for brand/title)
+     colour: neutral greys; red only for the primary action and live feedback */
   :root {
-    /* Stencit: red + bordeaux accents, warm light surfaces */
-    --bg: #f6f1ee;
-    --red: #ff4a4f; --bordeaux: #6f0f22;
-    --red-glow: 0 0 10px rgba(255,74,79,.55);
-    --grad: linear-gradient(135deg, #ff4a4f 0%, #e3242f 45%, #8e1427 100%);
-    --a1: #ffd2c9; --a2: #ff9a8f; --a3: #c9384a; --a4: #f4c6cf;
-    --surface: #ffffff;
-    --frost: rgba(255,255,255,.62);
-    --ink: #1c1214;
-    --muted: #8e7f80;
-    --line: rgba(0,0,0,.07);
-    --cam: rgba(26,12,15,.55);          /* surfaces floating over the camera */
-    --cam-2: rgba(255,255,255,.12);     /* inset elements inside those */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,.06), 0 2px 8px -2px rgba(0,0,0,.08);
-    --shadow-md: 0 1px 2px rgba(0,0,0,.05), 0 12px 32px -12px rgba(0,0,0,.18);
-    --shadow-lg: 0 2px 4px rgba(0,0,0,.04), 0 30px 60px -24px rgba(0,0,0,.28);
-    --shadow-cam: 0 10px 30px -10px rgba(0,0,0,.45);
-    --r-lg: 24px;
-    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px;
+    --bg: #f4f3f1; --ink: #141414; --muted: #8a8886; --line: rgba(0,0,0,.08);
+    --red: #e3242f; --red-2: #ff4a4f;
+    --frame: #161616; --on-dark: rgba(255,255,255,.08); --on-dark-2: rgba(255,255,255,.14); --text-dim: rgba(255,255,255,.6);
+    --overlay: rgba(14,14,14,.6);
+    --a1: #e9e5e1; --a2: #f1dfdb; --a3: #e2dfdc; --a4: #eeebe7;
+    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+    --h: 40px; --h-sm: 32px;
+    --r-frame: 28px; --r-stage: 20px; --r: 12px; --r-sm: 10px;
+    --track: -.05em; --track-ui: -.012em;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
-  body { background: var(--bg); color: var(--ink); font: 400 14px/1.4 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: -.012em;
-    -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: hidden; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 400 13px/1.4 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: var(--track-ui);
+    -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
   button, input { font: inherit; color: inherit; letter-spacing: inherit; }
   button { cursor: pointer; border: 0; background: none; padding: 0; }
   [hidden] { display: none !important; }
-
-  /* Aura background: slow, soft colour fields behind everything */
-  .aura { position: fixed; inset: -20vmax; z-index: -1; pointer-events: none; filter: blur(80px); opacity: .5; }
-  .aura i { position: absolute; border-radius: 50%; mix-blend-mode: multiply; animation: drift 18s ease-in-out infinite alternate, pulse 7s ease-in-out infinite; }
-  .aura i:nth-child(1) { width: 60vmax; height: 60vmax; left: 8vmax; top: 4vmax; background: radial-gradient(circle, var(--a1) 0%, transparent 65%); }
-  .aura i:nth-child(2) { width: 42vmax; height: 42vmax; right: 10vmax; top: 16vmax; background: radial-gradient(circle, var(--a2) 0%, transparent 62%); animation-duration: 22s, 8s; animation-delay: -6s, -2s; }
-  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 32vmax; bottom: 2vmax; background: radial-gradient(circle, var(--a3) 0%, transparent 62%); animation-duration: 26s, 9s; animation-delay: -12s, -4s; }
-  .aura i:nth-child(4) { width: 40vmax; height: 40vmax; left: 2vmax; bottom: 8vmax; background: radial-gradient(circle, var(--a4) 0%, transparent 62%); animation-duration: 20s, 10s; animation-delay: -3s, -1s; }
-  @keyframes drift { from { transform: translate(-4vmax, -3vmax) scale(.95); } to { transform: translate(5vmax, 4vmax) scale(1.08); } }
-  @keyframes pulse { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .aura i { animation: none; } }
   svg { flex: none; }
 
-  /* Squircle corners where supported (corner-shape), regular radii elsewhere */
-  .sq { border-radius: var(--r-lg); }
-  @supports (corner-shape: squircle) { .sq { corner-shape: squircle; border-radius: calc(var(--r-lg) * 1.6); }
-    .pill, .chip, .btn, .status, .coach, .ibtn, .seg, .seg button, .chk, .toast, .g-bubble, .art-zone span, .pane-label { corner-shape: squircle; } }
+  .aura { position: fixed; inset: -20vmax; z-index: -1; pointer-events: none; filter: blur(80px); opacity: .6; }
+  .aura i { position: absolute; border-radius: 50%; mix-blend-mode: multiply; animation: drift 18s ease-in-out infinite alternate; }
+  .aura i:nth-child(1) { width: 60vmax; height: 60vmax; left: 8vmax; top: 4vmax; background: radial-gradient(circle, var(--a1) 0%, transparent 65%); }
+  .aura i:nth-child(2) { width: 42vmax; height: 42vmax; right: 10vmax; top: 16vmax; background: radial-gradient(circle, var(--a2) 0%, transparent 62%); animation-duration: 22s; }
+  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 32vmax; bottom: 2vmax; background: radial-gradient(circle, var(--a3) 0%, transparent 62%); animation-duration: 26s; }
+  .aura i:nth-child(4) { width: 40vmax; height: 40vmax; left: 2vmax; bottom: 8vmax; background: radial-gradient(circle, var(--a4) 0%, transparent 62%); animation-duration: 20s; }
+  @keyframes drift { from { transform: translate(-4vmax, -3vmax) scale(.95); } to { transform: translate(5vmax, 4vmax) scale(1.08); } }
+  @media (prefers-reduced-motion: reduce) { .aura i { animation: none; } }
 
-  .pill { display: inline-flex; align-items: center; gap: var(--s2); height: 40px; padding: 0 var(--s4); border-radius: 12px; font-weight: 400; white-space: nowrap;
-    background: var(--frost); box-shadow: var(--shadow-sm); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); transition: box-shadow .15s, transform .1s; }
-  .pill:hover { box-shadow: var(--shadow-md); }
-  .pill:active { transform: scale(.98); }
-  .pill .lbl { color: var(--muted); font-weight: 400; }
-  .pill svg { width: 14px; height: 14px; color: var(--muted); }
-  .round { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; }
-  .round svg { width: 18px; height: 18px; }
-  .on-cam { background: var(--cam); color: #fff; box-shadow: var(--shadow-cam); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-  .on-cam[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  /* ---------- layout ---------- */
+  .shell { max-width: 1040px; margin: 0 auto; padding: var(--s5); display: grid; gap: var(--s4); }
+  .top { display: flex; align-items: center; justify-content: space-between; height: var(--h); }
+  .brand { display: inline-flex; align-items: center; gap: var(--s2); font-size: 18px; font-weight: 500; letter-spacing: var(--track); }
+  .brand svg { width: 22px; height: 22px; }
 
-  /* ---------- Shell ---------- */
-  .shell { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 48px auto; gap: var(--s4); padding: var(--s4) var(--s5) var(--s5); }
-  .top { position: relative; z-index: 20; display: flex; align-items: center; }
-  .brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 500; font-size: 19px; letter-spacing: -.05em; margin-right: auto; }
-  .brand svg { width: 26px; height: 26px; }
-  .top-center { position: absolute; left: 50%; transform: translateX(-50%); }
+  /* steps: quiet text tabs, the current one marked with a red dot */
+  .steps { display: flex; gap: var(--s5); }
+  .step { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); transition: color .2s; }
+  .step i { display: none; font-style: normal; }
+  .step::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .35; transition: background .2s, opacity .2s; }
+  .step.done { color: #5d5b59; }
+  .step.on { color: var(--ink); font-weight: 500; }
+  .step.on::before { background: var(--red); opacity: 1; }
 
-  .pop { position: absolute; z-index: 30; top: calc(100% + var(--s2)); left: 50%; transform: translateX(-50%); width: min(400px, calc(100vw - 32px)); padding: var(--s4);
-    background: var(--surface); box-shadow: var(--shadow-lg); --r-lg: 20px; }
-  .pop h5 { margin: var(--s4) 0 var(--s2); font-size: 11px; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-  .pop h5:first-child { margin-top: 0; }
-  .chips { display: flex; flex-wrap: wrap; gap: var(--s1); }
-  .chip { height: 32px; padding: 0 var(--s3); border-radius: 12px; background: var(--bg); font-size: 13px; }
-  .chip[aria-pressed="true"] { background: var(--bordeaux); color: #fff; }
+  .frame { display: grid; gap: var(--s2); padding: var(--s2); color: #fff; background: var(--frame); border-radius: var(--r-frame);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 16px 40px -28px rgba(0,0,0,.35); }
+  .stage { position: relative; overflow: hidden; background: #0e0e0e; border-radius: var(--r-stage); min-height: 420px; display: grid; place-items: center; touch-action: none; }
+  .stage canvas { display: block; max-width: 100%; max-height: min(68vh, 720px); }
+  #view { position: relative; }
+  #overlay { position: absolute; pointer-events: none; }
 
-  /* One dark glass frame around camera and controls */
-  .work { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: var(--s2); width: 100%; max-width: min(980px, calc((100dvh - 430px) * 4 / 3 + 16px)); min-width: min(100%, 440px); margin: 0 auto; align-self: start;
-    padding: var(--s2); --r-lg: 30px; color: #fff; background: rgba(30,13,17,.9); box-shadow: var(--shadow-lg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+  /* empty state */
+  .drop { display: grid; justify-items: center; gap: var(--s4); padding: var(--s7) var(--s5); text-align: center; }
+  .drop .mark { width: 32px; height: 32px; color: #fff; margin-bottom: var(--s2); }
+  .drop h1 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 500; letter-spacing: var(--track); }
+  .drop p { margin: 0; color: var(--text-dim); max-width: 34ch; text-wrap: balance; }
+  .drop .btn { margin-top: var(--s2); }
+  .drop.over { background: rgba(255,255,255,.04); }
 
-  /* ---------- Flash rail ---------- */
-  .flashes { display: flex; gap: var(--s2); overflow-x: auto; padding: var(--s1); margin: calc(var(--s1) * -1); scrollbar-width: none; }
-  .flashes::-webkit-scrollbar { display: none; }
-  .flash { position: relative; flex: none; width: 64px; aspect-ratio: 1; background: var(--surface); box-shadow: var(--shadow-sm); --r-lg: 14px; transition: box-shadow .15s, transform .15s; }
-  .flash:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-  .flash img { position: absolute; inset: 7px; width: calc(100% - 14px); height: calc(100% - 14px); object-fit: contain; }
-  .flash[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--red), var(--shadow-md); }
-  .flash.add { background: var(--cam-2); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); display: grid; place-items: center; color: #fff; }
-  .flash.add:hover { background: rgba(255,255,255,.2); }
-  .flash.add svg { width: 20px; height: 20px; }
-
-  /* ---------- Stage ---------- */
-  .center { position: relative; min-width: 0; }
-  .stage { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: #140a0c; --r-lg: 22px; touch-action: none; outline: none; isolation: isolate; }
-  .stage:has(.intro:not([hidden])) { background: rgba(255,255,255,.06); }
-  .intro .btn.dark { background: #fff; color: var(--ink); }
-  .intro .btn.dark svg { color: var(--ink); }
-  #view { width: 100%; height: 100%; display: block; object-fit: cover; }
-  #view.mirror { transform: scaleX(-1); }
-  video { display: none; }
-
-  .hud { position: absolute; z-index: 4; top: var(--s3); left: var(--s3); right: var(--s3); display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
-  .hud > * { pointer-events: auto; }
-  .stage:has(.intro:not([hidden])) .hud { display: none; }
-  .status { height: 32px; padding: 0 var(--s3); font-size: 12.5px; border-radius: 12px; display: inline-flex; align-items: center; gap: var(--s2); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.4); }
-  .status[data-state="ok"] .dot { background: var(--red); box-shadow: var(--red-glow); }
-  .status[data-state="search"] .dot, .status[data-state="busy"] .dot { background: var(--red); animation: blink .9s infinite; }
-  @keyframes blink { 50% { opacity: .25; } }
-  .stage-tools { display: flex; gap: var(--s2); }
-  /* Soft light: a wide, heavily blurred white inner glow along the camera edge. On a phone's
-     front camera the bright screen edge lights up the skin like a ring light. */
-  .stage::after { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none; opacity: 0;
-    box-shadow: inset 0 0 0 3px rgba(255,255,255,.95), inset 0 0 70px 34px rgba(255,255,255,.95), inset 0 0 160px 60px rgba(255,255,255,.55);
-    transition: opacity .35s ease; }
-  .stage.light::after { opacity: 1; }
-  @supports (corner-shape: squircle) { .stage::after { corner-shape: squircle; } }
-  .stage-tools .round { width: 36px; height: 36px; }
-  .stage-tools .round svg { width: 16px; height: 16px; }
-
-  .coach { position: absolute; z-index: 4; left: 50%; top: 56px; transform: translateX(-50%); padding: var(--s2) var(--s3); border-radius: 12px; font-size: 12.5px; white-space: nowrap; pointer-events: none; }
-
-  .intro { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; }
-  .btn { height: 44px; padding: 0 var(--s5); border-radius: 12px; font-weight: 400; display: inline-flex; align-items: center; gap: var(--s2); }
+  /* ---------- controls ---------- */
+  .btn, .chip, .field, .age, .thumb { height: var(--h); border-radius: var(--r); }
+  .btn { padding: 0 var(--s4); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); font-weight: 500; white-space: nowrap;
+    transition: transform .12s ease, filter .15s ease, background .15s ease; }
+  .btn:active { transform: scale(.97); }
   .btn svg { width: 16px; height: 16px; }
-  .btn.dark svg { color: #fff; }
-  .btn.dark { background: var(--grad); color: #fff; font-weight: 500; box-shadow: 0 6px 18px -6px rgba(227,36,47,.7), inset 0 1px 0 rgba(255,255,255,.25); }
-  .btn.dark:hover { filter: brightness(1.06); }
-  .btn.soft { background: var(--bg); }
-  .btn:disabled { opacity: .4; cursor: default; box-shadow: none; }
+  .btn.icon { width: var(--h); padding: 0; }
+  .btn.white { background: #fff; color: var(--ink); }
+  .btn.red { background: var(--red); color: #fff; }
+  .btn.red:hover { filter: brightness(1.08); }
+  .btn.ghost { background: var(--on-dark); color: #fff; }
+  .btn.ghost:hover { background: var(--on-dark-2); }
+  .btn:disabled { opacity: .35; cursor: default; }
+  #ai[aria-pressed="true"] { background: #fff; color: var(--red); }
+  #ai.busy svg { animation: spin 1.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  .no-flash { position: absolute; z-index: 4; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-  .stage:has(.intro:not([hidden])) .no-flash { display: none; }
+  .panel { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
+  .group { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+  .thumbs { display: flex; gap: var(--s2); }
+  .thumb { width: var(--h); background: #fff; display: grid; place-items: center; overflow: hidden; transition: box-shadow .15s; }
+  .thumb img { max-width: 76%; max-height: 76%; }
+  .thumb[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--frame), 0 0 0 3.5px #fff; }
+  .thumb.add { background: var(--on-dark); color: #fff; }
+  .thumb.add:hover { background: var(--on-dark-2); }
+  .chip { padding: 0 var(--s4); background: var(--on-dark); color: var(--text-dim); transition: background .15s, color .15s; }
+  .chip:hover { color: #fff; }
+  .chip[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  .field { display: inline-flex; align-items: center; gap: var(--s2); padding: 0 var(--s1) 0 var(--s3); background: var(--on-dark); color: var(--text-dim); }
+  .field input { width: 48px; height: var(--h-sm); border: 0; border-radius: 8px; background: rgba(0,0,0,.35); color: #fff; text-align: center; }
+  .field em { font-style: normal; padding-right: var(--s2); }
 
-  /* ---------- Control panel under the camera: map, toolbar, flashes ---------- */
-  .panel { display: grid; gap: var(--s2); }
+  /* age slider: one track, one label */
+  .age { display: inline-flex; align-items: center; gap: var(--s3); padding: 0 var(--s4); background: var(--on-dark); }
+  .age b { font-weight: 500; min-width: 84px; }
+  .age input { -webkit-appearance: none; appearance: none; width: 144px; height: 2px; border-radius: 2px; margin: 0; background: rgba(255,255,255,.3); }
+  .age input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); cursor: grab; }
+  .age input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
 
-  .map { position: relative; height: 148px; touch-action: none; cursor: crosshair; --r-lg: 16px; background: var(--cam-2); }
-  .map .grid { position: absolute; inset: 24px 30px; pointer-events: none;
-    background-image: radial-gradient(circle at center, rgba(255,255,255,.2) 0.9px, transparent 1.3px); background-size: 14px 14px; }
-  .map .axis { position: absolute; left: 50%; top: 24px; bottom: 24px; width: 1px; background: rgba(255,255,255,.1); }
-  .map .lbl, .map .read { position: absolute; font-size: 10.5px; pointer-events: none; white-space: nowrap; }
-  .map .lbl { color: rgba(255,255,255,.55); letter-spacing: .02em; }
-  .map .l-top { top: 7px; left: 50%; transform: translateX(-50%); }
-  .map .l-bot { bottom: 7px; left: 50%; transform: translateX(-50%); }
-  .map .l-left { left: 14px; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); }
-  .map .l-right { right: 14px; top: 50%; transform: translate(50%, -50%) rotate(90deg); }
-  .map .read { color: #fff; line-height: 16px; padding: 1px 7px; border-radius: 7px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); }
-  .map .r-size { top: 5px; right: 30px; }
-  .map .r-rot { bottom: 5px; right: 30px; }
+  /* on-image overlays: same inset (12), height (32) and radius (10) */
+  .status, .views, .tagv { position: absolute; z-index: 3; border-radius: var(--r-sm); background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .status { top: var(--s3); left: var(--s3); height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; gap: var(--s2); font-size: 12px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+  .status[data-s="busy"] .dot { background: var(--red-2); animation: blink .9s infinite; }
+  .status[data-s="ok"] .dot { background: var(--red-2); }
+  .status[data-s="err"] .dot { background: #ffb020; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .views { top: var(--s3); right: var(--s3); display: flex; gap: 2px; padding: 3px; }
+  .views button { height: 26px; padding: 0 var(--s3); border-radius: 7px; font-size: 12px; color: var(--text-dim); }
+  .views button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  .tagv { bottom: var(--s3); right: var(--s3); height: 24px; padding: 0 var(--s2); display: grid; place-items: center; font-size: 11px; border-radius: 8px; }
 
-  /* Gizmo: glass disc with a red sector for the current rotation, a grip on its rim,
-     and a degree scale + value bubble that spring open while the grip is held. */
-  .gizmo { position: absolute; width: 0; height: 0; pointer-events: none; transition: left .08s ease-out, top .08s ease-out; }
-  .g-ring { position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
-    border: 1.5px solid rgba(255,255,255,.55);
-    background: rgba(255,255,255,.14);
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,.15), 0 4px 18px -6px rgba(0,0,0,.5);
-    transition: width .16s cubic-bezier(.3,1.5,.5,1), height .16s cubic-bezier(.3,1.5,.5,1), border-color .2s; }
-  .g-ticks { position: absolute; border-radius: 50%; transform: translate(-50%, -50%) scale(.85); opacity: 0;
-    background: repeating-conic-gradient(rgba(255,255,255,.55) 0deg 1.2deg, transparent 1.2deg 15deg);
-    -webkit-mask: radial-gradient(circle, transparent calc(50% - 6px), #000 calc(50% - 6px) calc(50% - 1px), transparent 50%);
-    mask: radial-gradient(circle, transparent calc(50% - 6px), #000 calc(50% - 6px) calc(50% - 1px), transparent 50%);
-    transition: opacity .2s, transform .3s cubic-bezier(.3,1.5,.5,1); }
-  .g-dot { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--red);
-    box-shadow: var(--red-glow), 0 2px 6px rgba(0,0,0,.4); animation: breathe 2.6s ease-in-out infinite; transition: transform .25s cubic-bezier(.3,1.6,.5,1); }
-  @keyframes breathe { 50% { box-shadow: 0 0 0 7px rgba(255,74,79,.16), var(--red-glow), 0 2px 6px rgba(0,0,0,.4); } }
-  .g-knob { position: absolute; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; color: var(--ink); display: grid; place-items: center;
-    box-shadow: 0 0 0 0 rgba(255,74,79,0), 0 3px 10px rgba(0,0,0,.45); pointer-events: auto; cursor: grab; touch-action: none;
-    transition: transform .2s cubic-bezier(.3,1.6,.5,1), box-shadow .2s, left .06s ease-out, top .06s ease-out; }
-  .g-knob svg { width: 15px; height: 15px; }
-  .g-knob:hover { transform: scale(1.08); }
-  .g-bubble { position: absolute; padding: 3px 9px; border-radius: 12px; background: #fff; color: var(--ink); font-size: 11px; white-space: nowrap; pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,.35); opacity: 0; transform: translate(-50%, -100%) scale(.6); transform-origin: 50% 100%;
-    transition: opacity .15s, transform .22s cubic-bezier(.3,1.6,.5,1), left .06s ease-out, top .06s ease-out; }
-  .map.knob-drag .g-ring { border-color: #fff; }
-  .map.knob-drag .g-ticks { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .map.knob-drag .g-knob { transform: scale(1.18); cursor: grabbing; box-shadow: 0 0 0 3px var(--red), 0 0 18px rgba(255,74,79,.55), 0 3px 10px rgba(0,0,0,.45); }
-  .map.knob-drag .g-bubble { opacity: 1; transform: translate(-50%, -100%) scale(1); }
-  .map.dragging .g-dot { transform: scale(1.4); }
-  .map.snapped .g-ticks { animation: tick-flash .35s ease-out; }
-  .map.snapped .g-knob { animation: knob-pop .35s cubic-bezier(.3,1.6,.5,1); }
-  @keyframes tick-flash { 0% { filter: brightness(2.2); } }
-  @keyframes knob-pop { 40% { transform: scale(1.32); } }
-  @media (prefers-reduced-motion: reduce) { .g-dot { animation: none; } }
+  .needle { position: absolute; z-index: 4; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--red-2); box-shadow: 0 0 0 5px rgba(255,255,255,.22); pointer-events: none; }
+  .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,.3); cursor: ew-resize; pointer-events: auto; }
+  .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 
-  /* Toolbar: one rail, buttons press in and the active ones light up */
-  .toolbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-  .ibtn { position: relative; height: 46px; border-radius: 14px; font-size: 14px; font-weight: 400; color: rgba(255,255,255,.7); display: grid; place-items: center;
-    background: var(--cam-2); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-    transition: background .28s cubic-bezier(.3,1.4,.5,1), color .2s, transform .12s ease-out; }
-  .ibtn:hover { color: #fff; background: rgba(255,255,255,.18); }
-  .ibtn:active { transform: scale(.9); }
-  .ibtn[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,.3); }
-  .ibtn svg { width: 18px; height: 18px; transition: transform .4s cubic-bezier(.3,1.4,.5,1); }
-  .ibtn:active svg { transform: rotate(-120deg); }
+  /* cutter */
+  .cut { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: var(--s4); background: rgba(20,20,20,.4);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: fadein .25s ease; }
+  @keyframes fadein { from { opacity: 0; } }
+  .cutbox { width: min(940px, 100%); }
+  .cutstage { position: relative; overflow: hidden; background: #0e0e0e; border-radius: var(--r-stage); display: grid; place-items: center; min-height: 280px; }
+  #cutCanvas { display: block; max-width: 100%; max-height: 70vh; touch-action: none; cursor: crosshair; }
+  .cutstage .status { pointer-events: none; }
 
-  /* ---------- 3D skeleton inset ---------- */
-  .skel3d { position: absolute; z-index: 4; top: 56px; left: var(--s3); width: 132px; height: 168px; --r-lg: 18px; pointer-events: none; }
+  @supports (corner-shape: squircle) {
+    .frame, .stage, .cutstage, .btn, .chip, .field, .age, .thumb, .status, .views, .tagv { corner-shape: squircle; }
+    .frame { border-radius: calc(var(--r-frame) * 1.6); } .stage, .cutstage { border-radius: calc(var(--r-stage) * 1.6); }
+    .btn, .chip, .field, .age, .thumb { border-radius: calc(var(--r) * 1.6); } .status, .views { border-radius: calc(var(--r-sm) * 1.6); }
+  }
 
-  /* ---------- First-visit intro ---------- */
-  .onb { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(246,241,238,.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-  .onb-card { color: var(--ink); width: min(300px, calc(100% - 32px)); padding: var(--s5) var(--s5) var(--s4); background: var(--surface); box-shadow: var(--shadow-lg); --r-lg: 26px; text-align: center; }
-  .onb-art { height: 120px; display: grid; place-items: center; margin-bottom: var(--s4); border-radius: 18px; background: var(--bg); overflow: hidden; }
-  .onb-step { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .onb h3 { margin: 0 0 var(--s4); font-size: 18px; font-weight: 500; letter-spacing: -.05em; }
-  .onb-dots { display: flex; justify-content: center; gap: 5px; margin-bottom: var(--s4); }
-  .onb-dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.15); transition: width .2s; }
-  .onb-dots i.on { width: 16px; border-radius: 3px; background: var(--grad); }
-  .onb-row { display: flex; gap: var(--s2); }
-  .onb-row .btn { flex: 1; justify-content: center; height: 40px; padding: 0; }
-  /* Pictograms */
-  .art-up { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--surface); box-shadow: var(--shadow-md); animation: bob 1.8s ease-in-out infinite; }
-  .art-up svg { width: 22px; height: 22px; }
-  .art-zone { display: flex; gap: 6px; }
-  .art-zone span { height: 28px; padding: 0 10px; border-radius: 12px; font-size: 11px; display: grid; place-items: center; background: var(--surface); box-shadow: var(--shadow-sm); animation: pick 3.6s infinite; }
-  .art-zone span:nth-child(2) { animation-delay: 1.2s; } .art-zone span:nth-child(3) { animation-delay: 2.4s; }
-  .art-giz { position: relative; width: 96px; height: 96px; animation: spin 4s ease-in-out infinite; }
-  .art-giz .g-ring { left: 50%; top: 50%; width: 70px; height: 70px; border-color: rgba(0,0,0,.25); }
-  .art-giz .g-dot { left: 50%; top: 50%; background: var(--red); }
-  .art-giz .g-knob { left: 50%; top: 13px; background: var(--bordeaux); color: #fff; }
-  @keyframes bob { 50% { transform: translateY(-6px); } }
-  @keyframes pick { 0%, 30%, 100% { background: var(--surface); color: var(--ink); } 5%, 25% { background: var(--bordeaux); color: #fff; } }
-  @keyframes spin { 0%, 10% { transform: rotate(0) scale(.85); } 50%, 60% { transform: rotate(120deg) scale(1.1); } 100% { transform: rotate(0) scale(.85); } }
-  @media (prefers-reduced-motion: reduce) { .art-up, .art-zone span, .art-giz { animation: none; } }
+  /* Siri-style edge glow (after the open-source SwiftUI recreation "AppleIntelligenceGlowEffect"):
+     four rings of the same angular gradient, 6/9/11/15 px wide, blurred 0/4/12/15 px. The gradient's
+     stops jump to random positions every 0.5 s and glide there over 1 s. Red palette instead of Siri's. */
+  @property --c0 { syntax: "<color>"; inherits: true; initial-value: #ff4a4f; }
+  @property --c1 { syntax: "<color>"; inherits: true; initial-value: #ff8a7a; }
+  @property --c2 { syntax: "<color>"; inherits: true; initial-value: #c8102e; }
+  @property --c3 { syntax: "<color>"; inherits: true; initial-value: #ff3d6e; }
+  @property --c4 { syntax: "<color>"; inherits: true; initial-value: #ffb199; }
+  @property --c5 { syntax: "<color>"; inherits: true; initial-value: #8e1427; }
+  @property --p0 { syntax: "<percentage>"; inherits: true; initial-value: 0%; }
+  @property --p1 { syntax: "<percentage>"; inherits: true; initial-value: 20%; }
+  @property --p2 { syntax: "<percentage>"; inherits: true; initial-value: 40%; }
+  @property --p3 { syntax: "<percentage>"; inherits: true; initial-value: 60%; }
+  @property --p4 { syntax: "<percentage>"; inherits: true; initial-value: 80%; }
+  @property --p5 { syntax: "<percentage>"; inherits: true; initial-value: 100%; }
+  .siri { position: absolute; pointer-events: none; z-index: 2; border-radius: 14px; opacity: 0;
+    transition: opacity .6s ease, --c0 1s ease-in-out, --c1 1s ease-in-out, --c2 1s ease-in-out, --c3 1s ease-in-out, --c4 1s ease-in-out, --c5 1s ease-in-out,
+      --p0 1s ease-in-out, --p1 1s ease-in-out, --p2 1s ease-in-out, --p3 1s ease-in-out, --p4 1s ease-in-out, --p5 1s ease-in-out; }
+  .siri.on { opacity: 1; }
+  .siri i { position: absolute; inset: 0; border-radius: inherit; filter: blur(var(--b)); }
+  .siri i::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: var(--w);
+    background: conic-gradient(from 0deg, var(--c0) var(--p0), var(--c1) var(--p1), var(--c2) var(--p2), var(--c3) var(--p3), var(--c4) var(--p4), var(--c5) var(--p5));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  .siri i:nth-child(1) { --w: 6px; --b: 0px; }
+  .siri i:nth-child(2) { --w: 9px; --b: 4px; }
+  .siri i:nth-child(3) { --w: 11px; --b: 12px; }
+  .siri i:nth-child(4) { --w: 15px; --b: 15px; }
+  @media (prefers-reduced-motion: reduce) { .siri { transition: opacity .6s ease; } }
 
-  .toast { position: fixed; z-index: 50; top: var(--s4); left: 50%; transform: translate(-50%, -8px); padding: var(--s2) var(--s4); border-radius: 12px; font-size: 13px; opacity: 0; transition: .2s; pointer-events: none; background: var(--bordeaux); color: #fff; box-shadow: var(--shadow-md); }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-  /* ---------- Upload / background remover ---------- */
-  dialog { border: 0; padding: 0; color: var(--ink); background: var(--surface); box-shadow: var(--shadow-lg); --r-lg: 28px; }
-  dialog::backdrop { background: rgba(40,10,16,.3); }
-  #convDlg { width: min(960px, calc(100vw - 32px)); }
-  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: var(--s4) var(--s4) 0 var(--s5); }
-  .dlg-head h2 { margin: 0; font-size: 16px; font-weight: 400; }
-  .dlg-head .round { width: 36px; height: 36px; background: var(--bg); }
-  .conv { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); padding: var(--s4) var(--s5); }
-  .pane { position: relative; overflow: hidden; height: min(48vh, 420px); display: grid; place-items: center; background: var(--bg); --r-lg: 18px; }
-  .pane-label { position: absolute; top: var(--s2); left: var(--s2); z-index: 2; font-size: 11px; padding: 3px var(--s2); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-sm); }
-  .pane.out { background-color: #fff; background-image: conic-gradient(#f0f0ee 25%, #fff 0 50%, #f0f0ee 0 75%, #fff 0); background-size: 16px 16px; }
-  .pane canvas { position: absolute; inset: 0; margin: auto; max-width: 100%; max-height: 100%; display: block; }
-  #cvSrc { cursor: crosshair; touch-action: none; }
-  .drop { position: absolute; inset: 0; display: grid; place-items: center; cursor: pointer; }
-  .drop .btn { pointer-events: none; }
-  .drop.over { background: rgba(227,36,47,.06); }
-  .conv-controls { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; padding: 0 var(--s5) var(--s5); }
-  .seg { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--bg); }
-  .seg button { height: 30px; padding: 0 var(--s3); border-radius: 9px; font-size: 13px; color: var(--muted); }
-  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
-  .sl { width: 140px; }
-  .sl label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-  .sl output { color: var(--ink); }
-  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; }
-  input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 3px; background: rgba(0,0,0,.12); }
-  input[type=range]::-moz-range-track { height: 3px; border-radius: 3px; background: rgba(0,0,0,.12); }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6.5px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm), 0 0 0 1px rgba(0,0,0,.08); }
-  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm), 0 0 0 1px rgba(0,0,0,.08); }
-  .chk { height: 32px; padding: 0 var(--s3); border-radius: 12px; font-size: 13px; background: var(--bg); color: var(--muted); }
-  .chk[aria-pressed="true"] { background: var(--bordeaux); color: #fff; }
-  .conv-controls .actions { margin-left: auto; display: flex; gap: var(--s2); }
-  .conv-foot { padding: 0 var(--s5) var(--s4); margin-top: calc(var(--s3) * -1); font-size: 12px; color: var(--muted); min-height: 0; }
-  .conv-foot:empty { display: none; }
-
-  /* ---------- Phones ---------- */
-  @media (max-width: 760px) {
-    .shell { padding: var(--s3); gap: var(--s3); grid-template-rows: 40px auto; }
-    .work { max-width: none; min-width: 0; }
-    .top-center { position: static; transform: none; }
-    .top-center .pill { height: 36px; padding: 0 var(--s3); }
-    .work { gap: var(--s2); }
-    .work { padding: 6px; gap: 6px; --r-lg: 26px; }
-    .stage { --r-lg: 20px; }
-    .panel { gap: 6px; }
-    .map { height: 116px; }
-    .ibtn { height: 42px; font-size: 13px; }
-    .flash { width: 56px; }
-    .skel3d { top: 52px; left: var(--s2); width: 104px; height: 132px; }
-    .conv { grid-template-columns: 1fr; padding: var(--s3) var(--s4); }
-    .pane { height: 30vh; }
-    .conv-controls { padding: 0 var(--s4) var(--s4); gap: var(--s3); }
-    .sl { flex: 1; min-width: 120px; }
-    .conv-controls .actions { margin-left: 0; width: 100%; }
-    .conv-controls .actions .btn { flex: 1; justify-content: center; }
+  /* ---------- phones ---------- */
+  @media (max-width: 680px) {
+    .shell { padding: var(--s4); gap: var(--s3); }
+    .steps { gap: 0; }
+    .step:not(.on) { display: none; }
+    .step.on i { display: inline; color: var(--muted); font-weight: 400; }
+    .step.on i::after { content: " / 4 ·"; }
+    .stage { min-height: 320px; }
+    .panel { gap: var(--s2); }
+    .panel > .group { width: 100%; }
+    .panel > .group.end > .btn:not(.icon) { flex: 1; }
+    .age { flex: 1; } .age input { width: auto; flex: 1; } .age b { min-width: 0; }
   }
 </style>
 </head>
@@ -294,1434 +192,1054 @@
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <div class="shell">
   <header class="top">
-    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4a4f"/><stop offset=".55" stop-color="#e3242f"/><stop offset="1" stop-color="#8e1427"/></linearGradient></defs><g fill="url(#lg1)"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>stencit</div>
-    <div class="top-center">
-      <button class="pill" id="zonePill" aria-haspopup="true"><span id="zoneLabel">–</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></button>
-    </div>
-    <div class="pop sq" id="zonePop" hidden><div id="zoneGroups"></div></div>
+    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>Stencit</div>
+    <nav class="steps" aria-label="Schritte">
+      <div class="step" data-step="1"><i>1</i><span>Foto</span></div>
+      <div class="step" data-step="2"><i>2</i><span>Analyse</span></div>
+      <div class="step" data-step="3"><i>3</i><span>Platzieren</span></div>
+      <div class="step" data-step="4"><i>4</i><span>Stechen</span></div>
+    </nav>
   </header>
 
-  <main class="work sq">
-    <section class="center">
-      <div class="stage sq" id="stage" tabindex="0" aria-label="Kamera-Vorschau">
-        <video id="video" playsinline muted></video>
+  <main class="frame">
+    <div class="stage" id="stage">
+      <div class="drop" id="drop">
+        <svg viewBox="0 0 32 32" aria-hidden="true" class="mark"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>
+        <h1>Dein Tattoo, auf deiner Haut</h1>
+        <p>Foto vom Arm hochladen, Motiv platzieren, stechen.</p>
+        <button class="btn white" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Foto wählen</button>
+      </div>
+      <div id="viewWrap" hidden style="position:relative">
         <canvas id="view"></canvas>
-
-        <div class="hud">
-          <div class="status on-cam" id="pill" data-state="idle"><span class="dot"></span><span id="pillText">Kamera aus</span></div>
-          <div class="stage-tools" id="stageTools" hidden>
-            <button class="round on-cam" id="btnFreeze" aria-pressed="false" title="Pausieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
-            <button class="round on-cam" id="btnLight" aria-pressed="false" title="Licht"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-            <button class="round on-cam" id="btnFlip" title="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3l-2-3H9L7 7H4v12h16z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2"/></svg></button>
-          </div>
-        </div>
-        <div class="coach on-cam" id="coach" hidden></div>
-
-        <div class="intro" id="intro">
-          <button class="btn dark" id="btnStart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>Kamera starten</button>
-        </div>
-        <button class="pill no-flash" id="noFlash" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Flash hochladen</button>
-
-        <canvas class="skel3d on-cam sq" id="skel3d" hidden></canvas>
-
-        <div class="onb" id="onb" hidden>
-          <div class="onb-card sq">
-            <div class="onb-art" id="onbArt"></div>
-            <div class="onb-step" id="onbStep"></div>
-            <h3 id="onbTitle"></h3>
-            <div class="onb-dots" id="onbDots"><i></i><i></i><i></i></div>
-            <div class="onb-row">
-              <button class="btn soft" id="onbSkip">Überspringen</button>
-              <button class="btn dark" id="onbNext">Weiter</button>
-            </div>
-          </div>
-        </div>
+        <canvas id="overlay"></canvas>
+        <div class="siri" id="siri" hidden><i></i><i></i><i></i><i></i></div>
+        <div class="compare" id="compare" hidden></div>
+        <div class="needle" id="needle" hidden></div>
       </div>
-    </section>
+      <div class="status" id="status" hidden data-s="idle"><span class="dot"></span><span id="statusText"></span></div>
+      <div class="views" id="views" hidden>
+        <button data-view="photo" aria-pressed="true">Foto</button>
+        <button data-view="depth" aria-pressed="false">Tiefe</button>
+        <button data-view="mesh" aria-pressed="false">3D</button>
+      </div>
+      <div class="tagv" id="tagSize" hidden></div>
+    </div>
 
-    <section class="panel sq" id="panel">
-      <div class="map sq" id="map" aria-label="Position, Drehung und Größe">
-        <div class="grid"></div><div class="axis"></div>
-        <span class="lbl l-top" id="mapTop">Ellbogen</span><span class="lbl l-bot" id="mapBot">Handgelenk</span>
-        <span class="lbl l-left">◂ um den Arm</span><span class="lbl l-right">um den Arm ▸</span>
-        <span class="read r-size" id="readSize"></span><span class="read r-rot" id="readRot"></span>
-        <div class="gizmo" id="gizmo">
-          <div class="g-ring" id="gRing"></div>
-          <div class="g-ticks" id="gTicks"></div>
-          <div class="g-dot"></div>
-          <div class="g-bubble" id="gBubble"></div>
-          <div class="g-knob" id="gKnob" title="Drehen · Größe"><svg id="gKnobIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></div>
-        </div>
+    <div class="panel" id="panelPlace" hidden>
+      <div class="group">
+        <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+        <label class="field" title="Breite des Arms an der Stelle">Armbreite <input id="armCm" type="number" min="4" max="20" step="0.5" value="7.5"><em>cm</em></label>
       </div>
-      <div class="toolbar">
-        <button class="ibtn" id="tWrap" aria-pressed="true" title="3D-Wölbung">3D</button>
-        <button class="ibtn" id="tClip" aria-pressed="true" title="Nur auf Haut">Haut</button>
-        <button class="ibtn" id="tStab" aria-pressed="true" title="Haut-Stabilisierung (Experiment)">Stabil</button>
-        <button class="ibtn" id="tSkel" aria-pressed="false" title="3D-Skelett">Skelett</button>
-        <button class="ibtn" id="btnReset" title="Zurücksetzen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+      <div class="group end">
+        <button class="btn ghost icon" id="newPhoto" title="Neues Foto" aria-label="Neues Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
+        <button class="btn red" id="ink" disabled>Stechen</button>
       </div>
-      <div class="flashes" id="designGrid"></div>
-    </section>
+    </div>
+
+    <div class="panel" id="panelDone" hidden>
+      <div class="group">
+        <label class="age"><input type="range" id="age" min="0" max="100" value="40" aria-label="Alter des Tattoos"><b id="ageLabel">Verheilt</b></label>
+        <button class="chip" id="cmp" aria-pressed="false">Vergleich</button>
+      </div>
+      <div class="group end">
+        <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="btn ghost icon" id="save" title="Bild speichern" aria-label="Bild speichern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+        <button class="btn red" id="ai" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>KI-Finish</button>
+      </div>
+    </div>
   </main>
+
+  <div class="cut" id="cut" hidden>
+    <div class="frame cutbox">
+      <div class="cutstage">
+        <canvas id="cutCanvas"></canvas>
+        <div class="status" data-s="ok"><span class="dot"></span><span id="cutHint">Tattoo umfahren</span></div>
+      </div>
+      <div class="panel">
+        <div class="group">
+          <button class="chip" id="cutBg" aria-pressed="true">Hintergrund entfernen</button>
+          <button class="chip" id="cutAll">Ganzes Bild</button>
+        </div>
+        <div class="group end">
+          <button class="btn ghost" id="cutCancel">Abbrechen</button>
+          <button class="btn red" id="cutOk">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="photoInput" accept="image/*" hidden>
+  <input type="file" id="motifInput" accept="image/*" hidden>
 </div>
 
-<div class="toast" id="toast"></div>
-
-<!-- Upload + background remover -->
-<dialog id="convDlg" class="sq">
-  <div class="dlg-head">
-    <h2>Flash hochladen</h2>
-    <button class="round" id="convClose" title="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
-  <div class="conv">
-    <div class="pane src sq" id="paneSrc">
-      <span class="pane-label">Original</span>
-      <canvas id="cvSrc" hidden></canvas>
-      <label class="drop" id="drop">
-        <span class="btn dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Bild wählen</span>
-        <input type="file" id="convInput" accept="image/*" hidden>
-      </label>
-    </div>
-    <div class="pane out sq">
-      <span class="pane-label">PNG</span>
-      <canvas id="cvOut"></canvas>
-    </div>
-  </div>
-  <div class="conv-foot" id="convInfo"></div>
-  <div class="conv-controls">
-    <div class="seg" id="convMode">
-      <button data-mode="color" aria-pressed="true">Farbe</button>
-      <button data-mode="black" aria-pressed="false">Schwarz</button>
-    </div>
-    <div class="sl"><label for="cThr">Papier <output id="oThr"></output></label><input type="range" id="cThr" min="0" max="0.5" step="0.01" value="0.14"></div>
-    <div class="sl"><label for="cStr">Deckung <output id="oStr"></output></label><input type="range" id="cStr" min="0.6" max="2.5" step="0.05" value="1.35"></div>
-    <button class="chk" id="cFlat" aria-pressed="true">Schatten</button>
-    <div class="actions">
-      <button class="btn soft" id="convDownload" disabled>PNG</button>
-      <button class="btn dark" id="convUse" disabled>Übernehmen</button>
-    </div>
-  </div>
-</dialog>
-
 <script type="module">
-// MediaPipe is imported on camera start, so the UI renders immediately on slow connections.
-const VISION_BUNDLE = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/vision_bundle.mjs";
-
-const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm";
-const POSE_FULL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
-const POSE_LITE = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
-const HAND = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
-// Multiclass selfie segmenter: 0 background, 1 hair, 2 body skin, 3 face skin, 4 clothes, 5 accessories
-const SKIN_SEG = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
+// Flash Studio: photo -> depth + skin analysis -> surface-true placement -> "stechen" render.
+// Everything runs in the browser; the photo never leaves the device.
+const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js";
+const DEPTH_MODEL = "onnx-community/depth-anything-v2-small";
+const VISION = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/vision_bundle.mjs";
+const VISION_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm";
+const SEG_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 const SKIN_CLASS = 2;
-const PROFILE_STATIONS = 15; // width measurements along the limb across the tattoo's height
-const isMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
-// The "full" pose model is noticeably steadier than "lite". Desktops and iPhones handle it fine;
-// on Android we only take it with enough cores and memory.
-const strongDevice = !isMobile || /iPhone|iPad/.test(navigator.userAgent) ||
-  ((navigator.hardwareConcurrency || 4) >= 8 && (navigator.deviceMemory || 4) >= 4);
-const DESIGN_BASE = 600; // unrotated design height in px inside the design canvas
+// render = output image, proc = segmenter input, geo = depth input and resolution of the 3D surface
+const RENDER_MAX = 1600, PROC_MAX = 640, GEO_MAX = 1024, PREVIEW_MAX = 900;
+// Depth model input side: the GPU gets ~1.6x the model's default 518 px for finer relief
+const DEPTH_SIDE = { webgpu: 812, wasm: 518 };
 
-/* ================= Flashes (added through the upload / background remover) ================= */
-const DESIGNS = [];
-
-/* ================= Body zones ================= */
-// a/b: pose landmark indices (proximal -> distal). R: real skin radius in cm. len: typical segment length in cm.
-const ZONES = {
-  marker:     { label: "Markierung (X)",   group: "Präzision", model: "marker", kind: "marker", R: 4.0, t: 0.5, size: 8, coach: "X auf die Haut malen und antippen" },
-  forearm_l:  { label: "Linker Unterarm",  group: "Arme",  model: "pose", kind: "limb", a: 13, b: 15, tw: [17, 19], R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
-  forearm_r:  { label: "Rechter Unterarm", group: "Arme",  model: "pose", kind: "limb", a: 14, b: 16, tw: [18, 20], R: 4.0, len: 26, t: 0.55, size: 12, coach: "Ellbogen + Handgelenk ins Bild" },
-  upperarm_l: { label: "Linker Oberarm",   group: "Arme",  model: "pose", kind: "limb", a: 11, b: 13, R: 5.0, len: 30, t: 0.5,  size: 12, coach: "Schulter + Ellbogen ins Bild" },
-  upperarm_r: { label: "Rechter Oberarm",  group: "Arme",  model: "pose", kind: "limb", a: 12, b: 14, R: 5.0, len: 30, t: 0.5,  size: 12, coach: "Schulter + Ellbogen ins Bild" },
-  calf_l:     { label: "Linke Wade",       group: "Beine", model: "pose", kind: "limb", a: 25, b: 27, R: 5.5, len: 40, t: 0.4,  size: 14, coach: "Knie + Knöchel ins Bild" },
-  calf_r:     { label: "Rechte Wade",      group: "Beine", model: "pose", kind: "limb", a: 26, b: 28, R: 5.5, len: 40, t: 0.4,  size: 14, coach: "Knie + Knöchel ins Bild" },
-  chest:      { label: "Brust",            group: "Oberkörper", model: "pose", kind: "chest", R: 20, t: 0.22, size: 16, coach: "Schultern ins Bild" },
-  hand:       { label: "Handrücken",       group: "Nahaufnahme", model: "hand", kind: "hand", R: 4.2, t: 0.5, size: 6, coach: "Handrücken ins Bild" },
-  forearm_close: { label: "Unterarm (nah)", group: "Nahaufnahme", model: "hand", kind: "forearmClose", R: 3.8, t: 0.5, size: 10, coach: "Hand + Unterarm ins Bild" },
-};
-
-/* ================= State ================= */
 const $ = s => document.querySelector(s);
-const stage = $("#stage"), view = $("#view"), ctx = view.getContext("2d");
-const video = $("#video");
-const overlay = document.createElement("canvas"), octx = overlay.getContext("2d");
-const freezeCanvas = document.createElement("canvas");
-
-const state = {
-  designId: null, zone: "forearm_l", size: 12, rot: 0, t: 0.55, roll: 0, opacity: 0.9,
-  wrap: true, clip: true, debug: false, stab: true,
-  facing: "user", srcType: null, photo: null, mirror: false, frozen: false,
-  track: null, lastSeen: 0, vis: 0, lastFrame: null, lm: null,
-  dc: null, designImg: null,
-};
-// body: person silhouette from the pose model (measures limb width, also through sleeves)
-// skin: body-skin class from the multiclass segmenter (tattoo is only drawn here)
-const masks = { body: null, skin: null };
-let pose = null, hands = null, segmenter = null, modelsReady = false, modelsPromise = null;
-let lastTs = 0, lastVideoTime = -1, lastDetect = 0, segTick = 0;
-const SEG_EVERY = isMobile ? 3 : 2;
-// The models work on small inputs internally (256 px), so feeding them the full camera frame only costs
-// resize time and makes their output masks huge. Pose gets a mid-size copy for landmark precision,
-// the segmenter a small one, so reading its masks back from the GPU stays cheap.
-const POSE_IN_W = 640, SEG_IN_W = 256, SEG_DELEGATE = "GPU";
-const BG_CLASS = 0;
-const poseIn = document.createElement("canvas"), segIn = document.createElement("canvas");
-function scaledInput(src, cv, w) {
-  const W = srcW(), H = srcH(); if (W <= w) return src;
-  const h = Math.round(H * w / W);
-  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-  cv.getContext("2d").drawImage(src, 0, 0, w, h);
-  return cv;
-}
-
-/* ================= One Euro filter (jitter vs. lag) ================= */
-class OneEuro {
-  constructor(minCutoff = 1.0, beta = 0.015, dCutoff = 1.0) { Object.assign(this, { minCutoff, beta, dCutoff }); this.reset(); }
-  reset() { this.x = null; this.dx = 0; this.t = 0; }
-  a(cutoff, dt) { const tau = 1 / (2 * Math.PI * cutoff); return 1 / (1 + tau / dt); }
-  filter(x, t) {
-    if (this.x === null) { this.x = x; this.t = t; return x; }
-    const dt = Math.max((t - this.t) / 1000, 1e-3); this.t = t;
-    const ad = this.a(this.dCutoff, dt);
-    this.dx = ad * ((x - this.x) / dt) + (1 - ad) * this.dx;
-    const al = this.a(this.minCutoff + this.beta * Math.abs(this.dx), dt);
-    return this.x = al * x + (1 - al) * this.x;
-  }
-}
-// Higher beta than the default: same calm at rest, but much less lag once the arm moves.
-const F = { ax: new OneEuro(1.0, 0.04), ay: new OneEuro(1.0, 0.04), bx: new OneEuro(1.0, 0.04), by: new OneEuro(1.0, 0.04),
-  r: new OneEuro(0.8, 0.01), fs: new OneEuro(0.5, 0) };
-const stationF = Array.from({ length: PROFILE_STATIONS }, () => ({ r: new OneEuro(0.8, 0.01), off: new OneEuro(0.8, 0.01) }));
-const resetFilters = () => {
-  resetTwist();
-  resetFlow();
-  Object.values(F).forEach(f => f.reset());
-  stationF.forEach(s => { s.r.reset(); s.off.reset(); });
-};
-
-/* ================= Helpers ================= */
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
-const dist3 = (p, q) => Math.hypot(p.x - q.x, p.y - q.y, p.z - q.z);
-const mid = (p, q) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2, z: ((p.z ?? 0) + (q.z ?? 0)) / 2 });
-const srcEl = () => state.srcType === "video" ? video : state.photo;
-const srcW = () => state.srcType === "video" ? video.videoWidth : state.photo?.naturalWidth;
-const srcH = () => state.srcType === "video" ? video.videoHeight : state.photo?.naturalHeight;
-const downloadBlob = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); };
+const view = $("#view"), vctx = view.getContext("2d", { willReadFrequently: true });
+const overlay = $("#overlay"), octx = overlay.getContext("2d");
 
-let toastTimer;
-function toast(msg) {
-  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 3400);
-}
-let lastPill = "";
-function setStatus(text, s) {
-  const key = text + s; if (key === lastPill) return; lastPill = key;
-  $("#pillText").textContent = text; $("#pill").dataset.state = s;
-}
-function setCoach(text) {
-  const el = $("#coach");
-  if (!text) { el.hidden = true; return; }
-  if (el.textContent !== text) el.textContent = text;
-  el.hidden = false;
-}
-
-/* ================= Models ================= */
-function loadModels() {
-  if (modelsPromise) return modelsPromise;
-  modelsPromise = (async () => {
-    setStatus("Lädt …", "busy");
-    const { FilesetResolver, PoseLandmarker, HandLandmarker, ImageSegmenter } = await import(VISION_BUNDLE);
-    const vision = await FilesetResolver.forVisionTasks(WASM);
-    const create = async (Cls, opts, delegate = "GPU") => {
-      try { return await Cls.createFromOptions(vision, { ...opts, baseOptions: { ...opts.baseOptions, delegate } }); }
-      catch (e) { console.warn("GPU delegate failed, falling back to CPU", e);
-        return Cls.createFromOptions(vision, { ...opts, baseOptions: { ...opts.baseOptions, delegate: "CPU" } }); }
-    };
-    [pose, hands] = await Promise.all([
-      create(PoseLandmarker, { baseOptions: { modelAssetPath: strongDevice ? POSE_FULL : POSE_LITE }, runningMode: "VIDEO",
-        numPoses: 1, outputSegmentationMasks: false, minPoseDetectionConfidence: 0.5, minTrackingConfidence: 0.5 }),
-      create(HandLandmarker, { baseOptions: { modelAssetPath: HAND }, runningMode: "VIDEO", numHands: 2 }),
-    ]);
-    modelsReady = true;
-    // Skin segmentation is an upgrade, not a requirement: tracking keeps working without it.
-    try {
-      segmenter = await create(ImageSegmenter, { baseOptions: { modelAssetPath: SKIN_SEG }, runningMode: "VIDEO",
-        outputCategoryMask: true, outputConfidenceMasks: false }, SEG_DELEGATE);
-    } catch (e) { console.warn("Skin segmenter unavailable", e); }
-  })();
-  modelsPromise.catch(e => { console.error(e); setStatus("Fehler", "idle"); modelsPromise = null; });
-  return modelsPromise;
-}
-
-/* ================= Detection ================= */
-// Rolling per-stage timings (ms), handy for tuning on real phones: window.__tryon.state.perf
-state.perf = {};
-const perfMark = (k, t0) => { const v = performance.now() - t0; state.perf[k] = state.perf[k] == null ? v : state.perf[k] * 0.8 + v * 0.2; };
-function detect(src) {
-  let ts = performance.now(); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts;
-  const z = ZONES[state.zone], W = srcW(), H = srcH();
-  const P = l => ({ x: l.x * W, y: l.y * H });
-  let raw = null;
-
-  const t0 = performance.now();
-  if (z.model === "pose") {
-    const inp = scaledInput(src, poseIn, POSE_IN_W);
-    const res = pose.detectForVideo(inp, ts);
-    perfMark("pose", t0);
-    const lm = res.landmarks?.[0], wl = res.worldLandmarks?.[0];
-    state.world = wl || null; state.worldKind = "pose";
-    state.lm = lm ? lm.map(P) : null;
-    // Forearms: fuse in the hand model when that hand is visible (precise wrist + palm orientation)
-    const hand = z.tw && lm ? fusedHand(inp, ts, lm[z.b]) : null;
-    state.handLm = hand ? hand.lm.map(P) : null;
-    if (state.stab && z.tw && wl) {
-      const across = hand ? subV(hand.world[5], hand.world[17]) : subV(wl[z.tw[1]], wl[z.tw[0]]);
-      updateTwist(subV(wl[z.b], wl[z.a]), across);
-    }
-    if (lm) {
-      if (z.kind === "limb") {
-        const a = lm[z.a], b = lm[z.b];
-        raw = { A: P(a), B: P(hand ? hand.lm[0] : b), vis: Math.min(a.visibility ?? 1, hand ? 1 : (b.visibility ?? 1)), worldLen: wl ? dist3(wl[z.a], wl[z.b]) : 0, rHint: null };
-      } else { // chest: shoulder-mid -> hip-mid, width from shoulders
-        const ls = lm[11], rs = lm[12];
-        raw = { A: mid(P(ls), P(rs)), B: mid(P(lm[23]), P(lm[24])), vis: Math.min(ls.visibility ?? 1, rs.visibility ?? 1),
-          worldLen: wl ? dist3(mid(wl[11], wl[12]), mid(wl[23], wl[24])) : 0, rHint: dist(P(ls), P(rs)) / 2 };
-      }
-    }
-  } else if (z.model === "hand") {
-    const res = hands.detectForVideo(scaledInput(src, poseIn, POSE_IN_W), ts);
-    const lm = res.landmarks?.[0];
-    state.world = res.worldLandmarks?.[0] || null; state.worldKind = "hand";
-    state.lm = lm ? lm.map(P) : null;
-    if (lm) {
-      const wr = P(lm[0]), mc = P(lm[9]), width = dist(P(lm[5]), P(lm[17]));
-      if (z.kind === "hand") raw = { A: wr, B: mc, vis: 1, rHint: width * 0.56, worldLen: 0 };
-      else raw = { A: { x: wr.x + (wr.x - mc.x) * 2.4, y: wr.y + (wr.y - mc.y) * 2.4 }, B: wr, vis: 1, rHint: width * 0.5, worldLen: 0 };
-    }
-  } else { state.lm = state.handLm = null; state.world = null; } // marker: no skeleton needed
-
-  if (segmenter && ++segTick % SEG_EVERY === 0) {
-    const t2 = performance.now();
-    const sres = segmenter.segmentForVideo(scaledInput(src, segIn, SEG_IN_W), ts);
-    perfMark("seg", t2);
-    // One read-back per frame: the category mask holds the class of every pixel, from which we derive
-    // the skin mask and the body silhouette (everything that isn't background: skin, clothes, hair ...)
-    const t3 = performance.now(), cat = sres.categoryMask;
-    if (cat) {
-      const w = cat.width, h = cat.height, c = cat.getAsUint8Array();
-      const skin = new Float32Array(c.length), body = new Float32Array(c.length);
-      for (let i = 0; i < c.length; i++) { skin[i] = c[i] === SKIN_CLASS ? 1 : 0; body[i] = c[i] === BG_CLASS ? 0 : 1; }
-      fillInk(c, skin, w, h);
-      masks.skin = toMask(skin, w, h, masks.skin, [255, 255, 255]);
-      masks.body = toMask(body, w, h, masks.body, [255, 255, 255]);
-      cat.close();
-    }
-    perfMark("masks", t3);
-  }
-
-  if (raw && raw.vis > 0.5) {
-    const now = performance.now();
-    state.lastSeen = now;
-    state.track = {
-      A: { x: F.ax.filter(raw.A.x, now), y: F.ay.filter(raw.A.y, now) },
-      B: { x: F.bx.filter(raw.B.x, now), y: F.by.filter(raw.B.y, now) },
-      rHint: raw.rHint, worldLen: raw.worldLen,
-    };
-  }
-}
-
-// Existing tattoos: the segmenter tends to call inked skin "clothes" or "accessories", which punched holes
-// into the new tattoo. Small islands of those classes that don't reach the frame edge (a sleeve or shirt
-// always does) are counted as skin. Face and hair are never touched.
-const INK_CLASSES = new Set([4, 5]), INK_MAX_AREA = 0.03;
-function fillInk(c, skin, w, h) {
-  const seen = new Uint8Array(c.length), stack = [], maxA = c.length * INK_MAX_AREA;
-  for (let i0 = 0; i0 < c.length; i0++) {
-    if (seen[i0] || !INK_CLASSES.has(c[i0])) continue;
-    const comp = []; let edge = false; stack.push(i0); seen[i0] = 1;
-    while (stack.length) {
-      const i = stack.pop(), x = i % w, y = (i / w) | 0; comp.push(i);
-      if (x === 0 || y === 0 || x === w - 1 || y === h - 1) { edge = true; continue; }
-      for (const j of [i - 1, i + 1, i - w, i + w]) if (!seen[j] && INK_CLASSES.has(c[j])) { seen[j] = 1; stack.push(j); }
-    }
-    if (!edge && comp.length < maxA) for (const i of comp) skin[i] = 1;
-  }
-}
-
-// Copies a confidence mask into {arr, w, h, canvas}. Blends with the previous frame to stop edge flicker;
-// the canvas carries the mask as alpha (for clipping) tinted with `rgb` (for the debug overlay).
-function toMask(src, w, h, prev, rgb) {
-  let arr;
-  if (prev && prev.w === w && prev.h === h) { arr = prev.arr; for (let i = 0; i < arr.length; i++) arr[i] = arr[i] * 0.35 + src[i] * 0.65; }
-  else arr = new Float32Array(src);
-  const canvas = prev?.canvas ?? document.createElement("canvas");
-  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-  const gx = canvas.getContext("2d"), img = gx.createImageData(w, h), d = img.data;
-  for (let i = 0; i < arr.length; i++) {
-    const v = arr[i], o = i * 4;
-    d[o] = rgb[0]; d[o + 1] = rgb[1]; d[o + 2] = rgb[2];
-    d[o + 3] = v < 0.35 ? 0 : v > 0.65 ? 255 : ((v - 0.35) / 0.3) * 255;
-  }
-  gx.putImageData(img, 0, 0);
-  return { arr, w, h, canvas };
-}
-function maskAt(mask, x, y) {
-  const mx = (x * mask.w / view.width) | 0, my = (y * mask.h / view.height) | 0;
-  return (mx < 0 || my < 0 || mx >= mask.w || my >= mask.h) ? 0 : mask.arr[my * mask.w + mx];
-}
-
-// March outward from the limb axis across a mask to measure the real silhouette width.
-function measureWidth(mask, cx, cy, n, maxD) {
-  const at = (x, y) => maskAt(mask, x, y);
-  if (at(cx, cy) < 0.5) return null;
-  let d1 = 0, d2 = 0;
-  while (d1 < maxD && at(cx + n.x * d1, cy + n.y * d1) >= 0.5) d1 += 2;
-  while (d2 < maxD && at(cx - n.x * d2, cy - n.y * d2) >= 0.5) d2 += 2;
-  if (d1 >= maxD || d2 >= maxD) return null; // limb overlaps torso -> silhouette not usable
-  return { r: (d1 + d2) / 2, off: (d1 - d2) / 2 };
-}
-
-/* ================= Pose + hand fusion (forearms) ================= */
-// The pose model's wrist and finger points are rough; the hand model sees the same hand in much more
-// detail. We run it alongside the pose for forearm zones and pick the hand whose wrist sits closest to
-// the pose wrist of the selected arm, so the other hand never gets mixed in. No match -> pose only.
-const HAND_EVERY = isMobile ? 2 : 1, HAND_MATCH = 0.09; // max wrist distance (normalised image units)
-let lastHand = null, handTick = 0;
-function fusedHand(inp, ts, poseWrist) {
-  if (++handTick % HAND_EVERY !== 0) return lastHand && ts - lastHand.ts < 150 ? lastHand : null;
-  const t = performance.now(), res = hands.detectForVideo(inp, ts);
-  perfMark("hand", t);
-  let best = -1, bd = HAND_MATCH;
-  (res.landmarks || []).forEach((h, i) => { const d = Math.hypot(h[0].x - poseWrist.x, h[0].y - poseWrist.y); if (d < bd) { bd = d; best = i; } });
-  lastHand = best < 0 ? null : { lm: res.landmarks[best], world: res.worldLandmarks[best], ts };
-  return lastHand;
-}
-
-/* ================= Forearm twist (3D, part of "Stabil") ================= */
-// Turning the forearm (palm up / palm down) rolls the skin around the arm. The 3D direction across the
-// hand (pinky -> index knuckle) tells us by how much: we measure the direction across the hand,
-// perpendicular to the forearm, as an angle around the arm (0 = facing the camera, same convention as
-// state.roll) and add its change since placement to the tattoo's roll. Near the elbow the skin barely
-// twists, so the effect fades in along the forearm.
-const twist = { f: new OneEuro(1.0, 0.05), raw: null, unwrapped: 0, value: 0, ref: null };
-function resetTwist() { twist.f.reset(); twist.raw = null; twist.ref = null; }
-const subV = (p, q) => ({ x: p.x - q.x, y: p.y - q.y, z: p.z - q.z });
-// forearm: elbow -> wrist (pose world), across: pinky -> index knuckle (hand world if fused, else pose world).
-// Both world spaces are metric and camera-aligned, so their directions can be combined.
-function updateTwist(forearm, across) {
-  const dot = (p, q) => p.x * q.x + p.y * q.y + p.z * q.z;
-  const unit = v => { const l = Math.hypot(v.x, v.y, v.z) || 1; return { x: v.x / l, y: v.y / l, z: v.z / l }; };
-  const d = unit(forearm), perp = v => { const k = dot(v, d); return { x: v.x - d.x * k, y: v.y - d.y * k, z: v.z - d.z * k }; };
-  const v = perp(across);
-  const eCam = unit(perp({ x: 0, y: 0, z: -1 })), eN = unit(perp({ x: d.y, y: -d.x, z: 0 })); // towards camera / screen normal
-  const ang = Math.atan2(dot(v, eN), dot(v, eCam));
-  if (twist.raw == null) twist.unwrapped = ang;
-  else twist.unwrapped += Math.atan2(Math.sin(ang - twist.raw), Math.cos(ang - twist.raw));
-  twist.raw = ang;
-  twist.value = twist.f.filter(twist.unwrapped, performance.now());
-  if (twist.ref == null) twist.ref = twist.value;
-}
-function effRoll() {
-  const z = ZONES[state.zone];
-  if (!state.stab || !z.tw || twist.ref == null) return state.roll;
-  return clamp(state.roll + (twist.value - twist.ref) * clamp(state.t, 0, 1), -1.6, 1.6);
-}
-
-/* ================= Surface frame ================= */
-function computeFrame(now) {
-  const tr = state.track; if (!tr) return null;
-  const z = ZONES[state.zone];
-  const dx = tr.B.x - tr.A.x, dy = tr.B.y - tr.A.y, L = Math.hypot(dx, dy);
-  if (L < 8) return null;
-  let d = { x: dx / L, y: dy / L }, cx = tr.A.x + dx * state.t, cy = tr.A.y + dy * state.t;
-  if (state.stab) ({ cx, cy, d } = stabilise(cx, cy, d, L));
-  const n = { x: d.y, y: -d.x };
-  // Limbs are measured on the body silhouette (works through sleeves), hands on the skin mask.
-  const wMask = z.kind === "limb" ? (masks.body || masks.skin) : z.model === "hand" ? masks.skin : null;
-  const maxD = L * (z.kind === "hand" ? 0.9 : 0.6);
-
-  // The centre width fixes the real-world scale (px per cm) ...
-  const m0 = wMask ? measureWidth(wMask, cx, cy, n, maxD) : null;
-  const r0 = F.r.filter(m0 ? m0.r : (tr.rHint ?? L * z.R / z.len), now);
-  const ppc = r0 / z.R;
-  let fs = 1; // foreshortening along the limb (3D world length vs. projected 2D length)
-  if (tr.worldLen > 0.05) fs = clamp((L / ppc) / (tr.worldLen * 100), 0.35, 1);
-  fs = F.fs.filter(fs, now);
-  const Hcm = state.dc ? state.dc.height * state.size / DESIGN_BASE : state.size;
-  const hPx = Hcm * ppc * fs;
-
-  // ... and stations across the tattoo's height give the real profile: tapering, bulges, slight bends.
-  const K = PROFILE_STATIONS, raw = [];
-  for (let k = 0; k < K; k++) {
-    const y = -hPx / 2 + k * hPx / (K - 1);
-    const m = wMask ? measureWidth(wMask, cx + d.x * y, cy + d.y * y, n, maxD) : null;
-    const ok = m && m.r > r0 * 0.5 && m.r < r0 * 1.6; // reject merges with torso / other limbs
-    raw.push({ y, r: stationF[k].r.filter(ok ? m.r : r0, now), off: stationF[k].off.filter(ok ? m.off : (m0?.off ?? 0), now) });
-  }
-  const prof = raw.map((p, k) => {
-    const a = raw[Math.max(0, k - 1)], b = raw[Math.min(K - 1, k + 1)];
-    return { y: p.y, r: (a.r + 2 * p.r + b.r) / 4, off: (a.off + 2 * p.off + b.off) / 4 };
-  });
-
-  // How much of the tattoo's centre line is visible skin (null = no skin model)
-  let skin = null;
-  if (masks.skin) {
-    skin = 0;
-    for (const p of prof) skin += maskAt(masks.skin, cx + d.x * p.y + n.x * p.off, cy + d.y * p.y + n.y * p.off);
-    skin /= prof.length;
-  }
-  const c = prof[(K - 1) / 2];
-  if (state.stab) flow.radius = Math.max(hPx / 2, r0);
-  return { d, n, L, cx, cy, r: c.r, ppc, fs, hPx, prof, skin, measured: !!m0 };
-}
-
-/* ================= Skin stabilisation (optical flow, experimental) ================= */
-// Landmarks only know where the joints are, so the tattoo "swims" on the skin. Here we follow the skin
-// itself: pyramidal Lucas-Kanade on texture points under the tattoo (pores, hair, creases), estimate the
-// frame-to-frame motion (translation + rotation) and move an anchor with it. A complementary filter pulls
-// that anchor slowly back towards the landmark position: short term = skin, long term = skeleton.
-const FLOW_W = isMobile ? 256 : 384, FLOW_LEVELS = 3, FLOW_WIN = 4, FLOW_MAX_PTS = isMobile ? 28 : 40, FLOW_PULL = 0.08;
-const flow = { prev: null, pts: [], anchor: null, target: null, radius: 60, k: 1, snap: true, canvas: document.createElement("canvas") };
-const resetFlow = () => { flow.prev = null; flow.pts = []; flow.anchor = null; flow.snap = true; };
-
-// Called from computeFrame with the landmark-based axis point: remembers it as the target and returns
-// the stabilised anchor instead (or snaps to the target after user edits or a large jump).
-function stabilise(cx, cy, d, L) {
-  const ang = Math.atan2(d.y, d.x);
-  flow.target = { x: cx, y: cy, ang };
-  const a = flow.anchor;
-  if (!a || flow.snap || Math.hypot(a.x - cx, a.y - cy) > L * 0.25) {
-    flow.anchor = { x: cx, y: cy, ang }; flow.snap = false;
-    return { cx, cy, d };
-  }
-  return { cx: a.x, cy: a.y, d: { x: Math.cos(a.ang), y: Math.sin(a.ang) } };
-}
-
-function buildPyramid(src, W, H, outW = FLOW_W, cv = flow.canvas) {
-  const w = outW, h = Math.round(H * outW / W);
-  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-  const gx = cv.getContext("2d", { willReadFrequently: true });
-  gx.drawImage(src, 0, 0, w, h);
-  const px = gx.getImageData(0, 0, w, h).data, g0 = new Float32Array(w * h);
-  for (let i = 0; i < g0.length; i++) g0[i] = px[i * 4] * 0.299 + px[i * 4 + 1] * 0.587 + px[i * 4 + 2] * 0.114;
-  const levels = [{ g: g0, w, h }];
-  for (let l = 1; l < FLOW_LEVELS; l++) {
-    const p = levels[l - 1], lw = p.w >> 1, lh = p.h >> 1, g = new Float32Array(lw * lh);
-    for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) {
-      const i = 2 * y * p.w + 2 * x;
-      g[y * lw + x] = (p.g[i] + p.g[i + 1] + p.g[i + p.w] + p.g[i + p.w + 1]) / 4;
-    }
-    levels.push({ g, w: lw, h: lh });
-  }
-  for (const L of levels) { // central-difference gradients
-    const { g, w: lw, h: lh } = L, ix = new Float32Array(lw * lh), iy = new Float32Array(lw * lh);
-    for (let y = 1; y < lh - 1; y++) for (let x = 1; x < lw - 1; x++) {
-      const i = y * lw + x; ix[i] = (g[i + 1] - g[i - 1]) / 2; iy[i] = (g[i + lw] - g[i - lw]) / 2;
-    }
-    L.ix = ix; L.iy = iy;
-  }
-  levels.k = w / W;
-  return levels;
-}
-function samp(a, w, h, x, y) {
-  x = clamp(x, 0, w - 1.001); y = clamp(y, 0, h - 1.001);
-  const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * w + x0;
-  return (a[i] * (1 - fx) + a[i + 1] * fx) * (1 - fy) + (a[i + w] * (1 - fx) + a[i + w + 1] * fx) * fy;
-}
-// Pyramidal Lucas-Kanade for one point from pyramid P to pyramid C (level-0 coordinates)
-function lkTrack(P, C, x, y) {
-  let gx = 0, gy = 0;
-  const R = FLOW_WIN, n = (2 * R + 1) ** 2, ix = new Float32Array(n), iy = new Float32Array(n), iv = new Float32Array(n);
-  for (let l = P.length - 1; l >= 0; l--) {
-    const p = P[l], c = C[l], s = 1 / (1 << l), px = x * s, py = y * s;
-    let gxx = 0, gxy = 0, gyy = 0, i = 0;
-    for (let wy = -R; wy <= R; wy++) for (let wx = -R; wx <= R; wx++, i++) {
-      const a = samp(p.ix, p.w, p.h, px + wx, py + wy), b = samp(p.iy, p.w, p.h, px + wx, py + wy);
-      ix[i] = a; iy[i] = b; iv[i] = samp(p.g, p.w, p.h, px + wx, py + wy);
-      gxx += a * a; gxy += a * b; gyy += b * b;
-    }
-    const det = gxx * gyy - gxy * gxy;
-    if (det < 1e-3) return null;
-    let vx = 0, vy = 0;
-    for (let it = 0; it < 8; it++) {
-      let bx = 0, by = 0; i = 0;
-      for (let wy = -R; wy <= R; wy++) for (let wx = -R; wx <= R; wx++, i++) {
-        const diff = iv[i] - samp(c.g, c.w, c.h, px + wx + gx + vx, py + wy + gy + vy);
-        bx += diff * ix[i]; by += diff * iy[i];
-      }
-      const ex = (gyy * bx - gxy * by) / det, ey = (gxx * by - gxy * bx) / det;
-      vx += ex; vy += ey;
-      if (ex * ex + ey * ey < 1e-3) break;
-    }
-    if (l > 0) { gx = 2 * (gx + vx); gy = 2 * (gy + vy); } else { gx += vx; gy += vy; }
-  }
-  return { x: x + gx, y: y + gy };
-}
-// Shi-Tomasi corners inside the circle around the anchor (and on skin/body when a mask exists)
-function findFeatures(L, cx, cy, rad, keep) {
-  const { ix, iy, w, h } = L, cand = [], step = 6, mask = masks.skin || masks.body;
-  for (let y = Math.max(3, cy - rad); y < Math.min(h - 3, cy + rad); y += step)
-    for (let x = Math.max(3, cx - rad); x < Math.min(w - 3, cx + rad); x += step) {
-      if ((x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue;
-      // only points well inside the skin: corners on the limb's outline slide along it instead of moving with the skin
-      if (mask && [[0, 0], [8, 0], [-8, 0], [0, 8], [0, -8]].some(([u, v]) => maskAt(mask, (x + u) / flow.k, (y + v) / flow.k) < 0.5)) continue;
-      if (keep.some(p => Math.abs(p.x - x) < step && Math.abs(p.y - y) < step)) continue;
-      let a = 0, b = 0, c = 0;
-      for (let v = -2; v <= 2; v++) for (let u = -2; u <= 2; u++) {
-        const i = ((y | 0) + v) * w + (x | 0) + u; a += ix[i] * ix[i]; b += ix[i] * iy[i]; c += iy[i] * iy[i];
-      }
-      cand.push({ x, y, s: (a + c) / 2 - Math.sqrt(((a - c) / 2) ** 2 + b * b) });
-    }
-  cand.sort((p, q) => q.s - p.s);
-  const min = (cand[0]?.s ?? 0) * 0.05;
-  return cand.filter(p => p.s > min && p.s > 1).slice(0, FLOW_MAX_PTS - keep.length).map(({ x, y }) => ({ x, y }));
-}
-const median = a => { const s = [...a].sort((p, q) => p - q); return s[s.length >> 1]; };
-
-function flowStep(src, W, H) {
-  const cur = buildPyramid(src, W, H); flow.k = cur.k;
-  const a = flow.anchor, k = flow.k;
-  if (flow.prev && a && flow.pts.length) {
-    // Track forward, then back again: points that don't return to where they started are unreliable
-    const pairs = [];
-    for (const p of flow.pts) {
-      const q = lkTrack(flow.prev, cur, p.x, p.y); if (!q) continue;
-      const b = lkTrack(cur, flow.prev, q.x, q.y); if (!b || Math.hypot(b.x - p.x, b.y - p.y) > 0.7) continue;
-      pairs.push({ p, q });
-    }
-    // Drop outliers against the median motion, then fit rotation + translation (Procrustes)
-    const mdx = median(pairs.map(e => e.q.x - e.p.x)), mdy = median(pairs.map(e => e.q.y - e.p.y));
-    const inl = pairs.filter(e => Math.hypot(e.q.x - e.p.x - mdx, e.q.y - e.p.y - mdy) < 1.5 + 0.15 * Math.hypot(mdx, mdy));
-    if (inl.length >= 6) {
-      let pcx = 0, pcy = 0, qcx = 0, qcy = 0;
-      inl.forEach(({ p, q }) => { pcx += p.x; pcy += p.y; qcx += q.x; qcy += q.y; });
-      pcx /= inl.length; pcy /= inl.length; qcx /= inl.length; qcy /= inl.length;
-      let sa = 0, sb = 0;
-      inl.forEach(({ p, q }) => { const px = p.x - pcx, py = p.y - pcy, qx = q.x - qcx, qy = q.y - qcy; sa += px * qx + py * qy; sb += px * qy - py * qx; });
-      const th = Math.atan2(sb, sa), c = Math.cos(th), s = Math.sin(th);
-      const ax = a.x * k - pcx, ay = a.y * k - pcy;
-      a.x = (qcx + c * ax - s * ay) / k; a.y = (qcy + s * ax + c * ay) / k; a.ang += th;
-    }
-    flow.pts = inl.map(e => e.q);
-  } else flow.pts = [];
-  if (a && flow.target) { // complementary pull towards the landmarks
-    const t = flow.target;
-    a.x += (t.x - a.x) * FLOW_PULL; a.y += (t.y - a.y) * FLOW_PULL;
-    a.ang += Math.atan2(Math.sin(t.ang - a.ang), Math.cos(t.ang - a.ang)) * FLOW_PULL;
-  }
-  if (a && flow.pts.length < FLOW_MAX_PTS * 0.6) flow.pts.push(...findFeatures(cur[0], a.x * k, a.y * k, flow.radius * k, flow.pts));
-  flow.prev = cur;
-}
-
-/* ================= Marker mode: a pen X on the skin ================= */
-// The person draws a small X (or a dot) on the skin and taps it. Instead of a skeleton we follow the skin
-// texture around the mark: pyramidal Lucas-Kanade (as above, but finer) fitted as a similarity transform
-// (move, turn, zoom), so the tattoo stays centred on the X while the body part moves, turns in the image
-// or comes closer. A small template of the X re-centres the anchor every frame (no drift) and finds the
-// mark again after it was lost. Works on any skin: arm, leg, chest, back, neck ...
-const MK_W = isMobile ? 360 : 480, MK_RAD = 0.07, MK_PTS = isMobile ? 36 : 56, MK_TPL = 10, MK_TPL1 = 6;
-const MK_SPAN = 6; // cm of offset from the X to each edge of the position map
-const mk = { locked: false, pending: null, lost: 0, x: 0, y: 0, ang: 0, s: 1, ppc0: 10, pts: [], prev: null, tpl: null, k: 1,
-  cv: document.createElement("canvas"), out: null,
-  f: { x: new OneEuro(2.0, 0.05), y: new OneEuro(2.0, 0.05), a: new OneEuro(1.5, 0.05), s: new OneEuro(1.0, 0.02) } };
-function resetMarker() {
-  Object.assign(mk, { locked: false, pending: null, lost: 0, pts: [], prev: null, tpl: null, out: null });
-  Object.values(mk.f).forEach(f => f.reset());
-}
-function lockMarker(p) {
-  resetMarker(); mk.locked = true; mk.pending = p;
-  state.t = 0.5; state.roll = 0; syncUI();
-}
-// Corner points (Shi-Tomasi) around (cx, cy) on pyramid level 0, without a mask: the pen lines are the best features
-function mkFeatures(L, cx, cy, rad, keep, max) {
-  const { ix, iy, w, h } = L, cand = [], step = 4;
-  for (let y = Math.max(3, cy - rad); y < Math.min(h - 3, cy + rad); y += step)
-    for (let x = Math.max(3, cx - rad); x < Math.min(w - 3, cx + rad); x += step) {
-      if ((x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue;
-      if (keep.some(p => Math.abs(p.x - x) < step && Math.abs(p.y - y) < step)) continue;
-      let a = 0, b = 0, c = 0;
-      for (let v = -2; v <= 2; v++) for (let u = -2; u <= 2; u++) {
-        const i = ((y | 0) + v) * w + (x | 0) + u; a += ix[i] * ix[i]; b += ix[i] * iy[i]; c += iy[i] * iy[i];
-      }
-      cand.push({ x, y, s: (a + c) / 2 - Math.sqrt(((a - c) / 2) ** 2 + b * b) });
-    }
-  cand.sort((p, q) => q.s - p.s);
-  const min = (cand[0]?.s ?? 0) * 0.04;
-  return cand.filter(p => p.s > min && p.s > 1).slice(0, Math.max(0, max - keep.length)).map(({ x, y }) => ({ x, y }));
-}
-// Patch around (x, y), sampled in the X's own frame (turned by ang, zoomed by sc), so that it can be
-// compared with the template taken when the X was locked, however the body part has turned since.
-function grabPatch(L, x, y, T = MK_TPL, ang = 0, sc = 1) {
-  const out = new Float32Array((2 * T + 1) ** 2), c = Math.cos(ang) * sc, s = Math.sin(ang) * sc; let i = 0;
-  for (let v = -T; v <= T; v++) for (let u = -T; u <= T; u++) out[i++] = samp(L.g, L.w, L.h, x + c * u - s * v, y + s * u + c * v);
-  return out;
-}
-// Normalised cross-correlation of the X template around (x, y), radius r (pyramid level 0)
-function matchTpl(L, x, y, r, step, t = mk.tpl, T = MK_TPL, ang = mk.ang, sc = mk.s) {
-  if (!t) return null;
-  const n = t.length; let tm = 0; for (let i = 0; i < n; i++) tm += t[i]; tm /= n;
-  let tv = 0; for (let i = 0; i < n; i++) tv += (t[i] - tm) ** 2;
-  let best = null;
-  for (let dy = -r; dy <= r; dy += step) for (let dx = -r; dx <= r; dx += step) {
-    const p = grabPatch(L, x + dx, y + dy, T, ang, sc);
-    let pm = 0; for (let i = 0; i < n; i++) pm += p[i]; pm /= n;
-    let cv = 0, pv = 0; for (let i = 0; i < n; i++) { const a = p[i] - pm; cv += a * (t[i] - tm); pv += a * a; }
-    const ncc = cv / Math.sqrt(pv * tv + 1e-6);
-    if (!best || ncc > best.ncc) best = { x: x + dx, y: y + dy, ncc, ang };
-  }
-  return best;
-}
-// Real-world scale at the X: half the narrowest chord of the body silhouette, read as a ~4 cm limb radius.
-// Only a starting value (the size can be changed); on the torso, where no chord fits, a default.
-function estimatePpc(x, y, W) {
-  const m = masks.body; let best = null;
-  if (m) for (let k = 0; k < 8; k++) {
-    const a = k * Math.PI / 8, r = measureWidth(m, x, y, { x: Math.cos(a), y: Math.sin(a) }, W * 0.3);
-    if (r && (!best || r.r < best)) best = r.r;
-  }
-  return clamp(best ? best / 4 : W / 45, W / 140, W / 12);
-}
-// A finger never hits the X exactly: snap the tap onto the pen mark (centroid of the darkest pixels nearby)
-function darkCentre(L, x, y, R) {
-  const vals = [];
-  for (let v = -R; v <= R; v++) for (let u = -R; u <= R; u++) if (u * u + v * v <= R * R) vals.push({ u, v, g: samp(L.g, L.w, L.h, x + u, y + v) });
-  const sorted = vals.map(e => e.g).sort((a, b) => a - b), lo = sorted[0], med = sorted[sorted.length >> 1];
-  if (med - lo < 25) return { x, y }; // no clear mark: keep the tap
-  const thr = lo + (med - lo) * 0.35; let sx = 0, sy = 0, n = 0;
-  for (const e of vals) if (e.g < thr) { sx += e.u; sy += e.v; n++; }
-  return n >= 4 ? { x: x + sx / n, y: y + sy / n } : { x, y };
-}
-function markerStep(src, W, H) {
-  if (!mk.locked) return;
-  const cur = buildPyramid(src, W, H, MK_W, mk.cv), k = cur.k, L0 = cur[0]; mk.k = k;
-  if (mk.pending) {
-    const c0 = darkCentre(L0, mk.pending.x * k, mk.pending.y * k, MK_TPL * 2), px = c0.x, py = c0.y;
-    mk.x = px / k; mk.y = py / k; mk.ang = 0; mk.s = 1; mk.lost = 0;
-    mk.tpl = grabPatch(L0, px, py); mk.tpl1 = grabPatch(cur[1], px / 2, py / 2, MK_TPL1);
-    mk.pts = mkFeatures(L0, px, py, MK_RAD * L0.w, [], MK_PTS);
-    mk.ppc0 = estimatePpc(mk.x, mk.y, W);
-    mk.pending = null; mk.prev = cur; return;
-  }
-  let ax = mk.x * k, ay = mk.y * k, ok = false;
-  if (mk.prev && mk.pts.length) {
-    const pairs = [];
-    for (const p of mk.pts) {
-      const q = lkTrack(mk.prev, cur, p.x, p.y); if (!q) continue;
-      const b = lkTrack(cur, mk.prev, q.x, q.y); if (!b || Math.hypot(b.x - p.x, b.y - p.y) > 0.7) continue;
-      pairs.push({ p, q });
-    }
-    const mdx = median(pairs.map(e => e.q.x - e.p.x)), mdy = median(pairs.map(e => e.q.y - e.p.y));
-    const inl = pairs.filter(e => Math.hypot(e.q.x - e.p.x - mdx, e.q.y - e.p.y - mdy) < 1.5 + 0.2 * Math.hypot(mdx, mdy));
-    if (inl.length >= 5) {
-      // Similarity fit (Umeyama / Procrustes with scale)
-      let pcx = 0, pcy = 0, qcx = 0, qcy = 0;
-      inl.forEach(({ p, q }) => { pcx += p.x; pcy += p.y; qcx += q.x; qcy += q.y; });
-      pcx /= inl.length; pcy /= inl.length; qcx /= inl.length; qcy /= inl.length;
-      let sa = 0, sb = 0, pp = 0;
-      inl.forEach(({ p, q }) => { const px = p.x - pcx, py = p.y - pcy, qx = q.x - qcx, qy = q.y - qcy; sa += px * qx + py * qy; sb += px * qy - py * qx; pp += px * px + py * py; });
-      const th = Math.atan2(sb, sa), sc = clamp(Math.hypot(sa, sb) / (pp || 1), 0.92, 1.08), c = Math.cos(th), s = Math.sin(th);
-      const dx = ax - pcx, dy = ay - pcy;
-      ax = qcx + sc * (c * dx - s * dy); ay = qcy + sc * (s * dx + c * dy);
-      mk.ang += th; mk.s = clamp(mk.s * sc, 0.3, 4); ok = true;
-    }
-    mk.pts = inl.map(e => e.q);
-  }
-  // Re-centre on the X itself. When lost: coarse search on the half-size level in a radius that grows the
-  // longer the mark is gone, then refine at full size.
-  let m;
-  if (ok) m = matchTpl(L0, ax, ay, 5, 1);
-  else {
-    const r1 = Math.min(10 + mk.lost * 6, cur[1].w * 0.3) | 0;
-    let c1 = null; // the body part may have turned while the X was hidden: try a few angles
-    for (const da of [0, -0.3, 0.3]) {
-      const c = matchTpl(cur[1], ax / 2, ay / 2, r1, 2, mk.tpl1, MK_TPL1, mk.ang + da);
-      if (c && (!c1 || c.ncc > c1.ncc)) c1 = c;
-    }
-    m = c1 && c1.ncc > 0.45 ? matchTpl(L0, c1.x * 2, c1.y * 2, 4, 1, mk.tpl, MK_TPL, c1.ang) : null;
-    if (m) { // fine angle search at the found spot
-      for (const da of [-0.16, -0.12, -0.08, -0.04, 0.04, 0.08, 0.12, 0.16]) {
-        const c = matchTpl(L0, m.x, m.y, 1, 1, mk.tpl, MK_TPL, c1.ang + da);
-        if (c && c.ncc > m.ncc) m = c;
-      }
-      mk.ang = m.ang;
-    }
-  }
-  if (m && m.ncc > (ok ? 0.55 : 0.6)) {
-    const w = ok ? 0.35 : 1; ax += (m.x - ax) * w; ay += (m.y - ay) * w;
-    if (!ok) mk.pts = [];
-    ok = true;
-    if (m.ncc > 0.85) { const p = grabPatch(L0, ax, ay, MK_TPL, mk.ang, mk.s); for (let i = 0; i < p.length; i++) mk.tpl[i] = mk.tpl[i] * 0.95 + p[i] * 0.05; }
-  }
-  if (ok) {
-    mk.lost = 0; mk.x = ax / k; mk.y = ay / k;
-    if (mk.pts.length < MK_PTS * 0.6) mk.pts.push(...mkFeatures(L0, ax, ay, MK_RAD * L0.w * Math.min(mk.s, 2), mk.pts, MK_PTS));
-  } else mk.lost++;
-  mk.prev = cur;
-}
-function drawMarkerTattoo(now, alpha) {
-  const dc = state.dc; if (!dc || !mk.locked || mk.pending || alpha < 0.01) return;
-  const W = view.width, H = view.height;
-  const x = mk.f.x.filter(mk.x, now), y = mk.f.y.filter(mk.y, now), a = mk.f.a.filter(mk.ang, now), s = mk.f.s.filter(mk.s, now);
-  const ppc = mk.ppc0 * s, c = Math.cos(a), si = Math.sin(a);
-  const ox = state.roll / ROLL_MAX * MK_SPAN * ppc, oy = (state.t - 0.5) * 2 * MK_SPAN * ppc;
-  const cx = x + c * ox - si * oy, cy = y + si * ox + c * oy;
-  mk.out = { x, y, a, ppc };
-  const hPx = dc.height * state.size / DESIGN_BASE * ppc, wPx = dc.width / dc.height * hPx;
-  octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalCompositeOperation = "source-over"; octx.globalAlpha = 1;
-  octx.clearRect(0, 0, W, H);
-  octx.setTransform(c, si, -si, c, cx, cy);
-  octx.drawImage(dc, -wPx / 2, -hPx / 2, wPx, hPx);
-  // Clip to the person, not just to "skin": existing tattoos and the pen mark must not cut holes
-  compositeOverlay(state.clip ? (masks.body || masks.skin) : null, alpha);
-}
-
-/* ================= Rendering ================= */
-function buildDesignCanvas() {
-  const img = state.designImg; if (!img) return;
-  const iw = img.naturalWidth || img.width || 300, ih = img.naturalHeight || img.height || 300;
-  const h = DESIGN_BASE, w = iw / ih * h;
-  const a = state.rot * Math.PI / 180, c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a));
-  const cv = document.createElement("canvas");
-  cv.width = Math.ceil(w * c + h * s); cv.height = Math.ceil(w * s + h * c);
-  const gx = cv.getContext("2d");
-  gx.translate(cv.width / 2, cv.height / 2); gx.rotate(a); gx.drawImage(img, -w / 2, -h / 2, w, h);
-  state.dc = cv;
-}
-
-function drawTattoo(fr, alpha) {
-  const dc = state.dc; if (!dc || !fr || alpha < 0.01) return;
-  const z = ZONES[state.zone], W = view.width, H = view.height;
-  octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalCompositeOperation = "source-over"; octx.globalAlpha = 1;
-  octx.clearRect(0, 0, W, H);
-  // Local frame: x = across the limb (n), y = along the limb (d), origin on the limb axis.
-  octx.setTransform(fr.n.x, fr.n.y, fr.d.x, fr.d.y, fr.cx, fr.cy);
-  const cmPerPx = state.size / DESIGN_BASE;
-  const Wcm = dc.width * cmPerPx, rollCm = effRoll() * z.R;
-  const rows = fr.prof.length - 1, srcRowH = dc.height / rows, rowH = fr.hPx / rows;
-  const N = clamp(Math.round(dc.width / 6), 24, 96), sw = dc.width / N;
-
-  // One band per pair of profile stations. Inside a band the limb is a cylinder with that band's
-  // measured radius and centre; the design keeps its true width in cm along the skin (arc length),
-  // so it wraps further around thin parts (wrist) than around thick ones (muscle).
-  for (let j = 0; j < rows; j++) {
-    const p = fr.prof[j], q = fr.prof[j + 1];
-    const r = (p.r + q.r) / 2, off = (p.off + q.off) / 2, Rj = r / fr.ppc;
-    const sy = j * srcRowH, y0 = p.y, h = rowH + 0.6;
-    if (!state.wrap) {
-      octx.globalAlpha = 1;
-      octx.drawImage(dc, 0, sy, dc.width, srcRowH, off + (-Wcm / 2 + rollCm) * fr.ppc, y0, Wcm * fr.ppc, h);
-      continue;
-    }
-    for (let i = 0; i < N; i++) {
-      const u0 = -Wcm / 2 + i * Wcm / N, u1 = u0 + Wcm / N;
-      const t0 = (u0 + rollCm) / Rj, t1 = (u1 + rollCm) / Rj, c = Math.cos((t0 + t1) / 2);
-      if (c <= 0.03) continue;
-      const x0 = off + r * Math.sin(t0), x1 = off + r * Math.sin(t1);
-      octx.globalAlpha = Math.pow(c, 0.45);
-      octx.drawImage(dc, i * sw, sy, sw, srcRowH, x0, y0, x1 - x0 + 0.6, h);
-    }
-  }
-
-  compositeOverlay(state.clip ? (masks.skin || masks.body) : null, alpha);
-}
-function compositeOverlay(clipMask, alpha) {
-  const W = view.width, H = view.height;
-  octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalAlpha = 1;
-  if (clipMask) {
-    octx.globalCompositeOperation = "destination-in";
-    octx.drawImage(clipMask.canvas, 0, 0, W, H);
-    octx.globalCompositeOperation = "source-over";
-  }
-  // Multiply = ink sits *in* the skin (picks up skin tone, shadows, hair). A little normal blend keeps colours readable.
-  ctx.save();
-  ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = state.opacity * alpha; ctx.drawImage(overlay, 0, 0);
-  ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = state.opacity * alpha * 0.2; ctx.drawImage(overlay, 0, 0);
-  ctx.restore();
-}
-
-function drawDebug(fr) {
-  ctx.save();
-  ctx.lineWidth = Math.max(2, view.width / 400);
-  if (ZONES[state.zone].kind === "marker" && mk.locked) {
-    ctx.fillStyle = "#ff4a4f";
-    mk.pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x / mk.k, p.y / mk.k, ctx.lineWidth * 1.2, 0, 7); ctx.fill(); });
-    ctx.strokeStyle = "#fff"; ctx.beginPath(); ctx.arc(mk.x, mk.y, MK_TPL / mk.k, 0, 7); ctx.stroke();
-  }
-  if (masks.skin) { ctx.globalAlpha = 0.16; ctx.drawImage(masks.skin.canvas, 0, 0, view.width, view.height); ctx.globalAlpha = 1; }
-  if (state.handLm) {
-    ctx.fillStyle = "#ff4a4f";
-    state.handLm.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, ctx.lineWidth * 1.3, 0, 7); ctx.fill(); });
-  }
-  if (state.lm) {
-    ctx.fillStyle = "rgba(255,255,255,.9)";
-    state.lm.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, ctx.lineWidth * 1.6, 0, 7); ctx.fill(); });
-  }
-  if (state.track && fr) {
-    const { A, B } = state.track;
-    ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
-    // Measured profile: red rungs at each station, dashed outline along both edges
-    const pt = (p, s) => ({ x: fr.cx + fr.d.x * p.y + fr.n.x * (p.off + s * p.r), y: fr.cy + fr.d.y * p.y + fr.n.y * (p.off + s * p.r) });
-    ctx.strokeStyle = "#fff";
-    for (const p of fr.prof) { const a = pt(p, -1), b = pt(p, 1); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
-    ctx.setLineDash([6, 6]); ctx.strokeStyle = "rgba(255,255,255,.75)";
-    for (const s of [-1, 1]) {
-      ctx.beginPath();
-      fr.prof.forEach((p, k) => { const a = pt(p, s); k ? ctx.lineTo(a.x, a.y) : ctx.moveTo(a.x, a.y); });
-      ctx.stroke();
-    }
-  }
-  if (state.stab && flow.k) { // tracked skin points
-    ctx.setLineDash([]); ctx.fillStyle = "#fff";
-    flow.pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x / flow.k, p.y / flow.k, ctx.lineWidth * 1.2, 0, 7); ctx.fill(); });
-  }
-  ctx.restore();
-}
-
-function resize(W, H) {
-  if (view.width === W && view.height === H) return;
-  view.width = overlay.width = W; view.height = overlay.height = H;
-}
-
-function loop(now) {
-  requestAnimationFrame(loop);
-  const src = srcEl(); if (!src) return;
-  const W = srcW(), H = srcH(); if (!W || !H) return;
-  resize(W, H);
-
-  const isMk = ZONES[state.zone].kind === "marker";
-  // The marker needs no model (only the segmenter for clipping), so it tracks while MediaPipe still loads.
-  if (!state.frozen) {
-    if (state.srcType === "video") {
-      if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
-        lastVideoTime = video.currentTime;
-        if (modelsReady) detect(video);
-        if (isMk) markerStep(video, W, H); else if (modelsReady && state.stab) flowStep(video, W, H);
-      }
-    } else if (now - lastDetect > 120) { lastDetect = now; if (modelsReady) detect(src); if (isMk) markerStep(src, W, H); }
-  }
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
-  ctx.drawImage(state.frozen ? freezeCanvas : src, 0, 0, W, H);
-
-  const seen = isMk ? state.frozen || (mk.locked && !mk.pending && mk.lost < 6) : state.frozen || now - state.lastSeen < 400;
-  state.vis += ((seen ? 1 : 0) - state.vis) * (isMk ? 0.35 : 0.18);
-  let fr = null;
-  if (isMk) drawMarkerTattoo(now, state.vis);
-  else {
-    fr = state.frozen ? state.lastFrame : computeFrame(now);
-    if (fr) state.lastFrame = fr;
-    drawTattoo(fr, state.vis);
-  }
-  if (state.debug) drawDebug(fr);
-  if (state.skel) drawSkeleton3D(now);
-
-  const z = ZONES[state.zone];
-  if (!modelsReady && !isMk) { setStatus("Lädt …", "busy"); setCoach(""); }
-  else if (state.frozen) { setStatus("Pausiert", "ok"); setCoach(""); }
-  else if (isMk && !mk.locked) { setStatus("X antippen", "search"); setCoach(z.coach); }
-  else if (isMk && !seen) { setStatus("Suche X …", "search"); setCoach("X wieder ins Bild halten · Doppeltipp setzt neu"); }
-  else if (isMk) { setStatus(z.label, "ok"); setCoach(""); }
-  else if (seen) {
-    setStatus(z.label, "ok");
-    setCoach(state.clip && fr?.skin != null && fr.skin < 0.4 && state.vis > 0.5
-      ? "Stelle verdeckt" : "");
-  }
-  else { setStatus("Suche …", "search"); setCoach(z.coach); }
-}
-
-/* ================= Sources ================= */
-function showLive(isVideo) {
-  $("#intro").hidden = true; $("#stageTools").hidden = false; $("#btnFlip").hidden = !isVideo;
-  state.frozen = false; updateFreezeUI(); resetFilters(); state.track = null;
-  loadModels();
-}
-async function startCamera() {
-  stopCamera();
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: state.facing, width: { ideal: 1280 }, height: { ideal: 960 }, aspectRatio: { ideal: 4 / 3 }, frameRate: { ideal: 60 } }, audio: false });
-    video.srcObject = stream; await video.play();
-  } catch (e) {
-    console.error(e);
-    toast(e.name === "NotAllowedError"
-      ? "Kein Kamerazugriff"
-      : "Keine Kamera gefunden");
-    return;
-  }
-  state.srcType = "video"; state.mirror = state.facing === "user";
-  view.classList.toggle("mirror", state.mirror); view.classList.remove("contain");
-  showLive(true);
-}
-function stopCamera() { video.srcObject?.getTracks().forEach(t => t.stop()); video.srcObject = null; }
-/* ================= Interaction ================= */
-function toCanvas(e) {
-  const rect = view.getBoundingClientRect(), W = view.width, H = view.height;
-  const contain = view.classList.contains("contain");
-  const s = contain ? Math.min(rect.width / W, rect.height / H) : Math.max(rect.width / W, rect.height / H);
-  const ox = (rect.width - W * s) / 2, oy = (rect.height - H * s) / 2;
-  let x = (e.clientX - rect.left - ox) / s; const y = (e.clientY - rect.top - oy) / s;
-  if (state.mirror) x = W - x;
-  return { x, y };
-}
-function moveBy(dx, dy) {
-  if (ZONES[state.zone].kind === "marker") { // drag in the X's own frame, in cm
-    const o = mk.out; if (!o) return;
-    const c = Math.cos(o.a), s = Math.sin(o.a), lx = (dx * c + dy * s) / o.ppc, ly = (-dx * s + dy * c) / o.ppc;
-    state.roll = clamp(state.roll + lx / MK_SPAN * ROLL_MAX, -ROLL_MAX, ROLL_MAX);
-    state.t = clamp(state.t + ly / (2 * MK_SPAN), 0, 1); syncUI(); return;
-  }
-  const fr = state.lastFrame; if (!fr) return;
-  state.t = clamp(state.t + (dx * fr.d.x + dy * fr.d.y) / fr.L, -0.3, 1.3);
-  state.roll = clamp(state.roll + (dx * fr.n.x + dy * fr.n.y) / fr.r, -1.5, 1.5);
-  syncUI();
-}
-let designDirty = false;
-function setRot(v) { state.rot = ((v + 540) % 360) - 180; designDirty = true; syncUI(); }
-function setSize(v) { state.size = clamp(v, 3, 30); syncUI(); }
-setInterval(() => { if (designDirty) { designDirty = false; buildDesignCanvas(); } }, 30);
-
-const pointers = new Map(); let pinch = null;
-stage.addEventListener("pointerdown", e => {
-  if (e.target.closest("button, .intro, .dock, .hud") || !state.srcType) return;
-  if (ZONES[state.zone].kind === "marker" && !mk.locked) { lockMarker(toCanvas(e)); return; }
-  stage.setPointerCapture(e.pointerId); pointers.set(e.pointerId, toCanvas(e)); startPinch();
-});
-stage.addEventListener("pointermove", e => {
-  if (!pointers.has(e.pointerId)) return;
-  const p = toCanvas(e), prev = pointers.get(e.pointerId); pointers.set(e.pointerId, p);
-  if (pointers.size === 1) moveBy(p.x - prev.x, p.y - prev.y);
-  else if (pinch) {
-    const [a, b] = [...pointers.values()];
-    setSize(pinch.size * dist(a, b) / pinch.dist);
-    setRot(pinch.rot + (Math.atan2(b.y - a.y, b.x - a.x) - pinch.ang) * 180 / Math.PI);
-  }
-});
-stage.addEventListener("dblclick", e => {
-  if (e.target.closest("button, .intro, .dock, .hud") || !state.srcType || ZONES[state.zone].kind !== "marker") return;
-  lockMarker(toCanvas(e));
-});
-const endPointer = e => { pointers.delete(e.pointerId); startPinch(); };
-stage.addEventListener("pointerup", endPointer); stage.addEventListener("pointercancel", endPointer);
-function startPinch() {
-  if (pointers.size < 2) { pinch = null; return; }
-  const [a, b] = [...pointers.values()];
-  pinch = { dist: Math.max(dist(a, b), 1), ang: Math.atan2(b.y - a.y, b.x - a.x), size: state.size, rot: state.rot };
-}
-stage.addEventListener("wheel", e => {
-  if (!state.srcType || e.target.closest(".dock")) return; e.preventDefault();
-  if (e.shiftKey) setRot(state.rot + (e.deltaY || e.deltaX) * 0.15);
-  else setSize(state.size * Math.exp(-e.deltaY * 0.0015));
-}, { passive: false });
-stage.addEventListener("keydown", e => {
-  const k = e.key, step = 0.02;
-  if (k === "ArrowUp") state.t -= step; else if (k === "ArrowDown") state.t += step;
-  else if (k === "ArrowLeft") state.roll -= step * 2; else if (k === "ArrowRight") state.roll += step * 2;
-  else if (k === "+" || k === "=") setSize(state.size + 0.5); else if (k === "-") setSize(state.size - 0.5);
-  else if (k === "q") setRot(state.rot - 5); else if (k === "e") setRot(state.rot + 5);
-  else return;
-  e.preventDefault(); syncUI();
-});
-
-/* ================= UI ================= */
-function renderDesigns() {
-  const grid = $("#designGrid"); grid.innerHTML = "";
-  const add = document.createElement("button");
-  add.className = "flash add sq"; add.title = "Flash hochladen"; add.setAttribute("aria-label", "Flash hochladen");
-  add.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
-  add.onclick = openConverter;
-  grid.appendChild(add);
-  DESIGNS.forEach(d => {
-    const b = document.createElement("button");
-    b.className = "flash sq"; b.title = d.name; b.setAttribute("aria-pressed", d.id === state.designId);
-    b.innerHTML = `<img alt="${d.name}" src="${d.url}">`;
-    b.onclick = () => selectDesign(d.id);
-    grid.appendChild(b);
-  });
-  $("#noFlash").hidden = DESIGNS.length > 0;
-}
-async function selectDesign(id) {
-  state.designId = id; const d = DESIGNS.find(x => x.id === id);
-  const img = new Image(); img.src = d.url;
-  try { await img.decode(); } catch {}
-  state.designImg = img; buildDesignCanvas(); renderDesigns(); syncUI();
-}
-$("#noFlash").onclick = () => openConverter();
-
-// What the top and bottom edge of the position map mean for each zone
-const ZONE_ENDS = {
-  marker: ["oben", "unten"],
-  forearm_l: ["Ellbogen", "Handgelenk"], forearm_r: ["Ellbogen", "Handgelenk"],
-  upperarm_l: ["Schulter", "Ellbogen"], upperarm_r: ["Schulter", "Ellbogen"],
-  calf_l: ["Knie", "Knöchel"], calf_r: ["Knie", "Knöchel"],
-  chest: ["Schultern", "Bauch"], hand: ["Handgelenk", "Knöchel"], forearm_close: ["Ellbogen", "Handgelenk"],
-};
-function renderZones() {
-  const wrap = $("#zoneGroups"); wrap.innerHTML = "";
-  const groups = {};
-  Object.entries(ZONES).forEach(([id, z]) => (groups[z.group] ||= []).push([id, z]));
-  Object.entries(groups).forEach(([name, list]) => {
-    const h = document.createElement("h5"); h.textContent = name; wrap.appendChild(h);
-    const c = document.createElement("div"); c.className = "chips";
-    list.forEach(([id, z]) => {
-      const b = document.createElement("button"); b.className = "chip"; b.textContent = z.label;
-      b.setAttribute("aria-pressed", id === state.zone); b.onclick = () => { selectZone(id); $("#zonePop").hidden = true; }; c.appendChild(b);
-    });
-    wrap.appendChild(c);
-  });
-  [$("#mapTop").textContent, $("#mapBot").textContent] = ZONE_ENDS[state.zone];
-}
-function selectZone(id) {
-  state.zone = id; const z = ZONES[id];
-  state.t = z.t; state.size = z.size; state.roll = 0;
-  state.track = null; state.lastFrame = null; resetFilters(); resetMarker(); masks.body = masks.skin = null;
-  if (z.model === "hand" && state.srcType === "video" && state.facing === "user" && isMobile) toast("Rückkamera empfohlen");
-  renderZones(); syncUI();
-}
-$("#zonePill").onclick = e => { e.stopPropagation(); $("#zonePop").hidden = !$("#zonePop").hidden; };
-$("#zonePop").onclick = e => e.stopPropagation();
-document.addEventListener("click", () => $("#zonePop").hidden = true);
-$("#btnReset").onclick = () => { const z = ZONES[state.zone]; if (z.kind === "marker") resetMarker(); state.t = z.t; state.roll = 0; state.size = z.size; setRot(0); };
-
-/* ----- Dock: one map for position, rotation and size ----- */
-// The map is the limb unrolled (vertical = along it, horizontal = around it). The dot is the
-// tattoo's position; the knob on the ring around it sets rotation (angle) and size (distance).
-const ROLL_MAX = 1.5, SIZE_MIN = 3, SIZE_MAX = 30;
-const map = $("#map"), knob = $("#gKnob");
-const mapScale = () => map.offsetHeight / 148; // ring radii are designed for the 148px desktop map
-const RING_MIN = 26, RING_SPAN = 36; // ring radius (px on the desktop map) from smallest to largest size
-const ringR = () => mapScale() * (RING_MIN + (state.size - SIZE_MIN) / (SIZE_MAX - SIZE_MIN) * RING_SPAN);
-const sizeFromR = r => SIZE_MIN + clamp((r / mapScale() - RING_MIN) / RING_SPAN, 0, 1) * (SIZE_MAX - SIZE_MIN);
-const dotPos = () => ({ x: (clamp(state.roll / ROLL_MAX, -1, 1) + 1) / 2 * map.offsetWidth, y: clamp(state.t, 0, 1) * map.offsetHeight });
-
-// Snap feedback: short buzz on phones, a flash of the scale and a pop of the grip
-let lastSnap = null;
-function tick() {
-  navigator.vibrate?.(8);
-  map.classList.remove("snapped"); void map.offsetWidth; map.classList.add("snapped");
-}
-map.addEventListener("pointerdown", e => {
-  const onKnob = !!e.target.closest(".g-knob"), b = map.getBoundingClientRect();
-  map.setPointerCapture(e.pointerId); map.classList.toggle("knob-drag", onKnob); map.classList.toggle("dragging", !onKnob);
-  const move = ev => {
-    const x = ev.clientX - b.left, y = ev.clientY - b.top;
-    if (onKnob) {
-      const p = dotPos(), dx = x - p.x, dy = y - p.y;
-      let a = Math.atan2(dx, -dy) * 180 / Math.PI;
-      let snapped = null;
-      for (const s of [-180, -90, 0, 90, 180]) if (Math.abs(a - s) < 5) { a = s; snapped = s; }
-      if (snapped !== null && snapped !== lastSnap) tick();
-      lastSnap = snapped;
-      state.size = sizeFromR(Math.hypot(dx, dy)); setRot(a);
-    } else {
-      state.t = clamp(y / b.height, 0, 1); state.roll = (clamp(x / b.width, 0, 1) * 2 - 1) * ROLL_MAX; syncUI();
-    }
-  };
-  if (!onKnob) move(e);
-  const up = () => { map.classList.remove("knob-drag", "dragging"); lastSnap = null; map.removeEventListener("pointermove", move); map.removeEventListener("pointerup", up); map.removeEventListener("pointercancel", up); };
-  map.addEventListener("pointermove", move); map.addEventListener("pointerup", up); map.addEventListener("pointercancel", up);
-});
-map.addEventListener("dblclick", () => setRot(0));
-map.addEventListener("wheel", e => {
-  e.preventDefault();
-  if (e.shiftKey) setRot(state.rot + (e.deltaY || e.deltaX) * 0.15); else setSize(state.size * Math.exp(-e.deltaY * 0.0015));
-}, { passive: false });
-
-function sizeLabel() {
-  const img = state.designImg; const ar = img ? (img.naturalWidth || 1) / (img.naturalHeight || 1) : 1;
-  return `${(state.size * ar).toFixed(0)} × ${state.size.toFixed(0)}`;
-}
-function syncUI() {
-  flow.snap = true; // user edits move the tattoo immediately instead of being "held" by the skin tracker
-  if (twist.ref != null) twist.ref = twist.value; // ... and re-base the arm twist on the new placement
-  const p = dotPos(), r = ringR(), a = state.rot * Math.PI / 180;
-  const gz = $("#gizmo"); gz.style.left = p.x + "px"; gz.style.top = p.y + "px";
-  const ring = $("#gRing"), ticks = $("#gTicks"), bub = $("#gBubble");
-  ring.style.width = ring.style.height = 2 * r + "px";
-  ticks.style.width = ticks.style.height = 2 * r + 20 + "px";
-  const kx = Math.sin(a) * r, ky = -Math.cos(a) * r;
-  knob.style.left = kx + "px"; knob.style.top = ky + "px";
-  $("#gKnobIcon").style.transform = `rotate(${state.rot}deg)`;
-  bub.style.left = kx + "px"; bub.style.top = ky - 24 + "px";
-  bub.textContent = `${Math.round(state.rot)}° · ${state.size.toFixed(1)} cm`;
-  $("#readSize").textContent = sizeLabel() + " cm";
-  $("#readRot").textContent = Math.round(state.rot) + "°";
-  $("#zoneLabel").textContent = ZONES[state.zone].label;
-}
-// Fit the dot spacing to the field so the grid always ends with an even margin to every edge
-function layoutGrid() {
-  const g = map.querySelector(".grid"), w = g.clientWidth, h = g.clientHeight;
-  if (!w || !h) return;
-  const sx = w / Math.max(2, Math.round(w / 14)), sy = h / Math.max(2, Math.round(h / 14));
-  g.style.backgroundSize = `${sx}px ${sy}px`;
-}
-new ResizeObserver(() => { layoutGrid(); syncUI(); }).observe(map);
-function bindToggle(id, key) {
-  const b = $("#" + id);
-  b.onclick = () => { state[key] = !state[key]; b.setAttribute("aria-pressed", state[key]); };
-}
-bindToggle("tWrap", "wrap"); bindToggle("tClip", "clip"); bindToggle("tStab", "stab");
-$("#tStab").addEventListener("click", resetFlow);
-$("#tSkel").onclick = () => {
-  state.skel = state.debug = !state.skel;
-  $("#tSkel").setAttribute("aria-pressed", state.skel); $("#skel3d").hidden = !state.skel;
+const S = {
+  step: 1, photo: null, proc: null, geo: null, // render-res, segmenter-res and geometry-res canvases
+  disp: null, dispN: null, skin: null, height: null, relief: null, lum: null, nrm: null, nrmF: null, pw: 0, ph: 0, // geo-res maps
+  light: [-.35, -.55, .76], mesh: null, ink: null, age: .4,
+  axis: 0, armPx: 0, // arm direction (rad) and width in render px
+  motifs: [], motif: null,
+  anchor: null, rot: 0, sizeCm: 10, view: "photo",
+  inked: null, local: null, ai: null, inkBox: null, inkAlpha: null, compare: 0.5, comparing: false,
 };
 
-/* ----- 3D skeleton inset: world landmarks (metres) on a slow orbit ----- */
-const POSE_BONES = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32],[15,19],[16,20]];
-const HAND_BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
-const skel = $("#skel3d"), sctx = skel.getContext("2d");
-function drawSkeleton3D(now) {
-  const dpr = devicePixelRatio || 1, W = skel.clientWidth, H = skel.clientHeight;
-  if (!W) return;
-  if (skel.width !== Math.round(W * dpr)) { skel.width = Math.round(W * dpr); skel.height = Math.round(H * dpr); }
-  sctx.setTransform(dpr, 0, 0, dpr, 0, 0); sctx.clearRect(0, 0, W, H);
-  sctx.strokeStyle = "rgba(255,255,255,.14)"; sctx.lineWidth = 1;
-  sctx.beginPath(); sctx.ellipse(W / 2, H * .86, W * .32, 6, 0, 0, 7); sctx.stroke();
-  const w = state.world;
-  if (!w) { sctx.fillStyle = `rgba(255,74,79,${.45 + .35 * Math.sin(now / 280)})`; sctx.beginPath(); sctx.arc(W / 2, H / 2, 4, 0, 7); sctx.fill(); return; }
-  const hand = state.worldKind === "hand", z = ZONES[state.zone];
-  let cx = 0, cy = 0, cz = 0; w.forEach(p => { cx += p.x; cy += p.y; cz += p.z; }); cx /= w.length; cy /= w.length; cz /= w.length;
-  let ext = 0; w.forEach(p => ext = Math.max(ext, Math.abs(p.x - cx), Math.abs(p.y - cy), Math.abs(p.z - cz)));
-  const s = Math.min(W, H) * .4 / (ext || 1), ang = now * .0005, ca = Math.cos(ang), sa = Math.sin(ang);
-  const P = p => { const x = p.x - cx, y = p.y - cy, zz = p.z - cz, rx = x * ca - zz * sa, rz = x * sa + zz * ca, f = 1 / (1 + rz / (ext * 5)); return { x: W / 2 + rx * s * f, y: H * .46 + y * s * f, d: rz }; };
-  const pts = w.map(P), bones = hand ? HAND_BONES : POSE_BONES;
-  const hi = !hand && z.kind === "limb" ? [z.a, z.b] : null;
-  sctx.lineCap = "round";
-  bones.forEach(([a, b]) => {
-    const A = pts[a], B = pts[b], on = hi && hi.includes(a) && hi.includes(b);
-    sctx.strokeStyle = on ? "#ff4a4f" : `rgba(255,225,225,${(A.d + B.d) / 2 < 0 ? .7 : .35})`; sctx.lineWidth = on ? 3.5 : 1.5;
-    sctx.shadowColor = "rgba(255,60,70,.9)"; sctx.shadowBlur = on ? 10 : 0;
-    sctx.beginPath(); sctx.moveTo(A.x, A.y); sctx.lineTo(B.x, B.y); sctx.stroke();
+/* ---------- UI helpers ---------- */
+function setStep(n) {
+  S.step = n;
+  document.querySelectorAll(".step").forEach(el => {
+    const k = +el.dataset.step; el.classList.toggle("on", k === n); el.classList.toggle("done", k < n);
   });
-  sctx.shadowBlur = 0; sctx.fillStyle = "#fff";
-  new Set(bones.flat()).forEach(i => { sctx.beginPath(); sctx.arc(pts[i].x, pts[i].y, 1.8, 0, 7); sctx.fill(); });
-  if (!hand) { const h = pts[0]; sctx.strokeStyle = "rgba(255,255,255,.6)"; sctx.lineWidth = 1.5; sctx.beginPath(); sctx.arc(h.x, h.y, .09 * s, 0, 7); sctx.stroke(); }
+  $("#panelPlace").hidden = n !== 3; $("#panelDone").hidden = n !== 4;
+  $("#views").hidden = n < 3 && !S.disp;
+  $("#tagSize").hidden = n !== 3 || !S.motif;
 }
-
-/* ----- First-visit intro ----- */
-const ONB = [
-  { t: "Flash hochladen", art: `<div class="art-up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>` },
-  { t: "Stelle wählen", art: `<div class="art-zone"><span>Unterarm</span><span>Oberarm</span><span>Wade</span></div>` },
-  { t: "Ziehen · Drehen · Größe", art: `<div class="art-giz"><div class="g-ring"></div><div class="g-dot"></div><div class="g-knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></div></div>` },
-];
-let onbI = 0;
-function showOnb(i) {
-  onbI = i; $("#onbArt").innerHTML = ONB[i].art; $("#onbStep").textContent = `${i + 1} / ${ONB.length}`; $("#onbTitle").textContent = ONB[i].t;
-  document.querySelectorAll("#onbDots i").forEach((d, k) => d.classList.toggle("on", k === i));
-  $("#onbNext").textContent = i === ONB.length - 1 ? "Los" : "Weiter";
+function status(text, s = "busy") {
+  $("#status").hidden = !text; $("#statusText").textContent = text || ""; $("#status").dataset.s = s;
 }
-function closeOnb() { $("#onb").hidden = true; try { localStorage.setItem("bm-onboarded", "1"); } catch {} }
-$("#onbNext").onclick = () => onbI < ONB.length - 1 ? showOnb(onbI + 1) : closeOnb();
-$("#onbSkip").onclick = closeOnb;
-{ let seen = null; try { seen = localStorage.getItem("bm-onboarded"); } catch {} if (!seen) { $("#onb").hidden = false; showOnb(0); } }
+setStep(1);
 
-$("#btnStart").onclick = startCamera;
-$("#btnLight").onclick = () => {
-  const on = !stage.classList.contains("light");
-  stage.classList.toggle("light", on); $("#btnLight").setAttribute("aria-pressed", on);
-};
-$("#btnFlip").onclick = () => { state.facing = state.facing === "user" ? "environment" : "user"; startCamera(); };
+/* ---------- 1 · Photo ---------- */
+$("#pick").onclick = () => $("#photoInput").click();
+$("#newPhoto").onclick = () => $("#photoInput").click();
+$("#photoInput").onchange = e => e.target.files[0] && loadPhoto(e.target.files[0]);
+const stage = $("#stage");
+["dragenter", "dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); $("#drop").classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); $("#drop").classList.remove("over"); }));
+stage.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (!f) return; (S.step >= 3 ? loadMotif : loadPhoto)(f); });
 
-function updateFreezeUI() { $("#btnFreeze").setAttribute("aria-pressed", state.frozen); }
-$("#btnFreeze").onclick = () => {
-  if (!state.frozen) {
-    const src = srcEl(); if (!src) return;
-    freezeCanvas.width = srcW(); freezeCanvas.height = srcH();
-    freezeCanvas.getContext("2d").drawImage(src, 0, 0);
-    state.frozen = true;
-  } else state.frozen = false;
-  updateFreezeUI();
-};
-
-/* ================= Flash → PNG converter ================= */
-// Removes the paper from a photographed/scanned flash: estimates the (unevenly lit) paper colour,
-// treats everything darker than the paper as ink, and "un-mixes" the ink colour from white.
-const conv = { src: null, crop: { x: 0, y: 0, w: 1, h: 1 }, mode: "color", thr: 0.14, str: 1.35, flat: true, out: null, name: "flash" };
-const cvSrc = $("#cvSrc"), cvOut = $("#cvOut");
-
-function openConverter() { $("#convDlg").showModal(); }
-$("#convClose").onclick = () => $("#convDlg").close();
-
-const drop = $("#drop");
-$("#convInput").onchange = e => e.target.files[0] && loadConvFile(e.target.files[0]);
-["dragenter", "dragover"].forEach(ev => $("#paneSrc").addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
-["dragleave", "drop"].forEach(ev => $("#paneSrc").addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-$("#paneSrc").addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) loadConvFile(f); });
-
-function loadConvFile(file) {
+function scaled(img, max) {
+  const k = Math.min(1, max / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round((img.naturalWidth || img.width) * k); c.height = Math.round((img.naturalHeight || img.height) * k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+function loadPhoto(file) {
   const img = new Image();
   img.onload = () => {
-    const MAX = 2400, k = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
-    const c = document.createElement("canvas");
-    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-    const gx = c.getContext("2d");
-    gx.fillStyle = "#fff"; gx.fillRect(0, 0, c.width, c.height); // transparent PNGs become "paper"
-    gx.drawImage(img, 0, 0, c.width, c.height);
-    conv.src = c; conv.crop = { x: 0, y: 0, w: 1, h: 1 };
-    conv.name = file.name.replace(/\.[^.]+$/, "") || "flash";
-    drop.hidden = true; cvSrc.hidden = false;
-    drawSrc(); processConv();
+    S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
+    S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = null; S.inked = null; S.anchor = null; depthCanvas = null;
+    view.width = S.photo.width; view.height = S.photo.height;
+    $("#drop").hidden = true; $("#viewWrap").hidden = false;
+    fitOverlay(); S.view = "photo"; syncViews(); redraw();
+    analyse();
   };
-  img.onerror = () => toast("Bild nicht lesbar");
+  img.onerror = () => status("Bild nicht lesbar", "err");
   img.src = URL.createObjectURL(file);
 }
+function fitOverlay() {
+  overlay.width = view.clientWidth * devicePixelRatio; overlay.height = view.clientHeight * devicePixelRatio;
+  overlay.style.width = view.clientWidth + "px"; overlay.style.height = view.clientHeight + "px";
+  overlay.style.left = view.offsetLeft + "px"; overlay.style.top = view.offsetTop + "px";
+  Object.assign($("#siri").style, { left: overlay.style.left, top: overlay.style.top, width: overlay.style.width, height: overlay.style.height });
+}
+new ResizeObserver(() => { if (S.photo) { fitOverlay(); drawGizmo(); } }).observe(view);
 
-function drawSrc(sel) {
-  const s = conv.src; if (!s) return;
-  const k = Math.min(1, 1000 / Math.max(s.width, s.height));
-  cvSrc.width = Math.round(s.width * k); cvSrc.height = Math.round(s.height * k);
-  const gx = cvSrc.getContext("2d");
-  gx.drawImage(s, 0, 0, cvSrc.width, cvSrc.height);
-  const c = sel || conv.crop, W = cvSrc.width, H = cvSrc.height;
-  if (c.w < 0.999 || c.h < 0.999 || sel) {
-    gx.fillStyle = "rgba(20,20,22,.5)";
-    gx.beginPath(); gx.rect(0, 0, W, H); gx.rect(c.x * W, c.y * H, c.w * W, c.h * H); gx.fill("evenodd");
-    gx.strokeStyle = "#fff"; gx.lineWidth = 2; gx.setLineDash([8, 6]);
-    gx.strokeRect(c.x * W, c.y * H, c.w * W, c.h * H);
+/* ---------- 2 · Analysis ---------- */
+let depthPipe = null, depthDevice = null, segmenter = null;
+// GPU (WebGPU, half precision) when the graphics chip supports it, otherwise the quantised model on
+// the CPU. Some GPUs only fail once they actually run the model, so runDepth() falls back as well.
+async function makeDepth(device) {
+  const { pipeline, env } = await import(TRANSFORMERS);
+  // Model files come through our own domain (worker route /hf/): Safari can refuse Hugging Face's
+  // cross-domain download redirect. Local dev servers have no worker, so they load from Hugging Face.
+  if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) env.remoteHost = location.origin + "/hf/";
+  depthDevice = device;
+  const opts = device === "webgpu" ? { device: "webgpu", dtype: "fp16" } : { dtype: "q8" };
+  return pipeline("depth-estimation", DEPTH_MODEL, { ...opts, progress_callback: onProgress });
+}
+// Download progress over all model files, shown in the status pill on the first visit
+const loadProg = {};
+function onProgress(p) {
+  if (p.status !== "progress" || !p.total) return;
+  loadProg[p.file] = [p.loaded, p.total];
+  let a = 0, b = 0; for (const [l, t] of Object.values(loadProg)) { a += l; b += t; }
+  if (S.step === 2 && b > 1e6 && a < b) status(`Lädt Modell ${Math.round(a / b * 100)} %`);
+}
+function sizeDepth(dp) {
+  const ip = dp.processor?.image_processor, s = DEPTH_SIDE[depthDevice] || 518;
+  if (ip?.size) ip.size = { width: s, height: s };
+  return dp;
+}
+async function getDepth() {
+  if (depthPipe) return depthPipe;
+  const adapter = navigator.gpu ? await navigator.gpu.requestAdapter().catch(() => null) : null;
+  if (adapter?.features?.has("shader-f16")) {
+    try { return (depthPipe = await makeDepth("webgpu")); } catch (e) { console.warn("WebGPU depth unavailable, using CPU", e); }
+  }
+  return (depthPipe = await makeDepth("wasm"));
+}
+// The photo is handed over as pixels (no blob URL round trip, which some browsers refuse to fetch)
+async function runDepth(canvas) {
+  const dp = sizeDepth(await getDepth()), { RawImage } = await import(TRANSFORMERS);
+  const input = RawImage.fromCanvas ? RawImage.fromCanvas(canvas) : await new Promise(r => canvas.toBlob(b => r(URL.createObjectURL(b)), "image/jpeg", .92));
+  try { return await dp(input); }
+  catch (e) {
+    if (depthDevice !== "webgpu") throw e;
+    console.warn("WebGPU depth failed while running, retrying on CPU", e);
+    depthPipe = sizeDepth(await makeDepth("wasm"));
+    return depthPipe(input);
+  }
+}
+// Model output can arrive as float32, float16 or raw half-float bits (Uint16) depending on the backend
+function depthValues(t) {
+  const d = t.data;
+  if (d instanceof Float32Array || d instanceof Float64Array) return d;
+  if (typeof Float16Array !== "undefined" && d instanceof Float16Array) return Float32Array.from(d);
+  if (d instanceof Uint16Array) {
+    const out = new Float32Array(d.length);
+    for (let i = 0; i < d.length; i++) {
+      const h = d[i], s = h & 0x8000 ? -1 : 1, e = (h >> 10) & 31, f = h & 1023;
+      out[i] = s * (e === 0 ? f * 2 ** -24 : e === 31 ? (f ? NaN : Infinity) : (1 + f / 1024) * 2 ** (e - 15));
+    }
+    return out;
+  }
+  return Float32Array.from(d, Number);
+}
+async function getSegmenter() {
+  if (segmenter) return segmenter;
+  const { FilesetResolver, ImageSegmenter } = await import(VISION);
+  const fs = await FilesetResolver.forVisionTasks(VISION_WASM);
+  segmenter = await ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL }, runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: false });
+  return segmenter;
+}
+
+async function analyse() {
+  setStep(2); scanStart();
+  let stage = "Modell laden"; // named in the error message, so a failure points at its step
+  try {
+    status("Lädt Modelle …");
+    const [, seg] = await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]);
+    status("Tiefe …"); stage = "Tiefe berechnen";
+    const out = await runDepth(S.geo);
+    stage = "Haut erkennen";
+    S.pw = S.geo.width; S.ph = S.geo.height;
+    S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph); S.dispN = normalised(S.disp); // the point cloud shows from here
+    status("Haut …");
+    await frame(); S.skin = seg ? skinMask(seg) : null;
+    if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
+    stage = "3D-Modell"; status("3D-Modell …");
+    await frame(); refineDepth(); buildGeometry(); buildMesh();
+    await scanFinish();
+    status("");
+    S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
+    S.view = "photo"; syncViews(); setStep(3); redraw();
+    if (!S.motif) status("Motiv hinzufügen", "ok");
+  } catch (e) {
+    console.error(e); scanStop();
+    const m = String(e?.message || e);
+    status(/Kein Arm/.test(m) ? m : `${stage}: ` + (/fetch|network|Failed to load|Load failed/i.test(m) ? "Download fehlgeschlagen" :
+      /memory|allocation|OOM/i.test(m) ? "zu wenig Speicher" : m.slice(0, 80)), "err");
   }
 }
 
-// Crop by dragging a rectangle over the original
-let cropStart = null;
-const relPos = e => { const r = cvSrc.getBoundingClientRect(); return { x: clamp((e.clientX - r.left) / r.width, 0, 1), y: clamp((e.clientY - r.top) / r.height, 0, 1) }; };
-const rectFrom = (a, b) => ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
-cvSrc.addEventListener("pointerdown", e => { cvSrc.setPointerCapture(e.pointerId); cropStart = relPos(e); });
-cvSrc.addEventListener("pointermove", e => { if (cropStart) drawSrc(rectFrom(cropStart, relPos(e))); });
-cvSrc.addEventListener("pointerup", e => {
-  if (!cropStart) return;
-  const r = rectFrom(cropStart, relPos(e)); cropStart = null;
-  conv.crop = (r.w < 0.02 || r.h < 0.02) ? { x: 0, y: 0, w: 1, h: 1 } : r; // click = reset to whole image
-  drawSrc(); processConv();
-});
-
-function estimatePaper(d, w, h, flat) {
-  // Per grid cell: average of the brightest 20 % of pixels = local paper colour.
-  const cells = flat ? 24 : 1, cs = Math.max(8, Math.ceil(Math.max(w, h) / cells));
-  const gw = Math.ceil(w / cs), gh = Math.ceil(h / cs), grid = new Float32Array(gw * gh * 4);
-  const hist = new Uint32Array(256), sums = new Float64Array(256 * 3);
-  for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
-    hist.fill(0); sums.fill(0); let n = 0;
-    const x1 = Math.min(w, (gx + 1) * cs), y1 = Math.min(h, (gy + 1) * cs), step = cs > 40 ? 2 : 1;
-    for (let y = gy * cs; y < y1; y += step) for (let x = gx * cs; x < x1; x += step) {
-      const i = (y * w + x) * 4, l = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) | 0;
-      hist[l]++; sums[l * 3] += d[i]; sums[l * 3 + 1] += d[i + 1]; sums[l * 3 + 2] += d[i + 2]; n++;
-    }
-    let need = Math.max(1, n * 0.2), cnt = 0, r = 0, g = 0, b = 0;
-    for (let l = 255; l >= 0 && cnt < need; l--) { cnt += hist[l]; r += sums[l * 3]; g += sums[l * 3 + 1]; b += sums[l * 3 + 2]; }
-    const o = (gy * gw + gx) * 4;
-    grid[o] = r / cnt; grid[o + 1] = g / cnt; grid[o + 2] = b / cnt; grid[o + 3] = 1;
-  }
-  // Cells fully covered by ink (big black fills) would look like dark "paper" -> replace them from neighbours.
-  const lum = i => grid[i] * 0.299 + grid[i + 1] * 0.587 + grid[i + 2] * 0.114;
-  const ls = []; for (let i = 0; i < grid.length; i += 4) ls.push(lum(i));
-  const paperL = [...ls].sort((a, b) => a - b)[Math.floor(ls.length * 0.75)];
-  for (let i = 0; i < grid.length; i += 4) if (lum(i) < paperL * 0.78) grid[i + 3] = 0;
-  for (let pass = 0; pass < 12; pass++) {
-    let missing = false;
-    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
-      const o = (gy * gw + gx) * 4; if (grid[o + 3]) continue;
-      let r = 0, g = 0, b = 0, n = 0;
-      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        const x = gx + dx, y = gy + dy; if (x < 0 || y < 0 || x >= gw || y >= gh) continue;
-        const q = (y * gw + x) * 4; if (grid[q + 3] !== 1) continue;
-        r += grid[q]; g += grid[q + 1]; b += grid[q + 2]; n++;
-      }
-      if (n) { grid[o] = r / n; grid[o + 1] = g / n; grid[o + 2] = b / n; grid[o + 3] = 2; } else missing = true;
-    }
-    for (let i = 3; i < grid.length; i += 4) if (grid[i] === 2) grid[i] = 1;
-    if (!missing) break;
-  }
-  for (let i = 0; i < grid.length; i += 4) if (!grid[i + 3]) { grid[i] = grid[i + 1] = grid[i + 2] = paperL; }
-  // Bilinear lookup of the paper colour at any pixel
-  return (x, y, out) => {
-    const fx = clamp(x / cs - 0.5, 0, gw - 1), fy = clamp(y / cs - 0.5, 0, gh - 1);
-    const x0 = fx | 0, y0 = fy | 0, x1 = Math.min(gw - 1, x0 + 1), y1 = Math.min(gh - 1, y0 + 1), tx = fx - x0, ty = fy - y0;
-    for (let c = 0; c < 3; c++) {
-      const a = grid[(y0 * gw + x0) * 4 + c], b = grid[(y0 * gw + x1) * 4 + c], e = grid[(y1 * gw + x0) * 4 + c], f = grid[(y1 * gw + x1) * 4 + c];
-      out[c] = (a * (1 - tx) + b * tx) * (1 - ty) + (e * (1 - tx) + f * tx) * ty;
-    }
-  };
-}
-
-function extractInk(maxSide) {
-  const s = conv.src, c = conv.crop;
-  const sx = Math.round(c.x * s.width), sy = Math.round(c.y * s.height);
-  const sw = Math.max(1, Math.round(c.w * s.width)), sh = Math.max(1, Math.round(c.h * s.height));
-  const k = Math.min(1, maxSide / Math.max(sw, sh));
-  const w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
-  const work = document.createElement("canvas"); work.width = w; work.height = h;
-  const wx = work.getContext("2d", { willReadFrequently: true });
-  wx.drawImage(s, sx, sy, sw, sh, 0, 0, w, h);
-  const img = wx.getImageData(0, 0, w, h), d = img.data;
-  const paper = estimatePaper(d, w, h, conv.flat), bg = [0, 0, 0];
-  const thr = conv.thr, str = conv.str, black = conv.mode === "black";
-  let minX = w, minY = h, maxX = -1, maxY = -1;
+function resizeTensor(t, w, h) {
+  const dims = t.dims, th = dims[dims.length - 2], tw = dims[dims.length - 1], d = depthValues(t), out = new Float32Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const i = (y * w + x) * 4;
-    paper(x, y, bg);
-    const nr = Math.min(1, d[i] / Math.max(bg[0], 1)), ng = Math.min(1, d[i + 1] / Math.max(bg[1], 1)), nb = Math.min(1, d[i + 2] / Math.max(bg[2], 1));
-    const a0 = black ? 1 - (nr * 0.299 + ng * 0.587 + nb * 0.114) : 1 - Math.min(nr, ng, nb);
-    const a = clamp((a0 - thr) / (1 - thr) * str, 0, 1);
-    if (a <= 0.01) { d[i + 3] = 0; continue; }
-    if (black) { d[i] = 20; d[i + 1] = 18; d[i + 2] = 16; }
-    else { // un-composite from white paper: observed = a·ink + (1-a)·white
-      const inv = 1 - a0, q = 255 / Math.max(a0, 0.05);
-      d[i] = clamp((nr - inv) * q, 0, 255); d[i + 1] = clamp((ng - inv) * q, 0, 255); d[i + 2] = clamp((nb - inv) * q, 0, 255);
-    }
-    d[i + 3] = a * 255;
-    if (a > 0.08) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+    const fx = clamp((x + .5) * tw / w - .5, 0, tw - 1.001), fy = clamp((y + .5) * th / h - .5, 0, th - 1.001);
+    const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * tw + x0;
+    out[y * w + x] = (d[i] * (1 - ax) + d[i + 1] * ax) * (1 - ay) + (d[i + tw] * (1 - ax) + d[i + tw + 1] * ax) * ay;
   }
-  if (maxX < 0) return null;
-  wx.putImageData(img, 0, 0);
-  const pad = Math.round(Math.max(maxX - minX, maxY - minY) * 0.03);
-  minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad); maxX = Math.min(w - 1, maxX + pad); maxY = Math.min(h - 1, maxY + pad);
-  const out = document.createElement("canvas"); out.width = maxX - minX + 1; out.height = maxY - minY + 1;
-  out.getContext("2d").drawImage(work, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
   return out;
 }
-
-let convTimer;
-function processConv() {
-  if (!conv.src) return;
-  clearTimeout(convTimer);
-  convTimer = setTimeout(() => {
-    const prev = extractInk(900);
-    const gx = cvOut.getContext("2d");
-    if (!prev) { cvOut.width = 1; cvOut.height = 1; $("#convInfo").textContent = "Keine Linien erkannt"; setConvReady(false); return; }
-    cvOut.width = prev.width; cvOut.height = prev.height; gx.drawImage(prev, 0, 0);
-    $("#convInfo").textContent = "";
-    setConvReady(true);
-  }, 60);
+function skinMask(seg) {
+  const res = seg.segment(S.proc), cat = res.categoryMask, c = cat.getAsUint8Array(), m = new Float32Array(S.pw * S.ph);
+  const cw = cat.width, ch = cat.height;
+  for (let y = 0; y < S.ph; y++) for (let x = 0; x < S.pw; x++) {
+    const v = c[Math.min(ch - 1, (y * ch / S.ph) | 0) * cw + Math.min(cw - 1, (x * cw / S.pw) | 0)];
+    m[y * S.pw + x] = v === SKIN_CLASS ? 1 : 0;
+  }
+  cat.close(); res.close?.();
+  return blurField(m, S.pw, S.ph, 2);
 }
-function setConvReady(on) { $("#convDownload").disabled = $("#convUse").disabled = !on; }
-function finalPng() { return extractInk(2400); }
+// Fallback: the arm is usually the nearest large thing in the photo. Split near/far with Otsu's
+// threshold on the depth histogram, then keep only the region connected to the nearest point.
+function depthMask(d) {
+  const w = S.pw, h = S.ph;
+  let lo = Infinity, hi = -Infinity; for (const v of d) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const bins = 128, hist = new Float64Array(bins), bin = v => Math.min(bins - 1, ((v - lo) / (hi - lo || 1) * bins) | 0);
+  for (const v of d) hist[bin(v)]++;
+  let total = d.length, sum = 0; for (let i = 0; i < bins; i++) sum += i * hist[i];
+  let wB = 0, sB = 0, best = 0, thrBin = bins / 2;
+  for (let i = 0; i < bins; i++) {
+    wB += hist[i]; if (!wB || wB === total) continue; sB += i * hist[i];
+    const mB = sB / wB, mF = (sum - sB) / (total - wB), between = wB * (total - wB) * (mB - mF) ** 2;
+    if (between > best) { best = between; thrBin = i; }
+  }
+  const near = new Uint8Array(d.length); let seed = 0;
+  for (let i = 0; i < d.length; i++) { near[i] = bin(d[i]) > thrBin ? 1 : 0; if (d[i] > d[seed]) seed = i; }
+  const m = new Float32Array(d.length), stack = [seed]; m[seed] = 1;
+  while (stack.length) { // flood fill from the nearest pixel
+    const i = stack.pop(), x = i % w, y = (i / w) | 0;
+    for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1])
+      if (j >= 0 && near[j] && !m[j]) { m[j] = 1; stack.push(j); }
+  }
+  return blurField(m, w, h, 2);
+}
+const coverage = m => { let s = 0; for (let i = 0; i < m.length; i++) s += m[i] > .5; return s / m.length; };
+function blurField(a, w, h, r) { // separable box blur, two passes ~ gaussian
+  let src = a, tmp = new Float32Array(a.length), out = new Float32Array(a.length);
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < h; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += src[y * w + clamp(x, 0, w - 1)];
+      for (let x = 0; x < w; x++) { tmp[y * w + x] = acc / (2 * r + 1); acc += src[y * w + Math.min(w - 1, x + r + 1)] - src[y * w + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += tmp[clamp(y, 0, h - 1) * w + x];
+      for (let y = 0; y < h; y++) { out[y * w + x] = acc / (2 * r + 1); acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; } }
+    src = out; out = pass === 0 ? new Float32Array(a.length) : out;
+  }
+  return src;
+}
 
-$("#cThr").oninput = e => { conv.thr = +e.target.value; $("#oThr").textContent = Math.round(conv.thr * 200) + " %"; processConv(); };
-$("#cStr").oninput = e => { conv.str = +e.target.value; $("#oStr").textContent = conv.str.toFixed(2) + "×"; processConv(); };
-$("#oThr").textContent = Math.round(conv.thr * 200) + " %"; $("#oStr").textContent = conv.str.toFixed(2) + "×";
-$("#cFlat").onclick = e => { conv.flat = !conv.flat; e.currentTarget.setAttribute("aria-pressed", conv.flat); processConv(); };
-document.querySelectorAll("#convMode button").forEach(b => b.onclick = () => {
-  conv.mode = b.dataset.mode;
-  document.querySelectorAll("#convMode button").forEach(x => x.setAttribute("aria-pressed", x === b));
-  processConv();
+// Height field: relative depth inside the skin, scaled so the arm's cross-section is about as deep
+// as it is wide (a forearm is roughly round). Arm axis and width come from the skin mask's PCA.
+function buildGeometry() {
+  const w = S.pw, h = S.ph, m = S.skin, d = S.disp;
+  let n = 0, mx = 0, my = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = m[y * w + x]; if (v > .5) { n++; mx += x; my += y; } }
+  if (n < 50) throw new Error("Kein Arm erkannt – Arm größer und gut beleuchtet ins Bild");
+  mx /= n; my /= n;
+  let sxx = 0, syy = 0, sxy = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (m[y * w + x] > .5) { const dx = x - mx, dy = y - my; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; }
+  sxx /= n; syy /= n; sxy /= n;
+  const tr = sxx + syy, det = sxx * syy - sxy * sxy, l1 = tr / 2 + Math.sqrt(tr * tr / 4 - det), l2 = tr / 2 - Math.sqrt(tr * tr / 4 - det);
+  S.axis = Math.atan2(l1 - sxx, sxy || 1e-6); // direction of the largest spread = along the arm
+  const k = S.photo.width / w;
+  S.armPx = Math.sqrt(12 * Math.max(l2, 1)) * k; // a band of width W has variance W²/12 across it
+  S.armCenter = { x: mx * k, y: my * k };
+  // normalise disparity inside the skin (robust percentiles)
+  const vals = []; for (let i = 0; i < d.length; i++) if (m[i] > .5) vals.push(d[i]);
+  vals.sort((a, b) => a - b);
+  const lo = vals[(vals.length * .02) | 0], hi = vals[(vals.length * .98) | 0] || lo + 1;
+  const relief = 0.5 * S.armPx / k; // in model px
+  const H = new Float32Array(w * h);
+  for (let i = 0; i < H.length; i++) H[i] = clamp((d[i] - lo) / (hi - lo), 0, 1.2) * relief;
+  S.height = blurField(H, w, h, 1); // smooth surface: used for mapping the motif
+  // Fine relief for display and lighting: skin micro texture (pores, folds, veins) as tiny bumps,
+  // darker = slightly deeper. Kept out of S.height so it cannot wobble the motif.
+  const lb = blurField(S.lum, w, h, 3), F = new Float32Array(w * h), amp = relief * .3;
+  for (let i = 0; i < F.length; i++) F[i] = S.height[i] + (S.lum[i] - lb[i]) * amp * clamp(m[i] * 1.5 - .25, 0, 1);
+  S.relief = F;
+  S.nrm = normals(S.height, w, h); S.nrmF = normals(F, w, h);
+  S.light = estimateLight();
+}
+const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+function normalised(a) {
+  let lo = Infinity, hi = -Infinity; for (const v of a) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  const o = new Float32Array(a.length), k = 1 / (hi - lo || 1); for (let i = 0; i < a.length; i++) o[i] = (a[i] - lo) * k;
+  return o;
+}
+// Guided filter (He et al.): sharpens the depth map along the photo's real edges and recovers
+// detail the depth model smoothed away, without inventing structure where the photo is flat.
+function refineDepth() {
+  const w = S.pw, h = S.ph, n = w * h, px = S.geo.getContext("2d").getImageData(0, 0, w, h).data;
+  const I = new Float32Array(n); for (let i = 0; i < n; i++) I[i] = (.299 * px[i * 4] + .587 * px[i * 4 + 1] + .114 * px[i * 4 + 2]) / 255;
+  S.lum = I;
+  const p = S.dispN, r = Math.max(3, Math.round(w / 170)), eps = .0015;
+  const II = new Float32Array(n), IP = new Float32Array(n); for (let i = 0; i < n; i++) { II[i] = I[i] * I[i]; IP[i] = I[i] * p[i]; }
+  const mI = blurField(I, w, h, r), mP = blurField(p, w, h, r), mII = blurField(II, w, h, r), mIP = blurField(IP, w, h, r);
+  const A = new Float32Array(n), B = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const va = mII[i] - mI[i] * mI[i]; A[i] = (mIP[i] - mI[i] * mP[i]) / (va + eps); B[i] = mP[i] - A[i] * mI[i]; }
+  const mA = blurField(A, w, h, r), mB = blurField(B, w, h, r), q = new Float32Array(n);
+  for (let i = 0; i < n; i++) q[i] = mA[i] * I[i] + mB[i];
+  S.disp = q;
+}
+function normals(Hf, w, h) {
+  const N = new Float32Array(w * h * 3);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, gx = (Hf[y * w + Math.min(w - 1, x + 1)] - Hf[y * w + Math.max(0, x - 1)]) / 2, gy = (Hf[Math.min(h - 1, y + 1) * w + x] - Hf[Math.max(0, y - 1) * w + x]) / 2;
+    const l = Math.hypot(gx, gy, 1); N[i * 3] = -gx / l; N[i * 3 + 1] = -gy / l; N[i * 3 + 2] = 1 / l;
+  }
+  return N;
+}
+// Where does the light in the photo come from? Fit brightness ≈ c0 + c·n over the skin (least squares).
+// The fitted c points towards the light; it drives the 3D shading and the sheen of fresh lines.
+function estimateLight() {
+  const w = S.pw, h = S.ph, N = S.nrm, L = blurField(S.lum, w, h, 4), m = S.skin;
+  const A = [0, 1, 2, 3].map(() => new Float64Array(4)), b = new Float64Array(4);
+  for (let y = 1; y < h - 1; y += 2) for (let x = 1; x < w - 1; x += 2) {
+    const i = y * w + x; if (m[i] < .8) continue;
+    const f = [1, N[i * 3], N[i * 3 + 1], N[i * 3 + 2]];
+    for (let a = 0; a < 4; a++) { b[a] += f[a] * L[i]; for (let c = 0; c < 4; c++) A[a][c] += f[a] * f[c]; }
+  }
+  const tr = A[0][0] + A[1][1] + A[2][2] + A[3][3]; for (let a = 0; a < 4; a++) A[a][a] += tr * 1e-4;
+  const c = solve4(A, b); if (!c) return [-.35, -.55, .76];
+  let l = [c[1], c[2], Math.max(Math.abs(c[3]), 1e-6)], n = Math.hypot(...l);
+  if (!isFinite(n) || n < 1e-6) return [-.35, -.55, .76];
+  l = l.map(v => v / n);
+  if (l[2] < .4) { const s = Math.sqrt((1 - .16) / (l[0] ** 2 + l[1] ** 2 || 1)); l = [l[0] * s, l[1] * s, .4]; }
+  return l;
+}
+function solve4(A, b) {
+  const M = A.map((r, i) => [...r, b[i]]);
+  for (let c = 0; c < 4; c++) {
+    let p = c; for (let r = c + 1; r < 4; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    if (Math.abs(M[p][c]) < 1e-12) return null; [M[c], M[p]] = [M[p], M[c]];
+    for (let r = 0; r < 4; r++) if (r !== c) { const f = M[r][c] / M[c][c]; for (let k = c; k < 5; k++) M[r][k] -= f * M[c][k]; }
+  }
+  return M.map((r, i) => r[4] / r[i]);
+}
+// Height in render px at a render-px position (bilinear from the model-res field)
+function heightAt(x, y) {
+  const k = S.pw / S.photo.width, fx = clamp(x * k, 0, S.pw - 1.001), fy = clamp(y * k, 0, S.ph - 1.001);
+  const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * S.pw + x0, H = S.height, w = S.pw;
+  return ((H[i] * (1 - ax) + H[i + 1] * ax) * (1 - ay) + (H[i + w] * (1 - ax) + H[i + w + 1] * ax) * ay) / k;
+}
+function skinAt(x, y) {
+  const k = S.pw / S.photo.width, xi = clamp((x * k) | 0, 0, S.pw - 1), yi = clamp((y * k) | 0, 0, S.ph - 1);
+  return S.skin[yi * S.pw + xi];
+}
+
+/* ---------- scan animation (analysis feedback) ---------- */
+// Siri-style red edge glow (CSS, .siri) while analysing; the white Stencit mark animates in the middle.
+// Once the depth map exists, a faint point cloud rises over the photo; when the 3D model is ready the
+// lit mesh grows outwards from the arm, then everything fades out.
+let scanRaf = 0, scanT0 = 0, scanDone = null;
+function scanStart() { siriOn(true); scanT0 = performance.now(); cancelAnimationFrame(scanRaf); const loop = t => { if (drawScan(t)) scanRaf = requestAnimationFrame(loop); }; scanRaf = requestAnimationFrame(loop); }
+function scanStop() { siriOn(false); cancelAnimationFrame(scanRaf); scanDone = null; octx.clearRect(0, 0, overlay.width, overlay.height); }
+function scanFinish() { return new Promise(r => { scanDone = { t0: performance.now(), r }; }); }
+const ease = p => 1 - (1 - clamp(p, 0, 1)) ** 3;
+function drawScan(t) {
+  const W = overlay.width, H = overlay.height, el = (t - scanT0) / 1000; octx.clearRect(0, 0, W, H);
+  if (scanDone) {
+    const p = (t - scanDone.t0) / 3000, fade = 1 - clamp((p - .86) / .14, 0, 1), lf = 1 - clamp(p / .25, 0, 1);
+    drawCloud(el, (1 - clamp(p / .4, 0, 1)) * fade, W, H);
+    if (S.mesh) drawMesh3D(octx, W / view.width, H / view.height, S.mesh.maxR * 1.04 * ease(p / .62), fade, true);
+    if (p > .7) siriOn(false);
+    drawLoader(el, W, H, lf);
+    if (p >= 1) { octx.clearRect(0, 0, W, H); const r = scanDone.r; scanDone = null; r(); return false; }
+    return true;
+  }
+  octx.fillStyle = "rgba(10,10,10,.18)"; octx.fillRect(0, 0, W, H);
+  drawCloud(el, 1, W, H); drawLoader(el, W, H, 1);
+  return true; // keep scanning until scanFinish()
+}
+// Siri-style edge glow (CSS, see .siri): new random gradient stops every 0.5 s, CSS glides there in 1 s
+const SIRI = ["#ff4a4f", "#ff8a7a", "#c8102e", "#ff3d6e", "#ffb199", "#8e1427"];
+let siriTimer = 0;
+function siriStops() {
+  const el = $("#siri"), s = SIRI.map(c => [c, Math.random() * 100]).sort((a, b) => a[1] - b[1]);
+  s.forEach(([c, p], i) => { el.style.setProperty(`--c${i}`, c); el.style.setProperty(`--p${i}`, p.toFixed(1) + "%"); });
+}
+function siriOn(on) {
+  const el = $("#siri");
+  if (!on && !el.classList.contains("on")) return;
+  clearInterval(siriTimer); clearTimeout(siriTimer);
+  if (on) { el.hidden = false; siriStops(); requestAnimationFrame(() => el.classList.add("on")); siriTimer = setInterval(siriStops, 500); }
+  else { el.classList.remove("on"); siriTimer = setTimeout(() => { el.hidden = true; }, 700); }
+}
+// Loader: the Stencit mark in white. A soft highlight travels round the 8 outer dots (smooth comet
+// tail, eased), the centre dot breathes slowly. No colour, no glow, no progress bar.
+function drawLoader(el, W, H, a) {
+  if (a <= .01) return;
+  const dp = devicePixelRatio, cx = W / 2, cy = H / 2, R = 13 * dp, T = 1.25; // seconds per turn
+  octx.save(); octx.fillStyle = "#fff";
+  for (let k = 0; k < 8; k++) {
+    const ang = k * Math.PI / 4 - Math.PI / 2;
+    const ph = ((el / T - k / 8) % 1 + 1) % 1, head = Math.pow(.5 + .5 * Math.cos(ph * 2 * Math.PI), 4); // 1 at the head, fades behind it
+    octx.globalAlpha = a * (.22 + .78 * head);
+    const r = (2 + .5 * head) * dp;
+    octx.beginPath(); octx.arc(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, r, 0, 7); octx.fill();
+  }
+  const br = .5 + .5 * Math.sin(el * 2 * Math.PI / 2.4);
+  octx.globalAlpha = a * (.55 + .45 * br);
+  octx.beginPath(); octx.arc(cx, cy, (2.4 + .4 * br) * dp, 0, 7); octx.fill();
+  octx.restore();
+}
+function drawCloud(el, a, W, H) {
+  if (a <= .01 || !S.dispN) return;
+  const dp = devicePixelRatio, sp = 15 * dp, D = S.dispN, kx = S.pw / W, ky = S.ph / H;
+  octx.save();
+  for (let gy = sp / 2; gy < H; gy += sp) for (let gx = sp / 2; gx < W; gx += sp) {
+    const d = D[Math.min(S.ph - 1, (gy * ky) | 0) * S.pw + Math.min(S.pw - 1, (gx * kx) | 0)], d2 = d * d;
+    const lift = d2 * 14 * dp * (.7 + .3 * Math.sin(el * 2.4 + gx * .012 + gy * .008)), r = (.6 + 2 * d2) * dp;
+    octx.globalAlpha = a * clamp(.04 + .6 * d2, 0, 1);
+    octx.fillStyle = "#ffffff";
+    octx.fillRect(gx - r, gy - r - lift, 2 * r, 2 * r);
+  }
+  octx.restore();
+}
+
+// Mesh cache: lit surface image (geo res) plus mesh lines along and across the arm (render px),
+// each point stored with its distance to the arm centre so the reveal can grow outwards.
+function buildMesh() {
+  const w = S.pw, h = S.ph, m = S.skin, N = S.nrmF, l = S.light, k = S.photo.width / w;
+  const shade = document.createElement("canvas"); shade.width = w; shade.height = h;
+  const sg = shade.getContext("2d"), img = sg.createImageData(w, h), px = img.data;
+  // display light: a studio key light from the upper left, nudged towards the light found in the photo
+  let lv = [-.55 + .4 * l[0], -.6 + .4 * l[1], .45 + .4 * l[2]]; const ln = Math.hypot(...lv); lv = lv.map(v => v / ln);
+  for (let i = 0; i < w * h; i++) {
+    if (m[i] < .05) continue;
+    const nx = N[i * 3], ny = N[i * 3 + 1], nz = N[i * 3 + 2];
+    const lit = Math.max(0, nx * lv[0] + ny * lv[1] + nz * lv[2]) ** 2.2, rim = clamp((1 - nz) * 2.2 - .15, 0, 1) ** 2;
+    px[i * 4] = clamp(16 + lit * 200 + rim * 210, 0, 255);
+    px[i * 4 + 1] = clamp(16 + lit * 200 + rim * 60, 0, 255);
+    px[i * 4 + 2] = clamp(17 + lit * 198 + rim * 66, 0, 255);
+    px[i * 4 + 3] = clamp(m[i] * 1.2 - .1, 0, 1) * 240;
+  }
+  sg.putImageData(img, 0, 0);
+  // mesh lines: u along the arm, v across it; sampled finely and lifted by height so they bulge in 3D
+  const ca = Math.cos(S.axis), sa = Math.sin(S.axis), c = S.armCenter;
+  let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+  for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) if (m[y * w + x] > .5) {
+    const dx = x * k - c.x, dy = y * k - c.y, u = dx * ca + dy * sa, v = -dx * sa + dy * ca;
+    u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v);
+  }
+  const sp = Math.max(6, S.armPx / 15), ds = Math.max(2, S.armPx / 90), lines = [[], []]; let maxR = 0;
+  for (const across of [0, 1]) {
+    const [o0, o1, s0, s1] = across ? [u0, u1, v0, v1] : [v0, v1, u0, u1];
+    for (let o = Math.ceil(o0 / sp) * sp; o <= o1; o += sp) {
+      let cur = [];
+      const flush = () => { if (cur.length >= 9) lines[across].push(Float32Array.from(cur)); cur = []; };
+      for (let s = s0; s <= s1; s += ds) {
+        const u = across ? o : s, v = across ? s : o, x = c.x + u * ca - v * sa, y = c.y + u * sa + v * ca;
+        if (x < 0 || y < 0 || x >= S.photo.width || y >= S.photo.height || skinAt(x, y) < .5) { flush(); continue; }
+        const r = Math.hypot(x - c.x, y - c.y); maxR = Math.max(maxR, r);
+        cur.push(x, y - heightAt(x, y) * .14, r);
+      }
+      flush();
+    }
+  }
+  S.mesh = { shade, lines, maxR };
+}
+// R = reveal radius in render px (Infinity = everything)
+function drawMesh3D(ctx, sx, sy, R, alpha, ring) {
+  const M = S.mesh; if (!M || alpha <= 0) return;
+  const W = S.photo.width * sx, H = S.photo.height * sy, c = S.armCenter, open = !isFinite(R);
+  ctx.save(); ctx.globalAlpha = alpha * .92;
+  if (!open) { ctx.beginPath(); ctx.arc(c.x * sx, c.y * sy, Math.max(0, R) * sx, 0, 7); ctx.clip(); }
+  ctx.imageSmoothingQuality = "high"; ctx.drawImage(M.shade, 0, 0, W, H);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = alpha; ctx.lineWidth = Math.max(.7, sx * (open ? 1 : 1.1)) * (open ? Math.max(1, S.photo.width / 1400) : 1);
+  for (const across of [0, 1]) {
+    ctx.beginPath();
+    for (const P of M.lines[across]) {
+      let pen = false;
+      for (let i = 0; i < P.length; i += 3) {
+        if (P[i + 2] > R) { pen = false; continue; }
+        const x = P[i] * sx, y = P[i + 1] * sy;
+        if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; }
+      }
+    }
+    ctx.strokeStyle = across ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.16)"; ctx.stroke();
+  }
+  if (ring && !open && R < M.maxR) { // the growing front
+    ctx.globalAlpha = alpha * .7; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5 * devicePixelRatio;
+    ctx.shadowColor = "rgba(255,255,255,.6)"; ctx.shadowBlur = 10 * devicePixelRatio;
+    ctx.beginPath(); ctx.arc(c.x * sx, c.y * sy, Math.max(0, R) * sx, 0, 7); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ---------- views ---------- */
+document.querySelectorAll("#views button").forEach(b => b.onclick = () => { S.view = b.dataset.view; syncViews(); redraw(); });
+function syncViews() { document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === S.view)); $("#views").hidden = !S.disp; }
+let depthCanvas = null;
+// Depth view: refined depth as a graphite-to-white ramp, with the fine relief as hill shading on top
+function depthImage() {
+  if (depthCanvas) return depthCanvas;
+  const c = document.createElement("canvas"); c.width = S.pw; c.height = S.ph;
+  const g = c.getContext("2d"), img = g.createImageData(S.pw, S.ph), D = normalised(S.disp), N = S.nrmF, l = S.light;
+  for (let i = 0; i < D.length; i++) {
+    const v = clamp(D[i], 0, 1), sk = S.skin[i];
+    const hs = N ? clamp(.55 + .9 * (N[i * 3] * l[0] + N[i * 3 + 1] * l[1] + N[i * 3 + 2] * l[2] - .7), .35, 1.25) : 1;
+    const g = (20 + v * 225 * (.3 + .7 * sk)) * hs;
+    img.data[i * 4] = clamp(g, 0, 255); img.data[i * 4 + 1] = clamp(g, 0, 255); img.data[i * 4 + 2] = clamp(g * 1.02, 0, 255); img.data[i * 4 + 3] = 255;
+  }
+  g.putImageData(img, 0, 0); return (depthCanvas = c);
+}
+
+/* ---------- 3 · Motif: upload, lasso cutout, background removal ---------- */
+// Every upload opens the cutter. Draw around the tattoo (e.g. in a screenshot); "Hintergrund entfernen"
+// turns paper or skin around the lines transparent and keeps the ink with its real colours.
+$("#addMotif").onclick = () => $("#motifInput").click();
+$("#motifInput").onchange = e => { e.target.files[0] && loadMotif(e.target.files[0]); e.target.value = ""; };
+const cutC = $("#cutCanvas"), cutG = cutC.getContext("2d");
+const CUT = { img: null, path: null, drawing: false, bg: true, opaque: true, preview: null, raf: 0 };
+function loadMotif(file) {
+  const img = new Image();
+  img.onload = () => openCut(scaled(img, 1600));
+  img.onerror = () => status("Bild nicht lesbar", "err");
+  img.src = URL.createObjectURL(file);
+}
+function openCut(c) {
+  Object.assign(CUT, { img: c, path: null, preview: null, drawing: false, opaque: isOpaque(c) });
+  cutC.width = c.width; cutC.height = c.height;
+  $("#cutBg").hidden = !CUT.opaque; $("#cutBg").setAttribute("aria-pressed", CUT.bg); $("#cutHint").textContent = "Tattoo umfahren";
+  $("#cut").hidden = false;
+  cancelAnimationFrame(CUT.raf);
+  const loop = t => { if ($("#cut").hidden) return; drawCut(t); CUT.raf = requestAnimationFrame(loop); };
+  CUT.raf = requestAnimationFrame(loop);
+}
+function closeCut() { $("#cut").hidden = true; cancelAnimationFrame(CUT.raf); }
+function isOpaque(c) { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 16) if (d[i] < 250) return false; return true; }
+const trace = (g, P, dx = 0, dy = 0) => { g.moveTo(P[0].x - dx, P[0].y - dy); for (let i = 1; i < P.length; i++) g.lineTo(P[i].x - dx, P[i].y - dy); };
+function drawCut(t) {
+  const c = CUT.img, g = cutG, P = CUT.path, lw = Math.max(1.5, c.width / 520);
+  g.clearRect(0, 0, c.width, c.height); g.drawImage(c, 0, 0);
+  if (!P || P.length < 2) return;
+  g.save();
+  if (!CUT.drawing) {
+    g.beginPath(); g.rect(0, 0, c.width, c.height); trace(g, P); g.closePath(); g.fillStyle = "rgba(10,10,10,.66)"; g.fill("evenodd");
+    if (CUT.preview) { // what will become the motif: extracted ink on paper
+      const pv = CUT.preview; g.save(); g.beginPath(); trace(g, P); g.closePath(); g.clip();
+      g.fillStyle = "#f4f3f0"; g.fillRect(pv.x, pv.y, pv.canvas.width, pv.canvas.height); g.drawImage(pv.canvas, pv.x, pv.y); g.restore();
+    }
+  }
+  g.beginPath(); trace(g, P); if (!CUT.drawing) g.closePath();
+  g.lineJoin = "round"; g.lineWidth = lw * 2.4; g.strokeStyle = "rgba(0,0,0,.55)"; g.stroke();
+  g.lineWidth = lw; g.strokeStyle = "#ff4a4f"; g.setLineDash([lw * 5, lw * 4]); g.lineDashOffset = -t / 30; g.stroke();
+  g.restore();
+}
+const cutPt = e => { const b = cutC.getBoundingClientRect(); return { x: clamp((e.clientX - b.left) * cutC.width / b.width, 0, cutC.width), y: clamp((e.clientY - b.top) * cutC.height / b.height, 0, cutC.height) }; };
+cutC.addEventListener("pointerdown", e => { cutC.setPointerCapture(e.pointerId); CUT.drawing = true; CUT.path = [cutPt(e)]; CUT.preview = null; });
+cutC.addEventListener("pointermove", e => {
+  if (!CUT.drawing) return;
+  const p = cutPt(e), q = CUT.path[CUT.path.length - 1];
+  if (Math.hypot(p.x - q.x, p.y - q.y) > cutC.width / 500) CUT.path.push(p);
 });
-$("#convDownload").onclick = () => finalPng()?.toBlob(b => downloadBlob(b, conv.name + ".png"), "image/png");
-$("#convUse").onclick = () => {
-  const out = finalPng(); if (!out) return;
-  out.toBlob(b => {
-    const id = "png-" + Date.now();
-    DESIGNS.unshift({ id, name: conv.name.slice(0, 14), url: URL.createObjectURL(b), png: true });
-    selectDesign(id);
-    $("#convDlg").close();
-    toast("Flash bereit");
-  }, "image/png");
+["pointerup", "pointercancel"].forEach(ev => cutC.addEventListener(ev, () => {
+  if (!CUT.drawing) return; CUT.drawing = false;
+  const P = CUT.path; let area = 0; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; area += a.x * b.y - b.x * a.y; }
+  if (P.length < 3 || Math.abs(area / 2) < cutC.width * cutC.height * .001) { CUT.path = null; $("#cutHint").textContent = "Tattoo umfahren"; return; }
+  $("#cutHint").textContent = "Neu ziehen zum Ändern"; updatePreview();
+}));
+function updatePreview() { CUT.preview = CUT.path && CUT.bg && CUT.opaque ? extract(CUT.img, CUT.path, true) : null; }
+$("#cutBg").onclick = () => { CUT.bg = !CUT.bg; $("#cutBg").setAttribute("aria-pressed", CUT.bg); updatePreview(); };
+$("#cutAll").onclick = () => { CUT.path = null; CUT.preview = null; $("#cutHint").textContent = "Tattoo umfahren"; };
+$("#cutCancel").onclick = closeCut;
+$("#cutOk").onclick = () => {
+  const r = extract(CUT.img, CUT.path, CUT.bg && CUT.opaque), t = trim(r.canvas); closeCut();
+  if (!t) return status("Auswahl ist leer", "err");
+  addMotif(t);
 };
+// Crop to the lasso, optionally remove the background, then mask with the (anti-aliased) lasso shape
+function extract(img, P, removeBg) {
+  let x0 = 0, y0 = 0, x1 = img.width, y1 = img.height;
+  if (P) {
+    x0 = Infinity; y0 = Infinity; x1 = -Infinity; y1 = -Infinity;
+    for (const p of P) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+    x0 = Math.max(0, Math.floor(x0) - 2); y0 = Math.max(0, Math.floor(y0) - 2); x1 = Math.min(img.width, Math.ceil(x1) + 2); y1 = Math.min(img.height, Math.ceil(y1) + 2);
+  }
+  const w = x1 - x0, h = y1 - y0, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, -x0, -y0);
+  const id = g.getImageData(0, 0, w, h);
+  if (removeBg) inkFromBackground(c, id);
+  if (P) {
+    const mc = document.createElement("canvas"); mc.width = w; mc.height = h;
+    const mg = mc.getContext("2d"); mg.fillStyle = "#fff"; mg.beginPath(); trace(mg, P, x0, y0); mg.closePath(); mg.fill();
+    const md = mg.getImageData(0, 0, w, h).data;
+    for (let i = 3; i < id.data.length; i += 4) id.data[i] = id.data[i] * md[i] / 255;
+  }
+  g.putImageData(id, 0, 0);
+  return { canvas: c, x: x0, y: y0 };
+}
+// Background = the brighter of the two brightness clusters (Otsu), averaged locally so uneven light
+// on paper or skin is followed. Each pixel is then un-mixed: how much ink (alpha) over that
+// background explains its colour, and which ink colour it is.
+function inkFromBackground(c, id) {
+  const sm = scaled(c, 240), sw = sm.width, sh = sm.height, sd = sm.getContext("2d").getImageData(0, 0, sw, sh).data, n = sw * sh;
+  const Ls = new Float32Array(n); for (let i = 0; i < n; i++) Ls[i] = (.299 * sd[i * 4] + .587 * sd[i * 4 + 1] + .114 * sd[i * 4 + 2]) / 255;
+  const thr = otsu(Ls) * .97;
+  const wt = new Float32Array(n), wr = new Float32Array(n), wg = new Float32Array(n), wb = new Float32Array(n);
+  let gr = 0, gg = 0, gb = 0, gn = 0;
+  for (let i = 0; i < n; i++) if (Ls[i] > thr) { wt[i] = 1; wr[i] = sd[i * 4] / 255; wg[i] = sd[i * 4 + 1] / 255; wb[i] = sd[i * 4 + 2] / 255; gr += wr[i]; gg += wg[i]; gb += wb[i]; gn++; }
+  gn = gn || 1; const glob = [gr / gn, gg / gn, gb / gn];
+  const r = Math.max(4, Math.round(Math.max(sw, sh) * .06));
+  const Bw = blurField(wt, sw, sh, r), Br = blurField(wr, sw, sh, r), Bg = blurField(wg, sw, sh, r), Bb = blurField(wb, sw, sh, r);
+  const bg = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const f = clamp(Bw[i] * 8, 0, 1), k = Bw[i] > 1e-4 ? 1 / Bw[i] : 0; // few background pixels nearby: lean on the global colour
+    bg[i * 3] = Br[i] * k * f + glob[0] * (1 - f); bg[i * 3 + 1] = Bg[i] * k * f + glob[1] * (1 - f); bg[i * 3 + 2] = Bb[i] * k * f + glob[2] * (1 - f);
+  }
+  const { width: w, height: h, data: d } = id, fx = sw / w, fy = sh / h;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const sx = clamp((x + .5) * fx - .5, 0, sw - 1.001), sy = clamp((y + .5) * fy - .5, 0, sh - 1.001), x0 = sx | 0, y0 = sy | 0, ax = sx - x0, ay = sy - y0;
+    const i00 = (y0 * sw + x0) * 3, i10 = i00 + 3, i01 = i00 + sw * 3, i11 = i01 + 3, o = (y * w + x) * 4;
+    const b = [0, 1, 2].map(ch => (bg[i00 + ch] * (1 - ax) + bg[i10 + ch] * ax) * (1 - ay) + (bg[i01 + ch] * (1 - ax) + bg[i11 + ch] * ax) * ay);
+    const R = d[o] / 255, G = d[o + 1] / 255, B = d[o + 2] / 255, L = .299 * R + .587 * G + .114 * B, lb = Math.max(.05, .299 * b[0] + .587 * b[1] + .114 * b[2]);
+    const a0 = clamp(Math.max(1 - L / lb, Math.hypot(R - b[0], G - b[1], B - b[2]) / 1.1), 0, 1), a = clamp((a0 - .07) / .5, 0, 1);
+    if (a <= 0) { d[o + 3] = 0; continue; }
+    const k = 1 / Math.max(a0, .1);
+    d[o] = clamp((R - (1 - a0) * b[0]) * k, 0, 1) * 255; d[o + 1] = clamp((G - (1 - a0) * b[1]) * k, 0, 1) * 255; d[o + 2] = clamp((B - (1 - a0) * b[2]) * k, 0, 1) * 255;
+    d[o + 3] = d[o + 3] * a;
+  }
+}
+function otsu(v) {
+  const bins = 64, hist = new Float64Array(bins); for (const x of v) hist[Math.min(bins - 1, (clamp(x, 0, 1) * bins) | 0)]++;
+  let sum = 0; for (let i = 0; i < bins; i++) sum += i * hist[i];
+  let wB = 0, sB = 0, best = -1, t = bins / 2;
+  for (let i = 0; i < bins; i++) {
+    wB += hist[i]; if (!wB || wB === v.length) continue; sB += i * hist[i];
+    const mB = sB / wB, mF = (sum - sB) / (v.length - wB), btw = wB * (v.length - wB) * (mB - mF) ** 2;
+    if (btw > best) { best = btw; t = i; }
+  }
+  return (t + 1) / bins;
+}
+function trim(c) {
+  const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 10) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < 0) return null;
+  x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(c.width - 1, x1 + 2); y1 = Math.min(c.height - 1, y1 + 2);
+  const o = document.createElement("canvas"); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext("2d").drawImage(c, -x0, -y0);
+  return o;
+}
+function addMotif(src) {
+  const c = scaled(src, 1024), g = c.getContext("2d", { willReadFrequently: true });
+  const m = { id: Date.now(), canvas: c, data: g.getImageData(0, 0, c.width, c.height), url: c.toDataURL() };
+  S.motifs.push(m); selectMotif(m);
+}
+function selectMotif(m) {
+  S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; status(""); setStep(3); schedule();
+}
+function renderThumbs() {
+  const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
+  S.motifs.forEach(m => {
+    const b = document.createElement("button"); b.className = "thumb xs"; b.setAttribute("aria-pressed", m === S.motif);
+    b.innerHTML = `<img alt="" src="${m.url}">`; b.onclick = () => selectMotif(m); box.appendChild(b);
+  });
+}
+$("#armCm").oninput = () => schedule();
 
-renderDesigns(); renderZones(); syncUI();
-requestAnimationFrame(loop);
-window.__tryon = { state, loadModels, loadConvFile, conv, masks, flow, flowStep, detect, twist, updateTwist, effRoll, fusedHand, mk, lockMarker, markerStep, selectZone, selectDesign, DESIGNS };
+/* ---------- surface-true mapping ---------- */
+// For every pixel near the anchor we need tattoo coordinates (u, v) measured as arc length over the
+// skin surface, not over the flat photo. In the tattoo's own frame (e1 = its x-axis, e2 = its y-axis,
+// both rotated in the image) we integrate sqrt(1 + dh²) along rows for u and along columns for v.
+// Where the arm curves away from the camera the arc length grows faster than the image distance,
+// so the motif compresses exactly like a real tattoo seen at an angle.
+function pxPerCm() { return S.armPx / clamp(+$("#armCm").value || 7.5, 4, 20); }
+function motifSizePx(k) { const m = S.motif.canvas, hpx = S.sizeCm * pxPerCm() * k; return { w: hpx * m.width / m.height, h: hpx }; }
+function warp(k) { // k = output px per render px
+  const outW = Math.round(S.photo.width * k), outH = Math.round(S.photo.height * k);
+  const { w: Wpx, h: Hpx } = motifSizePx(k), th = S.rot * Math.PI / 180;
+  const e1 = { x: Math.cos(th), y: Math.sin(th) }, e2 = { x: -Math.sin(th), y: Math.cos(th) };
+  const P = { x: S.anchor.x * k, y: S.anchor.y * k }, R = Math.ceil(Math.hypot(Wpx, Hpx) * .75), N = 2 * R + 1;
+  const hk = (x, y) => heightAt(x / k, y / k) * k;
+  const U = new Float32Array(N * N), V = new Float32Array(N * N);
+  for (let bi = 0; bi < N; bi++) { // u: along e1, row by row
+    const b = bi - R, bx = P.x + b * e2.x, by = P.y + b * e2.y, row = bi * N;
+    for (const dir of [1, -1]) {
+      let prev = hk(bx, by), acc = 0;
+      for (let a = 1; a <= R; a++) { const x = bx + dir * a * e1.x, y = by + dir * a * e1.y, hh = hk(x, y); acc += Math.sqrt(1 + (hh - prev) ** 2); prev = hh; U[row + R + dir * a] = dir * acc; }
+    }
+  }
+  for (let ai = 0; ai < N; ai++) { // v: along e2, column by column
+    const a = ai - R, ax = P.x + a * e1.x, ay = P.y + a * e1.y;
+    for (const dir of [1, -1]) {
+      let prev = hk(ax, ay), acc = 0;
+      for (let b = 1; b <= R; b++) { const x = ax + dir * b * e2.x, y = ay + dir * b * e2.y, hh = hk(x, y); acc += Math.sqrt(1 + (hh - prev) ** 2); prev = hh; V[(R + dir * b) * N + ai] = dir * acc; }
+    }
+  }
+  const md = S.motif.data, mw = md.width, mh = md.height, src = md.data;
+  const x0 = Math.max(0, Math.floor(P.x - R)), x1 = Math.min(outW - 1, Math.ceil(P.x + R)), y0 = Math.max(0, Math.floor(P.y - R)), y1 = Math.min(outH - 1, Math.ceil(P.y + R));
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, out = new Uint8ClampedArray(bw * bh * 4);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const dx = x - P.x, dy = y - P.y, a = dx * e1.x + dy * e1.y, b = dx * e2.x + dy * e2.y;
+    const ai = Math.round(a) + R, bi = Math.round(b) + R;
+    if (ai < 0 || bi < 0 || ai >= N || bi >= N) continue;
+    const u = U[bi * N + ai] / Wpx + .5, v = V[bi * N + ai] / Hpx + .5;
+    if (u < 0 || v < 0 || u >= 1 || v >= 1) continue;
+    const fx = u * (mw - 1), fy = v * (mh - 1), mx = fx | 0, my = fy | 0, tx = fx - mx, ty = fy - my;
+    const i00 = (my * mw + mx) * 4, i10 = i00 + 4, i01 = i00 + mw * 4, i11 = i01 + 4, o = ((y - y0) * bw + (x - x0)) * 4;
+    const sk = skinAt(x / k, y / k);
+    for (let c = 0; c < 4; c++) {
+      let val = (src[i00 + c] * (1 - tx) + src[Math.min(i10, src.length - 4) + c] * tx) * (1 - ty) + (src[Math.min(i01, src.length - 4) + c] * (1 - tx) + src[Math.min(i11, src.length - 4) + c] * tx) * ty;
+      out[o + c] = c === 3 ? val * clamp(sk * 1.4 - .2, 0, 1) : val;
+    }
+  }
+  return { x0, y0, w: bw, h: bh, data: out };
+}
+
+/* ---------- drawing ---------- */
+let dirty = false;
+function schedule() { if (!dirty) { dirty = true; requestAnimationFrame(() => { dirty = false; redraw(); }); } }
+function redraw() {
+  if (!S.photo) return;
+  vctx.globalCompositeOperation = "source-over"; vctx.globalAlpha = 1;
+  if (S.step === 4 && S.inked) {
+    vctx.drawImage(S.inked, 0, 0);
+    if (S.comparing) { const cx = S.compare * view.width; vctx.save(); vctx.beginPath(); vctx.rect(0, 0, cx, view.height); vctx.clip(); vctx.drawImage(S.photo, 0, 0); vctx.restore(); }
+  } else if (S.view === "depth" && S.disp) {
+    vctx.drawImage(depthImage(), 0, 0, view.width, view.height);
+  } else {
+    vctx.drawImage(S.photo, 0, 0);
+    if (S.view === "mesh" && S.mesh) { vctx.fillStyle = "rgba(8,9,8,.62)"; vctx.fillRect(0, 0, view.width, view.height); drawMesh3D(vctx, 1, 1, Infinity, 1, false); }
+    if (S.step === 3 && S.motif && S.anchor) previewTattoo();
+  }
+  drawGizmo();
+}
+function previewTattoo() {
+  const k = Math.min(1, PREVIEW_MAX / Math.max(S.photo.width, S.photo.height));
+  const L = warp(k), c = document.createElement("canvas"); c.width = L.w; c.height = L.h;
+  c.getContext("2d").putImageData(new ImageData(L.data, L.w, L.h), 0, 0);
+  vctx.save(); vctx.imageSmoothingQuality = "high";
+  vctx.globalCompositeOperation = "multiply"; vctx.globalAlpha = .92;
+  vctx.drawImage(c, L.x0 / k, L.y0 / k, L.w / k, L.h / k);
+  vctx.restore();
+  const { w, h } = motifSizePx(1);
+  $("#tagSize").hidden = false; $("#tagSize").textContent = `${(w / pxPerCm()).toFixed(0)} × ${(h / pxPerCm()).toFixed(0)} cm · ${Math.round(((S.rot % 360) + 540) % 360 - 180)}°`;
+}
+
+/* ---------- gizmo: drag to move, grip on the ring to rotate + scale ---------- */
+function toOverlay(p) { return { x: p.x * overlay.width / view.width, y: p.y * overlay.height / view.height }; }
+function ringR() { return Math.max(24, motifSizePx(1).h * .55) * overlay.width / view.width; }
+function knobPos() { const c = toOverlay(S.anchor), r = ringR(), a = S.rot * Math.PI / 180; return { x: c.x + Math.sin(a) * r, y: c.y - Math.cos(a) * r }; }
+function drawGizmo() {
+  octx.clearRect(0, 0, overlay.width, overlay.height);
+  if (S.step !== 3 || !S.anchor || !S.motif) return;
+  const c = toOverlay(S.anchor), r = ringR(), k = knobPos(), dp = devicePixelRatio;
+  octx.save();
+  octx.fillStyle = "rgba(255,255,255,.10)"; octx.strokeStyle = "rgba(255,255,255,.7)"; octx.lineWidth = 1.5 * dp;
+  octx.beginPath(); octx.arc(c.x, c.y, r, 0, 7); octx.fill(); octx.stroke();
+  octx.fillStyle = "#ff4a4f"; octx.shadowColor = "rgba(255,74,79,.8)"; octx.shadowBlur = 8 * dp;
+  octx.beginPath(); octx.arc(c.x, c.y, 6 * dp, 0, 7); octx.fill();
+  octx.shadowBlur = 0; octx.fillStyle = "#fff"; octx.beginPath(); octx.arc(k.x, k.y, 13 * dp, 0, 7); octx.fill();
+  octx.strokeStyle = "#161616"; octx.lineWidth = 2 * dp; octx.beginPath(); octx.arc(k.x, k.y, 6 * dp, -2.2, 2); octx.stroke();
+  octx.restore();
+}
+const toRender = e => { const b = view.getBoundingClientRect(); return { x: (e.clientX - b.left) * view.width / b.width, y: (e.clientY - b.top) * view.height / b.height }; };
+let drag = null;
+view.addEventListener("pointerdown", e => {
+  if (S.step === 4 && S.comparing) return;
+  if (S.step !== 3 || !S.motif) return;
+  view.setPointerCapture(e.pointerId);
+  const p = toRender(e), k = knobPos(), po = toOverlay(p);
+  if (Math.hypot(po.x - k.x, po.y - k.y) < 22 * devicePixelRatio) drag = { mode: "knob" };
+  else drag = { mode: "move", dx: S.anchor.x - p.x, dy: S.anchor.y - p.y };
+});
+view.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const p = toRender(e);
+  if (drag.mode === "move") S.anchor = { x: clamp(p.x + drag.dx, 0, view.width), y: clamp(p.y + drag.dy, 0, view.height) };
+  else {
+    const dx = p.x - S.anchor.x, dy = p.y - S.anchor.y;
+    let a = Math.atan2(dx, -dy) * 180 / Math.PI; for (const s of [-180, -90, 0, 90, 180]) if (Math.abs(a - s) < 4) a = s;
+    S.rot = a; S.sizeCm = clamp(Math.hypot(dx, dy) / .55 / pxPerCm(), 2, 40);
+  }
+  schedule();
+});
+["pointerup", "pointercancel"].forEach(ev => view.addEventListener(ev, () => drag = null));
+view.addEventListener("wheel", e => {
+  if (S.step !== 3 || !S.motif) return; e.preventDefault();
+  if (e.shiftKey) S.rot += (e.deltaY || e.deltaX) * .15; else S.sizeCm = clamp(S.sizeCm * Math.exp(-e.deltaY * .0015), 2, 40);
+  schedule();
+}, { passive: false });
+
+/* ---------- 4 · Stechen: ink under the skin ---------- */
+// Physical model, computed in linear light:
+// 1. Split the skin into diffuse colour and specular highlight (dichromatic model: highlights are
+//    white, skin's diffuse colour has a nearly constant blue/red ratio). Ink can only change the
+//    diffuse part; highlights, sweat and sheen stay on top, which is what makes ink look "under" the skin.
+// 2. Ink sits in the dermis, under a thin scattering layer: it filters the diffuse light like a
+//    coloured glass (multiply), with a faint skin-coloured veil over it.
+// 3. Age (slider): fresh = crisp, saturated, deep black, red swollen halo, raised lines that catch the
+//    light. Healed = edges spread a little, colours calmer. Years = lines blur and soften, black drifts
+//    to blue-green grey, colours fade.
+const LIN = Float32Array.from({ length: 256 }, (_, i) => { const c = i / 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; });
+const SRGB = Uint8ClampedArray.from({ length: 4096 }, (_, i) => { const v = i / 4095; return 255 * (v <= .0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - .055); });
+const toS = v => SRGB[v <= 0 ? 0 : v >= 1 ? 4095 : (v * 4095 + .5) | 0];
+function vnoise(x, y, s) { // smooth value noise, cell size s px
+  x /= s; y /= s; const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+  const h = (a, b) => hash(a * 157 + b * 311 + 7);
+  return (h(xi, yi) * (1 - u) + h(xi + 1, yi) * u) * (1 - v) + (h(xi, yi + 1) * (1 - u) + h(xi + 1, yi + 1) * u) * v;
+}
+function ageLabel(t) { return t < .12 ? "Frisch" : t < .28 ? "Nach Tagen" : t < .55 ? "Verheilt" : t < .8 ? "Nach Jahren" : "10+ Jahre"; }
+
+// Placement-dependent part (runs once per "Stechen"): warped motif, skin layers, surface normals
+function prepareInk() {
+  const L = warp(1), W = view.width, H = view.height, pad = Math.round(W / 45) + 6;
+  const x0 = Math.max(0, L.x0 - pad), y0 = Math.max(0, L.y0 - pad), x1 = Math.min(W, L.x0 + L.w + pad), y1 = Math.min(H, L.y0 + L.h + pad), bw = x1 - x0, bh = y1 - y0, n = bw * bh;
+  const sd = S.photo.getContext("2d").getImageData(x0, y0, bw, bh).data;
+  const alpha = new Float32Array(n), pr = new Float32Array(n), pg = new Float32Array(n), pb = new Float32Array(n);
+  for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
+    const i = (y * L.w + x) * 4, j = (y + L.y0 - y0) * bw + (x + L.x0 - x0), a = L.data[i + 3] / 255;
+    if (a <= 0) continue;
+    alpha[j] = a; pr[j] = a * LIN[L.data[i]]; pg[j] = a * LIN[L.data[i + 1]]; pb[j] = a * LIN[L.data[i + 2]];
+  }
+  const R = new Float32Array(n), G = new Float32Array(n), B = new Float32Array(n);
+  for (let j = 0; j < n; j++) { R[j] = LIN[sd[j * 4]]; G[j] = LIN[sd[j * 4 + 1]]; B[j] = LIN[sd[j * 4 + 2]]; }
+  // specular estimate from the local diffuse chroma
+  const r2 = Math.max(6, Math.round(W / 90)), Rb = blurField(R, bw, bh, r2), Bb = blurField(B, bw, bh, r2), sp = new Float32Array(n);
+  for (let j = 0; j < n; j++) {
+    const q = clamp(Bb[j] / Math.max(Rb[j], 1e-4), .15, .9), s = (B[j] - q * R[j]) / (1 - q) - .012;
+    sp[j] = clamp(s, 0, Math.min(R[j], G[j], B[j]) * .92);
+  }
+  const spec = blurField(sp, bw, bh, 1);
+  // base surface normal per pixel (from the smooth 3D surface)
+  const nrm = new Float32Array(n * 3), kx = S.pw / W;
+  for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
+    const gi = Math.min(S.ph - 1, ((y + y0) * kx) | 0) * S.pw + Math.min(S.pw - 1, ((x + x0) * kx) | 0), j = y * bw + x;
+    nrm[j * 3] = S.nrm[gi * 3]; nrm[j * 3 + 1] = S.nrm[gi * 3 + 1]; nrm[j * 3 + 2] = S.nrm[gi * 3 + 2];
+  }
+  S.ink = { x0, y0, bw, bh, alpha, pr, pg, pb, R, G, B, spec, nrm };
+  S.inkBox = { x0, y0, w: bw, h: bh }; S.inkAlpha = alpha;
+}
+function renderInk(t) {
+  const I = S.ink, { bw, bh } = I, n = bw * bh, W = view.width, unit = Math.max(1, W / 1400);
+  const fresh = clamp(1 - t / .3, 0, 1), aged = clamp((t - .45) / .55, 0, 1);
+  // ink spread: crisp needle lines when fresh, slowly diffusing in the dermis over the years,
+  // with slightly irregular edges (ink never sits in a perfect vector line)
+  const a1 = blurField(I.alpha, bw, bh, 1), rough = .25 + .6 * t;
+  for (let j = 0; j < n; j++) { const v = a1[j], e = 4 * v * (1 - v); if (e > .02) a1[j] = clamp(v + (vnoise(j % bw, (j / bw) | 0, 2.2 * unit) - .5) * rough * e, 0, 1); }
+  const spr = Math.round(unit * (.4 + 1.1 * t + 1.3 * aged));
+  const a = spr > 0 ? blurField(a1, bw, bh, spr) : a1;
+  const cb = spr + 1, cr = blurField(I.pr, bw, bh, cb), cg = blurField(I.pg, bw, bh, cb), cbl = blurField(I.pb, bw, bh, cb), ca = blurField(I.alpha, bw, bh, cb);
+  const halo = fresh > 0 ? blurField(I.alpha, bw, bh, Math.round(W / 95)) : null;
+  const bump = fresh > 0 ? blurField(I.alpha, bw, bh, Math.max(1, Math.round(unit * 1.6))) : null;
+  const l = S.light, hl = Math.hypot(l[0], l[1], l[2] + 1), hv = [l[0] / hl, l[1] / hl, (l[2] + 1) / hl];
+  const sat = 1 - .15 * t - .2 * aged, dens = .97 - .05 * t - .07 * aged, veil = .02 + .05 * t + .05 * aged;
+  // Light the ink layer scatters back on its own (it is not a perfect absorber): neutral to slightly
+  // blue, and bluer/greener with age (Tyndall effect, why old black tattoos look blue-grey).
+  // Scaled by the local light level (skin brightness / typical skin albedo), not tinted by the skin.
+  const tyn = [.018 + .03 * aged, .021 + .045 * aged, .028 + .058 * aged];
+  const out = new ImageData(bw, bh), od = out.data;
+  for (let j = 0; j < n; j++) {
+    const s = I.spec[j]; let R = I.R[j] - s, G = I.G[j] - s, B = I.B[j] - s;
+    if (halo) { const hh = clamp(halo[j] * 2, 0, 1) * .6 * fresh * (1 - clamp(a[j], 0, 1) * .7); R *= 1 + hh * .05; G *= 1 - hh * .4; B *= 1 - hh * .44; }
+    const aj = clamp(a[j], 0, 1) * dens;
+    if (aj > .002) {
+      const inv = 1 / Math.max(ca[j], .02);
+      let ir = clamp(cr[j] * inv, 0, 1), ig = clamp(cg[j] * inv, 0, 1), ib = clamp(cbl[j] * inv, 0, 1);
+      const il = .2126 * ir + .7152 * ig + .0722 * ib;
+      ir = il + (ir - il) * sat; ig = il + (ig - il) * sat; ib = il + (ib - il) * sat;
+      const E = (.2126 * R + .7152 * G + .0722 * B) / .4 * aj * (1 - veil);
+      R = R * (veil + (1 - veil) * (1 - aj + aj * ir)) + E * tyn[0];
+      G = G * (veil + (1 - veil) * (1 - aj + aj * ig)) + E * tyn[1];
+      B = B * (veil + (1 - veil) * (1 - aj + aj * ib)) + E * tyn[2];
+    }
+    let gloss = 0;
+    if (bump) { // fresh lines are slightly raised: tilt the surface normal by the ink's slope and light it
+      const b = bump[j];
+      if (b > .02 && b < .98) {
+        const x = j % bw, y = (j / bw) | 0, gx = (bump[j + (x < bw - 1 ? 1 : 0)] - bump[j - (x > 0 ? 1 : 0)]) * 2.2, gy = (bump[j + (y < bh - 1 ? bw : 0)] - bump[j - (y > 0 ? bw : 0)]) * 2.2;
+        let nx = I.nrm[j * 3] - gx, ny = I.nrm[j * 3 + 1] - gy, nz = I.nrm[j * 3 + 2]; const nl = Math.hypot(nx, ny, nz);
+        const d = Math.max(0, (nx * hv[0] + ny * hv[1] + nz * hv[2]) / nl);
+        gloss = d ** 36 * .3 * fresh * clamp(Math.hypot(gx, gy) * 3, 0, 1);
+      }
+    }
+    R += s + gloss; G += s + gloss; B += s + gloss;
+    od[j * 4] = toS(R); od[j * 4 + 1] = toS(G); od[j * 4 + 2] = toS(B); od[j * 4 + 3] = 255;
+  }
+  return out;
+}
+function composeInk() {
+  const I = S.ink, res = document.createElement("canvas"); res.width = view.width; res.height = view.height;
+  const rg = res.getContext("2d"); rg.drawImage(S.photo, 0, 0); rg.putImageData(renderInk(S.age), I.x0, I.y0);
+  return res;
+}
+async function stechen() {
+  if (!S.motif || !S.anchor) return;
+  setStep(4); status("Sticht …"); drawGizmo(); await frame();
+  prepareInk();
+  const res = composeInk();
+  await needleReveal(res, S.inkBox);
+  S.local = S.inked = res; S.ai = null;
+  $("#ai").setAttribute("aria-pressed", false); status(""); redraw();
+}
+// Age slider: re-render the ink only (no needle), throttled to one render per frame
+let ageBusy = false;
+$("#age").oninput = e => {
+  S.age = e.target.value / 100; $("#ageLabel").textContent = ageLabel(S.age);
+  if (S.step !== 4 || !S.ink || ageBusy) return;
+  ageBusy = true;
+  requestAnimationFrame(() => {
+    ageBusy = false; S.local = S.inked = composeInk(); S.ai = null; $("#ai").setAttribute("aria-pressed", false);
+    redraw();
+  });
+};
+$("#ageLabel").textContent = ageLabel(S.age);
+
+/* ---------- KI-Finish: refine the inked crop with an image-editing model (server side) ---------- */
+// Only the area around the tattoo is sent, plus the original flash. The result is blended back
+// through a soft mask around the ink, so everything outside the tattoo stays pixel-identical.
+async function aiFinish() {
+  if (!S.local || !S.inkBox) return;
+  if (S.ai) { // already refined: just toggle
+    S.inked = S.inked === S.ai ? S.local : S.ai; $("#ai").setAttribute("aria-pressed", S.inked === S.ai); redraw(); return;
+  }
+  const b = S.inkBox, W = view.width, H = view.height, px = Math.round(Math.max(b.w, b.h) * .35);
+  const cx0 = Math.max(0, b.x0 - px), cy0 = Math.max(0, b.y0 - px), cx1 = Math.min(W, b.x0 + b.w + px), cy1 = Math.min(H, b.y0 + b.h + px), cw = cx1 - cx0, ch = cy1 - cy0;
+  const k = Math.min(1, 1024 / Math.max(cw, ch)), crop = document.createElement("canvas");
+  crop.width = Math.round(cw * k); crop.height = Math.round(ch * k);
+  crop.getContext("2d").drawImage(S.local, cx0, cy0, cw, ch, 0, 0, crop.width, crop.height);
+  const dk = Math.min(1, 512 / Math.max(S.motif.canvas.width, S.motif.canvas.height)), design = document.createElement("canvas");
+  design.width = Math.round(S.motif.canvas.width * dk); design.height = Math.round(S.motif.canvas.height * dk);
+  const dg = design.getContext("2d"); dg.fillStyle = "#fff"; dg.fillRect(0, 0, design.width, design.height); dg.drawImage(S.motif.canvas, 0, 0, design.width, design.height);
+
+  const btn = $("#ai"); btn.disabled = true; btn.classList.add("busy"); status("KI veredelt …");
+  try {
+    const r = await fetch("/api/ink", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: crop.toDataURL("image/jpeg", .92), design: design.toDataURL("image/jpeg", .9), mode: S.age < .2 ? "fresh" : "healed" }) });
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.error === "no_key" ? "KI nicht eingerichtet" : e.error === "rate_limited" ? "Kurz warten, zu viele Anfragen" : "KI fehlgeschlagen");
+    }
+    const bmp = await createImageBitmap(await r.blob());
+    const aiCrop = document.createElement("canvas"); aiCrop.width = cw; aiCrop.height = ch;
+    aiCrop.getContext("2d").drawImage(bmp, 0, 0, cw, ch);
+    // soft mask: the ink area, grown and feathered so the transition into untouched skin is invisible
+    const grow = blurField(S.inkAlpha, b.w, b.h, Math.max(4, Math.round(W / 220)));
+    const mask = new Float32Array(cw * ch);
+    for (let y = 0; y < b.h; y++) for (let x = 0; x < b.w; x++) mask[(y + b.y0 - cy0) * cw + (x + b.x0 - cx0)] = clamp(grow[y * b.w + x] * 3, 0, 1);
+    const base = S.local.getContext("2d").getImageData(cx0, cy0, cw, ch), ai = aiCrop.getContext("2d").getImageData(0, 0, cw, ch), bd = base.data, ad = ai.data;
+    for (let i = 0; i < mask.length; i++) { const m = mask[i]; if (!m) continue; for (let c = 0; c < 3; c++) bd[i * 4 + c] = bd[i * 4 + c] * (1 - m) + ad[i * 4 + c] * m; }
+    const res = document.createElement("canvas"); res.width = W; res.height = H;
+    const rg = res.getContext("2d"); rg.drawImage(S.local, 0, 0); rg.putImageData(base, cx0, cy0);
+    S.ai = S.inked = res; btn.setAttribute("aria-pressed", true); status("KI-Finish", "ok"); redraw();
+  } catch (e) { console.error(e); status(e.message || "KI fehlgeschlagen", "err"); }
+  finally { btn.disabled = false; btn.classList.remove("busy"); }
+}
+$("#ai").onclick = aiFinish;
+function hash(i) { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math.floor(s); }
+// The needle travels over the motif in quick strokes while the ink appears behind it
+function needleReveal(res, box) {
+  return new Promise(resolve => {
+    const nd = $("#needle"), b = view.getBoundingClientRect(), wrap = $("#viewWrap").getBoundingClientRect();
+    const sx = b.width / view.width, sy = b.height / view.height, rows = 9, T = 1600, t0 = performance.now();
+    nd.hidden = false;
+    const step = t => {
+      const p = clamp((t - t0) / T, 0, 1), row = Math.min(rows - 1, Math.floor(p * rows)), rp = p * rows - row;
+      const yTop = box.y0 + box.h * row / rows, yBot = box.y0 + box.h * (row + 1) / rows;
+      const xNeedle = box.x0 + box.w * (row % 2 ? 1 - rp : rp);
+      vctx.drawImage(S.photo, 0, 0);
+      vctx.save(); vctx.beginPath(); vctx.rect(box.x0, box.y0, box.w, yTop - box.y0); vctx.rect(row % 2 ? xNeedle : box.x0, yTop, row % 2 ? box.x0 + box.w - xNeedle : xNeedle - box.x0, yBot - yTop); vctx.clip(); vctx.drawImage(res, 0, 0); vctx.restore();
+      nd.style.left = (b.left - wrap.left + xNeedle * sx) + "px"; nd.style.top = (b.top - wrap.top + (yTop + yBot) / 2 * sy + Math.sin(t / 18) * 2) + "px";
+      if (p < 1) requestAnimationFrame(step); else { nd.hidden = true; resolve(); }
+    };
+    requestAnimationFrame(step);
+  });
+}
+$("#ink").onclick = stechen;
+$("#edit").onclick = () => { S.inked = S.local = S.ai = S.ink = null; S.comparing = false; $("#compare").hidden = true; setStep(3); status(""); redraw(); };
+$("#cmp").onclick = () => {
+  S.comparing = !S.comparing; $("#cmp").setAttribute("aria-pressed", S.comparing); $("#compare").hidden = !S.comparing; placeCompare(); redraw();
+};
+function placeCompare() { const c = $("#compare"); c.style.left = (view.offsetLeft + S.compare * view.clientWidth) + "px"; c.style.top = view.offsetTop + "px"; c.style.height = view.clientHeight + "px"; }
+$("#compare").addEventListener("pointerdown", e => {
+  const c = $("#compare"); c.setPointerCapture(e.pointerId);
+  const mv = ev => { const b = view.getBoundingClientRect(); S.compare = clamp((ev.clientX - b.left) / b.width, 0, 1); placeCompare(); redraw(); };
+  const up = () => { c.removeEventListener("pointermove", mv); c.removeEventListener("pointerup", up); };
+  c.addEventListener("pointermove", mv); c.addEventListener("pointerup", up);
+});
+$("#save").onclick = () => S.inked?.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "tattoo-vorschau.png"; a.click(); }, "image/png");
+
+window.__studio = { S, loadPhoto, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>

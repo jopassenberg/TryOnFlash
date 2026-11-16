@@ -4,7 +4,7 @@ Ziel: Prüfen, ob Snaps Body Mesh den Arm deutlich besser trackt als unser Media
 Dafür eine Lens mit **Upper Body Mesh** und einem fest eingebauten Test-Tattoo bauen und über
 **Camera Kit Web** auf der Seite `/snap` laden.
 
-Live: https://tryonflash.jopassenberg.workers.dev/snap
+Seite `/snap` wurde am 16.11.2026 entfernt (verworfen, siehe Ergebnis unten).
 
 ## 1. Accounts (machst du)
 
