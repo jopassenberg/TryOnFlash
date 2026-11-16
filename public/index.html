@@ -902,7 +902,8 @@ function addMotif(src) {
   S.motifs.push(m); selectMotif(m);
 }
 function selectMotif(m) {
-  S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; status(""); setStep(3); schedule();
+  S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; setStep(3); schedule();
+  status(touchUI() ? "Ziehen · zwei Finger drehen und zoomen" : "", "ok");
 }
 function renderThumbs() {
   const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
@@ -913,6 +914,40 @@ function renderThumbs() {
 }
 $("#armCm").oninput = () => schedule();
 
+// Stencil look for the placement preview, like a die-cut flash sticker: the motif's silhouette (holes
+// filled) grown by a padding, a translucent white fill, a white stroke round the cut, the motif on top.
+function makeSticker(c) {
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = Math.round(M * .07), sw = Math.max(2, Math.round(M * .014)), o = pad + sw;
+  const W = w + 2 * o, H = h + 2 * o, canvas = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
+  // 1 · solid silhouette: flood-fill the outside on a small mask, everything else counts as inside
+  const k = Math.min(1, 256 / M), mw = Math.max(2, Math.round(w * k)), mh = Math.max(2, Math.round(h * k)), small = canvas(mw, mh), sg = small.getContext("2d");
+  sg.drawImage(c, 0, 0, mw, mh);
+  const sd = sg.getImageData(0, 0, mw, mh), d = sd.data, out = new Uint8Array(mw * mh), stack = [];
+  const seed = i => { if (!out[i] && d[i * 4 + 3] < 40) { out[i] = 1; stack.push(i); } };
+  for (let x = 0; x < mw; x++) { seed(x); seed((mh - 1) * mw + x); }
+  for (let y = 0; y < mh; y++) { seed(y * mw); seed(y * mw + mw - 1); }
+  while (stack.length) { const i = stack.pop(), x = i % mw; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (i >= mw) seed(i - mw); if (i < mw * (mh - 1)) seed(i + mw); }
+  for (let i = 0; i < mw * mh; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = out[i] ? 0 : 255; }
+  sg.putImageData(sd, 0, 0);
+  const sil = canvas(w, h), lg = sil.getContext("2d");
+  lg.imageSmoothingQuality = "high"; lg.drawImage(small, 0, 0, w, h); lg.drawImage(c, 0, 0);
+  lg.globalCompositeOperation = "source-in"; lg.fillStyle = "#fff"; lg.fillRect(0, 0, w, h);
+  // 2 · grow it: stamp the silhouette around circles of a few radii
+  const grown = r => {
+    const cv = canvas(W, H), g = cv.getContext("2d");
+    for (const f of [1, .66, .33, 0]) for (let i = 0; i < (f ? 36 : 1); i++) { const a = i / 36 * 2 * Math.PI; g.drawImage(sil, o + Math.cos(a) * r * f, o + Math.sin(a) * r * f); }
+    return cv;
+  };
+  const outer = grown(o), inner = grown(pad);
+  // 3 · stroke ring + translucent fill + motif
+  const res = canvas(W, H), g = res.getContext("2d");
+  g.globalAlpha = .95; g.drawImage(outer, 0, 0);
+  g.globalAlpha = 1; g.globalCompositeOperation = "destination-out"; g.drawImage(inner, 0, 0);
+  g.globalCompositeOperation = "source-over"; g.globalAlpha = .3; g.drawImage(inner, 0, 0);
+  g.globalAlpha = 1; g.drawImage(c, o, o);
+  return { canvas: res, data: g.getImageData(0, 0, W, H), grow: [W / w, H / h] };
+}
+
 /* ---------- surface-true mapping ---------- */
 // For every pixel near the anchor we need tattoo coordinates (u, v) measured as arc length over the
 // skin surface, not over the flat photo. In the tattoo's own frame (e1 = its x-axis, e2 = its y-axis,
@@ -921,9 +956,10 @@ $("#armCm").oninput = () => schedule();
 // so the motif compresses exactly like a real tattoo seen at an angle.
 function pxPerCm() { return S.armPx / clamp(+$("#armCm").value || 7.5, 4, 20); }
 function motifSizePx(k) { const m = S.motif.canvas, hpx = S.sizeCm * pxPerCm() * k; return { w: hpx * m.width / m.height, h: hpx }; }
-function warp(k) { // k = output px per render px
+// src: image to map (default the motif); grow: its size relative to the motif (the sticker has padding)
+function warp(k, src = S.motif.data, grow = [1, 1]) { // k = output px per render px
   const outW = Math.round(S.photo.width * k), outH = Math.round(S.photo.height * k);
-  const { w: Wpx, h: Hpx } = motifSizePx(k), th = S.rot * Math.PI / 180;
+  const ms = motifSizePx(k), Wpx = ms.w * grow[0], Hpx = ms.h * grow[1], th = S.rot * Math.PI / 180;
   const e1 = { x: Math.cos(th), y: Math.sin(th) }, e2 = { x: -Math.sin(th), y: Math.cos(th) };
   const P = { x: S.anchor.x * k, y: S.anchor.y * k }, R = Math.ceil(Math.hypot(Wpx, Hpx) * .75), N = 2 * R + 1;
   const hk = (x, y) => heightAt(x / k, y / k) * k;
@@ -942,7 +978,7 @@ function warp(k) { // k = output px per render px
       for (let b = 1; b <= R; b++) { const x = ax + dir * b * e2.x, y = ay + dir * b * e2.y, hh = hk(x, y); acc += Math.sqrt(1 + (hh - prev) ** 2); prev = hh; V[(R + dir * b) * N + ai] = dir * acc; }
     }
   }
-  const md = S.motif.data, mw = md.width, mh = md.height, src = md.data;
+  const md = src, mw = md.width, mh = md.height, px = md.data;
   const x0 = Math.max(0, Math.floor(P.x - R)), x1 = Math.min(outW - 1, Math.ceil(P.x + R)), y0 = Math.max(0, Math.floor(P.y - R)), y1 = Math.min(outH - 1, Math.ceil(P.y + R));
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1, out = new Uint8ClampedArray(bw * bh * 4);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
@@ -955,7 +991,7 @@ function warp(k) { // k = output px per render px
     const i00 = (my * mw + mx) * 4, i10 = i00 + 4, i01 = i00 + mw * 4, i11 = i01 + 4, o = ((y - y0) * bw + (x - x0)) * 4;
     const sk = skinAt(x / k, y / k);
     for (let c = 0; c < 4; c++) {
-      let val = (src[i00 + c] * (1 - tx) + src[Math.min(i10, src.length - 4) + c] * tx) * (1 - ty) + (src[Math.min(i01, src.length - 4) + c] * (1 - tx) + src[Math.min(i11, src.length - 4) + c] * tx) * ty;
+      let val = (px[i00 + c] * (1 - tx) + px[Math.min(i10, px.length - 4) + c] * tx) * (1 - ty) + (px[Math.min(i01, px.length - 4) + c] * (1 - tx) + px[Math.min(i11, px.length - 4) + c] * tx) * ty;
       out[o + c] = c === 3 ? val * clamp(sk * 1.4 - .2, 0, 1) : val;
     }
   }
@@ -982,10 +1018,10 @@ function redraw() {
 }
 function previewTattoo() {
   const k = Math.min(1, PREVIEW_MAX / Math.max(S.photo.width, S.photo.height));
-  const L = warp(k), c = document.createElement("canvas"); c.width = L.w; c.height = L.h;
+  const st = S.motif.sticker || (S.motif.sticker = makeSticker(S.motif.canvas));
+  const L = warp(k, st.data, st.grow), c = document.createElement("canvas"); c.width = L.w; c.height = L.h;
   c.getContext("2d").putImageData(new ImageData(L.data, L.w, L.h), 0, 0);
-  vctx.save(); vctx.imageSmoothingQuality = "high";
-  vctx.globalCompositeOperation = "multiply"; vctx.globalAlpha = .92;
+  vctx.save(); vctx.imageSmoothingQuality = "high"; vctx.globalAlpha = .92;
   vctx.drawImage(c, L.x0 / k, L.y0 / k, L.w / k, L.h / k);
   vctx.restore();
   const { w, h } = motifSizePx(1);
@@ -996,32 +1032,55 @@ function previewTattoo() {
 function toOverlay(p) { return { x: p.x * overlay.width / view.width, y: p.y * overlay.height / view.height }; }
 function ringR() { return Math.max(24, motifSizePx(1).h * .55) * overlay.width / view.width; }
 function knobPos() { const c = toOverlay(S.anchor), r = ringR(), a = S.rot * Math.PI / 180; return { x: c.x + Math.sin(a) * r, y: c.y - Math.cos(a) * r }; }
+// Touch screens use gestures (one finger moves, two fingers pinch to scale and twist to rotate), so the
+// ring with its grip is only drawn for mouse and pen.
+const touchUI = () => matchMedia("(pointer: coarse)").matches;
 function drawGizmo() {
   octx.clearRect(0, 0, overlay.width, overlay.height);
-  if (S.step !== 3 || !S.anchor || !S.motif) return;
+  if (S.step !== 3 || !S.anchor || !S.motif || touchUI()) return;
   const c = toOverlay(S.anchor), r = ringR(), k = knobPos(), dp = devicePixelRatio;
   octx.save();
-  octx.fillStyle = "rgba(255,255,255,.10)"; octx.strokeStyle = "rgba(255,255,255,.7)"; octx.lineWidth = 1.5 * dp;
+  octx.fillStyle = "rgba(255,255,255,.08)"; octx.strokeStyle = "rgba(255,255,255,.7)"; octx.lineWidth = 1.5 * dp;
   octx.beginPath(); octx.arc(c.x, c.y, r, 0, 7); octx.fill(); octx.stroke();
-  octx.fillStyle = "#ff4a4f"; octx.shadowColor = "rgba(255,74,79,.8)"; octx.shadowBlur = 8 * dp;
-  octx.beginPath(); octx.arc(c.x, c.y, 6 * dp, 0, 7); octx.fill();
-  octx.shadowBlur = 0; octx.fillStyle = "#fff"; octx.beginPath(); octx.arc(k.x, k.y, 13 * dp, 0, 7); octx.fill();
+  octx.fillStyle = "#fff"; octx.beginPath(); octx.arc(c.x, c.y, 4 * dp, 0, 7); octx.fill();
+  octx.beginPath(); octx.arc(k.x, k.y, 13 * dp, 0, 7); octx.fill();
   octx.strokeStyle = "#161616"; octx.lineWidth = 2 * dp; octx.beginPath(); octx.arc(k.x, k.y, 6 * dp, -2.2, 2); octx.stroke();
   octx.restore();
 }
 const toRender = e => { const b = view.getBoundingClientRect(); return { x: (e.clientX - b.left) * view.width / b.width, y: (e.clientY - b.top) * view.height / b.height }; };
-let drag = null;
+let drag = null, pinch = null;
+const touches = new Map();
+const moveFrom = p => ({ mode: "move", dx: S.anchor.x - p.x, dy: S.anchor.y - p.y });
+function startPinch() {
+  const [a, b] = [...touches.values()];
+  pinch = { d: Math.hypot(b.x - a.x, b.y - a.y) || 1, ang: Math.atan2(b.y - a.y, b.x - a.x), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2,
+    size: S.sizeCm, rot: S.rot, ax: S.anchor.x, ay: S.anchor.y };
+}
 view.addEventListener("pointerdown", e => {
-  if (S.step === 4 && S.comparing) return;
   if (S.step !== 3 || !S.motif) return;
-  view.setPointerCapture(e.pointerId);
-  const p = toRender(e), k = knobPos(), po = toOverlay(p);
-  if (Math.hypot(po.x - k.x, po.y - k.y) < 22 * devicePixelRatio) drag = { mode: "knob" };
-  else drag = { mode: "move", dx: S.anchor.x - p.x, dy: S.anchor.y - p.y };
+  try { view.setPointerCapture(e.pointerId); } catch {}
+  const p = toRender(e);
+  if (e.pointerType === "touch") {
+    touches.set(e.pointerId, p);
+    if (touches.size >= 2) { drag = null; startPinch(); } else drag = moveFrom(p);
+    return;
+  }
+  const k = knobPos(), po = toOverlay(p);
+  drag = Math.hypot(po.x - k.x, po.y - k.y) < 22 * devicePixelRatio ? { mode: "knob" } : moveFrom(p);
 });
 view.addEventListener("pointermove", e => {
-  if (!drag) return;
   const p = toRender(e);
+  if (e.pointerType === "touch" && touches.has(e.pointerId)) {
+    touches.set(e.pointerId, p);
+    if (pinch && touches.size >= 2) {
+      const [a, b] = [...touches.values()], d = Math.hypot(b.x - a.x, b.y - a.y), ang = Math.atan2(b.y - a.y, b.x - a.x);
+      S.sizeCm = clamp(pinch.size * d / pinch.d, 2, 40);
+      S.rot = pinch.rot + (ang - pinch.ang) * 180 / Math.PI;
+      S.anchor = { x: clamp(pinch.ax + (a.x + b.x) / 2 - pinch.mx, 0, view.width), y: clamp(pinch.ay + (a.y + b.y) / 2 - pinch.my, 0, view.height) };
+      schedule(); return;
+    }
+  }
+  if (!drag) return;
   if (drag.mode === "move") S.anchor = { x: clamp(p.x + drag.dx, 0, view.width), y: clamp(p.y + drag.dy, 0, view.height) };
   else {
     const dx = p.x - S.anchor.x, dy = p.y - S.anchor.y;
@@ -1030,7 +1089,15 @@ view.addEventListener("pointermove", e => {
   }
   schedule();
 });
-["pointerup", "pointercancel"].forEach(ev => view.addEventListener(ev, () => drag = null));
+["pointerup", "pointercancel"].forEach(ev => view.addEventListener(ev, e => {
+  if (e.pointerType === "touch") {
+    touches.delete(e.pointerId);
+    if (touches.size >= 2) startPinch();
+    else { pinch = null; drag = touches.size === 1 ? moveFrom([...touches.values()][0]) : null; } // lifting one finger keeps the motif still
+    return;
+  }
+  drag = null;
+}));
 view.addEventListener("wheel", e => {
   if (S.step !== 3 || !S.motif) return; e.preventDefault();
   if (e.shiftKey) S.rot += (e.deltaY || e.deltaX) * .15; else S.sizeCm = clamp(S.sizeCm * Math.exp(-e.deltaY * .0015), 2, 40);
