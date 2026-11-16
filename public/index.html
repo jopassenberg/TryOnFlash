@@ -14,8 +14,11 @@
      type: 13 body · 12 small · 22 title; Plus Jakarta Sans 400/500, tracking -1.2 % (-5 % for brand/title)
      colour: neutral greys; red only for the primary action and live feedback */
   :root {
-    --bg: #f4f3f1; --ink: #141414; --muted: #8a8886; --line: rgba(0,0,0,.08);
-    --red: #e3242f; --red-2: #ff4a4f;
+    /* colours in OKLCH: perceptually even steps, neutral greys with a hint of warmth */
+    --bg: oklch(96.5% .004 75); --ink: oklch(18% .003 75); --muted: oklch(62% .006 75); --line: oklch(0% 0 0 / .08);
+    --red: oklch(59% .21 26); --red-2: oklch(66% .21 24);
+    /* motion: snappy ease-out for state changes, a spring with slight overshoot for things that arrive */
+    --ease-out: cubic-bezier(.22, 1, .36, 1); --spring: cubic-bezier(.34, 1.56, .64, 1); --fast: 140ms; --med: 240ms;
     --frame: #161616; --on-dark: rgba(255,255,255,.08); --on-dark-2: rgba(255,255,255,.14); --text-dim: rgba(255,255,255,.6);
     --overlay: rgba(14,14,14,.6);
     --a1: #e9e5e1; --a2: #f1dfdb; --a3: #e2dfdc; --a4: #eeebe7;
@@ -26,7 +29,7 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
-  body { background: var(--bg); color: var(--ink); font: 400 13px/1.4 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: var(--track-ui);
+  body { background: var(--bg); color: var(--ink); font: 400 13px/1.4 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: var(--track-ui); hyphens: auto; text-wrap: pretty;
     -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
   button, input { font: inherit; color: inherit; letter-spacing: inherit; }
   button { cursor: pointer; border: 0; background: none; padding: 0; }
@@ -47,7 +50,7 @@
   .card { position: relative; min-height: 0; overflow: hidden; color: #fff; background: #0e0e0e; border-radius: var(--r-frame);
     box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 24px 48px -36px rgba(0,0,0,.45); }
   .top { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); }
-  .brand { display: inline-flex; align-items: center; gap: var(--s2); font-size: 18px; font-weight: 500; letter-spacing: var(--track); }
+  .brand { display: inline-flex; align-items: center; gap: var(--s2); font-size: clamp(16px, 12px + .5vw, 19px); font-weight: 500; letter-spacing: var(--track); }
   .brand svg { width: 22px; height: 22px; }
   /* steps: one glass pill with the current step, "Platzieren · 3 / 4" */
   .steps { height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; border-radius: var(--r-sm); font-size: 12px; background: rgba(0,0,0,.05); }
@@ -83,7 +86,12 @@
   .btn, .chip, .field, .thumb { height: var(--h); border-radius: var(--r); }
   .btn { padding: 0 var(--s4); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); font-weight: 500; white-space: nowrap;
     transition: transform .12s ease, filter .15s ease, background .15s ease; }
-  .btn:active { transform: scale(.97); }
+  .btn, .chip, .thumb, .seg button, .views button { transition: transform .38s var(--spring), background var(--fast) var(--ease-out), color var(--fast) var(--ease-out), box-shadow var(--fast) var(--ease-out); }
+  .btn:active, .chip:active, .thumb:active, .seg button:active, .views button:active { transform: scale(.94); transition-duration: 80ms; transition-timing-function: var(--ease-out); }
+  .btn, .chip, .seg button, .views button, .status, .steps { text-box: trim-both cap alphabetic; }
+  /* bigger hit areas than the drawn shape (Fitts): small targets get 4–6 px invisible margin */
+  .btn.icon, .thumb, .views button, .seg button { position: relative; }
+  .btn.icon::after, .thumb::after, .views button::after { content: ""; position: absolute; inset: -5px; }
   .btn svg { width: 16px; height: 16px; }
   .btn.icon { width: var(--h); padding: 0; }
   .btn.white { background: #fff; color: var(--ink); }
@@ -96,10 +104,29 @@
   .panel { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
   .group { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
   /* dock: the step's controls float in one glass bar at the bottom of the card */
-  .card > .panel { position: absolute; z-index: 5; left: 50%; bottom: var(--s4); transform: translateX(-50%); flex-wrap: nowrap; max-width: calc(100% - 32px);
-    padding: var(--s2); border-radius: 20px; background: rgba(22,22,22,.62); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+  .card > .panel { position: absolute; z-index: 5; left: 50%; bottom: var(--s2); transform: translateX(-50%); flex-wrap: nowrap; max-width: calc(100% - 32px);
+    padding: var(--s2); border-radius: 20px; background: oklch(26% .003 75 / .62); backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .08), inset 0 1px 0 oklch(100% 0 0 / .06), 0 8px 24px -12px oklch(0% 0 0 / .5); }
+  .card > .panel:not([hidden]) { animation: dock-in .5s var(--spring) both; }
+  .card > .panel:not([hidden]) .group > * { animation: item-in .45s var(--spring) both; }
+  .card > .panel .group > :nth-child(2) { animation-delay: 30ms; } .card > .panel .group > :nth-child(3) { animation-delay: 60ms; }
+  .card > .panel .group + .group > :nth-child(1) { animation-delay: 60ms; } .card > .panel .group + .group > :nth-child(2) { animation-delay: 90ms; }
+  @keyframes dock-in { from { translate: 0 24px; scale: .96; opacity: 0; } }
+  @keyframes item-in { from { translate: 0 6px; opacity: 0; } }
+  /* the card edge: a faint alpha border keeps the photo from bleeding into the page */
+  .card::after { content: ""; position: absolute; inset: 0; z-index: 7; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .07); }
+  /* text that changes (step, status) swaps with a short blur instead of jumping */
+  .swap { animation: swap .32s var(--ease-out); }
+  @keyframes swap { from { filter: blur(4px); opacity: 0; translate: 0 3px; } }
+  @media (prefers-reduced-motion: reduce) { .card > .panel, .card > .panel .group > *, .swap, .thumb.pop { animation: none !important; } }
   .card > .panel .group + .group { padding-left: var(--s2); border-left: 1px solid rgba(255,255,255,.12); }
-  .thumbs { display: flex; gap: var(--s2); }
+  .thumbs { display: flex; gap: var(--s2); overflow-x: auto; scrollbar-width: none; max-width: 40vw; padding: 5px; margin: -5px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(90deg, transparent, #000 6px, #000 calc(100% - 14px), transparent); }
+  .thumbs::-webkit-scrollbar { display: none; }
+  .thumb { flex: none; }
+  .thumb:not(.add) { box-shadow: inset 0 0 0 1px oklch(0% 0 0 / .08); }
+  .thumb.pop { animation: pop .5s var(--spring); }
+  @keyframes pop { 0% { transform: scale(.7); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
   .thumb { width: var(--h); background: #fff; display: grid; place-items: center; overflow: hidden; transition: box-shadow .15s; }
   .thumb img { max-width: 76%; max-height: 76%; }
   .thumb[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--frame), 0 0 0 3.5px #fff; }
@@ -182,6 +209,7 @@
   .siri i { position: absolute; inset: 0; border-radius: inherit; filter: blur(var(--b)); }
   .siri i::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: var(--w);
     background: conic-gradient(from 0deg, var(--c0) var(--p0), var(--c1) var(--p1), var(--c2) var(--p2), var(--c3) var(--p3), var(--c4) var(--p4), var(--c5) var(--p5));
+    background: conic-gradient(in oklch from 0deg, var(--c0) var(--p0), var(--c1) var(--p1), var(--c2) var(--p2), var(--c3) var(--p3), var(--c4) var(--p4), var(--c5) var(--p5));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
   .siri i:nth-child(1) { --w: 6px; --b: 0px; }
@@ -194,13 +222,14 @@
   @media (max-width: 680px) {
     .shell { padding: 0 var(--s2) var(--s2); grid-template-rows: 56px 1fr; }
     .top { padding: 0 var(--s2); }
-    .card { border-radius: 24px; }
-    @supports (corner-shape: squircle) { .card { border-radius: 38px; } }
+    .card { border-radius: var(--r-frame); }
+    .shell { padding-bottom: max(var(--s2), env(safe-area-inset-bottom)); }
+    .thumbs { max-width: calc(100vw - 180px); }
     .status { top: var(--s3); }
     #panelCam .group { justify-content: space-between; padding: 0 var(--s3); }
     .views { right: var(--s3); }
     .tagv { right: var(--s3); bottom: 148px; }
-    .card > .panel { left: var(--s3); right: var(--s3); bottom: var(--s3); transform: none; max-width: none; flex-wrap: wrap; border-radius: 24px; }
+    .card > .panel { left: var(--s2); right: var(--s2); bottom: var(--s2); transform: none; max-width: none; flex-wrap: wrap; border-radius: 20px; }
     .card > .panel .group { width: 100%; }
     .card > .panel .group + .group { padding-left: 0; border-left: 0; }
     .card > .panel .group.end > .btn:not(.icon) { flex: 1; }
@@ -230,8 +259,8 @@
       <div class="drop" id="drop">
         <svg viewBox="0 0 32 32" aria-hidden="true" class="mark"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>
         <div class="row">
-          <button class="btn white" id="camBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Kamera</button>
-          <button class="btn ghost" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Hochladen</button>
+          <button class="btn white" id="camBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Kamera</button>
+          <button class="btn ghost" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Hochladen</button>
         </div>
       </div>
       <video id="cam" playsinline muted autoplay hidden></video>
@@ -253,19 +282,19 @@
 
     <div class="panel" id="panelCam" hidden>
       <div class="group">
-        <button class="btn ghost icon" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9.5" cy="9.5" r="1.5"/><path d="M20 15l-4-4-8 8"/></svg></button>
+        <button class="btn ghost icon" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9.5" cy="9.5" r="1.5"/><path d="M20 15l-4-4-8 8"/></svg></button>
         <button class="shutter" id="shoot" title="Foto aufnehmen" aria-label="Foto aufnehmen"></button>
-        <button class="btn ghost icon" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg></button>
+        <button class="btn ghost icon" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg></button>
       </div>
     </div>
 
     <div class="panel" id="panelPlace" hidden>
       <div class="group">
-        <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+        <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
         <label class="field" title="Breite des Arms an der Stelle">Armbreite <input id="armCm" type="number" min="4" max="20" step="0.5" value="7.5"><em>cm</em></label>
       </div>
       <div class="group end">
-        <button class="btn ghost icon" id="newPhoto" title="Neues Foto" aria-label="Neues Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
+        <button class="btn ghost icon" id="newPhoto" title="Neues Foto" aria-label="Neues Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
         <button class="btn primary" id="ink" disabled>Stechen</button>
       </div>
     </div>
@@ -275,8 +304,8 @@
         <button class="chip" id="cmp" aria-pressed="false">Vergleich</button>
       </div>
       <div class="group end">
-        <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-        <button class="btn primary" id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Speichern</button>
+        <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="btn primary" id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Speichern</button>
       </div>
     </div>
   </main>
@@ -287,8 +316,8 @@
         <canvas id="cutCanvas"></canvas>
         <div class="status" data-s="ok"><span class="dot"></span><span id="cutHint">Tattoo umfahren</span></div>
         <div class="cuttools">
-          <button class="btn icon" id="cutUndo" title="Rückgängig" aria-label="Rückgängig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-          <button class="btn icon" id="cutFit" title="Einpassen" aria-label="Einpassen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+          <button class="btn icon" id="cutUndo" title="Rückgängig" aria-label="Rückgängig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+          <button class="btn icon" id="cutFit" title="Einpassen" aria-label="Einpassen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
         </div>
       </div>
       <div class="panel">
@@ -345,7 +374,10 @@ const S = {
 };
 
 /* ---------- UI helpers ---------- */
+// Swap animation for text that changes in place (step pill, status): a short blur-in, no jump
+function swapAnim(el) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
 function setStep(n) {
+  if (S.step !== n) swapAnim($(".steps"));
   S.step = n;
   document.querySelectorAll(".step").forEach(el => {
     const k = +el.dataset.step; el.classList.toggle("on", k === n); el.classList.toggle("done", k < n);
@@ -355,7 +387,9 @@ function setStep(n) {
   $("#tagSize").hidden = n !== 3 || !S.motif;
 }
 function status(text, s = "busy") {
-  $("#status").hidden = !text; $("#statusText").textContent = text || ""; $("#status").dataset.s = s;
+  const el = $("#status"), changed = text && text !== $("#statusText").textContent;
+  el.hidden = !text; $("#statusText").textContent = text || ""; el.dataset.s = s;
+  if (changed) swapAnim(el);
 }
 setStep(1);
 
@@ -1125,7 +1159,7 @@ function selectMotif(m) {
 function renderThumbs() {
   const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
   S.motifs.forEach(m => {
-    const b = document.createElement("button"); b.className = "thumb xs"; b.setAttribute("aria-pressed", m === S.motif);
+    const b = document.createElement("button"); b.className = "thumb" + (m === S.motif ? " pop" : ""); b.setAttribute("aria-pressed", m === S.motif);
     b.innerHTML = `<img alt="" src="${m.url}">`; b.onclick = () => selectMotif(m); box.appendChild(b);
   });
 }
@@ -1437,7 +1471,11 @@ function composeInk() {
   return res;
 }
 async function stechen() {
-  if (!S.motif || !S.anchor) return;
+  if (!S.motif || !S.anchor || S.inking) return;
+  S.inking = true; $("#ink").disabled = true; // immediate feedback, no double start
+  try { await stechenRun(); } finally { S.inking = false; $("#ink").disabled = !S.motif; }
+}
+async function stechenRun() {
   setStep(4); status("Sticht …"); drawGizmo(); await frame();
   prepareInk();
   const res = composeInk();
@@ -1479,6 +1517,33 @@ $("#compare").addEventListener("pointerdown", e => {
   c.addEventListener("pointermove", mv); c.addEventListener("pointerup", up);
 });
 $("#save").onclick = () => S.inked?.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "tattoo-vorschau.png"; a.click(); }, "image/png");
+
+/* ---------- keyboard and clipboard (familiar shortcuts; any image source welcome) ---------- */
+document.addEventListener("keydown", e => {
+  if (e.target.closest?.("input")) return;
+  const cutOpen = !$("#cut").hidden, mod = e.metaKey || e.ctrlKey;
+  if (cutOpen) {
+    if (e.key === "Escape") closeCut();
+    else if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+    else if (e.key === "Enter") $("#cutOk").click();
+    else if (!mod && "leb".includes(e.key.toLowerCase())) setTool({ l: "lasso", e: "erase", b: "paint" }[e.key.toLowerCase()]);
+    else if (e.key === "0") fitCut();
+    return;
+  }
+  if (e.key === "Escape" && !$("#panelCam").hidden) { closeCam(); if (!S.photo || $("#viewWrap").hidden) $("#drop").hidden = false; return; }
+  if (S.step === 3 && S.motif && S.anchor) {
+    const step = e.shiftKey ? 20 : 4, mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (mv) { e.preventDefault(); S.anchor = { x: clamp(S.anchor.x + mv[0] * step, 0, view.width), y: clamp(S.anchor.y + mv[1] * step, 0, view.height) }; schedule(); }
+    else if (e.key === "+" || e.key === "=") { S.sizeCm = clamp(S.sizeCm * 1.05, 2, 40); schedule(); }
+    else if (e.key === "-") { S.sizeCm = clamp(S.sizeCm / 1.05, 2, 40); schedule(); }
+    else if (e.key === "[" || e.key === "]") { S.rot += (e.key === "]" ? 1 : -1) * (e.shiftKey ? 15 : 3); schedule(); }
+    else if (e.key === "Enter") stechen();
+  }
+});
+document.addEventListener("paste", e => {
+  const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith("image/")); if (!f || !$("#cut").hidden) return;
+  e.preventDefault(); (S.step >= 3 ? loadMotif : loadPhoto)(f);
+});
 
 window.__studio = { S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
