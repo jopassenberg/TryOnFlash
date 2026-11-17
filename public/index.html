@@ -429,16 +429,15 @@
   .cuttools .btn:hover { background: var(--fill); }
   .cutbox > .panel { padding: var(--s1); row-gap: var(--s2); }
   .looks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); padding: 0 var(--s1); }
-  .looks.bgs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .looks.bgs button { grid-template-columns: 56px 1fr; justify-items: start; align-items: center; text-align: left; padding: 6px 12px 6px 6px; }
-  .looks.bgs canvas { max-width: 56px; }
   /* Schachbrett zeigt, dass der Hintergrund wirklich weg (durchsichtig) ist */
-  .looks.bgs button[data-bg="remove"] canvas, .cut.no-bg .cutstage { background-color: #fff;
+  .cut.no-bg .cutstage { background-color: #fff;
     background-image: conic-gradient(oklch(92% .003 75) 25%, transparent 0 50%, oklch(92% .003 75) 0 75%, transparent 0); background-size: 16px 16px; }
   .sec-title { padding: var(--s1) var(--s2) 0; font-size: 13px; color: var(--text-2); }
   .sec-title .dim { color: var(--text-3); margin-left: 6px; }
   .quickbar { display: none; justify-items: center; gap: 2px; padding: var(--s3) var(--s2) var(--s1); text-align: center; font-size: 15px; }
   .quickbar .dim { font-size: 13px; color: var(--text-3); }
+  .sel-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; background: oklch(80% .24 135); box-shadow: 0 0 0 2px oklch(19% .003 75 / .15); }
+  .cutbox > .sw.cut-bg { margin: 0 var(--s1); }
   /* Schnellansicht: nur Ergebnis + Anpassen/Übernehmen; Werkzeuge erst nach „Anpassen“ */
   .cut.quick .quickbar { display: grid; }
   .cut.quick .looks, .cut.quick .sec-title, .cut.quick .panel:has(#cutTools) .group:first-child, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
@@ -662,13 +661,9 @@
         </div>
       </div>
       <!-- Schnellansicht nach dem Hochladen: das automatisch ausgeschnittene Motiv, darunter Anpassen / Übernehmen -->
-      <div class="quickbar" id="cutQuick"><span>Automatisch ausgeschnitten</span><span class="dim">Passt es? Sonst anpassen.</span></div>
+      <div class="quickbar" id="cutQuick"><span><i class="sel-swatch"></i>Grün umrandet = erkanntes Motiv</span><span class="dim">Alles außerhalb fällt weg. Passt es nicht? Anpassen.</span></div>
       <!-- Hintergrund: zwei Bilder statt Schalter, damit man sieht, was passiert -->
-      <div class="sec-title" id="cutBgTitle">Hintergrund</div>
-      <div class="looks bgs" id="cutBg" role="radiogroup" aria-label="Hintergrund">
-        <button data-bg="keep" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Behalten</span></button>
-        <button data-bg="remove" role="radio" aria-checked="true"><canvas width="96" height="96"></canvas><span>Entfernen</span></button>
-      </div>
+      <button class="sw cut-bg" id="cutBg" role="switch" aria-checked="true"><span class="t">Hintergrund entfernen<small>Papier oder Haut um das Motiv wird durchsichtig</small></span><span class="track"></span></button>
       <!-- Stil: jede Option zeigt sofort, wie das Motiv damit aussieht -->
       <div class="sec-title">Stil <span class="dim" id="lookDesc"></span></div>
       <div class="looks" id="cutLook" role="radiogroup" aria-label="Stil">
@@ -1445,9 +1440,15 @@ function openCut(c, opts = {}) {
     look: "color", shade: true, lookKey: "", lookCanvas: null, onDone: opts.onDone || null });
   setStyle("orig");
   $("#cutOk").textContent = opts.okLabel || "Übernehmen";
-  if (CUT.opaque && CUT.bg && autoMask()) $("#cutHint").textContent = "Motiv erkannt · mit Lasso oder Radierer anpassen";
+  if (opts.restore) { // gespeichertes Flash bearbeiten: Auswahl, Stil und Hintergrund wie beim letzten Mal
+    const R = opts.restore; if (R.bg !== undefined) CUT.bg = R.bg;
+    if (R.mask) { CUT.mask.getContext("2d").drawImage(R.mask, 0, 0, c.width, c.height); CUT.hasMask = true; }
+    if (R.style) setStyle(R.style);
+    $("#cutHint").textContent = "Auswahl anpassen: Lasso, Radierer, Pinsel";
+  } else if (CUT.opaque && CUT.bg && autoMask()) $("#cutHint").textContent = "Motiv erkannt · mit Lasso oder Radierer anpassen";
   cutC.width = c.width; cutC.height = c.height;
-  $("#cutBg").hidden = $("#cutBgTitle").hidden = !CUT.opaque; setBg(CUT.bg); CUT.quick = true; $("#cut").classList.add("quick");
+  $("#cutBg").hidden = !CUT.opaque; setBg(CUT.bg);
+  CUT.quick = !opts.restore; $("#cut").classList.toggle("quick", CUT.quick);
   lookThumbs();
   const hint = $("#cutHint").textContent; $("#cut").hidden = false; setTool("lasso"); if (CUT.hasMask) $("#cutHint").textContent = hint; fitCut();
   cancelAnimationFrame(CUT.raf);
@@ -1517,13 +1518,6 @@ function setStyle(s) {
 }
 document.querySelectorAll("#cutLook button").forEach(b => b.onclick = () => setStyle(b.dataset.style));
 function lookThumbs() { // kleine Vorschau je Stil, aus dem Motiv (mit Auswahl, falls schon eine da ist)
-  if (CUT.opaque) { // Hintergrund-Kacheln: Original mit Papier · freigestellt auf Schachbrett
-    if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas;
-    for (const [sel, img] of [['[data-bg="keep"]', CUT.img], ['[data-bg="remove"]', CUT.ink]]) {
-      const c = document.querySelector(`#cutBg ${sel} canvas`), g = c.getContext("2d"), s = Math.min(96 / img.width, 96 / img.height);
-      g.clearRect(0, 0, 96, 96); g.drawImage(img, (96 - img.width * s) / 2, (96 - img.height * s) / 2, img.width * s, img.height * s);
-    }
-  }
   let base = CUT.img; if (CUT.bg && CUT.opaque) { if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas; base = CUT.ink; }
   const k = 160 / Math.max(base.width, base.height), w = Math.max(1, Math.round(base.width * k)), h = Math.max(1, Math.round(base.height * k)), sm = canvasOf(w, h), sg = sm.getContext("2d");
   sg.drawImage(base, 0, 0, w, h);
@@ -1541,11 +1535,12 @@ function drawCut() {
     const cg = CUT.comp.getContext("2d"); cg.globalCompositeOperation = "source-over"; cg.clearRect(0, 0, W, H);
     cg.drawImage(source(), 0, 0);
     if (CUT.hasMask) { cg.globalCompositeOperation = "destination-in"; cg.drawImage(CUT.mask, 0, 0); }
-    CUT.dirty = false;
+    CUT.dirty = false; CUT.outlineDirty = true;
   }
   g.clearRect(0, 0, W, H);
-  if (!CUT.quick && (CUT.hasMask || CUT.drawing)) { g.drawImage(c, 0, 0); g.fillStyle = "rgba(10,10,10,.68)"; g.fillRect(0, 0, W, H); }
+  if (CUT.hasMask || CUT.drawing) { g.drawImage(c, 0, 0); g.fillStyle = "rgba(10,10,10,.68)"; g.fillRect(0, 0, W, H); }
   g.drawImage(CUT.comp, 0, 0);
+  if (CUT.hasMask && !CUT.drawing) { if (CUT.outlineDirty !== false) makeOutline(); g.drawImage(CUT.outline, 0, 0, W, H); }
   const lw = 1.5 / (CUT.fit * CUT.zoom);
   if (CUT.drawing && CUT.tool === "lasso" && CUT.path?.length > 1) {
     g.save(); g.beginPath(); trace(g, CUT.path); g.lineJoin = "round";
@@ -1556,6 +1551,18 @@ function drawCut() {
     g.lineWidth = lw * 3; g.strokeStyle = "rgba(0,0,0,.5)"; g.stroke(); g.lineWidth = lw * 1.5; g.strokeStyle = "#fff"; g.stroke(); g.restore();
   }
   drawLoupe();
+}
+// Leuchtend grüner Umriss um die Auswahl, damit sofort klar ist, was als Motiv gilt (auf kleinerer Kopie gerechnet)
+function makeOutline() {
+  const M = CUT.mask, k = Math.min(1, 900 / Math.max(M.width, M.height)), w = Math.round(M.width * k), h = Math.round(M.height * k);
+  const o = CUT.outline && CUT.outline.width === w ? CUT.outline : (CUT.outline = canvasOf(w, h)), g = o.getContext("2d");
+  const ring = (r, color) => { const c = canvasOf(w, h), x = c.getContext("2d");
+    for (let a = 0; a < 16; a++) x.drawImage(M, Math.cos(a * Math.PI / 8) * r, Math.sin(a * Math.PI / 8) * r, w, h);
+    x.globalCompositeOperation = "destination-out"; x.drawImage(M, 0, 0, w, h);
+    x.globalCompositeOperation = "source-in"; x.fillStyle = color; x.fillRect(0, 0, w, h); return c; };
+  const s = Math.max(1.5, w / 380);
+  g.clearRect(0, 0, w, h); g.drawImage(ring(s * 2.2, "rgba(0,0,0,.45)"), 0, 0); g.drawImage(ring(s * 1.4, "oklch(80% .24 135)"), 0, 0);
+  CUT.outlineDirty = false;
 }
 // Lupe: 3-fach vergrößert, sitzt über dem Finger (darunter, wenn oben kein Platz ist), damit man sieht,
 // wo die Linie genau läuft. Mit Maus nur beim Zeichnen, sonst stört sie.
@@ -1649,20 +1656,18 @@ cutStage.addEventListener("wheel", e => {
   if (zoomy) zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)), e.clientX, e.clientY);
   else if (CUT.zoom > 1) { CUT.px -= e.deltaX; CUT.py -= e.deltaY; applyCut(); }
 }, { passive: false });
-function setBg(on) {
-  CUT.bg = on; CUT.dirty = true; $("#cut").classList.toggle("no-bg", on && CUT.opaque);
-  document.querySelectorAll("#cutBg button").forEach(b => b.setAttribute("aria-checked", (b.dataset.bg === "remove") === on));
-}
-document.querySelectorAll("#cutBg button").forEach(b => b.onclick = () => { setBg(b.dataset.bg === "remove"); lookThumbs(); });
+function setBg(on) { CUT.bg = on; CUT.dirty = true; $("#cut").classList.toggle("no-bg", on && CUT.opaque); $("#cutBg").setAttribute("aria-checked", on); }
+$("#cutBg").onclick = () => { setBg(!CUT.bg); lookThumbs(); };
 $("#cutEdit").onclick = () => { CUT.quick = false; $("#cut").classList.remove("quick"); fitCut(); };
 $("#cutCancel").onclick = closeCut;
 $("#cutOk").onclick = () => {
   const src = source(), r = canvasOf(src.width, src.height), g = r.getContext("2d");
   g.drawImage(src, 0, 0);
   if (CUT.hasMask) { g.globalCompositeOperation = "destination-in"; g.drawImage(CUT.mask, 0, 0); }
-  const t = trim(r), done = CUT.onDone || addMotif; CUT.onDone = null; closeCut();
+  const t = trim(r), done = CUT.onDone || addMotif, meta = { src: CUT.img, mask: CUT.hasMask ? CUT.mask : null, style: CUT.style, bg: CUT.bg };
+  CUT.onDone = null; closeCut();
   if (!t) return status("Auswahl ist leer", "err");
-  done(t);
+  done(t, meta);
 };
 // Smart ausstechen: nach dem Entfernen des Hintergrunds die größte zusammenhängende Tinte (plus was in ihrem
 // Rahmen liegt) als Auswahl vorgeben. Text, Wasserzeichen oder Nachbarmotive im Screenshot bleiben draußen.
@@ -1701,6 +1706,12 @@ function autoMask() {
   }
   if (main.ink < total * .35) return false; // kein klares Hauptmotiv: lieber nichts vorgeben
   const own = new Set(main.ids), m = new Uint8Array(n); for (let i = 0; i < n; i++) m[i] = own.has(lab[i]) ? 1 : 0;
+  { // Löcher füllen: alles, was vom Rand aus nicht erreichbar ist, gehört zur Auswahl (eine Fläche statt Ringe)
+    const out = new Uint8Array(n), st = [], seed = i => { if (!out[i] && !m[i]) { out[i] = 1; st.push(i); } };
+    for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); } for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+    while (st.length) { const i = st.pop(), x = i % w; if (x > 0) seed(i - 1); if (x < w - 1) seed(i + 1); if (i >= w) seed(i - w); if (i < n - w) seed(i + w); }
+    for (let i = 0; i < n; i++) if (!out[i]) m[i] = 1;
+  }
   const D2 = distanceField(m, w, h), md = sg.createImageData(w, h); // noch etwas Luft um die Auswahl
   for (let i = 0; i < n; i++) md.data[i * 4 + 3] = clamp(r * 1.5 - D2[i] + .5, 0, 1) * 255;
   sg.putImageData(md, 0, 0);
@@ -2615,13 +2626,28 @@ $("#flUpload").onclick = $("#flUpload2").onclick = () => $("#flashInput").click(
 $("#flashInput").onchange = e => {
   const f = e.target.files[0]; e.target.value = ""; if (!f) return;
   const img = new Image(), url = URL.createObjectURL(f), name = f.name.replace(/\.[^.]+$/, "").slice(0, 60) || "Flash";
-  img.onload = () => { URL.revokeObjectURL(url); openCut(scaled(img, MOBILE ? 1600 : 2000), { okLabel: "Speichern", onDone: c => saveFlash(c, name) }); };
+  img.onload = () => { URL.revokeObjectURL(url); openCut(scaled(img, MOBILE ? 1600 : 2000), { okLabel: "Speichern", onDone: (c, meta) => saveFlash(c, name, meta) }); };
   img.src = url;
 };
-async function saveFlash(c, name) {
-  const blob = await toBlob(c, "image/png"), sticker = await toBlob(dieCut(c), "image/png");
-  const rec = { id: crypto.randomUUID(), name, blob, sticker, w: c.width, h: c.height, created: Date.now() };
+// Gespeichert wird das Ergebnis (blob, sticker) und, um es später wieder zu bearbeiten, das Original,
+// die Auswahl-Maske, der Stil und ob der Hintergrund entfernt war.
+async function flashRecord(c, meta, base) {
+  const rec = { ...base, blob: await toBlob(c, "image/png"), sticker: await toBlob(dieCut(c), "image/png"), w: c.width, h: c.height };
+  if (meta?.src) { rec.src = await toBlob(meta.src, "image/jpeg", .92); rec.mask = meta.mask ? await toBlob(meta.mask, "image/png") : null; rec.style = meta.style; rec.bg = meta.bg; }
+  return rec;
+}
+async function saveFlash(c, name, meta) {
+  const rec = await flashRecord(c, meta, { id: crypto.randomUUID(), name, created: Date.now() });
   await idb("flashes", "readwrite", s => s.put(rec)); FL.items.unshift(rec); renderFlashes();
+}
+async function editFlash(f) {
+  const load = b => createImageBitmap(b).catch(() => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(b); }));
+  const img = await load(f.src || f.blob), c = canvasOf(img.width, img.height); c.getContext("2d").drawImage(img, 0, 0);
+  const mask = f.mask ? await load(f.mask) : null;
+  openCut(c, { okLabel: "Speichern", restore: { mask, style: f.style || "orig", bg: f.src ? f.bg : false }, onDone: async (out, meta) => {
+    const rec = await flashRecord(out, meta, { id: f.id, name: f.name, created: f.created, pos: f.pos ? { ...f.pos, h: f.pos.w * out.height / out.width } : null });
+    await idb("flashes", "readwrite", s => s.put(rec)); FL.items = FL.items.map(x => x.id === f.id ? rec : x); FL.urls.delete(f.id); layoutKey = ""; renderFlashes();
+  } });
 }
 function viewFlash(id) {
   const f = FL.items.find(x => x.id === id); if (!f) return;
@@ -2629,6 +2655,7 @@ function viewFlash(id) {
     <div class="bar"><button class="rb" data-a="close" aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
     <button class="rb" data-a="del" aria-label="Löschen"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button>
     <button class="rb" data-a="share" aria-label="Per Link teilen"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></button>
+    <button class="rb" data-a="edit" aria-label="Bearbeiten"><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg></button>
     <button class="pill" data-a="try"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Anprobieren</button></div></div>`;
   const close = () => { $("#flView").innerHTML = ""; };
   $("#flView").querySelector(".big").onclick = close;
@@ -2636,6 +2663,7 @@ function viewFlash(id) {
     const a = b.dataset.a; close();
     if (a === "try") tryFlash(f.blob);
     if (a === "share") { FL.sel = new Set([id]); shareSheet(); }
+    if (a === "edit") editFlash(f);
     if (a === "del") { await idb("flashes", "readwrite", s => s.delete(id)); FL.items = FL.items.filter(x => x.id !== id); renderFlashes(); }
   });
 }
