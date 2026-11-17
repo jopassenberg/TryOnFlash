@@ -721,9 +721,14 @@ const SKIN_CLASS = 2;
 // Phones get a smaller budget: iOS reloads the tab when a page uses too much memory, and the depth
 // model's attention grows with the square of its input size.
 const MOBILE = matchMedia("(pointer: coarse)").matches || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const RENDER_MAX = MOBILE ? 1280 : 1600, PROC_MAX = 640, GEO_MAX = MOBILE ? 768 : 1024, PREVIEW_MAX = MOBILE ? 720 : 900;
+// Merkt sich, ob eine Analyse lief: Ist die Marke beim Laden noch da, hat iOS die Seite mitten in der Analyse
+// wegen Speichermangels neu geladen. Dann rechnet die App ab jetzt (in diesem Tab) mit kleinerer Auflösung.
+const ss = { get: k => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} } };
+const CRASHED = !!ss.get("stencit-busy"); ss.set("stencit-busy", null); if (CRASHED) ss.set("stencit-lite", "1");
+const LITE = MOBILE && !!ss.get("stencit-lite");
+const RENDER_MAX = LITE ? 1024 : MOBILE ? 1280 : 1600, PROC_MAX = LITE ? 512 : 640, GEO_MAX = LITE ? 576 : MOBILE ? 768 : 1024, PREVIEW_MAX = MOBILE ? 720 : 900;
 // Depth model input side: desktop GPUs get ~1.6x the model's default 518 px for finer relief
-const DEPTH_SIDE = { webgpu: MOBILE ? 518 : 812, wasm: MOBILE ? 434 : 518 };
+const DEPTH_SIDE = { webgpu: LITE ? 434 : MOBILE ? 518 : 812, wasm: LITE ? 364 : MOBILE ? 434 : 518 };
 
 const $ = s => document.querySelector(s);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -965,7 +970,7 @@ async function getSegmenter() {
 }
 
 async function analyse() {
-  setStep(2); scanStart();
+  setStep(2); scanStart(); ss.set("stencit-busy", "1");
   let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
     status("Lädt Modelle …");
@@ -992,9 +997,10 @@ async function analyse() {
     status("");
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
+    ss.set("stencit-busy", null);
     if (!usePending() && !S.motif) status("Motiv hinzufügen", "ok");
   } catch (e) {
-    console.error(e); scanStop();
+    ss.set("stencit-busy", null); console.error(e); scanStop();
     const m = String(e?.message || e);
     status(/Kein Arm/.test(m) ? m : `${stage}: ` + (/fetch|network|Failed to load|Load failed/i.test(m) ? "Download fehlgeschlagen" :
       /memory|allocation|OOM/i.test(m) ? "zu wenig Speicher" : m.slice(0, 80)), "err");
@@ -2744,7 +2750,7 @@ function viewFlash(id) {
   $("#flView").querySelectorAll("[data-a]").forEach(b => b.onclick = async () => {
     if (!ready()) return;
     const a = b.dataset.a; close();
-    if (a === "try") tryFlash(f.blob);
+    if (a === "try") tryFresh(f.blob);
     if (a === "share") { FL.sel = new Set([id]); shareSheet(); }
     if (a === "edit") editFlash(f);
     if (a === "del") { await idb("flashes", "readwrite", s => s.delete(id)); FL.items = FL.items.filter(x => x.id !== id); renderFlashes(); }
@@ -2855,6 +2861,13 @@ async function tryFlash(blob) {
   pendingFlash = c; const h = $("#drop .hello span"); if (h) h.textContent = "jetzt ein Foto deiner Haut.";
   try { const buf = await (await toBlob(c, "image/png")).arrayBuffer(); await idb("handoff", "readwrite", s => s.put({ buf, type: "image/png" }, "flash")); } catch {}
 }
+// Aus den eigenen Flashes: Motiv in die Übergabe legen und die Seite neu laden. So startet das Studio mit
+// leerem Speicher (die Galerie-Bilder sind weg) – auf dem iPhone braucht die Analyse jeden Megabyte.
+async function tryFresh(blob) {
+  try { const buf = await blob.arrayBuffer(); await idb("handoff", "readwrite", s => s.put({ buf, type: blob.type || "image/png" }, "flash")); }
+  catch (e) { console.warn("handoff", e); return tryFlash(blob); }
+  location.replace(location.pathname);
+}
 function usePending() { // nach der Analyse aufgerufen
   if (!pendingFlash) return false;
   const c = pendingFlash; pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
@@ -2866,6 +2879,7 @@ function usePending() { // nach der Analyse aufgerufen
     const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
     if (blob) await tryFlash(blob);
   } catch (e) { console.warn("handoff", e); }
+  if (CRASHED) status("Speicher voll · Foto nochmal", "err");
 })();
 
 window.__studio = { S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
