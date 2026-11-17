@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Stencit Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,6 +30,7 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
+  html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }  /* kein Doppeltipp-Zoom */
   body { background: var(--bg); color: var(--ink); font: 400 15px/1.5 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: -.011em;
     hyphens: auto; text-wrap: pretty; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
   button, input { font: inherit; color: inherit; letter-spacing: inherit; }
@@ -61,12 +62,12 @@
   .step i::after { content: " / 4"; }
 
   /* die Karte hat einen dunklen Rahmen wie ein Gerät; die Insel oben wächst aus diesem Rahmen */
-  .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: var(--n-0); border-radius: var(--r-outer); border: var(--frame-w) solid var(--frame); }
+  .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: oklch(15% .003 75); border-radius: var(--r-outer); border: var(--frame-w) solid var(--frame); }
   .stage { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; touch-action: none; }
   #viewWrap { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
   #view { display: block; position: relative; }
   #overlay { position: absolute; pointer-events: none; }
-  #cam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--n-200); }
+  #cam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: oklch(15% .003 75); }
   #cam.mirror { transform: scaleX(-1); }
   .shot { position: absolute; inset: 0; z-index: 6; background: #fff; opacity: 0; pointer-events: none; }
   .shot.go { animation: shot .45s ease-out; }
@@ -77,10 +78,16 @@
 
   /* ---------- Startseite (leere Karte) ---------- */
   .drop { display: grid; justify-items: center; gap: var(--s6); padding: var(--s7) var(--s5); text-align: center; }
+  .drop { color: #fff; }
   .drop .hello { margin: 0; font-weight: 400; font-size: clamp(34px, 4.2vw, 56px); line-height: 1.02; letter-spacing: -.045em; }
-  .drop .hello span { color: var(--text-3); }
+  .drop .hello span { color: oklch(100% 0 0 / .42); }
+  /* Glas-Buttons auf dunklem Grund: Fläche statt Farbe, die Hauptaktion etwas heller */
+  .btn.glass-btn { background: oklch(100% 0 0 / .1); color: #fff; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+  .btn.glass-btn:hover { background: oklch(100% 0 0 / .16); }
+  .btn.glass-btn.main { background: oklch(100% 0 0 / .18); }
+  .btn.glass-btn.main:hover { background: oklch(100% 0 0 / .24); }
+  .drop.over { background: oklch(100% 0 0 / .04); }
   .drop .row { display: flex; gap: var(--s2); align-items: center; }
-  .drop.over .hello { opacity: .5; }
 
   /* ---------- Buttons: rund, flächig, ohne Rand und Schatten ---------- */
   .btn { height: var(--h); padding: 0 var(--s5); border-radius: var(--r-full); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
@@ -346,8 +353,8 @@
       <div class="drop" id="drop">
         <h1 class="hello">Dein Tattoo,<br><span>bevor es eins ist.</span></h1>
         <div class="row">
-          <button class="btn accent lg" id="camBtn"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Kamera</button>
-          <button class="btn soft lg" id="pick"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>Hochladen</button>
+          <button class="btn glass-btn main lg" id="camBtn"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Kamera</button>
+          <button class="btn glass-btn lg" id="pick"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>Hochladen</button>
         </div>
       </div>
       <video id="cam" playsinline muted autoplay hidden></video>
@@ -502,6 +509,10 @@ function syncIsland() {
   if (part) isl.style.width = part.scrollWidth + "px";
   isl.dataset.mode = mode;
 }
+// Seite auf dem Handy nicht zoombar: iOS Safari ignoriert user-scalable=no, darum die Pinch-Gesten selbst abfangen
+// (das Platzieren mit zwei Fingern auf dem Foto läuft über Pointer-Events und bleibt davon unberührt)
+["gesturestart", "gesturechange", "gestureend"].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+document.addEventListener("touchmove", e => { if (e.scale !== undefined && e.scale !== 1) e.preventDefault(); }, { passive: false });
 setStep(1);
 
 /* ---------- 1 · Photo ---------- */
@@ -965,9 +976,8 @@ function buildMesh() {
     if (m[i] < .05) continue;
     const nx = N[i * 3], ny = N[i * 3 + 1], nz = N[i * 3 + 2];
     const lit = Math.max(0, nx * lv[0] + ny * lv[1] + nz * lv[2]) ** 2.2, rim = clamp((1 - nz) * 2.2 - .15, 0, 1) ** 2;
-    px[i * 4] = clamp(16 + lit * 200 + rim * 150, 0, 255);
-    px[i * 4 + 1] = clamp(16 + lit * 200 + rim * 150, 0, 255);
-    px[i * 4 + 2] = clamp(17 + lit * 198 + rim * 155, 0, 255);
+    const [r, g, b] = ramp(.06 + lit * .7 + rim * .45);
+    px[i * 4] = r; px[i * 4 + 1] = g; px[i * 4 + 2] = b;
     px[i * 4 + 3] = clamp(m[i] * 1.2 - .1, 0, 1) * 240;
   }
   sg.putImageData(img, 0, 0);
@@ -1024,11 +1034,11 @@ function drawMesh3D(ctx, sx, sy, R, alpha, ring) {
         if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; }
       }
     }
-    ctx.strokeStyle = across ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.16)"; ctx.stroke();
+    ctx.strokeStyle = across ? "rgba(255,200,190,.5)" : "rgba(255,200,190,.16)"; ctx.stroke();
   }
   if (ring && !open && R < M.maxR) { // the growing front
-    ctx.globalAlpha = alpha * .7; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5 * devicePixelRatio;
-    ctx.shadowColor = "rgba(255,255,255,.6)"; ctx.shadowBlur = 10 * devicePixelRatio;
+    ctx.globalAlpha = alpha * .7; ctx.strokeStyle = "#ffb3a6"; ctx.lineWidth = 1.5 * devicePixelRatio;
+    ctx.shadowColor = "rgba(219,26,29,.7)"; ctx.shadowBlur = 10 * devicePixelRatio;
     ctx.beginPath(); ctx.arc(c.x * sx, c.y * sy, Math.max(0, R) * sx, 0, 7); ctx.stroke();
   }
   ctx.restore();
@@ -1038,6 +1048,13 @@ function drawMesh3D(ctx, sx, sy, R, alpha, ring) {
 document.querySelectorAll("#views button").forEach(b => b.onclick = () => { S.view = b.dataset.view; syncViews(); redraw(); });
 function syncViews() { document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === S.view)); $("#views").hidden = !S.disp; }
 let depthCanvas = null;
+// Markenverlauf für Tiefe und 3D: fast Schwarz → Bordeaux → Rot → helles Lachsrot für Lichter
+const RAMP = [[0, 14, 6, 8], [.3, 115, 15, 38], [.62, 219, 26, 29], [.85, 255, 120, 100], [1, 255, 214, 200]];
+function ramp(t) {
+  t = clamp(t, 0, 1); let i = 1; while (i < RAMP.length - 1 && t > RAMP[i][0]) i++;
+  const a = RAMP[i - 1], b = RAMP[i], f = (t - a[0]) / (b[0] - a[0] || 1);
+  return [a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f];
+}
 // Depth view: refined depth as a graphite-to-white ramp, with the fine relief as hill shading on top
 function depthImage() {
   if (depthCanvas) return depthCanvas;
@@ -1046,8 +1063,8 @@ function depthImage() {
   for (let i = 0; i < D.length; i++) {
     const v = clamp(D[i], 0, 1), sk = S.skin[i];
     const hs = N ? clamp(.55 + .9 * (N[i * 3] * l[0] + N[i * 3 + 1] * l[1] + N[i * 3 + 2] * l[2] - .7), .35, 1.25) : 1;
-    const g = (20 + v * 225 * (.3 + .7 * sk)) * hs;
-    img.data[i * 4] = clamp(g, 0, 255); img.data[i * 4 + 1] = clamp(g, 0, 255); img.data[i * 4 + 2] = clamp(g * 1.02, 0, 255); img.data[i * 4 + 3] = 255;
+    const [r, gg, b] = ramp((.04 + v * .9 * (.3 + .7 * sk)) * hs);
+    img.data[i * 4] = r; img.data[i * 4 + 1] = gg; img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = 255;
   }
   g.putImageData(img, 0, 0); return (depthCanvas = c);
 }
@@ -1311,7 +1328,7 @@ function motifPreview(m) { // the motif itself (no sticker), small, for the moti
   return (m.preview = c.toDataURL());
 }
 function setTray(open) { $("#tray").hidden = !open; $("#motifCard").setAttribute("aria-expanded", open); }
-$("#motifCard").onclick = () => setTray($("#tray").hidden);
+$("#motifCard").onclick = () => S.motifs.length ? setTray($("#tray").hidden) : $("#motifInput").click(); // leer = gleich hinzufügen
 document.addEventListener("pointerdown", e => { if (!$("#tray").hidden && !e.target.closest(".motifs")) setTray(false); });
 function renderThumbs() {
   const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
