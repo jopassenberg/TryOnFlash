@@ -141,7 +141,7 @@
   @keyframes pop { 0% { transform: scale(.7); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
   /* Chip: Schalter als Fläche, an = schwarz */
-  .chip { height: var(--h); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 14px; background: var(--fill); color: var(--text-2); }
+  .chip { flex: none; white-space: nowrap; height: var(--h); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 14px; background: var(--fill); color: var(--text-2); }
   .chip:hover { color: var(--ink); }
   .chip[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
 
@@ -185,20 +185,20 @@
   @keyframes sum-item { from { opacity: 0; translate: 0 6px; } }
   @media (prefers-reduced-motion: reduce) { .sumcard.in, .sumcard.out, .sumcard > * { animation: none; } }
   /* zwei Größen: 28 für die Größe, sonst überall 14; Hierarchie nur über Weiß und Grau */
-  .sum-body { padding: 20px; display: grid; gap: 14px; font-size: 14px; line-height: 1.35; }
+  .sum-body { padding: 22px 22px 20px; display: grid; gap: 18px; font-size: 14px; line-height: 1.35; }
   .sum-body .dim { color: oklch(100% 0 0 / .5); }
   .sum-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 2px 2px 4px; }
   .sum-size { font-size: 28px; line-height: 1.05; letter-spacing: -.04em; margin-bottom: 4px; }
   .sum-x { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .12); }
   .sum-x .ic { width: 16px; height: 16px; }
-  .needles { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-  .needles li { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px; padding: 4px 14px 4px 4px; border-radius: 18px; background: oklch(100% 0 0 / .07); }
-  .nic { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: oklch(100% 0 0 / .08); }
-  .nic svg { width: 30px; height: 30px; }
-  .swatches { display: flex; flex-wrap: wrap; gap: 4px; }
-  .swatches span { height: 36px; padding: 0 14px 0 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: oklch(100% 0 0 / .07); }
-  .swatches i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .2); }
-  .sum-scale { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 4px 14px; border-radius: 18px; background: oklch(100% 0 0 / .07); }
+  .needles { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .needles li { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 12px; }
+  .nic { width: 28px; height: 28px; display: grid; place-items: center; }
+  .nic svg { width: 28px; height: 28px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .swatches span { display: inline-flex; align-items: center; gap: 8px; }
+  .swatches i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .25); }
+  .sum-scale { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .sum-scale input { width: 56px; height: 32px; border: 0; border-radius: 999px; background: oklch(100% 0 0 / .12); color: #fff; text-align: center; font-size: 14px; }
   .isl-size { padding: 0 24px; font-size: 15px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   .isl-status { gap: 10px; padding: 0 22px 0 18px; font-size: 13px; }
@@ -289,6 +289,9 @@
   .cutstage { position: relative; overflow: hidden; border-radius: calc(var(--r-card) - var(--s2)); height: min(68vh, 680px); touch-action: none;
     background: var(--n-100) radial-gradient(circle at center, oklch(19% .003 75 / .09) 1px, transparent 1.4px) 0 0 / 16px 16px; }
   #cutCanvas { position: absolute; left: 50%; top: 50%; display: block; touch-action: none; transform-origin: center; }
+  /* Lupe: zeigt beim Zeichnen den Bereich unter Finger oder Maus vergrößert, mit Fadenkreuz */
+  .loupe { position: absolute; z-index: 5; width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 50%; pointer-events: none; background: var(--n-100);
+    box-shadow: 0 0 0 3px #fff, 0 0 0 4px oklch(0% 0 0 / .12); }
   .cutstage .status { left: var(--s3); top: var(--s3); bottom: auto; transform: none; pointer-events: none; }
   .cuttools { position: absolute; z-index: 4; top: var(--s3); right: var(--s3); display: flex; gap: var(--s1); padding: 4px; border-radius: var(--r-full); background: var(--glass-light); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .cuttools .btn { width: 36px; height: 36px; background: var(--fill); }
@@ -365,7 +368,15 @@
     .cutstage { height: 58vh; }
     .cutbox .panel .group { width: 100%; }
     .cutbox .panel .group.end > .btn { flex: 1; }
-    .size { flex: 1; width: auto; }
+    .size { flex: 1 1 100%; width: auto; }
+    .cutbox, .cutbox > .panel { min-width: 0; }
+    .cutbox .panel .group:first-child { flex-wrap: wrap; }
+    .cutbox .seg { width: 100%; }
+    .cutbox .seg button { flex: 1; justify-content: center; padding: 0 var(--s2); }
+    .cutbox .panel .group.end { flex-wrap: wrap; }
+    .cutbox .panel .group.end > .chip { flex: 1 1 100%; justify-content: center; }
+    .cutstage .status { max-width: calc(100% - 120px); }
+    .cutstage .status #cutHint { overflow: hidden; text-overflow: ellipsis; }
     .drop .row { flex-direction: column; width: 100%; max-width: 320px; }
     .drop .row .btn { width: 100%; }
   }
@@ -461,6 +472,7 @@
     <div class="cutbox">
       <div class="cutstage" id="cutStage">
         <canvas id="cutCanvas"></canvas>
+        <canvas class="loupe" id="loupe" hidden aria-hidden="true"></canvas>
         <div class="status" data-s="ok"><span class="dot"></span><span id="cutHint">Tattoo umfahren</span></div>
         <div class="cuttools">
           <button class="btn icon" id="cutUndo" title="Rückgängig" aria-label="Rückgängig"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
@@ -1292,6 +1304,31 @@ function drawCut() {
     g.save(); g.beginPath(); g.arc(CUT.hover.x, CUT.hover.y, brushPx() / 2, 0, 7);
     g.lineWidth = lw * 3; g.strokeStyle = "rgba(0,0,0,.5)"; g.stroke(); g.lineWidth = lw * 1.5; g.strokeStyle = "#fff"; g.stroke(); g.restore();
   }
+  drawLoupe();
+}
+// Lupe: 3-fach vergrößert, sitzt über dem Finger (darunter, wenn oben kein Platz ist), damit man sieht,
+// wo die Linie genau läuft. Mit Maus nur beim Zeichnen, sonst stört sie.
+const LOUPE = 132, LOUPE_ZOOM = 3;
+function drawLoupe() {
+  const el = $("#loupe"), on = CUT.drawing && !CUT.pinch && CUT.hover && CUT.client;
+  el.hidden = !on; if (!on) return;
+  const dpr = devicePixelRatio || 1, px = Math.round(LOUPE * dpr);
+  if (el.width !== px) { el.width = el.height = px; }
+  const sb = cutStage.getBoundingClientRect(), scale = CUT.fit * CUT.zoom, half = LOUPE / 2 / (scale * LOUPE_ZOOM);
+  const cx = CUT.client.x - sb.left, cy = CUT.client.y - sb.top, off = CUT.touch ? 110 : 90;
+  const ly = cy - off - LOUPE / 2 > 8 ? cy - off : cy + off, lx = clamp(cx, LOUPE / 2 + 8, sb.width - LOUPE / 2 - 8);
+  el.style.left = lx + "px"; el.style.top = ly + "px";
+  const g = el.getContext("2d"); g.save(); g.clearRect(0, 0, px, px);
+  g.beginPath(); g.arc(px / 2, px / 2, px / 2, 0, 7); g.clip();
+  g.fillStyle = "#f4f3f0"; g.fillRect(0, 0, px, px); g.imageSmoothingEnabled = LOUPE_ZOOM * scale < 2.5;
+  g.drawImage(cutC, CUT.hover.x - half, CUT.hover.y - half, half * 2, half * 2, 0, 0, px, px);
+  // Fadenkreuz mit Lücke in der Mitte, damit der Punkt selbst frei bleibt
+  const m = px / 2, gap = 5 * dpr, len = 12 * dpr; g.lineWidth = 3 * dpr; g.strokeStyle = "rgba(0,0,0,.45)";
+  const cross = () => { g.beginPath(); g.moveTo(m - gap - len, m); g.lineTo(m - gap, m); g.moveTo(m + gap, m); g.lineTo(m + gap + len, m);
+    g.moveTo(m, m - gap - len); g.lineTo(m, m - gap); g.moveTo(m, m + gap); g.lineTo(m, m + gap + len); g.stroke(); };
+  cross(); g.lineWidth = 1.4 * dpr; g.strokeStyle = "#fff"; cross();
+  if (CUT.tool !== "lasso") { g.beginPath(); g.arc(m, m, brushPx() / 2 * px / (half * 2), 0, 7); g.lineWidth = 1.4 * dpr; g.stroke(); }
+  g.restore();
 }
 function snapshot() {
   const s = canvasOf(CUT.mask.width, CUT.mask.height); s.getContext("2d").drawImage(CUT.mask, 0, 0);
@@ -1317,6 +1354,7 @@ function startPinchCut() {
 }
 cutC.addEventListener("pointerdown", e => {
   try { cutC.setPointerCapture(e.pointerId); } catch {}
+  CUT.client = { x: e.clientX, y: e.clientY }; CUT.touch = e.pointerType !== "mouse";
   CUT.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (CUT.ptrs.size >= 2) { // second finger: this is a zoom/pan, drop the stroke the first finger began
     if (CUT.drawing && CUT.tool !== "lasso") undo();
@@ -1329,7 +1367,7 @@ cutC.addEventListener("pointerdown", e => {
   CUT.last = null; brushTo(p);
 });
 cutC.addEventListener("pointermove", e => {
-  const p = cutPt(e); CUT.hover = p;
+  const p = cutPt(e); CUT.hover = p; CUT.client = { x: e.clientX, y: e.clientY };
   if (CUT.ptrs.has(e.pointerId)) CUT.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (CUT.pinch && CUT.ptrs.size >= 2) {
     const [a, b] = [...CUT.ptrs.values()], d = Math.hypot(b.x - a.x, b.y - a.y), P = CUT.pinch;
