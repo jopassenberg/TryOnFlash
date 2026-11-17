@@ -19,7 +19,7 @@ static = instancer.instantiateVariableFont(TTFont(SRC), {"wght": 400})
 CAP = static["OS/2"].sCapHeight              # 745 units
 gs = static.getGlyphSet()
 blob = hb.Blob.from_file_path(SRC); face = hb.Face(blob); font = hb.Font(face); font.set_variations({"wght": 400})
-TEXT, TRACK = "Stencit", -14                 # -1.4 % tracking: a touch tighter for display size
+TEXT, TRACK = "Stencit", -50                 # -5 % tracking, wie die Marke (Plus Jakarta, 1000 Einheiten/em)
 buf = hb.Buffer(); buf.add_str(TEXT); buf.guess_segment_properties(); hb.shape(font, buf, {"kern": True, "liga": False})
 x, paths = 0, []
 for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
