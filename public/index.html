@@ -199,41 +199,38 @@
 
   @supports (corner-shape: squircle) {
     .card, .cutbox, .cutstage, .btn, .chip, .field, .thumb, .status, .views, .info { corner-shape: squircle; }
-    .siri, .siri i, .siri i::before { corner-shape: squircle; }
+    .siri, .siri i { corner-shape: squircle; }
     .card, .cutbox { border-radius: calc(var(--r-frame) * 1.6); } .cutstage { border-radius: calc(var(--r-stage) * 1.6); }
     .btn, .chip, .field, .thumb { border-radius: calc(var(--r) * 1.6); } .status, .views { border-radius: calc(var(--r-sm) * 1.6); }
   }
 
-  /* Siri-style edge glow (after the open-source SwiftUI recreation "AppleIntelligenceGlowEffect"):
-     four rings of the same angular gradient, 6/9/11/15 px wide, blurred 0/4/12/15 px. The gradient's
-     stops jump to random positions every 0.5 s and glide there over 1 s. Red palette instead of Siri's. */
-  @property --c0 { syntax: "<color>"; inherits: true; initial-value: #ff4a4f; }
-  @property --c1 { syntax: "<color>"; inherits: true; initial-value: #ff8a7a; }
-  @property --c2 { syntax: "<color>"; inherits: true; initial-value: #c8102e; }
-  @property --c3 { syntax: "<color>"; inherits: true; initial-value: #ff3d6e; }
-  @property --c4 { syntax: "<color>"; inherits: true; initial-value: #ffb199; }
-  @property --c5 { syntax: "<color>"; inherits: true; initial-value: #8e1427; }
-  @property --p0 { syntax: "<percentage>"; inherits: true; initial-value: 0%; }
-  @property --p1 { syntax: "<percentage>"; inherits: true; initial-value: 20%; }
-  @property --p2 { syntax: "<percentage>"; inherits: true; initial-value: 40%; }
-  @property --p3 { syntax: "<percentage>"; inherits: true; initial-value: 60%; }
-  @property --p4 { syntax: "<percentage>"; inherits: true; initial-value: 80%; }
-  @property --p5 { syntax: "<percentage>"; inherits: true; initial-value: 100%; }
-  .siri { position: absolute; inset: 0; pointer-events: none; z-index: 3; border-radius: inherit; opacity: 0;
-    transition: opacity .6s ease, --c0 1s ease-in-out, --c1 1s ease-in-out, --c2 1s ease-in-out, --c3 1s ease-in-out, --c4 1s ease-in-out, --c5 1s ease-in-out,
-      --p0 1s ease-in-out, --p1 1s ease-in-out, --p2 1s ease-in-out, --p3 1s ease-in-out, --p4 1s ease-in-out, --p5 1s ease-in-out; }
+  /* Siri-style edge glow, built so the GPU animates it on its own (smooth even while the analysis keeps
+     the main thread busy): a soft inner band and a thin bright rim, each a masked window onto a large
+     conic gradient that only rotates (transform) and breathes (opacity). No repaints per frame. */
+  .siri { position: absolute; inset: 0; pointer-events: none; z-index: 3; border-radius: inherit; opacity: 0; transition: opacity .6s var(--ease-out); }
   .siri.on { opacity: 1; }
-  .siri i { position: absolute; inset: 0; border-radius: inherit; filter: blur(var(--b)); }
-  .siri i::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: var(--w);
-    background: conic-gradient(from 0deg, var(--c0) var(--p0), var(--c1) var(--p1), var(--c2) var(--p2), var(--c3) var(--p3), var(--c4) var(--p4), var(--c5) var(--p5));
-    background: conic-gradient(in oklch from 0deg, var(--c0) var(--p0), var(--c1) var(--p1), var(--c2) var(--p2), var(--c3) var(--p3), var(--c4) var(--p4), var(--c5) var(--p5));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  .siri i { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
+  .siri i::before { content: ""; position: absolute; left: 50%; top: 50%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax; will-change: transform;
+    background: conic-gradient(from 0deg, #ff4a4f, #ff8a7a, #c8102e, #ff3d6e, #ffb199, #8e1427, #ff4a4f);
+    background: conic-gradient(in oklch from 0deg, #ff4a4f, #ff8a7a, #c8102e, #ff3d6e, #ffb199, #8e1427, #ff4a4f); animation: siri-spin 7s linear infinite; }
+  .siri .band { --e: 44px; opacity: .4; will-change: opacity; animation: siri-breathe 2.6s ease-in-out infinite;
+    -webkit-mask: linear-gradient(to right, #000, transparent var(--e)), linear-gradient(to left, #000, transparent var(--e)), linear-gradient(to bottom, #000, transparent var(--e)), linear-gradient(to top, #000, transparent var(--e));
+    mask: linear-gradient(to right, #000, transparent var(--e)), linear-gradient(to left, #000, transparent var(--e)), linear-gradient(to bottom, #000, transparent var(--e)), linear-gradient(to top, #000, transparent var(--e)); }
+  .siri .band::before { animation-duration: 9s; animation-direction: reverse; }
+  .siri .ring { padding: 2.5px; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
-  .siri i:nth-child(1) { --w: 6px; --b: 0px; }
-  .siri i:nth-child(2) { --w: 9px; --b: 4px; }
-  .siri i:nth-child(3) { --w: 11px; --b: 12px; }
-  .siri i:nth-child(4) { --w: 15px; --b: 15px; }
-  @media (prefers-reduced-motion: reduce) { .siri { transition: opacity .6s ease; } }
+  @keyframes siri-spin { to { transform: rotate(360deg); } }
+  @keyframes siri-breathe { 50% { opacity: .7; } }
+  /* loader: the Stencit mark, a highlight running round the 8 dots (pure CSS opacity, GPU-driven) */
+  .loader { position: absolute; z-index: 4; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .35s var(--ease-out); }
+  .loader.on { opacity: 1; }
+  .loader i, .loader b { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: #fff; will-change: opacity; }
+  .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(14px); opacity: .22; animation: loader-dot 1.2s linear infinite; animation-delay: calc(var(--k) * .15s - 1.2s); }
+  .loader b { width: 6px; height: 6px; margin: -3px; animation: siri-breathe 2.4s ease-in-out infinite; opacity: .6; }
+  @keyframes loader-dot { 0% { opacity: 1; } 45%, 100% { opacity: .22; } }
+  .scan-dim { position: absolute; inset: 0; z-index: 2; background: oklch(0% 0 0 / .2); opacity: 0; pointer-events: none; transition: opacity .5s var(--ease-out); }
+  .scan-dim.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .siri i::before, .siri .band, .loader i, .loader b { animation: none; } }
 
   /* ---------- phones: the card becomes the whole screen ---------- */
   @media (max-width: 680px) {
@@ -269,7 +266,9 @@
     </nav>
   </header>
   <main class="card">
-    <div class="siri" id="siri" hidden><i></i><i></i><i></i><i></i></div>
+    <div class="scan-dim" id="scanDim"></div>
+    <div class="siri" id="siri" hidden><i class="band"></i><i class="ring"></i></div>
+    <div class="loader" id="loader"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><b></b></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop">
         <svg viewBox="0 0 32 32" aria-hidden="true" class="mark"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>
@@ -575,11 +574,16 @@ async function analyse() {
     stage = "Haut erkennen";
     S.pw = S.geo.width; S.ph = S.geo.height;
     S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph); S.dispN = normalised(S.disp); // the point cloud shows from here
+    // Phones: free each model as soon as it is done, so the next one fits into memory (iOS reloads the
+    // page when it runs out). Desktop keeps them for the next photo.
+    if (MOBILE) { await depthPipe?.dispose?.().catch(() => {}); depthPipe = null; }
     status("Haut …");
     await frame(); S.skin = seg ? skinMask(seg) : null;
+    if (MOBILE && segmenter) { segmenter.close(); segmenter = null; }
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
     stage = "3D-Modell"; status("3D-Modell …");
-    await frame(); refineDepth(); buildGeometry(); buildMesh();
+    // one heavy step per frame, so the scan animation and the page stay responsive
+    await frame(); refineDepth(); await frame(); buildGeometry(); await frame(); buildMesh(); await frame();
     stage = "Maßstab"; status("Maßstab …");
     S.scale = computeScale(await detectBody(S.proc).catch(e => (console.warn("body", e), null)));
     await scanFinish();
@@ -810,7 +814,7 @@ function skinAt(x, y) {
 let scanRaf = 0, scanT0 = 0, scanDone = null;
 function scanStart() { siriOn(true); scanT0 = performance.now(); cancelAnimationFrame(scanRaf); const loop = t => { if (drawScan(t)) scanRaf = requestAnimationFrame(loop); }; scanRaf = requestAnimationFrame(loop); }
 function scanStop() { siriOn(false); cancelAnimationFrame(scanRaf); scanDone = null; octx.clearRect(0, 0, overlay.width, overlay.height); }
-function scanFinish() { return new Promise(r => { scanDone = { t0: performance.now(), r }; }); }
+function scanFinish() { $("#loader").classList.remove("on"); return new Promise(r => { scanDone = { t0: performance.now(), r }; }); }
 const ease = p => 1 - (1 - clamp(p, 0, 1)) ** 3;
 function drawScan(t) {
   const W = overlay.width, H = overlay.height, el = (t - scanT0) / 1000; octx.clearRect(0, 0, W, H);
@@ -819,58 +823,40 @@ function drawScan(t) {
     drawCloud(el, (1 - clamp(p / .4, 0, 1)) * fade, W, H);
     if (S.mesh) drawMesh3D(octx, W / view.width, H / view.height, S.mesh.maxR * 1.04 * ease(p / .62), fade, true);
     if (p > .7) siriOn(false);
-    drawLoader(el, W, H, lf);
     if (p >= 1) { octx.clearRect(0, 0, W, H); const r = scanDone.r; scanDone = null; r(); return false; }
     return true;
   }
-  octx.fillStyle = "rgba(10,10,10,.18)"; octx.fillRect(0, 0, W, H);
-  drawCloud(el, 1, W, H); drawLoader(el, W, H, 1);
+  drawCloud(el, 1, W, H);
   return true; // keep scanning until scanFinish()
 }
-// Siri-style edge glow (CSS, see .siri): new random gradient stops every 0.5 s, CSS glides there in 1 s
-const SIRI = ["#ff4a4f", "#ff8a7a", "#c8102e", "#ff3d6e", "#ffb199", "#8e1427"];
+// Glow, loader and dim are CSS (GPU) animations; JS only switches them on and off
 let siriTimer = 0;
-function siriStops() {
-  const el = $("#siri"), s = SIRI.map(c => [c, Math.random() * 100]).sort((a, b) => a[1] - b[1]);
-  s.forEach(([c, p], i) => { el.style.setProperty(`--c${i}`, c); el.style.setProperty(`--p${i}`, p.toFixed(1) + "%"); });
-}
 function siriOn(on) {
   const el = $("#siri");
+  $("#loader").classList.toggle("on", on); $("#scanDim").classList.toggle("on", on);
   if (!on && !el.classList.contains("on")) return;
-  clearInterval(siriTimer); clearTimeout(siriTimer);
-  if (on) { el.hidden = false; siriStops(); requestAnimationFrame(() => el.classList.add("on")); siriTimer = setInterval(siriStops, 500); }
+  clearTimeout(siriTimer);
+  if (on) { el.hidden = false; requestAnimationFrame(() => el.classList.add("on")); }
   else { el.classList.remove("on"); siriTimer = setTimeout(() => { el.hidden = true; }, 700); }
-}
-// Loader: the Stencit mark in white. A soft highlight travels round the 8 outer dots (smooth comet
-// tail, eased), the centre dot breathes slowly. No colour, no glow, no progress bar.
-function drawLoader(el, W, H, a) {
-  if (a <= .01) return;
-  const dp = devicePixelRatio, cx = W / 2, cy = H / 2, R = 13 * dp, T = 1.25; // seconds per turn
-  octx.save(); octx.fillStyle = "#fff";
-  for (let k = 0; k < 8; k++) {
-    const ang = k * Math.PI / 4 - Math.PI / 2;
-    const ph = ((el / T - k / 8) % 1 + 1) % 1, head = Math.pow(.5 + .5 * Math.cos(ph * 2 * Math.PI), 4); // 1 at the head, fades behind it
-    octx.globalAlpha = a * (.22 + .78 * head);
-    const r = (2 + .5 * head) * dp;
-    octx.beginPath(); octx.arc(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, r, 0, 7); octx.fill();
-  }
-  const br = .5 + .5 * Math.sin(el * 2 * Math.PI / 2.4);
-  octx.globalAlpha = a * (.55 + .45 * br);
-  octx.beginPath(); octx.arc(cx, cy, (2.4 + .4 * br) * dp, 0, 7); octx.fill();
-  octx.restore();
 }
 function drawCloud(el, a, W, H) {
   if (a <= .01 || !S.dispN) return;
-  const dp = devicePixelRatio, sp = 15 * dp, D = S.dispN, kx = S.pw / W, ky = S.ph / H;
-  octx.save();
-  for (let gy = sp / 2; gy < H; gy += sp) for (let gx = sp / 2; gx < W; gx += sp) {
+  const dp = devicePixelRatio, sp = 20 * dp, D = S.dispN, kx = S.pw / W, ky = S.ph / H;
+  // only the part of the (cover-sized) overlay that is visible in the card
+  const vb = view.getBoundingClientRect(), sb = stage.getBoundingClientRect(), fx = W / vb.width, fy = H / vb.height;
+  const x0 = Math.max(0, (sb.left - vb.left) * fx), x1 = Math.min(W, (sb.right - vb.left) * fx), y0 = Math.max(0, (sb.top - vb.top) * fy), y1 = Math.min(H, (sb.bottom - vb.top) * fy);
+  const buckets = [[], [], [], []];
+  for (let gy = y0 + sp / 2; gy < y1; gy += sp) for (let gx = x0 + sp / 2; gx < x1; gx += sp) {
     const d = D[Math.min(S.ph - 1, (gy * ky) | 0) * S.pw + Math.min(S.pw - 1, (gx * kx) | 0)], d2 = d * d;
-    const lift = d2 * 14 * dp * (.7 + .3 * Math.sin(el * 2.4 + gx * .012 + gy * .008)), r = (.6 + 2 * d2) * dp;
-    octx.globalAlpha = a * clamp(.04 + .6 * d2, 0, 1);
-    octx.fillStyle = "#ffffff";
-    octx.fillRect(gx - r, gy - r - lift, 2 * r, 2 * r);
+    const lift = d2 * 14 * dp * (.7 + .3 * Math.sin(el * 2.4 + gx * .012 + gy * .008)), r = (.7 + 2 * d2) * dp;
+    buckets[Math.min(3, (d2 * 4) | 0)].push(gx - r, gy - r - lift, 2 * r);
   }
-  octx.restore();
+  buckets.forEach((b, k) => {
+    if (!b.length) return;
+    octx.fillStyle = `rgba(255,255,255,${(a * (.06 + .18 * k)).toFixed(3)})`; octx.beginPath();
+    for (let i = 0; i < b.length; i += 3) octx.rect(b[i], b[i + 1], b[i + 2], b[i + 2]);
+    octx.fill();
+  });
 }
 
 // Mesh cache: lit surface image (geo res) plus mesh lines along and across the arm (render px),
@@ -1293,10 +1279,13 @@ async function detectBody(canvas) {
     handLm ||= await V.HandLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: HAND_MODEL }, runningMode: "IMAGE", numHands: 2 });
     const r = handLm.detect(canvas); B.hands = (r.landmarks || []).map((l, i) => ({ img: l, world: r.worldLandmarks[i] }));
   } catch (e) { console.warn("hand", e); }
+  if (MOBILE && handLm) { handLm.close(); handLm = null; } // one model at a time on phones
+  await frame();
   try {
     poseLm ||= await V.PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: POSE_MODEL }, runningMode: "IMAGE", numPoses: 1 });
     const r = poseLm.detect(canvas); if (r.landmarks?.[0]) B.pose = { img: r.landmarks[0], world: r.worldLandmarks[0] };
   } catch (e) { console.warn("pose", e); }
+  if (MOBILE && poseLm) { poseLm.close(); poseLm = null; }
   return B;
 }
 function segDist(p, a, b) { const vx = b.x - a.x, vy = b.y - a.y, t = clamp(((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy || 1), 0, 1); return Math.hypot(p.x - a.x - vx * t, p.y - a.y - vy * t); }
