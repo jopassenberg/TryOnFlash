@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Toolbar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --n-0: oklch(100% 0 0); --n-100: oklch(97% .003 75); --n-200: oklch(94.5% .003 75); --n-500: oklch(68% .005 75); --n-600: oklch(54% .005 75); --n-900: oklch(19% .003 75);
+    --frame: oklch(17% .003 75); --frame-w: 6px; --r-outer: 42px; --r-in: 36px; --inset: 8px;
+    --glass: oklch(26% .004 75 / .42); --blur: blur(24px) saturate(1.6); --on: #fff; --on-2: oklch(100% 0 0 / .6); --on-fill: oklch(100% 0 0 / .12);
+    --h: 44px; --h-lg: 56px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--n-100); color: var(--n-900); font: 400 15px/1.5 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 48px 24px 96px; display: grid; gap: 72px; }
+  h1 { margin: 0; font-weight: 400; font-size: clamp(36px, 4.5vw, 56px); line-height: 1; letter-spacing: -.045em; }
+  h1 span, .dim { color: var(--n-500); }
+  .lbl { font-size: 12px; color: var(--n-500); }
+  h2 { margin: 4px 0 6px; font-weight: 400; font-size: 28px; letter-spacing: -.035em; }
+  .sub { margin: 0 0 24px; color: var(--n-600); max-width: 760px; }
+  .pair { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+  @media (max-width: 960px) { .pair { grid-template-columns: 1fr; } }
+  ul { margin: 16px 0 0; padding-left: 18px; color: var(--n-600); font-size: 13px; display: grid; gap: 4px; }
+  .ic { width: 20px; height: 20px; fill: currentColor; flex: none; }
+
+  /* the app card */
+  .app { position: relative; overflow: hidden; border: var(--frame-w) solid var(--frame); border-radius: var(--r-outer); color: var(--on);
+    background: radial-gradient(60% 55% at 50% 52%, oklch(78% .05 55), oklch(64% .055 45) 55%, oklch(30% .01 60) 100%); }
+  .app.desk { aspect-ratio: 16 / 9.4; }
+  .app.phone { aspect-ratio: 9 / 18.5; --r-outer: 40px; --r-in: 35px; --frame-w: 5px; }
+  .app .arm { position: absolute; left: -15%; right: -15%; top: 30%; height: 44%; border-radius: 50%; background: linear-gradient(180deg, oklch(80% .06 55), oklch(64% .07 48) 60%, oklch(46% .06 42)); transform: rotate(-6deg); }
+  .phone .arm { left: 18%; right: 18%; top: -10%; height: 120%; transform: rotate(4deg); background: linear-gradient(90deg, oklch(48% .06 42), oklch(80% .06 55) 50%, oklch(48% .06 42)); }
+  .app .tat { position: absolute; left: 50%; top: 48%; width: 22%; transform: translate(-50%, -50%) rotate(-6deg); color: #161616; opacity: .9; }
+  .phone .tat { width: 46%; top: 44%; }
+  .isl { position: absolute; z-index: 3; top: 0; left: 50%; translate: -50% 0; height: 48px; padding: 0 6px; display: flex; align-items: center; gap: 4px; border-radius: 0 0 24px 24px; background: var(--frame); }
+  .isl::before, .isl::after { content: ""; position: absolute; top: 0; width: 16px; height: 16px; }
+  .isl::before { right: 100%; background: radial-gradient(circle at 0 100%, transparent 15.5px, var(--frame) 16px); }
+  .isl::after { left: 100%; background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--frame) 16px); }
+  .isl span { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--on-2); }
+  .isl span.on { background: #fff; color: var(--n-900); }
+  .isl .ic { width: 18px; height: 18px; }
+
+  .glass { background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+  .ib { width: var(--h); height: var(--h); border-radius: 50%; display: grid; place-items: center; color: var(--on); }
+  .ib:hover { background: var(--on-fill); }
+  .pw { height: var(--h); padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--n-900); white-space: nowrap; }
+
+  /* the motif as its own object: a rounded square with a white stroke, corner concentric to the frame */
+  .motif { position: relative; display: grid; place-items: center; background: oklch(100% 0 0 / .5); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+    box-shadow: inset 0 0 0 2px oklch(100% 0 0 / .9); color: #161616; }
+  .motif svg { width: 70%; height: 70%; }
+  .motif.ghost { box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .35); opacity: .75; }
+  .motif .badge { position: absolute; right: -6px; top: -6px; width: 22px; height: 22px; border-radius: 50%; background: #fff; color: var(--n-900); display: grid; place-items: center; font-size: 11px; }
+  .motif .size { position: absolute; left: 50%; bottom: 8px; translate: -50% 0; font-size: 11px; color: var(--n-900); white-space: nowrap; }
+
+  /* ===== A · Kompakte Kapsel, Motiv-Kachel daneben ===== */
+  .a-row { position: absolute; left: 50%; bottom: var(--inset); translate: -50% 0; display: flex; align-items: flex-end; gap: 8px; }
+  .a-row .motif { width: 72px; height: 72px; border-radius: calc(var(--r-in) - var(--inset) - 4px); }
+  .a-dock { height: var(--h-lg); padding: 6px; display: flex; align-items: center; gap: 2px; border-radius: 28px; }
+  .phone .a-row { left: var(--inset); right: var(--inset); translate: none; }
+  .phone .a-dock { flex: 1; }
+  .phone .a-dock .pw { margin-left: auto; }
+
+  /* ===== B · Motiv-Karte in der Ecke, Werkzeuge rechts ===== */
+  .b-motifs { position: absolute; left: var(--inset); bottom: var(--inset); display: flex; align-items: flex-end; gap: 8px; }
+  .b-motifs .motif.big { width: 112px; height: 112px; border-radius: calc(var(--r-in) - var(--inset)); }
+  .b-motifs .motif.big svg { width: 62%; height: 62%; margin-top: -14px; }
+  .b-motifs .motif.sm { width: 52px; height: 52px; border-radius: 16px; }
+  .b-motifs .add { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: var(--on); }
+  .b-tools { position: absolute; right: var(--inset); bottom: var(--inset); height: var(--h-lg); padding: 6px; display: flex; align-items: center; gap: 2px; border-radius: calc(var(--r-in) - var(--inset)); }
+  .phone .b-motifs .motif.big { width: 96px; height: 96px; }
+  .phone .b-motifs .motif.sm, .phone .b-motifs .add { display: none; }
+  .phone .b-tools { flex-direction: column; height: auto; width: var(--h-lg); padding: 6px; gap: 4px; }
+  .phone .b-tools .pw { width: 44px; padding: 0; justify-content: center; }
+  .phone .b-tools .pw span { display: none; }
+
+  /* ===== C · Seitenleiste wie Bild 7, Motiv oben darin ===== */
+  .c-rail { position: absolute; right: 0; top: 50%; translate: 0 -50%; width: 92px; padding: 10px 0; display: grid; justify-items: center; gap: 8px; background: var(--frame);
+    border-radius: 28px 0 0 28px; }
+  .c-rail::before, .c-rail::after { content: ""; position: absolute; right: 0; width: 20px; height: 20px; }
+  .c-rail::before { bottom: 100%; background: radial-gradient(circle at 0 0, transparent 19.5px, var(--frame) 20px); }
+  .c-rail::after { top: 100%; background: radial-gradient(circle at 0 100%, transparent 19.5px, var(--frame) 20px); }
+  .c-rail .motif { width: 72px; height: 72px; border-radius: 20px; background: oklch(100% 0 0 / .78); }
+  .c-rail .sep { width: 40px; height: 1px; background: oklch(100% 0 0 / .12); }
+  .c-rail .ib { color: var(--on-2); }
+  .c-rail .ib:hover { color: var(--on); }
+  .c-rail .go { width: 72px; height: 72px; border-radius: 20px; background: #fff; color: var(--n-900); display: grid; place-items: center; align-content: center; gap: 2px; font-size: 12px; }
+  .phone .c-rail { top: auto; bottom: 120px; translate: none; width: 76px; }
+  .phone .c-rail .motif, .phone .c-rail .go { width: 60px; height: 60px; border-radius: 18px; }
+  .phone .c-rail .ib.hide-phone { display: none; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol>
+<symbol id="i-ai-generate" viewBox="0 0 32 32"><path stroke-width="0" d="M19 22v-2h1v-7h-1v-2h4v2h-1v7h1v2h-4zM15.5005 22h2l-3.5005-11h-3l-3.4966 11h1.9988l.6018-2h4.7781l.6184 2zm-4.7947-4l1.6284-5.4111.2559-.0024 1.6736 5.4136h-3.5579zM32 4L28 4 28 0 26 0 26 4 22 4 22 6 26 6 26 10 28 10 28 6 32 6 32 4zM30 12H32V14H30zM18 0H20V2H18z"/><path stroke-width="0" d="M32 32L0 32 0 0 14 0 14 2 2 2 2 30 30 30 30 18 32 18 32 32z"/></symbol>
+<symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol>
+<symbol id="i-arrow--right" viewBox="0 0 32 32"><path d="M18 6L16.57 7.393 24.15 15 4 15 4 17 24.15 17 16.57 24.573 18 26 28 16 18 6z"/></symbol>
+<symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol>
+<symbol id="i-checkmark" viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></symbol>
+<symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol>
+<symbol id="i-close" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol>
+<symbol id="i-color-palette" viewBox="0 0 32 32"><circle cx="10" cy="12" r="2"/><circle cx="16" cy="9" r="2"/><circle cx="22" cy="12" r="2"/><circle cx="23" cy="18" r="2"/><circle cx="19" cy="23" r="2"/><path d="M16.54,2A14,14,0,0,0,2,16a4.82,4.82,0,0,0,6.09,4.65l1.12-.31A3,3,0,0,1,13,23.24V27a3,3,0,0,0,3,3A14,14,0,0,0,30,15.46,14.05,14.05,0,0,0,16.54,2Zm8.11,22.31A11.93,11.93,0,0,1,16,28a1,1,0,0,1-1-1V23.24a5,5,0,0,0-5-5,5.07,5.07,0,0,0-1.33.18l-1.12.31A2.82,2.82,0,0,1,4,16,12,12,0,0,1,16.47,4,12.18,12.18,0,0,1,28,15.53,11.89,11.89,0,0,1,24.65,24.32Z"/></symbol>
+<symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol>
+<symbol id="i-crop" viewBox="0 0 32 32"><path d="M25,20H23V9H12V7H23a2,2,0,0,1,2,2Z"/><path d="M9,23V2H7V7H2V9H7V23a2,2,0,0,0,2,2H23v5h2V25h5V23Z"/></symbol>
+<symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol>
+<symbol id="i-cut-out" viewBox="0 0 32 32"><path d="M19.05 13.7326L18.05 12 7.928 17.8457 6.9312 17.27a2.9524 2.9524 0 00.6672-.769A3 3 0 103.5 17.5986l2.428 1.4019L3.5 20.4023a3.0342 3.0342 0 103.4407.3223l.987-.5693L14.5914 24l1-1.7294-5.6634-3.27zM4.0344 15.26a1 1 0 11.4658.6069A.9929.9929 0 014.0344 15.26zM4.9988 22a1 1 0 11-.8645 1.5A1 1 0 014.9988 22zM17 26H21V28H17zM10 26H14V28H10z"/><path d="M28,28H24V26h4V4H7V8H5V4A2.0023,2.0023,0,0,1,7,2H28a2.0023,2.0023,0,0,1,2,2V26A2.0023,2.0023,0,0,1,28,28Z"/></symbol>
+<symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol>
+<symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol>
+<symbol id="i-home" viewBox="0 0 32 32"><path d="M16.6123,2.2138a1.01,1.01,0,0,0-1.2427,0L1,13.4194l1.2427,1.5717L4,13.6209V26a2.0041,2.0041,0,0,0,2,2H26a2.0037,2.0037,0,0,0,2-2V13.63L29.7573,15,31,13.4282ZM18,26H14V18h4Zm2,0V18a2.0023,2.0023,0,0,0-2-2H14a2.002,2.002,0,0,0-2,2v8H6V12.0615l10-7.79,10,7.8005V26Z"/></symbol>
+<symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol>
+<symbol id="i-information" viewBox="0 0 32 32"><path d="M17 22L17 14 13 14 13 16 15 16 15 22 12 22 12 24 20 24 20 22 17 22zM16 8a1.5 1.5 0 101.5 1.5A1.5 1.5 0 0016 8z"/><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/></symbol>
+<symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol>
+<symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol>
+<symbol id="i-magic-wand" viewBox="0 0 32 32"><path d="M29.4141,24,12,6.5859a2.0476,2.0476,0,0,0-2.8281,0l-2.586,2.586a2.0021,2.0021,0,0,0,0,2.8281L23.999,29.4141a2.0024,2.0024,0,0,0,2.8281,0l2.587-2.5865a1.9993,1.9993,0,0,0,0-2.8281ZM8,10.5859,10.5859,8l5,5-2.5866,2.5869-5-5ZM25.4131,28l-11-10.999L17,14.4141l11,11Z"/><path d="M2.586 14.586H5.414V17.414H2.586z" transform="rotate(-45 4 16)"/><path d="M14.586 2.586H17.414V5.414H14.586z" transform="rotate(-45 16 4)"/><path d="M2.586 2.586H5.414V5.414H2.586z" transform="rotate(-45 4 4)"/></symbol>
+<symbol id="i-overflow-menu--horizontal" viewBox="0 0 32 32"><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/><circle cx="24" cy="16" r="2"/></symbol>
+<symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol>
+<symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol>
+<symbol id="i-redo" viewBox="0 0 32 32"><path d="M12,10H24.1851L20.5977,6.4141,22,5,28,11,22,17l-1.4023-1.4146L24.1821,12H12a6,6,0,0,0,0,12h8v2H12a8,8,0,0,1,0-16Z"/></symbol>
+<symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 32 32"><path d="M17.91 26.82l.35 2a12.9 12.9 0 004.24-1.54l-1-1.73A10.88 10.88 0 0117.91 26.82zM24.42 23.07L26 24.35a13 13 0 002.24-3.91l-1.87-.68A11 11 0 0124.42 23.07zM9.5 27.25a12.9 12.9 0 004.24 1.54l.35-2a10.88 10.88 0 01-3.59-1.3zM5.67 19.76l-1.87.68A13 13 0 006 24.35l.32-.26 1.22-1h0a11 11 0 01-1.91-3.31zM29 16a12.85 12.85 0 00-.8-4.44l-1.87.68A11.18 11.18 0 0127 16zM26 7.65a13 13 0 00-20 0V4H4v8h8V10H6.81A11 11 0 0124.42 8.93z"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 32 32"><path d="M29,10H3a1,1,0,0,0-1,1V21a1,1,0,0,0,1,1H29a1,1,0,0,0,1-1V11A1,1,0,0,0,29,10ZM28,20H4V12H8v4h2V12h5v4h2V12h5v4h2V12h4Z"/></symbol>
+<symbol id="i-scale" viewBox="0 0 32 32"><path d="M13,17H7a2,2,0,0,0-2,2v6a2,2,0,0,0,2,2h6a2,2,0,0,0,2-2V19A2,2,0,0,0,13,17ZM7,25V19h6v6Z"/><path d="M19,21v2h6a2,2,0,0,0,2-2V7a2,2,0,0,0-2-2H11A2,2,0,0,0,9,7v6h2V7H25V21"/></symbol>
+<symbol id="i-settings" viewBox="0 0 32 32"><path d="M27,16.76c0-.25,0-.5,0-.76s0-.51,0-.77l1.92-1.68A2,2,0,0,0,29.3,11L26.94,7a2,2,0,0,0-1.73-1,2,2,0,0,0-.64.1l-2.43.82a11.35,11.35,0,0,0-1.31-.75l-.51-2.52a2,2,0,0,0-2-1.61H13.64a2,2,0,0,0-2,1.61l-.51,2.52a11.48,11.48,0,0,0-1.32.75L7.43,6.06A2,2,0,0,0,6.79,6,2,2,0,0,0,5.06,7L2.7,11a2,2,0,0,0,.41,2.51L5,15.24c0,.25,0,.5,0,.76s0,.51,0,.77L3.11,18.45A2,2,0,0,0,2.7,21L5.06,25a2,2,0,0,0,1.73,1,2,2,0,0,0,.64-.1l2.43-.82a11.35,11.35,0,0,0,1.31.75l.51,2.52a2,2,0,0,0,2,1.61h4.72a2,2,0,0,0,2-1.61l.51-2.52a11.48,11.48,0,0,0,1.32-.75l2.42.82a2,2,0,0,0,.64.1,2,2,0,0,0,1.73-1L29.3,21a2,2,0,0,0-.41-2.51ZM25.21,24l-3.43-1.16a8.86,8.86,0,0,1-2.71,1.57L18.36,28H13.64l-.71-3.55a9.36,9.36,0,0,1-2.7-1.57L6.79,24,4.43,20l2.72-2.4a8.9,8.9,0,0,1,0-3.13L4.43,12,6.79,8l3.43,1.16a8.86,8.86,0,0,1,2.71-1.57L13.64,4h4.72l.71,3.55a9.36,9.36,0,0,1,2.7,1.57L25.21,8,27.57,12l-2.72,2.4a8.9,8.9,0,0,1,0,3.13L27.57,20Z"/><path d="M16,22a6,6,0,1,1,6-6A5.94,5.94,0,0,1,16,22Zm0-10a3.91,3.91,0,0,0-4,4,3.91,3.91,0,0,0,4,4,3.91,3.91,0,0,0,4-4A3.91,3.91,0,0,0,16,12Z"/></symbol>
+<symbol id="i-share" viewBox="0 0 32 32"><path d="M23,20a5,5,0,0,0-3.89,1.89L11.8,17.32a4.46,4.46,0,0,0,0-2.64l7.31-4.57A5,5,0,1,0,18,7a4.79,4.79,0,0,0,.2,1.32l-7.31,4.57a5,5,0,1,0,0,6.22l7.31,4.57A4.79,4.79,0,0,0,18,25a5,5,0,1,0,5-5ZM23,4a3,3,0,1,1-3,3A3,3,0,0,1,23,4ZM7,19a3,3,0,1,1,3-3A3,3,0,0,1,7,19Zm16,9a3,3,0,1,1,3-3A3,3,0,0,1,23,28Z"/></symbol>
+<symbol id="i-time" viewBox="0 0 32 32"><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/><path d="M20.59 22L15 16.41 15 7 17 7 17 15.58 22 20.59 20.59 22z"/></symbol>
+<symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol>
+<symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol>
+<symbol id="i-view" viewBox="0 0 32 32"><path d="M30.94,15.66A16.69,16.69,0,0,0,16,5,16.69,16.69,0,0,0,1.06,15.66a1,1,0,0,0,0,.68A16.69,16.69,0,0,0,16,27,16.69,16.69,0,0,0,30.94,16.34,1,1,0,0,0,30.94,15.66ZM16,25c-5.3,0-10.9-3.93-12.93-9C5.1,10.93,10.7,7,16,7s10.9,3.93,12.93,9C26.9,21.07,21.3,25,16,25Z"/><path d="M16,10a6,6,0,1,0,6,6A6,6,0,0,0,16,10Zm0,10a4,4,0,1,1,4-4A4,4,0,0,1,16,20Z"/></symbol>
+<symbol id="bird" viewBox="0 0 64 48"><path d="M4 30c10-2 18-10 22-20 2 8 6 12 12 13 6-6 14-8 22-6-8 2-12 6-14 12 4 2 6 6 6 10-6-4-12-5-18-3-6 4-14 6-30-6z" fill="currentColor"/></symbol>
+<symbol id="rose" viewBox="0 0 48 48"><circle cx="24" cy="20" r="11" fill="currentColor"/><path d="M24 31v13M24 38c-5-1-8-4-9-8M24 36c5-1 8-4 9-8" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+  <div>
+    <span class="lbl">Toolbar · drei Entwürfe</span>
+    <h1>Schmalere Leiste,<br><span>Motiv als eigenes Objekt.</span></h1>
+    <p class="sub" style="margin-top:16px">Überall gleich: Das Motiv ist eine eigene Kachel mit weißem Rand, eckig, mit Rundung passend zum Rahmen. Die Ecken folgen weiter der Kette 42 → 36 → 28.</p>
+  </div>
+
+  <section>
+    <span class="lbl">A</span><h2>Kompakte Kapsel <span class="dim">und Motiv-Kachel daneben</span></h2>
+    <p class="sub">Am nächsten an heute. Die Kapsel schrumpft auf das Nötige, das aktive Motiv steht links daneben als größere Kachel (72 px). Weitere Motive: Kachel antippen, dann klappt eine Reihe auf.</p>
+    <div class="pair">
+      <div class="app desk"><i class="arm"></i><svg class="tat"><use href="#bird"/></svg>
+        <div class="isl"><span class="on"><svg class="ic"><use href="#i-image"/></svg></span><span><svg class="ic"><use href="#i-layers"/></svg></span><span><svg class="ic"><use href="#i-cube"/></svg></span></div>
+        <div class="a-row">
+          <div class="motif"><svg><use href="#bird"/></svg><span class="badge">2</span></div>
+          <div class="a-dock glass"><span class="ib"><svg class="ic"><use href="#i-add"/></svg></span><span class="ib"><svg class="ic"><use href="#i-camera"/></svg></span><span class="pw">Stechen</span></div>
+        </div>
+      </div>
+      <div class="app phone"><i class="arm"></i><svg class="tat"><use href="#bird"/></svg>
+        <div class="isl"><span class="on"><svg class="ic"><use href="#i-image"/></svg></span><span><svg class="ic"><use href="#i-layers"/></svg></span><span><svg class="ic"><use href="#i-cube"/></svg></span></div>
+        <div class="a-row">
+          <div class="motif"><svg><use href="#bird"/></svg><span class="badge">2</span></div>
+          <div class="a-dock glass"><span class="ib"><svg class="ic"><use href="#i-add"/></svg></span><span class="ib"><svg class="ic"><use href="#i-camera"/></svg></span><span class="pw">Stechen</span></div>
+        </div>
+      </div>
+    </div>
+    <ul><li>Desktop: Leiste ca. 240 px statt fast halber Kartenbreite.</li><li>Motiv-Kachel Radius 24 = 36 − 8 − 4, schließt mit der Kapsel unten bündig ab.</li></ul>
+  </section>
+
+  <section>
+    <span class="lbl">B</span><h2>Motiv-Karte in der Ecke <span class="dim">und Werkzeuge rechts</span></h2>
+    <p class="sub">Das Motiv bekommt die linke untere Ecke als große Karte (112 px) mit Maßangabe, die Ecke ist konzentrisch zum Rahmen. Werkzeuge und Stechen sitzen gegenüber. Die Mitte bleibt frei für das Tattoo.</p>
+    <div class="pair">
+      <div class="app desk"><i class="arm"></i><svg class="tat"><use href="#bird"/></svg>
+        <div class="isl"><span class="on"><svg class="ic"><use href="#i-image"/></svg></span><span><svg class="ic"><use href="#i-layers"/></svg></span><span><svg class="ic"><use href="#i-cube"/></svg></span></div>
+        <div class="b-motifs">
+          <div class="motif big"><svg><use href="#bird"/></svg><span class="size">8 × 6 cm</span></div>
+          <div class="motif sm ghost"><svg><use href="#rose"/></svg></div>
+          <span class="add glass"><svg class="ic"><use href="#i-add"/></svg></span>
+        </div>
+        <div class="b-tools glass"><span class="ib"><svg class="ic"><use href="#i-camera"/></svg></span><span class="pw"><svg class="ic"><use href="#i-pen"/></svg><span>Stechen</span></span></div>
+      </div>
+      <div class="app phone"><i class="arm"></i><svg class="tat"><use href="#bird"/></svg>
+        <div class="isl"><span class="on"><svg class="ic"><use href="#i-image"/></svg></span><span><svg class="ic"><use href="#i-layers"/></svg></span><span><svg class="ic"><use href="#i-cube"/></svg></span></div>
+        <div class="b-motifs"><div class="motif big"><svg><use href="#bird"/></svg><span class="size">8 × 6 cm</span></div></div>
+        <div class="b-tools glass"><span class="ib"><svg class="ic"><use href="#i-add"/></svg></span><span class="ib"><svg class="ic"><use href="#i-camera"/></svg></span><span class="pw"><svg class="ic"><use href="#i-pen"/></svg><span>Stechen</span></span></div>
+      </div>
+    </div>
+    <ul><li>Desktop: keine Leiste in der Mitte mehr, nur zwei Inseln in den Ecken.</li><li>Handy: Werkzeuge stehen senkrecht rechts unten, Stechen als runder weißer Knopf.</li></ul>
+  </section>
+
+  <section>
+    <span class="lbl">C</span><h2>Seitenleiste <span class="dim">wie dein Bild 7</span></h2>
+    <p class="sub">Eine schwarze Leiste wächst rechts aus dem Rahmen, wie die Insel oben. Oben das Motiv als Kachel, darunter Werkzeuge, unten Stechen als weiße Kachel. Unten bleibt das Bild ganz frei.</p>
+    <div class="pair">
+      <div class="app desk"><i class="arm"></i><svg class="tat"><use href="#bird"/></svg>
+        <div class="isl"><span class="on"><svg class="ic"><use href="#i-image"/></svg></span><span><svg class="ic"><use href="#i-layers"/></svg></span><span><svg class="ic"><use href="#i-cube"/></svg></span></div>
+        <div class="c-rail">
+          <div class="motif"><svg><use href="#bird"/></svg></div>
+          <span class="ib"><svg class="ic"><use href="#i-add"/></svg></span>
+          <span class="ib hide-phone"><svg class="ic"><use href="#i-camera"/></svg></span>
+          <i class="sep"></i>
+          <div class="go"><svg class="ic"><use href="#i-pen"/></svg>Stechen</div>
+        </div>
+      </div>
+      <div class="app phone"><i class="arm"></i><svg class="tat"><use href="#bird"/></svg>
+        <div class="isl"><span class="on"><svg class="ic"><use href="#i-image"/></svg></span><span><svg class="ic"><use href="#i-layers"/></svg></span><span><svg class="ic"><use href="#i-cube"/></svg></span></div>
+        <div class="c-rail">
+          <div class="motif"><svg><use href="#bird"/></svg></div>
+          <span class="ib"><svg class="ic"><use href="#i-add"/></svg></span>
+          <span class="ib hide-phone"><svg class="ic"><use href="#i-camera"/></svg></span>
+          <i class="sep"></i>
+          <div class="go"><svg class="ic"><use href="#i-pen"/></svg>Stechen</div>
+        </div>
+      </div>
+    </div>
+    <ul><li>Gleiche Sprache wie die Insel: beide wachsen mit Hohlkehlen aus dem Rahmen.</li><li>Am auffälligsten, braucht aber rechts 92 px Bildbreite.</li></ul>
+  </section>
+</div>
+</body>
+</html>
