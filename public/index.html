@@ -314,7 +314,7 @@
   /* Collage: Positionen und Drehung kommen aus collage.js */
   .fl-grid { position: relative; min-height: 40px; }
   .fl-tile { position: absolute; display: grid; place-items: center; cursor: pointer; transform: rotate(var(--r, 0deg)); animation: pop .5s var(--spring) both; transition: transform .45s var(--spring), opacity .25s; }
-  .fl-tile:hover { transform: rotate(var(--r, 0deg)) translateY(-4px) scale(1.02); }
+  @media (hover: hover) { .fl-tile:hover { transform: rotate(var(--r, 0deg)) translateY(-4px) scale(1.02); } }
   .fl-tile:active { transform: rotate(var(--r, 0deg)) scale(.96); }
   .fl-tile.dragging { z-index: 5; transition: none; transform: rotate(var(--r, 0deg)) scale(1.05); filter: drop-shadow(0 18px 24px oklch(0% 0 0 / .12)); cursor: grabbing; }
   .fl-tile img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
@@ -341,10 +341,11 @@
   .fl-view { position: fixed; inset: 0; z-index: 20; display: grid; grid-template-rows: 1fr auto; gap: 20px; padding: 32px 24px max(24px, env(safe-area-inset-bottom)); background: #fff; animation: fade .25s var(--ease-out); }
   .fl-view .big { min-height: 0; display: grid; place-items: center; }
   .fl-view .big img { max-width: min(100%, 760px); max-height: 100%; object-fit: contain; animation: pop .5s var(--spring); }
-  .fl-view .bar { justify-self: center; display: flex; gap: 8px; }
+  .fl-view .bar { justify-self: center; width: min(100%, 360px); display: grid; gap: 10px; }
+  .fl-view .bar .icons { display: flex; justify-content: center; gap: 10px; }
   .fl-view .bar .rb { width: 52px; height: 52px; }
   .fl-view .bar .rb .ic { width: 20px; height: 20px; }
-  .fl-view .bar .pill { height: 52px; padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: var(--n-900); color: #fff; font-size: 15px; }
+  .fl-view .bar .pill { width: 100%; height: 56px; padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--n-900); color: #fff; font-size: 16px; }
   @keyframes pop { from { opacity: 0; transform: scale(.94); } }
   @keyframes fade { from { opacity: 0; } }
   /* Dialoge (Teilen, Links): dunkle Karte unten in der Mitte */
@@ -2586,14 +2587,14 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
     if (P.size === 2) { const [a, b] = [...P.values()]; if (g?.tile) { g.tile.classList.remove("dragging"); g.tile.style.left = g.l + "px"; g.tile.style.top = g.t + "px"; }
       g = { pinch: true, d: Math.hypot(b.x - a.x, b.y - a.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, z: VIEW.z, x: VIEW.x, y: VIEW.y }; return; }
     const tile = e.target.closest(".fl-tile");
-    g = { tile, sx: e.clientX, sy: e.clientY, vx: VIEW.x, vy: VIEW.y, moved: false, l: tile ? parseFloat(tile.style.left) : 0, t: tile ? parseFloat(tile.style.top) : 0 };
+    g = { tile, sx: e.clientX, sy: e.clientY, vx: VIEW.x, vy: VIEW.y, moved: false, t0: performance.now(), slop: e.pointerType === "mouse" ? 5 : 12, l: tile ? parseFloat(tile.style.left) : 0, t: tile ? parseFloat(tile.style.top) : 0 };
   });
   V.addEventListener("pointermove", e => {
     if (!P.has(e.pointerId) || !g) return; P.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (g.pinch) { if (P.size < 2) return; const [a, b] = [...P.values()], d = Math.hypot(b.x - a.x, b.y - a.y);
       VIEW.z = g.z; VIEW.x = g.x; VIEW.y = g.y; zoomAt(g.z * d / g.d, g.mx, g.my); VIEW.x += (a.x + b.x) / 2 - g.mx; VIEW.y += (a.y + b.y) / 2 - g.my; applyView(); return; }
     const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
-    if (!g.moved && Math.hypot(dx, dy) < 6) return;
+    if (!g.moved && Math.hypot(dx, dy) < g.slop) return;
     g.moved = true;
     if (g.tile && !FL.selecting) { g.tile.classList.add("dragging"); g.tile.style.left = g.l + dx / VIEW.z + "px"; g.tile.style.top = g.t + dy / VIEW.z + "px"; }
     else { V.classList.add("panning"); VIEW.x = g.vx + dx; VIEW.y = g.vy + dy; applyView(); }
@@ -2604,7 +2605,7 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
     if (g.pinch) { if (!P.size) g = null; return; }
     if (P.size) return;
     const G = g; g = null;
-    if (G.tile && !G.moved) { const id = G.tile.dataset.id; FL.selecting ? toggleSel(id) : viewFlash(id); return; }
+    if (G.tile && !G.moved) { if (e.type === "pointercancel") return; const id = G.tile.dataset.id; FL.selecting ? toggleSel(id) : setTimeout(() => viewFlash(id), 0); return; }
     if (G.tile && G.moved && !FL.selecting) {
       G.tile.classList.remove("dragging");
       const f = FL.items.find(x => x.id === G.tile.dataset.id); if (!f) return;
@@ -2652,14 +2653,15 @@ async function editFlash(f) {
 function viewFlash(id) {
   const f = FL.items.find(x => x.id === id); if (!f) return;
   $("#flView").innerHTML = `<div class="fl-view" role="dialog" aria-label="${esc(f.name)}"><div class="big"><img alt="" src="${flashURL(f)}"></div>
-    <div class="bar"><button class="rb" data-a="close" aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
+    <div class="bar"><div class="icons"><button class="rb" data-a="close" aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
     <button class="rb" data-a="del" aria-label="Löschen"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button>
     <button class="rb" data-a="share" aria-label="Per Link teilen"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></button>
     <button class="rb" data-a="edit" aria-label="Bearbeiten"><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg></button>
-    <button class="pill" data-a="try"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Anprobieren</button></div></div>`;
-  const close = () => { $("#flView").innerHTML = ""; };
-  $("#flView").querySelector(".big").onclick = close;
+    </div><button class="pill" data-a="try"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Anprobieren</button></div></div>`;
+  const close = () => { $("#flView").innerHTML = ""; }, opened = performance.now(), ready = () => performance.now() - opened > 450;
+  $("#flView").querySelector(".big").onclick = () => { if (ready()) close(); };
   $("#flView").querySelectorAll("[data-a]").forEach(b => b.onclick = async () => {
+    if (!ready()) return;
     const a = b.dataset.a; close();
     if (a === "try") tryFlash(f.blob);
     if (a === "share") { FL.sel = new Set([id]); shareSheet(); }
