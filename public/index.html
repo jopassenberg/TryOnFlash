@@ -193,10 +193,12 @@
   .sum-x .ic { width: 16px; height: 16px; }
   .needles { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   .needles li { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 12px; }
+  .nname { display: flex; align-items: baseline; gap: 12px; }
+  .nname > :first-child { min-width: 44px; }
   .nic { width: 28px; height: 28px; display: grid; place-items: center; }
   .nic svg { width: 28px; height: 28px; }
-  .swatches { display: flex; flex-wrap: wrap; gap: 6px 16px; }
-  .swatches span { display: inline-flex; align-items: center; gap: 8px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+  .swatches span { height: 32px; padding: 0 12px 0 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: oklch(100% 0 0 / .1); }
   .swatches i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .25); }
   .sum-scale { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .sum-scale input { width: 56px; height: 32px; border: 0; border-radius: 999px; background: oklch(100% 0 0 / .12); color: #fff; text-align: center; font-size: 14px; }
@@ -1639,7 +1641,7 @@ function updateInfo() {
     $("#islSumBody").innerHTML = `
       <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="dim">${fmt(s.area, 0)} cm²${sc.part ? " · " + sc.part : ""}</div></div>
         <button class="sum-x" id="sumClose" aria-label="Zusammenfassung schließen"><svg class="ic" aria-hidden="true"><use href="#i-chevron--up"/></svg></button></header>
-      <ul class="needles">${s.needles.map(n => `<li><span class="nic">${needleIcon(n)}</span><span>${n.name} <span class="dim">${n.role}</span></span><span class="dim">${n.detail}</span></li>`).join("")}</ul>
+      <ul class="needles">${s.needles.map(n => `<li><span class="nic">${needleIcon(n)}</span><span class="nname"><span>${n.name}</span><span class="dim">${n.role}</span></span><span class="dim">${n.detail}</span></li>`).join("")}</ul>
       <div class="swatches">${s.colours.map(c => `<span><i style="background:${SWATCH[c] || "#888"}"></i>${c}</span>`).join("")}</div>
       <label class="sum-scale"><span>Maßstab <span class="dim">± ${sc.tol ?? 20} %</span></span><span><input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}" aria-label="Breite an der Stelle in cm"> <span class="dim">cm Breite</span></span></label>`;
     return syncIsland();
@@ -1729,12 +1731,12 @@ function summarise() {
   const area = st.ink * w * h, fillShare = thick.length / Math.max(st.inside, 1), fill = fillShare > .2;
   const fillW = thick.length ? thick[Math.floor(thick.length * .9)] : 0; // breiteste typische Stelle der Flächen
   const needles = [], L = pickLiner(lineMm);
-  needles.push({ type: "RL", n: L.n, name: `${L.n}RL`, role: "Linien", detail: `${fmt(L.w)} mm` });
+  needles.push({ type: "RL", n: L.n, name: `${L.n}RL`, role: "für Linien", detail: `${fmt(L.w)} mm` });
   if (fill) {
-    if (fillW < 4) needles.push({ type: "RS", n: fillW < 3 ? 5 : 7, name: `${fillW < 3 ? 5 : 7}RS`, role: "Kleine Flächen", detail: "" });
-    else { const n = pickMagnum(fillW); needles.push({ type: "M1", n, name: `${n}M1`, role: "Füllen", detail: "" }); }
+    if (fillW < 4) needles.push({ type: "RS", n: fillW < 3 ? 5 : 7, name: `${fillW < 3 ? 5 : 7}RS`, role: "für kleine Flächen", detail: "" });
+    else { const n = pickMagnum(fillW); needles.push({ type: "M1", n, name: `${n}M1`, role: "für Flächen", detail: "" }); }
   }
-  if (st.shade > .12) { const n = Math.max(7, pickMagnum(Math.max(fillW, lineMm * 6), 23)); needles.push({ type: "RM", n, name: `${n}RM`, role: "Schattieren", detail: "" }); }
+  if (st.shade > .12) { const n = Math.max(7, pickMagnum(Math.max(fillW, lineMm * 6), 23)); needles.push({ type: "RM", n, name: `${n}RM`, role: "für Schatten", detail: "" }); }
   return { area, lineMm, needles, colours: st.colours };
 }
 // Nadel-Icon im Stil des Logos: Punkte wie Nadelspitzen von vorne. Round Liner dicht im Kreis,
