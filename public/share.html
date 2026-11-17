@@ -25,9 +25,9 @@
   .chips { display: flex; gap: 6px; }
   .chip { height: 32px; padding: 0 14px 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; background: var(--fill); white-space: nowrap; }
   .note { margin: 8px 0 0; color: var(--dim); max-width: 560px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 40px 32px; padding: 24px 0 0; }
-  .tile { min-width: 0; aspect-ratio: 1; display: grid; place-items: center; animation: pop .5s var(--spring) both; transition: transform .45s var(--spring); }
-  .tile:hover { transform: translateY(-4px) rotate(-1deg); }
+  .grid { position: relative; margin-top: 24px; min-height: 40px; }
+  .tile { position: absolute; display: grid; place-items: center; transform: rotate(var(--r, 0deg)); animation: pop .5s var(--spring) both; transition: transform .45s var(--spring); }
+  .tile:hover { transform: rotate(var(--r, 0deg)) translateY(-4px) scale(1.02); }
   .tile img { width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none; user-select: none; pointer-events: none; }
   @keyframes pop { from { opacity: 0; transform: scale(.94); } }
   .empty { min-height: 70dvh; display: grid; place-items: center; align-content: center; gap: 10px; text-align: center; }
@@ -50,7 +50,7 @@
     .wrap { padding: 0 12px 32px; }
     .top { height: 60px; }
     .chip.lock span { display: none; }
-    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+    .grid { margin-top: 12px; }
   }
 </style>
 </head>
@@ -69,6 +69,7 @@
     <button class="pill" id="lbTry"><svg class="ic"><use href="#i-camera"/></svg>Auf der Haut ansehen</button></div>
 </div>
 <script type="module">
+import { layoutCollage } from "/collage.js";
 const $ = s => document.querySelector(s);
 const b64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
 const id = location.pathname.split("/")[2];
@@ -119,7 +120,7 @@ function distanceField(inside, w, h) { // distance (px) from every pixel to the 
   return D;
 }
 function dieCut(c) {
-  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .06, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw) + 2;
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .075, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw) + 2;
   const W = w + 2 * o, H = h + 2 * o, cv = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
   const k = Math.min(1, 900 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
   const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
@@ -142,18 +143,26 @@ function dieCut(c) {
   return res;
 }
 const stickers = [];
+let laidW = 0;
 async function render() {
-  $("#inner").innerHTML = `${data.note ? `<p class="note"></p>` : ""}<div class="grid">${data.flashes.map((f, i) => `<button class="tile" data-i="${i}" style="animation-delay:${i * 40}ms" aria-label="Flash ${i + 1}"><img alt=""></button>`).join("")}</div>`;
+  $("#inner").innerHTML = `${data.note ? `<p class="note"></p>` : ""}<div class="grid" id="grid"></div>`;
   if (data.note) $(".note").textContent = data.note; // als Text, nie als HTML
   tick();
-  const tiles = [...document.querySelectorAll(".tile")];
-  for (const t of tiles) {
-    const i = +t.dataset.i, f = data.flashes[i];
-    t.onclick = () => open(i);
-    const img = new Image(); img.src = `data:${f.type};base64,${f.data}`; await img.decode();
+  for (let i = 0; i < data.flashes.length; i++) {
+    const f = data.flashes[i], img = new Image(); img.src = `data:${f.type};base64,${f.data}`; await img.decode();
     const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }); c.getContext("2d").drawImage(img, 0, 0);
-    stickers[i] = dieCut(c).toDataURL("image/png"); t.querySelector("img").src = stickers[i];
+    stickers[i] = dieCut(c).toDataURL("image/png");
   }
+  await layout();
+  new ResizeObserver(() => { if ($("#grid") && $("#grid").clientWidth !== laidW) layout(); }).observe($("#inner"));
+}
+async function layout() {
+  const grid = $("#grid"), W = grid.clientWidth; laidW = W;
+  const L = await layoutCollage(stickers.map((s, i) => ({ id: id + ":" + i, src: s })), W);
+  grid.style.height = L.height + "px";
+  grid.innerHTML = L.items.map((p, k) => { const i = +p.id.split(":")[1];
+    return `<button class="tile" data-i="${i}" style="left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;width:${p.w.toFixed(1)}px;height:${p.h.toFixed(1)}px;--r:${p.rot.toFixed(2)}deg;animation-delay:${k * 40}ms" aria-label="Flash ${i + 1}"><img alt="" src="${stickers[i]}"></button>`; }).join("");
+  grid.querySelectorAll(".tile").forEach(t => t.onclick = () => open(+t.dataset.i));
 }
 function open(i) {
   current = data.flashes[i]; $("#lbImg").src = stickers[i] || `data:${current.type};base64,${current.data}`;

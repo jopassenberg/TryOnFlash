@@ -304,10 +304,11 @@
   .rb .badge { position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; line-height: 18px; text-align: center; background: var(--n-900); color: #fff; }
   .flashes { position: relative; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
   .flashes::-webkit-scrollbar { display: none; }
-  .fl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 40px 32px; padding: 16px 8px 120px; }
-  .fl-tile { position: relative; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; animation: pop .5s var(--spring) both; transition: transform .45s var(--spring), opacity .25s; }
-  .fl-tile:hover { transform: translateY(-4px) rotate(-1deg); }
-  .fl-tile:active { transform: scale(.96); }
+  /* Collage: Positionen und Drehung kommen aus collage.js */
+  .fl-grid { position: relative; margin: 16px 8px 120px; min-height: 40px; }
+  .fl-tile { position: absolute; display: grid; place-items: center; transform: rotate(var(--r, 0deg)); animation: pop .5s var(--spring) both; transition: transform .45s var(--spring), opacity .25s; }
+  .fl-tile:hover { transform: rotate(var(--r, 0deg)) translateY(-4px) scale(1.02); }
+  .fl-tile:active { transform: rotate(var(--r, 0deg)) scale(.96); }
   .fl-tile img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
   .fl-tile .chk { position: absolute; right: 6%; top: 6%; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--fill-2); color: transparent; }
   .fl-tile .chk .ic { width: 15px; height: 15px; }
@@ -432,7 +433,7 @@
     .card { --frame-w: 5px; --r-outer: 40px; }
     .tabbar { justify-self: stretch; margin-top: var(--s2); }
     .tabbar button { flex: 1; justify-content: center; }
-    .fl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; padding: 8px 4px 120px; }
+    .fl-grid { margin: 8px 4px 120px; }
     .fl-dock { left: var(--s2); right: var(--s2); translate: none; bottom: calc(max(var(--s2), env(safe-area-inset-bottom)) + 48px + var(--s3)); }
     /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
     .card:has(#info:not([hidden])) .stage > .status { top: calc(56px + 44px + var(--s2)); }
@@ -611,6 +612,7 @@
 </div>
 
 <script type="module">
+import { layoutCollage } from "/collage.js";
 // Flash Studio: photo -> depth + skin analysis -> surface-true placement -> "stechen" render.
 // Everything runs in the browser; the photo never leaves the device.
 const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js";
@@ -1675,7 +1677,7 @@ function makeSticker(c) {
 
 // Die-Cut für die Galerie: Motiv, weißer Rand (6 %) und eine feine graue Schnittkante, transparent drumherum
 function dieCut(c) {
-  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .06, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw) + 2;
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .075, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw) + 2;
   const W = w + 2 * o, H = h + 2 * o, cv = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
   const k = Math.min(1, 900 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
   const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
@@ -2336,14 +2338,29 @@ function renderFlashes() {
   const n = FL.items.length;
   $("#flEmpty").hidden = !!n; $("#flSelect").hidden = !n;
   $("#flashesView").classList.toggle("selecting", FL.selecting); $("#flSelect").setAttribute("aria-pressed", FL.selecting);
-  $("#flGrid").innerHTML = FL.items.map((f, i) => `<button class="fl-tile" data-id="${f.id}" aria-pressed="${FL.sel.has(f.id)}" style="animation-delay:${Math.min(i, 12) * 35}ms" aria-label="${esc(f.name)}">
-    <img alt="" src="${flashURL(f)}"><span class="chk"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg></span></button>`).join("");
-  $("#flGrid").querySelectorAll(".fl-tile").forEach(b => b.onclick = () => FL.selecting ? toggleSel(b.dataset.id) : viewFlash(b.dataset.id));
+  layoutFlashes();
   $("#flDock").hidden = !FL.selecting;
   $("#flSelInfo").textContent = `${FL.sel.size} ausgewählt`; $("#flShare").disabled = !FL.sel.size;
   $("#flLinksBtn").hidden = !FL.links.length; $("#flLinksN").textContent = FL.links.length;
   for (const f of FL.items) if (!f.sticker) ensureSticker(f).then(renderFlashes).catch(e => console.warn("sticker", e));
 }
+// Collage neu berechnen, wenn sich Motive oder die Breite ändern; nur Auswahl ändert die Kacheln direkt
+let layoutKey = "", layoutRun = 0;
+async function layoutFlashes() {
+  const grid = $("#flGrid"), W = grid.clientWidth; if (!W) return;
+  const key = W + "|" + FL.items.map(f => f.id + (f.sticker ? "s" : "")).join(",");
+  if (key !== layoutKey) {
+    const run = ++layoutRun, L = await layoutCollage(FL.items.map(f => ({ id: f.id, src: flashURL(f) })), W);
+    if (run !== layoutRun) return; layoutKey = key;
+    grid.style.height = L.height + "px";
+    grid.innerHTML = L.items.map((p, i) => { const f = FL.items.find(x => x.id === p.id);
+      return `<button class="fl-tile" data-id="${p.id}" style="left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;width:${p.w.toFixed(1)}px;height:${p.h.toFixed(1)}px;--r:${p.rot.toFixed(2)}deg;animation-delay:${Math.min(i, 14) * 35}ms" aria-label="${esc(f.name)}">
+        <img alt="" src="${flashURL(f)}"><span class="chk"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg></span></button>`; }).join("");
+    grid.querySelectorAll(".fl-tile").forEach(b => b.onclick = () => FL.selecting ? toggleSel(b.dataset.id) : viewFlash(b.dataset.id));
+  }
+  grid.querySelectorAll(".fl-tile").forEach(b => b.setAttribute("aria-pressed", FL.sel.has(b.dataset.id)));
+}
+new ResizeObserver(() => { if (!$("#flashesView").hidden) layoutFlashes(); }).observe($("#flashesView"));
 function toggleSel(id) { FL.sel.has(id) ? FL.sel.delete(id) : FL.sel.add(id); renderFlashes(); }
 $("#flSelect").onclick = () => { FL.selecting = !FL.selecting; if (!FL.selecting) FL.sel.clear(); renderFlashes(); };
 $("#flSelCancel").onclick = () => { FL.selecting = false; FL.sel.clear(); renderFlashes(); };
@@ -2373,13 +2390,14 @@ async function storeFlash(file) {
 // Bogen zerlegen: Tinte etwas „zusammenwachsen“ lassen (Abstand), dann zusammenhängende Gruppen suchen.
 // Gruppen unter 1,5 % der Tinte (Schmutz, Signaturen) gehören zur nächsten großen Gruppe oder fallen weg.
 function splitSheet(c) {
-  const k = Math.min(1, 420 / Math.max(c.width, c.height)), w = Math.max(2, Math.round(c.width * k)), h = Math.max(2, Math.round(c.height * k));
+  const k = Math.min(1, 640 / Math.max(c.width, c.height)), w = Math.max(2, Math.round(c.width * k)), h = Math.max(2, Math.round(c.height * k));
   const s = Object.assign(document.createElement("canvas"), { width: w, height: h }), g = s.getContext("2d", { willReadFrequently: true });
   g.drawImage(c, 0, 0, w, h);
   const d = g.getImageData(0, 0, w, h).data, n = w * h, ink = new Uint8Array(n); let total = 0;
-  for (let i = 0; i < n; i++) if (d[i * 4 + 3] > 40) { ink[i] = 1; total++; }
+  // nur kräftige Tinte verbindet (helle Punkte, Schattierung und Hilfslinien verbinden Motive sonst über die Lücke)
+  for (let i = 0; i < n; i++) if (d[i * 4 + 3] > 110) { ink[i] = 1; total++; }
   if (total < 20) return [trim(c) || c];
-  const D = distanceField(ink, w, h), r = Math.max(2, Math.max(w, h) * .025), grow = new Uint8Array(n); for (let i = 0; i < n; i++) grow[i] = D[i] <= r ? 1 : 0;
+  const D = distanceField(ink, w, h), r = Math.max(1.5, Math.max(w, h) * .004), grow = new Uint8Array(n); for (let i = 0; i < n; i++) grow[i] = D[i] <= r ? 1 : 0;
   const lab = new Int32Array(n), boxes = [];
   for (let s0 = 0; s0 < n; s0++) {
     if (!grow[s0] || lab[s0]) continue;
@@ -2390,13 +2408,16 @@ function splitSheet(c) {
     boxes.push(b);
   }
   boxes.forEach((b, i) => { b.id = i + 1; b.ids = [i + 1]; });
-  // Gruppen, deren Rahmen sich überlappen (z. B. Ring und Punkt darin), gehören zu einem Motiv
+  // Eine Gruppe, die zum größten Teil im Rahmen einer anderen liegt (z. B. Punkt im Ring), gehört zu ihr.
+  // Nur leicht überlappende Rahmen (verschachtelte Motive auf einem Bogen) bleiben getrennt.
   let merged = true;
   while (merged) {
     merged = false;
     for (let i = 0; i < boxes.length && !merged; i++) for (let j = i + 1; j < boxes.length && !merged; j++) {
       const A = boxes[i], B = boxes[j];
-      if (A.x0 <= B.x1 && B.x0 <= A.x1 && A.y0 <= B.y1 && B.y0 <= A.y1) {
+      const ix = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0), iy = Math.min(A.y1, B.y1) - Math.max(A.y0, B.y0);
+      const small = Math.min((A.x1 - A.x0 + 1) * (A.y1 - A.y0 + 1), (B.x1 - B.x0 + 1) * (B.y1 - B.y0 + 1));
+      if (ix > 0 && iy > 0 && ix * iy > .7 * small) {
         Object.assign(A, { x0: Math.min(A.x0, B.x0), y0: Math.min(A.y0, B.y0), x1: Math.max(A.x1, B.x1), y1: Math.max(A.y1, B.y1), ink: A.ink + B.ink, ids: A.ids.concat(B.ids) });
         boxes.splice(j, 1); merged = true;
       }
@@ -2520,7 +2541,7 @@ function tryFlash(blob) {
   } catch (e) { console.warn("handoff", e); }
 })();
 
-window.__studio = { S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
+window.__studio = { splitSheet: (...a) => splitSheet(...a), S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>
