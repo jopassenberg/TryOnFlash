@@ -11,78 +11,62 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --n-0: oklch(100% 0 0); --n-100: oklch(97% .003 75); --n-200: oklch(94.5% .003 75); --n-500: oklch(68% .005 75); --n-900: oklch(19% .003 75);
-    --frame: oklch(17% .003 75); --frame-w: 6px; --r-outer: 42px; --r-in: 36px; --inset: 8px;
-    --dim: oklch(100% 0 0 / .5); --fill: oklch(100% 0 0 / .08);
-    --spring: cubic-bezier(.34, 1.4, .64, 1); --ease: cubic-bezier(.22, 1, .36, 1);
-  }
+  :root { --ink: oklch(19% .003 75); --dim: oklch(54% .005 75); --fill: oklch(19% .003 75 / .06); --spring: cubic-bezier(.34, 1.4, .64, 1); --ease: cubic-bezier(.22, 1, .36, 1); }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   html { touch-action: manipulation; }
-  body { background: var(--n-100); color: var(--n-900); font: 400 15px/1.45 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
+  body { background: #fff; color: var(--ink); font: 400 15px/1.45 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
   button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; letter-spacing: inherit; -webkit-tap-highlight-color: transparent; }
-  .ic { width: 18px; height: 18px; fill: currentColor; flex: none; }
+  .ic { width: 16px; height: 16px; fill: currentColor; flex: none; }
   [hidden] { display: none !important; }
-  .shell { min-height: 100dvh; padding: 0 24px 24px; display: grid; grid-template-rows: 72px 1fr; }
-  .top { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
-  .top .logo { height: 18px; width: auto; display: block; color: var(--n-900); }
-  .lock { height: 32px; padding: 0 14px 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; background: oklch(19% .003 75 / .06); }
-  .lock .ic { width: 14px; height: 14px; }
-  .card { position: relative; min-height: 0; border: var(--frame-w) solid var(--frame); border-radius: var(--r-outer); background: oklch(15% .003 75); color: #fff; overflow: hidden; }
-  .inner { height: 100%; overflow: auto; padding: 28px 28px 32px; display: grid; align-content: start; gap: 24px; }
-  h1 { margin: 0; font-weight: 400; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; letter-spacing: -.045em; }
-  h1 span { color: oklch(100% 0 0 / .42); }
-  .meta { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag { height: 32px; padding: 0 14px 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; background: var(--fill); color: oklch(100% 0 0 / .8); }
-  .tag .ic { width: 14px; height: 14px; }
-  .note { margin: 0; color: oklch(100% 0 0 / .75); max-width: 560px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-  .tile { position: relative; aspect-ratio: 1; border-radius: 28px; background: #f4f3f0; display: grid; place-items: center; overflow: hidden; animation: pop .5s var(--spring) both; }
-  .tile img { max-width: 82%; max-height: 82%; -webkit-user-drag: none; user-select: none; pointer-events: none; }
-  .tile span { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: oklch(19% .003 75 / .55); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
+  .top { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .top .logo { height: 18px; width: auto; display: block; color: var(--ink); }
+  .chips { display: flex; gap: 6px; }
+  .chip { height: 32px; padding: 0 14px 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; background: var(--fill); white-space: nowrap; }
+  .note { margin: 8px 0 0; color: var(--dim); max-width: 560px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 40px 32px; padding: 24px 0 0; }
+  .tile { min-width: 0; aspect-ratio: 1; display: grid; place-items: center; animation: pop .5s var(--spring) both; transition: transform .45s var(--spring); }
+  .tile:hover { transform: translateY(-4px) rotate(-1deg); }
+  .tile img { width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none; user-select: none; pointer-events: none; }
   @keyframes pop { from { opacity: 0; transform: scale(.94); } }
-  .empty { display: grid; place-items: center; text-align: center; gap: 14px; min-height: 50dvh; padding: 24px; }
+  .empty { min-height: 70dvh; display: grid; place-items: center; align-content: center; gap: 10px; text-align: center; }
   .empty .big { font-size: 28px; letter-spacing: -.04em; line-height: 1.1; }
   .empty p { margin: 0; color: var(--dim); max-width: 340px; }
-  .loader { width: 40px; height: 40px; position: relative; }
-  .loader i { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: #fff; opacity: .22;
+  .loader { width: 40px; height: 40px; position: relative; margin: 0 auto 6px; }
+  .loader i { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: var(--ink); opacity: .18;
     transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(14px); animation: dot 1.2s linear infinite; animation-delay: calc(var(--k) * .15s - 1.2s); }
-  @keyframes dot { 0% { opacity: 1; } 45%, 100% { opacity: .22; } }
-  /* Großansicht */
-  .lb { position: fixed; inset: 0; z-index: 10; display: grid; grid-template-rows: 1fr auto; gap: 16px; padding: 24px 24px max(24px, env(safe-area-inset-bottom));
-    background: oklch(12% .003 75 / .92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); color: #fff; animation: fade .25s var(--ease); }
+  @keyframes dot { 0% { opacity: 1; } 45%, 100% { opacity: .18; } }
+  .lb { position: fixed; inset: 0; z-index: 10; display: grid; grid-template-rows: 1fr auto; gap: 20px; padding: 32px 24px max(24px, env(safe-area-inset-bottom)); background: #fff; animation: fade .25s var(--ease); }
   @keyframes fade { from { opacity: 0; } }
   .lb .stage { min-height: 0; display: grid; place-items: center; }
-  .lb .paper { max-width: min(100%, 720px); max-height: 100%; border-radius: 32px; background: #f4f3f0; padding: 6%; display: grid; place-items: center; animation: pop .45s var(--spring); }
-  .lb .paper img { max-width: 100%; max-height: calc(100dvh - 220px); -webkit-user-drag: none; user-select: none; pointer-events: none; }
-  .lb .bar { justify-self: center; display: flex; gap: 6px; padding: 6px; border-radius: 28px; background: var(--fill); }
-  .btn { height: 44px; padding: 0 20px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: var(--fill); color: #fff; white-space: nowrap; }
-  .btn.primary { background: #fff; color: var(--n-900); }
-  .btn.icon { width: 44px; padding: 0; justify-content: center; }
-  .foot { font-size: 12px; color: oklch(100% 0 0 / .4); }
+  .lb .stage img { max-width: min(100%, 760px); max-height: 100%; object-fit: contain; -webkit-user-drag: none; user-select: none; pointer-events: none; animation: pop .45s var(--spring); }
+  .lb .bar { justify-self: center; display: flex; gap: 8px; }
+  .rb { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--fill); }
+  .rb .ic { width: 20px; height: 20px; }
+  .pill { height: 52px; padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: var(--ink); color: #fff; }
+  .pill .ic { width: 18px; height: 18px; }
   @media (max-width: 680px) {
-    .shell { padding: 0 8px max(8px, env(safe-area-inset-bottom)); grid-template-rows: 60px 1fr; }
-    .card { --frame-w: 5px; --r-outer: 40px; }
-    .inner { padding: 22px 18px 24px; gap: 20px; }
-    .grid { grid-template-columns: 1fr 1fr; }
-    .tile { border-radius: 24px; }
+    .wrap { padding: 0 12px 32px; }
+    .top { height: 60px; }
+    .chip.lock span { display: none; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
   }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-locked" viewBox="0 0 32 32"><path d="M24,14H22V8A6,6,0,0,0,10,8v6H8a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H24a2,2,0,0,0,2-2V16A2,2,0,0,0,24,14ZM12,8a4,4,0,0,1,8,0v6H12ZM24,28H8V16H24Z"/></symbol><symbol id="i-time" viewBox="0 0 32 32"><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/><path d="M20.59 22L15 16.41 15 7 17 7 17 15.58 22 20.59 20.59 22z"/></symbol><symbol id="i-close" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol></defs></svg>
-<div class="shell">
-  <header class="top"><a href="/" aria-label="Stencit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" class="logo" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a><span class="lock"><svg class="ic"><use href="#i-locked"/></svg>Verschlüsselt</span></header>
-  <main class="card"><div class="inner" id="inner">
-    <div class="empty" id="state"><div class="loader"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i></div><p>Flashes werden entschlüsselt …</p></div>
-  </div></main>
+<div class="wrap">
+  <header class="top"><a href="/" aria-label="Stencit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" class="logo" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a>
+    <div class="chips"><span class="chip" id="left" hidden><svg class="ic"><use href="#i-time"/></svg><b style="font-weight:400" id="leftT"></b></span>
+      <span class="chip lock"><svg class="ic"><use href="#i-locked"/></svg><span>Verschlüsselt</span></span></div></header>
+  <main id="inner"><div class="empty"><div class="loader"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i></div><p>Flashes werden entschlüsselt …</p></div></main>
 </div>
 <div class="lb" id="lb" hidden>
-  <div class="stage"><div class="paper"><img id="lbImg" alt=""></div></div>
-  <div class="bar"><button class="btn icon" id="lbClose" aria-label="Schließen"><svg class="ic"><use href="#i-close"/></svg></button>
-    <button class="btn" id="lbSave" hidden><svg class="ic"><use href="#i-download"/></svg>Sichern</button>
-    <button class="btn primary" id="lbTry"><svg class="ic"><use href="#i-camera"/></svg>Auf der Haut ansehen</button></div>
+  <div class="stage"><img id="lbImg" alt=""></div>
+  <div class="bar"><button class="rb" id="lbClose" aria-label="Schließen"><svg class="ic"><use href="#i-close"/></svg></button>
+    <button class="rb" id="lbSave" hidden aria-label="Sichern"><svg class="ic"><use href="#i-download"/></svg></button>
+    <button class="pill" id="lbTry"><svg class="ic"><use href="#i-camera"/></svg>Auf der Haut ansehen</button></div>
 </div>
 <script type="module">
 const $ = s => document.querySelector(s);
@@ -113,26 +97,66 @@ async function load() {
   render(); timer = setInterval(tick, 30000);
 }
 function tick() {
-  if (exp && exp < Date.now()) { clearInterval(timer); $("#lb").hidden = true; data = null; return state("Link abgelaufen", "Die Zeit für diesen Link ist um. Frag einfach nach einem neuen."); }
-  const t = $("#left"); if (t) t.textContent = `noch ${left(exp - Date.now())}`;
+  if (exp && exp < Date.now()) { clearInterval(timer); $("#lb").hidden = true; $("#left").hidden = true; data = null; return state("Link abgelaufen", "Die Zeit für diesen Link ist um. Frag einfach nach einem neuen."); }
+  $("#left").hidden = false; $("#leftT").textContent = left(exp - Date.now());
 }
-function render() {
-  const n = data.flashes.length;
-  $("#inner").innerHTML = `
-    <div><h1>${n} Flash${n > 1 ? "es" : ""} <span>für dich</span></h1></div>
-    <div class="meta"><span class="tag"><svg class="ic"><use href="#i-time"/></svg><span id="left">noch ${left(exp - Date.now())}</span></span>
-      <span class="tag"><svg class="ic"><use href="#i-locked"/></svg>Ende-zu-Ende verschlüsselt</span></div>
-    ${data.note ? `<p class="note"></p>` : ""}
-    <div class="grid">${data.flashes.map((f, i) => `<button class="tile" data-i="${i}" style="animation-delay:${i * 40}ms"><img alt=""></button>`).join("")}</div>
-    <div class="foot">Tippe ein Flash an, um es groß zu sehen oder mit einem Foto auf deiner Haut zu probieren.</div>`;
-  if (data.note) $(".note").textContent = data.note; // as text, never as HTML
-  document.querySelectorAll(".tile").forEach(t => {
-    const f = data.flashes[+t.dataset.i]; t.querySelector("img").src = `data:${f.type};base64,${f.data}`;
-    t.onclick = () => open(+t.dataset.i);
-  });
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+function edt1d(f, n, d, v, z) { // Felzenszwalb & Huttenlocher, squared distances along one line
+  let k = 0; v[0] = 0; z[0] = -1e20; z[1] = 1e20;
+  for (let q = 1; q < n; q++) {
+    let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+    while (s <= z[k]) { k--; s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+    k++; v[k] = q; z[k] = s; z[k + 1] = 1e20;
+  }
+  k = 0;
+  for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; d[q] = (q - v[k]) ** 2 + f[v[k]]; }
+}
+function distanceField(inside, w, h) { // distance (px) from every pixel to the nearest inside pixel
+  const n = Math.max(w, h), f = new Float64Array(n), d = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 1), D = new Float64Array(w * h);
+  for (let i = 0; i < w * h; i++) D[i] = inside[i] ? 0 : 1e20;
+  for (let x = 0; x < w; x++) { for (let y = 0; y < h; y++) f[y] = D[y * w + x]; edt1d(f, h, d, v, z); for (let y = 0; y < h; y++) D[y * w + x] = d[y]; }
+  for (let y = 0; y < h; y++) { for (let x = 0; x < w; x++) f[x] = D[y * w + x]; edt1d(f, w, d, v, z); for (let x = 0; x < w; x++) D[y * w + x] = Math.sqrt(d[x]); }
+  return D;
+}
+function dieCut(c) {
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .06, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw) + 2;
+  const W = w + 2 * o, H = h + 2 * o, cv = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
+  const k = Math.min(1, 900 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
+  const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
+  mg.drawImage(c, o * k, o * k, w * k, h * k);
+  const md = mg.getImageData(0, 0, mw, mh).data, n = mw * mh, outside = new Uint8Array(n), st = [];
+  const seed = i => { if (!outside[i] && md[i * 4 + 3] < 40) { outside[i] = 1; st.push(i); } };
+  for (let x = 0; x < mw; x++) { seed(x); seed((mh - 1) * mw + x); }
+  for (let y = 0; y < mh; y++) { seed(y * mw); seed(y * mw + mw - 1); }
+  while (st.length) { const i = st.pop(), x = i % mw; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (i >= mw) seed(i - mw); if (i < n - mw) seed(i + mw); }
+  const inside = new Uint8Array(n); for (let i = 0; i < n; i++) inside[i] = outside[i] ? 0 : 1;
+  const D = distanceField(inside, mw, mh), P = pad * k, SW = sw * k, img = mg.createImageData(mw, mh), px = img.data;
+  for (let i = 0; i < n; i++) {
+    const inner = clamp(P - D[i] + .5, 0, 1), outer = clamp(P + SW - D[i] + .5, 0, 1), ring = outer - inner, a = inner + ring;
+    const v = a > 0 ? (inner * 255 + ring * 196) / a : 255; // innen weiß, Kante hellgrau
+    px[i * 4] = px[i * 4 + 1] = v; px[i * 4 + 2] = v - 2; px[i * 4 + 3] = a * 255;
+  }
+  mg.putImageData(img, 0, 0);
+  const res = cv(W, H), g = res.getContext("2d");
+  g.imageSmoothingQuality = "high"; g.drawImage(mc, 0, 0, W, H); g.drawImage(c, o, o);
+  return res;
+}
+const stickers = [];
+async function render() {
+  $("#inner").innerHTML = `${data.note ? `<p class="note"></p>` : ""}<div class="grid">${data.flashes.map((f, i) => `<button class="tile" data-i="${i}" style="animation-delay:${i * 40}ms" aria-label="Flash ${i + 1}"><img alt=""></button>`).join("")}</div>`;
+  if (data.note) $(".note").textContent = data.note; // als Text, nie als HTML
+  tick();
+  const tiles = [...document.querySelectorAll(".tile")];
+  for (const t of tiles) {
+    const i = +t.dataset.i, f = data.flashes[i];
+    t.onclick = () => open(i);
+    const img = new Image(); img.src = `data:${f.type};base64,${f.data}`; await img.decode();
+    const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }); c.getContext("2d").drawImage(img, 0, 0);
+    stickers[i] = dieCut(c).toDataURL("image/png"); t.querySelector("img").src = stickers[i];
+  }
 }
 function open(i) {
-  current = data.flashes[i]; $("#lbImg").src = `data:${current.type};base64,${current.data}`;
+  current = data.flashes[i]; $("#lbImg").src = stickers[i] || `data:${current.type};base64,${current.data}`;
   $("#lbSave").hidden = !data.allowDownload; $("#lb").hidden = false;
 }
 $("#lbClose").onclick = () => { $("#lb").hidden = true; };

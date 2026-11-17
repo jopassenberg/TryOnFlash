@@ -289,51 +289,57 @@
   .tabbar button[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
   .shell[data-tab="flashes"] .steps { visibility: hidden; }
 
-  /* ---------- Flashes: eigene Mappe, hochladen, per Link teilen ---------- */
-  .flashes { color: #fff; }
-  .fl-scroll { position: absolute; inset: 0; overflow: auto; padding: 28px 28px 104px; display: grid; align-content: start; gap: 22px; scrollbar-width: none; }
-  .fl-scroll::-webkit-scrollbar { display: none; }
-  .fl-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .fl-head h2 { margin: 0; font-weight: 400; font-size: 28px; line-height: 1.05; letter-spacing: -.04em; }
-  .fl-head h2 span { color: oklch(100% 0 0 / .42); }
-  .fl-actions { display: flex; gap: 6px; }
-  .fl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-  .fl-tile { position: relative; aspect-ratio: 1; border-radius: 28px; background: #f4f3f0; display: grid; place-items: center; overflow: hidden; color: var(--ink);
-    transition: transform .35s var(--spring), opacity .2s; animation: pop .45s var(--spring) both; }
+  /* ---------- Flashes: eigene Seite, eine helle Galerie. Nur die ausgeschnittenen Motive, groß, auf Weiß ---------- */
+  body:has(.shell[data-tab="flashes"]) { background: #fff; }
+  body:has(.shell[data-tab="flashes"]) .aura { display: none; }
+  .fl-tools { display: none; gap: 6px; }
+  .shell[data-tab="flashes"] .fl-tools { display: flex; }
+  .shell[data-tab="flashes"] .steps { display: none; }
+  .rb { position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--fill); color: var(--ink); transition: transform .3s var(--spring), background-color .2s; }
+  .rb:hover { background: var(--fill-2); }
+  .rb:active { transform: scale(.92); }
+  .rb.main { background: var(--n-900); color: #fff; }
+  .rb[aria-pressed="true"] { background: var(--n-900); color: #fff; }
+  .rb .ic { width: 18px; height: 18px; }
+  .rb .badge { position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; line-height: 18px; text-align: center; background: var(--n-900); color: #fff; }
+  .flashes { position: relative; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .flashes::-webkit-scrollbar { display: none; }
+  .fl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 40px 32px; padding: 16px 8px 120px; }
+  .fl-tile { position: relative; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; animation: pop .5s var(--spring) both; transition: transform .45s var(--spring), opacity .25s; }
+  .fl-tile:hover { transform: translateY(-4px) rotate(-1deg); }
   .fl-tile:active { transform: scale(.96); }
-  .fl-tile img { max-width: 82%; max-height: 82%; pointer-events: none; }
-  .fl-tile .chk { position: absolute; right: 10px; top: 10px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: oklch(19% .003 75 / .1); color: transparent; }
-  .fl-tile .chk .ic { width: 14px; height: 14px; }
+  .fl-tile img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
+  .fl-tile .chk { position: absolute; right: 6%; top: 6%; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--fill-2); color: transparent; }
+  .fl-tile .chk .ic { width: 15px; height: 15px; }
   .flashes:not(.selecting) .fl-tile .chk { display: none; }
   .fl-tile[aria-pressed="true"] .chk { background: var(--n-900); color: #fff; }
-  .flashes.selecting .fl-tile:not([aria-pressed="true"]) { opacity: .55; }
-  .fl-empty { display: grid; justify-items: start; gap: 14px; padding: 8px 0 12px; }
-  .fl-empty p { margin: 0; color: oklch(100% 0 0 / .5); max-width: 380px; }
-  .fl-sec { display: grid; gap: 10px; }
-  .fl-label { font-size: 13px; color: oklch(100% 0 0 / .45); }
-  .fl-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-  .fl-links li { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; font-size: 14px; }
-  .fl-links .lk { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .07); }
-  .fl-links .lk .ic { width: 16px; height: 16px; }
-  .fl-links .dim { color: oklch(100% 0 0 / .5); }
-  .fl-links .acts { display: flex; gap: 4px; }
-  .ib-dark { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .08); color: #fff; }
-  .ib-dark:hover { background: oklch(100% 0 0 / .14); }
-  .ib-dark .ic { width: 16px; height: 16px; }
-  /* Leiste unten in den Flashes, wie im Studio konzentrisch zum Rahmen */
-  .fl-dock { position: absolute; left: 50%; bottom: var(--inset); translate: -50% 0; z-index: 4; display: flex; align-items: center; gap: 4px; height: var(--h-lg); padding: 6px 6px 6px 18px;
-    border-radius: calc(var(--r-inner-card) - var(--inset)); background: oklch(26% .004 75 / .7); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); font-size: 14px; white-space: nowrap;
-    animation: dock-in .45s var(--spring) both; }
+  .flashes.selecting .fl-tile:not([aria-pressed="true"]) { opacity: .4; }
+  .fl-empty { min-height: 60%; display: grid; place-items: center; align-content: center; gap: 16px; text-align: center; color: var(--text-3); }
+  .fl-empty .rb { width: 56px; height: 56px; }
+  .fl-empty .rb .ic { width: 22px; height: 22px; }
+  .fl-busy { position: fixed; left: 50%; top: 84px; translate: -50% 0; z-index: 12; height: 36px; padding: 0 16px; border-radius: 999px; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; background: var(--n-900); color: #fff; animation: dock-in .4s var(--spring) both; }
+  /* Auswahl-Leiste unten */
+  .fl-dock { position: fixed; left: 50%; bottom: calc(var(--s4) + 56px + var(--s3)); translate: -50% 0; z-index: 9; display: flex; align-items: center; gap: 6px; height: 56px; padding: 6px 6px 6px 20px;
+    border-radius: 28px; background: var(--n-900); color: #fff; font-size: 14px; white-space: nowrap; animation: dock-in .45s var(--spring) both; }
   .fl-dock .btn.primary { background: #fff; color: var(--ink); margin-left: 8px; }
-  .fl-dock .btn.ghost { color: #fff; background: oklch(100% 0 0 / .1); }
-  /* Aktionen für ein Flash und der Teilen-Dialog: dunkle Karte, die von unten kommt */
-  .sheet-bg { position: absolute; inset: 0; z-index: 8; background: oklch(0% 0 0 / .45); animation: fade .25s var(--ease-out); }
+  .fl-dock .btn.ghost { background: oklch(100% 0 0 / .1); color: #fff; }
+  /* Großansicht eines Flashes: weiß, das Motiv groß, darunter runde Knöpfe */
+  .fl-view { position: fixed; inset: 0; z-index: 20; display: grid; grid-template-rows: 1fr auto; gap: 20px; padding: 32px 24px max(24px, env(safe-area-inset-bottom)); background: #fff; animation: fade .25s var(--ease-out); }
+  .fl-view .big { min-height: 0; display: grid; place-items: center; }
+  .fl-view .big img { max-width: min(100%, 760px); max-height: 100%; object-fit: contain; animation: pop .5s var(--spring); }
+  .fl-view .bar { justify-self: center; display: flex; gap: 8px; }
+  .fl-view .bar .rb { width: 52px; height: 52px; }
+  .fl-view .bar .rb .ic { width: 20px; height: 20px; }
+  .fl-view .bar .pill { height: 52px; padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: var(--n-900); color: #fff; font-size: 15px; }
+  @keyframes pop { from { opacity: 0; transform: scale(.94); } }
   @keyframes fade { from { opacity: 0; } }
-  .sheet { position: absolute; z-index: 9; left: var(--inset); right: var(--inset); bottom: var(--inset); max-width: 460px; margin: 0 auto; max-height: calc(100% - 2 * var(--inset)); overflow: auto;
-    padding: 22px; border-radius: calc(var(--r-inner-card) - var(--inset)); background: var(--frame); color: #fff; display: grid; gap: 18px; font-size: 14px;
-    animation: sheet-in .5s var(--spring) both; box-shadow: 0 0 0 1px oklch(100% 0 0 / .06); }
-  @keyframes sheet-in { from { transform: translateY(40px); opacity: 0; } }
+  /* Dialoge (Teilen, Links): dunkle Karte unten in der Mitte */
+  .sheet-bg { position: fixed; inset: 0; z-index: 30; background: oklch(0% 0 0 / .35); animation: fade .25s var(--ease-out); }
+  .sheet { position: fixed; z-index: 31; left: 50%; bottom: max(var(--s4), env(safe-area-inset-bottom)); translate: -50% 0; width: min(460px, calc(100% - 2 * var(--s2))); max-height: calc(100% - 32px); overflow: auto;
+    padding: 22px; border-radius: 30px; background: var(--frame); color: #fff; display: grid; gap: 18px; font-size: 14px; animation: sheet-in .5s var(--spring) both; }
   .sheet > * { min-width: 0; }
+  @keyframes sheet-in { from { transform: translateY(40px); opacity: 0; } }
   .sheet h3 { margin: 0; font-weight: 400; font-size: 22px; letter-spacing: -.03em; }
   .sheet .dim { color: oklch(100% 0 0 / .5); }
   .sheet .row { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -344,12 +350,17 @@
   .sheet textarea::placeholder { color: oklch(100% 0 0 / .4); }
   .sheet .btn.primary { background: #fff; color: var(--ink); }
   .sheet .btn.ghost { background: oklch(100% 0 0 / .08); color: #fff; }
-  .sheet .btn.danger { background: oklch(100% 0 0 / .08); color: oklch(78% .14 25); }
   .sheet .wide { width: 100%; }
   .linkbox { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 16px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
   .linkbox code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; color: oklch(100% 0 0 / .8); }
   .sec-note { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: oklch(100% 0 0 / .5); }
   .sec-note .ic { width: 14px; height: 14px; margin-top: 2px; }
+  .fl-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .fl-links li { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+  .fl-links .acts { display: flex; gap: 4px; }
+  .ib-dark { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .08); color: #fff; }
+  .ib-dark:hover { background: oklch(100% 0 0 / .14); }
+  .ib-dark .ic { width: 16px; height: 16px; }
   .needle { position: absolute; z-index: 4; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px oklch(100% 0 0 / .18), 0 0 0 7px oklch(100% 0 0 / .06); pointer-events: none; }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; }
@@ -421,10 +432,8 @@
     .card { --frame-w: 5px; --r-outer: 40px; }
     .tabbar { justify-self: stretch; margin-top: var(--s2); }
     .tabbar button { flex: 1; justify-content: center; }
-    .fl-scroll { padding: 22px 18px 96px; }
-    .fl-grid { grid-template-columns: 1fr 1fr; }
-    .fl-tile { border-radius: 24px; }
-    .fl-dock { left: var(--inset); right: var(--inset); translate: none; }
+    .fl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; padding: 8px 4px 120px; }
+    .fl-dock { left: var(--s2); right: var(--s2); translate: none; bottom: calc(max(var(--s2), env(safe-area-inset-bottom)) + 48px + var(--s3)); }
     /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
     .card:has(#info:not([hidden])) .stage > .status { top: calc(56px + 44px + var(--s2)); }
     #panelPlace { flex-direction: column; align-items: stretch; }
@@ -473,6 +482,11 @@
       <div class="step" data-step="3"><i>3</i><span>Platzieren</span></div>
       <div class="step" data-step="4"><i>4</i><span>Stechen</span></div>
     </nav>
+    <div class="fl-tools">
+      <button class="rb" id="flLinksBtn" hidden aria-label="Geteilte Links"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg><span class="badge" id="flLinksN"></span></button>
+      <button class="rb" id="flSelect" hidden aria-pressed="false" aria-label="Auswählen zum Teilen"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg></button>
+      <button class="rb main" id="flUpload" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button>
+    </div>
   </header>
   <main class="card">
     <div class="scan-dim" id="scanDim"></div>
@@ -547,26 +561,17 @@
     </div>
   </main>
 
-  <!-- Flashes: die eigene Mappe auf diesem Gerät; Teilen erzeugt einen verschlüsselten Link mit Ablauf -->
-  <section class="card flashes" id="flashesView" hidden aria-label="Flashes">
-    <div class="fl-scroll" id="flScroll">
-      <div class="fl-head">
-        <h2>Flashes <span id="flCount"></span></h2>
-        <div class="fl-actions">
-          <button class="btn glass-btn" id="flSelect" hidden>Auswählen</button>
-          <button class="btn glass-btn main" id="flUpload"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>Hochladen</button>
-        </div>
-      </div>
-      <div class="fl-empty" id="flEmpty"><p>Lade deine Flash-Bögen hoch. Sie bleiben auf diesem Gerät, bis du sie per Link teilst.</p></div>
-      <div class="fl-grid" id="flGrid"></div>
-      <div class="fl-sec" id="flLinksSec" hidden><div class="fl-label">Geteilte Links</div><ul class="fl-links" id="flLinks"></ul></div>
-    </div>
+  <!-- Flashes: eigene Seite, Galerie der ausgeschnittenen Motive. Teilen erzeugt einen verschlüsselten Link mit Ablauf -->
+  <section class="flashes" id="flashesView" hidden aria-label="Flashes">
+    <div class="fl-empty" id="flEmpty" hidden><button class="rb main" id="flUpload2" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button><span>Flash-Bögen hochladen</span></div>
+    <div class="fl-grid" id="flGrid"></div>
     <div class="fl-dock" id="flDock" hidden><span id="flSelInfo"></span>
       <button class="btn ghost" id="flSelCancel">Abbrechen</button>
-      <button class="btn primary" id="flShare" disabled><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Link erstellen</button></div>
-    <div id="flSheet"></div>
+      <button class="btn primary" id="flShare" disabled><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Link</button></div>
     <input type="file" id="flashInput" accept="image/*" multiple hidden>
   </section>
+  <div id="flSheet"></div>
+  <div id="flView"></div>
 
   <nav class="tabbar" aria-label="Bereiche">
     <button data-tab="studio" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>Studio</button>
@@ -1668,6 +1673,31 @@ function makeSticker(c) {
   return { canvas: res, data: g.getImageData(0, 0, W, H), grow: [W / w, H / h] };
 }
 
+// Die-Cut für die Galerie: Motiv, weißer Rand (6 %) und eine feine graue Schnittkante, transparent drumherum
+function dieCut(c) {
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .06, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw) + 2;
+  const W = w + 2 * o, H = h + 2 * o, cv = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
+  const k = Math.min(1, 900 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
+  const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
+  mg.drawImage(c, o * k, o * k, w * k, h * k);
+  const md = mg.getImageData(0, 0, mw, mh).data, n = mw * mh, outside = new Uint8Array(n), st = [];
+  const seed = i => { if (!outside[i] && md[i * 4 + 3] < 40) { outside[i] = 1; st.push(i); } };
+  for (let x = 0; x < mw; x++) { seed(x); seed((mh - 1) * mw + x); }
+  for (let y = 0; y < mh; y++) { seed(y * mw); seed(y * mw + mw - 1); }
+  while (st.length) { const i = st.pop(), x = i % mw; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (i >= mw) seed(i - mw); if (i < n - mw) seed(i + mw); }
+  const inside = new Uint8Array(n); for (let i = 0; i < n; i++) inside[i] = outside[i] ? 0 : 1;
+  const D = distanceField(inside, mw, mh), P = pad * k, SW = sw * k, img = mg.createImageData(mw, mh), px = img.data;
+  for (let i = 0; i < n; i++) {
+    const inner = clamp(P - D[i] + .5, 0, 1), outer = clamp(P + SW - D[i] + .5, 0, 1), ring = outer - inner, a = inner + ring;
+    const v = a > 0 ? (inner * 255 + ring * 196) / a : 255; // innen weiß, Kante hellgrau
+    px[i * 4] = px[i * 4 + 1] = v; px[i * 4 + 2] = v - 2; px[i * 4 + 3] = a * 255;
+  }
+  mg.putImageData(img, 0, 0);
+  const res = cv(W, H), g = res.getContext("2d");
+  g.imageSmoothingQuality = "high"; g.drawImage(mc, 0, 0, W, H); g.drawImage(c, o, o);
+  return res;
+}
+
 /* ---------- scale: how many photo pixels make a centimetre ---------- */
 // Best available reference, in this order:
 // 1. a hand in the photo: MediaPipe's hand model returns its 21 points in metric 3D, so palm and finger
@@ -2277,6 +2307,7 @@ function setTab(tab) {
   $(".shell").dataset.tab = tab;
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tab === tab));
   $("main.card").hidden = tab !== "studio"; $("#flashesView").hidden = tab !== "flashes";
+  if (tab !== "flashes") { $("#flView").innerHTML = ""; sheet(""); }
   if (tab === "flashes") loadFlashes();
 }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
@@ -2288,61 +2319,132 @@ async function loadFlashes() {
   if (old.length) { await idb("links", "readwrite", s => old.forEach(l => s.delete(l.id))); FL.links = FL.links.filter(l => l.exp >= Date.now()); }
   renderFlashes();
 }
-function flashURL(f) { if (!FL.urls.has(f.id)) FL.urls.set(f.id, URL.createObjectURL(f.blob)); return FL.urls.get(f.id); }
+// Galerie-Bild: das Motiv als Die-Cut-Sticker (weißer Rand, feine graue Schnittkante). Wird einmal erzeugt und gespeichert.
+function flashURL(f) {
+  if (!FL.urls.has(f.id)) FL.urls.set(f.id, URL.createObjectURL(f.sticker || f.blob));
+  return FL.urls.get(f.id);
+}
+async function ensureSticker(f) {
+  if (f.sticker) return;
+  const img = await createImageBitmap(f.blob), c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height });
+  c.getContext("2d").drawImage(img, 0, 0);
+  f.sticker = await toBlob(dieCut(isOpaque(c) ? extract(c, null, true).canvas : c), "image/png");
+  FL.urls.delete(f.id); await idb("flashes", "readwrite", s => s.put(f));
+}
+const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type, q));
 function renderFlashes() {
   const n = FL.items.length;
-  $("#flCount").textContent = n ? n : ""; $("#flEmpty").hidden = !!n; $("#flSelect").hidden = !n;
-  $("#flashesView").classList.toggle("selecting", FL.selecting);
-  $("#flSelect").textContent = FL.selecting ? "Fertig" : "Auswählen";
-  $("#flGrid").innerHTML = FL.items.map((f, i) => `<button class="fl-tile" data-id="${f.id}" aria-pressed="${FL.sel.has(f.id)}" style="animation-delay:${Math.min(i, 12) * 30}ms" aria-label="${esc(f.name)}">
+  $("#flEmpty").hidden = !!n; $("#flSelect").hidden = !n;
+  $("#flashesView").classList.toggle("selecting", FL.selecting); $("#flSelect").setAttribute("aria-pressed", FL.selecting);
+  $("#flGrid").innerHTML = FL.items.map((f, i) => `<button class="fl-tile" data-id="${f.id}" aria-pressed="${FL.sel.has(f.id)}" style="animation-delay:${Math.min(i, 12) * 35}ms" aria-label="${esc(f.name)}">
     <img alt="" src="${flashURL(f)}"><span class="chk"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg></span></button>`).join("");
-  $("#flGrid").querySelectorAll(".fl-tile").forEach(b => b.onclick = () => FL.selecting ? toggleSel(b.dataset.id) : flashActions(b.dataset.id));
+  $("#flGrid").querySelectorAll(".fl-tile").forEach(b => b.onclick = () => FL.selecting ? toggleSel(b.dataset.id) : viewFlash(b.dataset.id));
   $("#flDock").hidden = !FL.selecting;
   $("#flSelInfo").textContent = `${FL.sel.size} ausgewählt`; $("#flShare").disabled = !FL.sel.size;
-  $("#flLinksSec").hidden = !FL.links.length;
-  $("#flLinks").innerHTML = FL.links.map(l => `<li><span class="lk"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></span>
-    <span>${l.count} Flash${l.count > 1 ? "es" : ""} <span class="dim">· noch ${timeLeft(l.exp - Date.now())}</span></span>
-    <span class="acts"><button class="ib-dark" data-copy="${l.id}" aria-label="Link kopieren"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button>
-    <button class="ib-dark" data-end="${l.id}" aria-label="Link beenden"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button></span></li>`).join("");
-  $("#flLinks").querySelectorAll("[data-copy]").forEach(b => b.onclick = () => copyLink(FL.links.find(l => l.id === b.dataset.copy).url, b));
-  $("#flLinks").querySelectorAll("[data-end]").forEach(b => b.onclick = () => endLink(b.dataset.end));
+  $("#flLinksBtn").hidden = !FL.links.length; $("#flLinksN").textContent = FL.links.length;
+  for (const f of FL.items) if (!f.sticker) ensureSticker(f).then(renderFlashes).catch(e => console.warn("sticker", e));
 }
 function toggleSel(id) { FL.sel.has(id) ? FL.sel.delete(id) : FL.sel.add(id); renderFlashes(); }
 $("#flSelect").onclick = () => { FL.selecting = !FL.selecting; if (!FL.selecting) FL.sel.clear(); renderFlashes(); };
 $("#flSelCancel").onclick = () => { FL.selecting = false; FL.sel.clear(); renderFlashes(); };
-$("#flUpload").onclick = () => $("#flashInput").click();
+$("#flUpload").onclick = $("#flUpload2").onclick = () => $("#flashInput").click();
 $("#flashInput").onchange = async e => {
   const files = [...e.target.files]; e.target.value = "";
+  const busy = Object.assign(document.createElement("div"), { className: "fl-busy", textContent: "Motive werden ausgeschnitten …" }); document.body.append(busy);
   for (const f of files) {
-    try { const st = await storeFlash(f); FL.items.unshift(st); } catch (err) { console.warn("flash", err); }
+    try { const recs = await storeFlash(f); FL.items.unshift(...recs); renderFlashes(); await frame(); } catch (err) { console.warn("flash", err); }
   }
-  renderFlashes();
+  busy.remove(); renderFlashes();
 };
-// Bild verkleinern (max. 2000 px), PNG wenn es Transparenz hat, sonst JPEG; so bleiben Links klein
+// Hochladen: Papier entfernen, einen Bogen mit mehreren Motiven in einzelne Flashes zerlegen,
+// jedes als ausgeschnittenes PNG (für Studio und Links) plus Sticker-Bild (für die Galerie) speichern.
 async function storeFlash(file) {
-  const img = await createImageBitmap(file), k = Math.min(1, 2000 / Math.max(img.width, img.height));
-  const c = Object.assign(document.createElement("canvas"), { width: Math.round(img.width * k), height: Math.round(img.height * k) }), g = c.getContext("2d");
-  g.drawImage(img, 0, 0, c.width, c.height);
-  const alpha = file.type === "image/png" && !isOpaque(c);
-  const blob = await new Promise(r => c.toBlob(r, alpha ? "image/png" : "image/jpeg", .9));
-  const rec = { id: crypto.randomUUID(), name: file.name.replace(/\.[^.]+$/, "").slice(0, 60) || "Flash", blob, w: c.width, h: c.height, created: Date.now() };
-  await idb("flashes", "readwrite", s => s.put(rec));
-  return rec;
+  const img = await createImageBitmap(file), k = Math.min(1, 2400 / Math.max(img.width, img.height));
+  const c = Object.assign(document.createElement("canvas"), { width: Math.round(img.width * k), height: Math.round(img.height * k) });
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const cut = isOpaque(c) ? extract(c, null, true).canvas : c, parts = splitSheet(cut), base = file.name.replace(/\.[^.]+$/, "").slice(0, 50) || "Flash", recs = [];
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i], blob = await toBlob(p, "image/png"), sticker = await toBlob(dieCut(p), "image/png");
+    const rec = { id: crypto.randomUUID(), name: parts.length > 1 ? `${base} ${i + 1}` : base, blob, sticker, w: p.width, h: p.height, created: Date.now() + i };
+    await idb("flashes", "readwrite", s => s.put(rec)); recs.push(rec);
+  }
+  return recs.reverse();
+}
+// Bogen zerlegen: Tinte etwas „zusammenwachsen“ lassen (Abstand), dann zusammenhängende Gruppen suchen.
+// Gruppen unter 1,5 % der Tinte (Schmutz, Signaturen) gehören zur nächsten großen Gruppe oder fallen weg.
+function splitSheet(c) {
+  const k = Math.min(1, 420 / Math.max(c.width, c.height)), w = Math.max(2, Math.round(c.width * k)), h = Math.max(2, Math.round(c.height * k));
+  const s = Object.assign(document.createElement("canvas"), { width: w, height: h }), g = s.getContext("2d", { willReadFrequently: true });
+  g.drawImage(c, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, n = w * h, ink = new Uint8Array(n); let total = 0;
+  for (let i = 0; i < n; i++) if (d[i * 4 + 3] > 40) { ink[i] = 1; total++; }
+  if (total < 20) return [trim(c) || c];
+  const D = distanceField(ink, w, h), r = Math.max(2, Math.max(w, h) * .025), grow = new Uint8Array(n); for (let i = 0; i < n; i++) grow[i] = D[i] <= r ? 1 : 0;
+  const lab = new Int32Array(n), boxes = [];
+  for (let s0 = 0; s0 < n; s0++) {
+    if (!grow[s0] || lab[s0]) continue;
+    const id = boxes.length + 1, st = [s0]; lab[s0] = id; const b = { x0: w, y0: h, x1: 0, y1: 0, ink: 0 };
+    while (st.length) { const i = st.pop(), x = i % w, y = (i / w) | 0;
+      if (ink[i]) { b.ink++; b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y); }
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]) if (j >= 0 && grow[j] && !lab[j]) { lab[j] = id; st.push(j); } }
+    boxes.push(b);
+  }
+  boxes.forEach((b, i) => { b.id = i + 1; b.ids = [i + 1]; });
+  // Gruppen, deren Rahmen sich überlappen (z. B. Ring und Punkt darin), gehören zu einem Motiv
+  let merged = true;
+  while (merged) {
+    merged = false;
+    for (let i = 0; i < boxes.length && !merged; i++) for (let j = i + 1; j < boxes.length && !merged; j++) {
+      const A = boxes[i], B = boxes[j];
+      if (A.x0 <= B.x1 && B.x0 <= A.x1 && A.y0 <= B.y1 && B.y0 <= A.y1) {
+        Object.assign(A, { x0: Math.min(A.x0, B.x0), y0: Math.min(A.y0, B.y0), x1: Math.max(A.x1, B.x1), y1: Math.max(A.y1, B.y1), ink: A.ink + B.ink, ids: A.ids.concat(B.ids) });
+        boxes.splice(j, 1); merged = true;
+      }
+    }
+  }
+  const big = boxes.filter(b => b.ink >= total * .015).slice(0, 24);
+  if (big.length <= 1) return [trim(c) || c];
+  return big.map(b => {
+    const pad = 3, x0 = Math.max(0, (b.x0 - pad) / k), y0 = Math.max(0, (b.y0 - pad) / k), x1 = Math.min(c.width, (b.x1 + 1 + pad) / k), y1 = Math.min(c.height, (b.y1 + 1 + pad) / k);
+    // nur die Tinte dieser Gruppe übernehmen (Maske aus den Labels), damit Nachbarn nicht hineinragen
+    const out = Object.assign(document.createElement("canvas"), { width: Math.max(1, Math.round(x1 - x0)), height: Math.max(1, Math.round(y1 - y0)) }), og = out.getContext("2d");
+    og.drawImage(c, -x0, -y0);
+    const m = Object.assign(document.createElement("canvas"), { width: w, height: h }), mg = m.getContext("2d"), md = mg.createImageData(w, h);
+    const own = new Set(b.ids); for (let i = 0; i < n; i++) if (own.has(lab[i])) md.data[i * 4 + 3] = 255;
+    mg.putImageData(md, 0, 0);
+    og.globalCompositeOperation = "destination-in"; og.drawImage(m, 0, 0, w, h, -x0, -y0, c.width, c.height);
+    return trim(out) || out;
+  });
+}
+function viewFlash(id) {
+  const f = FL.items.find(x => x.id === id); if (!f) return;
+  $("#flView").innerHTML = `<div class="fl-view" role="dialog" aria-label="${esc(f.name)}"><div class="big"><img alt="" src="${flashURL(f)}"></div>
+    <div class="bar"><button class="rb" data-a="close" aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
+    <button class="rb" data-a="del" aria-label="Löschen"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button>
+    <button class="rb" data-a="share" aria-label="Per Link teilen"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></button>
+    <button class="pill" data-a="try"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Anprobieren</button></div></div>`;
+  const close = () => { $("#flView").innerHTML = ""; };
+  $("#flView").querySelector(".big").onclick = close;
+  $("#flView").querySelectorAll("[data-a]").forEach(b => b.onclick = async () => {
+    const a = b.dataset.a; close();
+    if (a === "try") tryFlash(f.blob);
+    if (a === "share") { FL.sel = new Set([id]); shareSheet(); }
+    if (a === "del") { await idb("flashes", "readwrite", s => s.delete(id)); FL.items = FL.items.filter(x => x.id !== id); renderFlashes(); }
+  });
+}
+$("#flLinksBtn").onclick = () => linksSheet();
+function linksSheet() {
+  if (!FL.links.length) return sheet("");
+  sheet(`<h3>Geteilte Links</h3><ul class="fl-links">${FL.links.map(l => `<li><span>${l.count} Flash${l.count > 1 ? "es" : ""} <span class="dim">· noch ${timeLeft(l.exp - Date.now())}</span></span>
+    <span class="acts"><button class="ib-dark" data-copy="${l.id}" aria-label="Link kopieren"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button>
+    <button class="ib-dark" data-end="${l.id}" aria-label="Link beenden"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button></span></li>`).join("")}</ul>
+    <button class="btn ghost wide" data-close>Fertig</button>`);
+  $("#flSheet").querySelectorAll("[data-copy]").forEach(b => b.onclick = () => copyLink(FL.links.find(l => l.id === b.dataset.copy).url, b));
+  $("#flSheet").querySelectorAll("[data-end]").forEach(b => b.onclick = async () => { await endLink(b.dataset.end); linksSheet(); });
 }
 function sheet(html) {
   $("#flSheet").innerHTML = html ? `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog">${html}</div>` : "";
   $("#flSheet").querySelectorAll("[data-close]").forEach(b => b.onclick = () => sheet(""));
-}
-function flashActions(id) {
-  const f = FL.items.find(x => x.id === id); if (!f) return;
-  sheet(`<h3>${esc(f.name)}</h3><div class="stack">
-    <button class="btn primary wide" id="faTry"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Im Studio anprobieren</button>
-    <button class="btn ghost wide" id="faShare"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Per Link teilen</button>
-    <button class="btn danger wide" id="faDel"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg>Löschen</button>
-    <button class="btn ghost wide" data-close>Abbrechen</button></div>`);
-  $("#faTry").onclick = () => { sheet(""); tryFlash(f.blob); };
-  $("#faShare").onclick = () => { FL.sel = new Set([id]); shareSheet(); };
-  $("#faDel").onclick = async () => { await idb("flashes", "readwrite", s => s.delete(id)); FL.items = FL.items.filter(x => x.id !== id); sheet(""); renderFlashes(); };
 }
 $("#flShare").onclick = () => shareSheet();
 function shareSheet() {
