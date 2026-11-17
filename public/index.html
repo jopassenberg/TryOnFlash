@@ -50,7 +50,7 @@
   @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 
   /* ---------- Layout: Kopfzeile, darunter eine große Karte ---------- */
-  .shell { height: 100vh; height: 100dvh; padding: 0 var(--s5) var(--s4); display: grid; grid-template-rows: 72px 1fr auto; }
+  .shell { height: 100vh; height: 100dvh; padding: 0 var(--s5) var(--s4); display: grid; grid-template-rows: 72px 1fr; }
   .top { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); }
   .brand { display: inline-flex; color: var(--ink); }
   .brand .logo { height: 18px; width: auto; display: block; }
@@ -282,11 +282,16 @@
   .tools .btn.primary:hover { background: var(--n-200); }
 
   /* ---------- Menü unten: Studio | Flashes (Desktop rechts, Handy mittig wie eine App-Leiste) ---------- */
-  .tabbar { justify-self: end; margin-top: var(--s3); display: flex; gap: 4px; padding: 4px; border-radius: var(--r-full); background: var(--fill); }
-  .tabbar button { height: 40px; padding: 0 18px 0 14px; border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-2); }
+  /* Menü: kleine helle Kapsel oben rechts, nur Icons; das aktive weiß mit Punkt darunter */
+  .top-r { display: flex; align-items: center; gap: var(--s2); }
+  .tabbar { display: flex; gap: 2px; padding: 3px; border-radius: 22px; background: var(--fill); }
+  .tabbar button { position: relative; width: 44px; height: 36px; border-radius: 18px; display: grid; place-items: center; color: var(--text-3); transition: color .2s, background-color .2s; }
   .tabbar button .ic { width: 18px; height: 18px; }
   .tabbar button:hover { color: var(--ink); }
-  .tabbar button[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
+  .tabbar button[aria-pressed="true"] { background: var(--n-0); color: var(--ink); }
+  .tabbar button[aria-pressed="true"]::after { content: ""; position: absolute; bottom: 3px; width: 3px; height: 3px; border-radius: 50%; background: var(--ink); }
+  body:has(.shell[data-tab="flashes"]) .tabbar { background: oklch(19% .003 75 / .05); }
+  body:has(.shell[data-tab="flashes"]) .tabbar button[aria-pressed="true"] { background: oklch(19% .003 75 / .1); }
   .shell[data-tab="flashes"] .steps { visibility: hidden; }
 
   /* ---------- Flashes: eigene Seite, eine helle Galerie. Nur die ausgeschnittenen Motive, groß, auf Weiß ---------- */
@@ -324,7 +329,7 @@
   .fl-busy { position: fixed; left: 50%; top: 84px; translate: -50% 0; z-index: 12; height: 36px; padding: 0 16px; border-radius: 999px; display: flex; align-items: center; gap: 10px;
     font-size: 13px; background: var(--n-900); color: #fff; animation: dock-in .4s var(--spring) both; }
   /* Auswahl-Leiste unten */
-  .fl-dock { position: fixed; left: 50%; bottom: calc(var(--s4) + 56px + var(--s3)); translate: -50% 0; z-index: 9; display: flex; align-items: center; gap: 6px; height: 56px; padding: 6px 6px 6px 20px;
+  .fl-dock { position: fixed; left: 50%; bottom: calc(var(--s4) + var(--s3)); translate: -50% 0; z-index: 9; display: flex; align-items: center; gap: 6px; height: 56px; padding: 6px 6px 6px 20px;
     border-radius: 28px; background: var(--n-900); color: #fff; font-size: 14px; white-space: nowrap; animation: dock-in .45s var(--spring) both; }
   .fl-dock .btn.primary { background: #fff; color: var(--ink); margin-left: 8px; }
   .fl-dock .btn.ghost { background: oklch(100% 0 0 / .1); color: #fff; }
@@ -431,13 +436,11 @@
 
   /* ---------- Handy: die Karte füllt den Bildschirm ---------- */
   @media (max-width: 680px) {
-    .shell { padding: 0 var(--s2) max(var(--s2), env(safe-area-inset-bottom)); grid-template-rows: 60px 1fr auto; }
+    .shell { padding: 0 var(--s2) max(var(--s2), env(safe-area-inset-bottom)); grid-template-rows: 60px 1fr; }
     .top { padding: 0 var(--s2); }
     .brand .logo { height: 17px; }
     .card { --frame-w: 5px; --r-outer: 40px; }
-    .tabbar { justify-self: stretch; margin-top: var(--s2); }
-    .tabbar button { flex: 1; justify-content: center; }
-    .fl-dock { left: var(--s2); right: var(--s2); translate: none; bottom: calc(max(var(--s2), env(safe-area-inset-bottom)) + 48px + var(--s3)); }
+    .fl-dock { left: var(--s2); right: var(--s2); translate: none; bottom: calc(max(var(--s2), env(safe-area-inset-bottom)) + var(--s2)); }
     /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
     .card:has(#info:not([hidden])) .stage > .status { top: calc(56px + 44px + var(--s2)); }
     #panelPlace { flex-direction: column; align-items: stretch; }
@@ -480,6 +483,7 @@
 <div class="shell" data-tab="studio">
   <header class="top">
     <a class="brand" href="/" aria-label="Stencit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" class="logo" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a>
+    <div class="top-r">
     <nav class="steps" aria-label="Schritte">
       <div class="step" data-step="1"><i>1</i><span>Foto</span></div>
       <div class="step" data-step="2"><i>2</i><span>Analyse</span></div>
@@ -491,6 +495,11 @@
       <button class="rb" id="flTidy" hidden aria-label="Neu anordnen"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg></button>
       <button class="rb" id="flSelect" hidden aria-pressed="false" aria-label="Auswählen zum Teilen"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg></button>
       <button class="rb main" id="flUpload" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button>
+    </div>
+    <nav class="tabbar" aria-label="Bereiche">
+      <button data-tab="studio" aria-pressed="true" aria-label="Studio" title="Studio"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></button>
+      <button data-tab="flashes" aria-pressed="false" aria-label="Flashes" title="Flashes"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg></button>
+    </nav>
     </div>
   </header>
   <main class="card">
@@ -578,10 +587,6 @@
   <div id="flSheet"></div>
   <div id="flView"></div>
 
-  <nav class="tabbar" aria-label="Bereiche">
-    <button data-tab="studio" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>Studio</button>
-    <button data-tab="flashes" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Flashes</button>
-  </nav>
 
   <div class="cut" id="cut" hidden>
     <div class="cutbox">
