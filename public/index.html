@@ -148,14 +148,15 @@
   /* ---------- Insel: kommt aus dem Rahmen oben, zeigt erst die Analyse, wird dann zum Ebenen-Umschalter ---------- */
   .island { position: absolute; z-index: 6; top: 0; left: 50%; height: 48px; min-width: 48px; color: #fff; background: var(--frame);
     border-radius: 0 0 24px 24px; translate: -50% -110%; transition: translate .6s var(--spring), width .5s var(--spring); }
-  .island[data-mode="status"], .island[data-mode="views"] { translate: -50% 0; }
+  .island[data-mode="status"], .island[data-mode="size"] { translate: -50% 0; }
   /* weiche Hohlkehlen links und rechts, damit die Insel aus dem Rahmen fließt */
   .island::before, .island::after { content: ""; position: absolute; top: 0; width: 16px; height: 16px; }
   .island::before { right: 100%; background: radial-gradient(circle at 0 100%, transparent 15.5px, var(--frame) 16px); }
   .island::after { left: 100%; background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--frame) 16px); }
   .island > div { position: absolute; left: 50%; top: 0; height: 100%; translate: -50% 0; display: flex; align-items: center; white-space: nowrap;
     opacity: 0; filter: blur(4px); transition: opacity .25s var(--ease-out), filter .25s var(--ease-out); pointer-events: none; }
-  .island[data-mode="status"] .isl-status, .island[data-mode="views"] .views { opacity: 1; filter: none; pointer-events: auto; transition-delay: .12s; }
+  .island[data-mode="status"] .isl-status, .island[data-mode="size"] .isl-size { opacity: 1; filter: none; pointer-events: auto; transition-delay: .12s; }
+  .isl-size { padding: 0 24px; font-size: 15px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   .isl-status { gap: 10px; padding: 0 22px 0 18px; font-size: 13px; }
   .isl-status[data-s="err"] { color: oklch(85% .12 70); }
   .isl-status .loader { position: relative; left: auto; top: auto; width: 18px; height: 18px; opacity: 1; z-index: auto; }
@@ -163,7 +164,7 @@
   .isl-status .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(7px); }
   .isl-status .loader b { width: 3px; height: 3px; }
   .isl-status[data-s="err"] .loader { visibility: hidden; width: 0; margin-right: -10px; }
-  .views { gap: 4px; padding: 0 6px; }
+  .views { display: flex; gap: 2px; }
   .views button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: oklch(100% 0 0 / .55); }
   .views button .ic { width: 18px; height: 18px; }
   .views button:hover { color: #fff; }
@@ -206,27 +207,31 @@
   .info .scale-edit input { background: var(--on-glass-fill); color: var(--on-glass); }
   .info .link { color: var(--on-glass); text-decoration-color: var(--on-glass-2); }
 
-  /* Platzieren: links Motiv-Kachel + weitere Motive, rechts Werkzeuge; beide Glas, Ecken konzentrisch zum Rahmen */
+  /* Platzieren: unten links die Motiv-Kachel, direkt daneben die Leiste; alles Glas, Ecken konzentrisch zum Rahmen (36 − 8 = 28) */
   #panelPlace { left: var(--inset); right: var(--inset); transform: none; max-width: none; min-height: 0; padding: 0; gap: var(--s2); background: none;
-    backdrop-filter: none; -webkit-backdrop-filter: none; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+    backdrop-filter: none; -webkit-backdrop-filter: none; align-items: flex-end; justify-content: flex-start; pointer-events: none; }
   #panelPlace > * { pointer-events: auto; }
-  .motifs { display: flex; align-items: flex-end; gap: var(--s2); min-width: 0; }
-  .motif-card { flex: none; width: 96px; height: 96px; border-radius: calc(var(--r-inner-card) - var(--inset)); display: grid; place-items: center;
-    background: oklch(100% 0 0 / .55); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: inset 0 0 0 2px oklch(100% 0 0 / .95);
-    transition: transform .38s var(--spring); }
+  .motifs { position: relative; flex: none; }
+  .motif-card { position: relative; display: block; width: 96px; height: 96px; padding: 6px; border-radius: calc(var(--r-inner-card) - var(--inset));
+    background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); transition: transform .38s var(--spring); }
   .motif-card:active { transform: scale(.95); }
-  .motif-card img { max-width: 72%; max-height: 72%; }
-  .motif-card:not(:has(img[src])) { display: none; }
-  .motifs .thumbs { max-width: 34vw; height: var(--h-lg); padding: 6px; margin: 0; gap: 4px; align-items: center; border-radius: 28px; background: var(--glass);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); -webkit-mask-image: none; mask-image: none; }
+  .motif-card .pic { width: 100%; height: 100%; display: grid; place-items: center; border-radius: calc(var(--r-inner-card) - var(--inset) - 6px); background: oklch(100% 0 0 / .5); }
+  .motif-card img { max-width: 74%; max-height: 74%; }
+  .motif-card .badge { position: absolute; right: -4px; top: -4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--n-0); color: var(--ink); }
+  .motif-card .badge .ic { width: 14px; height: 14px; }
+  /* Auswahl: klappt über der Kachel auf */
+  .tray { position: absolute; left: 0; bottom: calc(100% + var(--s2)); padding: 6px; border-radius: 28px; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    animation: tray-in .35s var(--spring); }
+  @keyframes tray-in { from { opacity: 0; translate: 0 8px; scale: .96; } }
+  .tray .thumbs { max-width: min(60vw, 420px); margin: 0; padding: 0; gap: 4px; -webkit-mask-image: none; mask-image: none; }
   .tools { display: flex; align-items: center; gap: 4px; height: var(--h-lg); padding: 6px; border-radius: 28px; background: var(--glass); color: var(--on-glass);
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+  .tools .views { padding-right: 4px; margin-right: 2px; }
+  .tools .views button { width: 44px; height: 44px; }
   .btn.soft-on { padding: 0 18px; background: var(--on-glass-fill); color: var(--on-glass); }
   .btn.soft-on:hover { background: oklch(100% 0 0 / .2); }
   .tools .btn.primary { background: var(--on-glass); color: var(--ink); padding: 0 20px; }
   .tools .btn.primary:hover { background: var(--n-200); }
-  .size-read { min-width: 96px; padding: 0 var(--s3); text-align: center; font-size: 14px; white-space: nowrap; color: var(--on-glass); }
-  .size-read:empty { display: none; }
   .needle { position: absolute; z-index: 4; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px oklch(100% 0 0 / .2), 0 0 0 10px oklch(100% 0 0 / .08); pointer-events: none; }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; }
@@ -295,11 +300,15 @@
     .card { --frame-w: 5px; --r-outer: 40px; }
     .stage > .status { bottom: calc(var(--inset) + var(--h-lg) + var(--s2)); }
     #panelPlace { flex-direction: column; align-items: stretch; }
-    .motifs { justify-content: flex-start; }
+    .motifs { align-self: flex-start; }
     .motif-card { width: 76px; height: 76px; }
-    .motifs .thumbs { max-width: calc(100vw - 120px); }
     .tools .btn.primary { margin-left: auto; }
-    .size-read { min-width: 0; padding: 0 var(--s2); }
+    .tools .views button { width: 40px; height: 40px; }
+    #newPhoto { width: var(--h); padding: 0; }
+    #newPhoto .ic { margin: 0; }
+    #newPhoto span { display: none; }
+    .tray { left: calc(100% + var(--s2)); bottom: 0; }
+    .tray .thumbs { max-width: calc(100vw - 140px); }
     .card:has(#panelPlace:not([hidden])) .stage > .status { bottom: calc(var(--inset) + var(--h-lg) + var(--s2) + 76px + var(--s2)); }
     /* Maßstab-Karte: volle Breite unter der Insel */
     .info { left: var(--s2); right: var(--s2); top: 56px; width: auto; }
@@ -318,7 +327,7 @@
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol><symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol><symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol><symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol><symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol><symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol><symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol><symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol><symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol><symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-center-to-fit" viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></symbol><symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol><symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol><symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol><symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol><symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol><symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol><symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol><symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol><symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol><symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol><symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol><symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol><symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-center-to-fit" viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></symbol><symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol><symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol><symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol><symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol><symbol id="i-arrows--horizontal" viewBox="0 0 32 32"><path d="M11.41 26.59L7.83 23 28 23 28 21 7.83 21 11.41 17.41 10 16 4 22 10 28 11.41 26.59zM28 10L22 4 20.59 5.41 24.17 9 4 9 4 11 24.17 11 20.59 14.59 22 16 28 10z"/></symbol></defs></svg>
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <div class="shell">
   <header class="top">
@@ -352,11 +361,7 @@
       <div class="status" id="status" hidden data-s="idle"><span class="dot"></span><span id="statusText"></span></div>
       <div class="island" id="island" data-mode="hidden">
         <div class="isl-status" id="islStatus"><div class="loader" id="loader"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><b></b></div><span id="islText"></span></div>
-      <div class="views" id="views">
-        <button data-view="photo" aria-pressed="true" title="Foto" aria-label="Foto"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
-        <button data-view="depth" aria-pressed="false" title="Tiefe" aria-label="Tiefe"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></button>
-        <button data-view="mesh" aria-pressed="false" title="3D-Modell" aria-label="3D-Modell"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg></button>
-      </div>
+      <div class="isl-size" id="islSize"></div>
       </div>
       <div class="info" id="info" hidden>
         <button class="info-head" id="infoHead" aria-expanded="false"><span id="infoTitle"></span><svg class="ic" aria-hidden="true"><use href="#i-chevron--down"/></svg></button>
@@ -373,15 +378,21 @@
     </div>
 
     <div class="panel" id="panelPlace" hidden>
-      <!-- links: das aktive Motiv als eigene Kachel, daneben weitere Motive und Plus -->
+      <!-- das aktive Motiv als Kachel; antippen öffnet die Auswahl zum Tauschen oder Hinzufügen -->
       <div class="motifs">
-        <button class="motif-card" id="motifCard" title="Motiv ändern" aria-label="Aktives Motiv, ändern"><img id="motifImg" alt=""></button>
-        <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button></div>
+        <button class="motif-card" id="motifCard" aria-expanded="false" title="Motiv tauschen" aria-label="Motiv tauschen oder hinzufügen"><span class="pic"><img id="motifImg" alt=""></span><i class="badge"><svg class="ic" aria-hidden="true"><use id="badgeUse" href="#i-add"/></svg></i></button>
+        <div class="tray" id="tray" hidden>
+          <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button></div>
+        </div>
       </div>
-      <!-- rechts: neues Foto, die Größe live, Stechen -->
+      <!-- daneben: Ansicht, neues Foto, Stechen -->
       <div class="tools">
-        <button class="btn soft-on" id="newPhoto" title="Neues Foto"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Foto</button>
-        <span class="size-read" id="sizeRead" aria-live="polite"></span>
+        <div class="views" id="views" role="group" aria-label="Ansicht">
+          <button data-view="photo" aria-pressed="true" title="Foto" aria-label="Foto"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
+          <button data-view="depth" aria-pressed="false" title="Tiefe" aria-label="Tiefe"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></button>
+          <button data-view="mesh" aria-pressed="false" title="3D-Modell" aria-label="3D-Modell"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg></button>
+        </div>
+        <button class="btn soft-on" id="newPhoto" title="Neues Foto"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg><span>Foto</span></button>
         <button class="btn primary" id="ink" disabled><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg>Stechen</button>
       </div>
     </div>
@@ -486,12 +497,11 @@ function status(text, s = "busy") {
 // Insel: "status" während der Analyse, danach "views" (Foto / Tiefe / 3D), sonst eingefahren
 let islandText = "";
 function syncIsland() {
-  const isl = $("#island"), mode = islandText ? "status" : !$("#views").hidden ? "views" : "hidden";
-  const part = mode === "status" ? $("#islStatus") : mode === "views" ? $("#views") : null;
+  const isl = $("#island"), size = S.step >= 3 && $("#islSize").textContent, mode = islandText ? "status" : size ? "size" : "hidden";
+  const part = mode === "status" ? $("#islStatus") : mode === "size" ? $("#islSize") : null;
   if (part) isl.style.width = part.scrollWidth + "px";
   isl.dataset.mode = mode;
 }
-new MutationObserver(syncIsland).observe($("#views"), { attributes: true, attributeFilter: ["hidden"] });
 setStep(1);
 
 /* ---------- 1 · Photo ---------- */
@@ -1045,7 +1055,7 @@ function depthImage() {
 /* ---------- 3 · Motif: upload, lasso cutout, background removal ---------- */
 // Every upload opens the cutter. Draw around the tattoo (e.g. in a screenshot); "Hintergrund entfernen"
 // turns paper or skin around the lines transparent and keeps the ink with its real colours.
-$("#addMotif").onclick = () => $("#motifInput").click();
+$("#addMotif").onclick = () => { setTray(false); $("#motifInput").click(); };
 $("#motifInput").onchange = e => { e.target.files[0] && loadMotif(e.target.files[0]); e.target.value = ""; };
 // Cutter (stencil editor). Flow: 1 · draw round the tattoo with the lasso, 2 · refine with eraser and
 // brush while zoomed in, 3 · take it. Everything edits one mask (white = keep). "Hintergrund weg"
@@ -1300,10 +1310,13 @@ function motifPreview(m) { // the motif itself (no sticker), small, for the moti
   c.getContext("2d").drawImage(m.canvas, 0, 0, c.width, c.height);
   return (m.preview = c.toDataURL());
 }
-$("#motifCard").onclick = () => $("#motifInput").click();
+function setTray(open) { $("#tray").hidden = !open; $("#motifCard").setAttribute("aria-expanded", open); }
+$("#motifCard").onclick = () => setTray($("#tray").hidden);
+document.addEventListener("pointerdown", e => { if (!$("#tray").hidden && !e.target.closest(".motifs")) setTray(false); });
 function renderThumbs() {
   const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
   const img = $("#motifImg"); if (S.motif) img.src = motifPreview(S.motif); else img.removeAttribute("src");
+  $("#badgeUse").setAttribute("href", S.motifs.length > 1 ? "#i-arrows--horizontal" : "#i-add"); setTray(false);
   S.motifs.filter(m => m !== S.motif).forEach(m => {
     const b = document.createElement("button"); b.className = "thumb" + (m === S.motif ? " pop" : ""); b.setAttribute("aria-pressed", m === S.motif);
     b.innerHTML = `<img alt="" src="${stickerThumb(m)}">`; b.onclick = () => selectMotif(m); box.insertBefore(b, $("#addMotif"));
@@ -1420,12 +1433,11 @@ $("#infoHead").onclick = () => setInfo(!infoOpen);
 function sizeCm() { const { w, h } = motifSizePx(1), k = pxPerCm(); return { w: w / k, h: h / k }; }
 function updateInfo() {
   const el = $("#info");
-  if (S.step < 3 || !S.motif || !S.anchor) { el.hidden = true; $("#sizeRead").textContent = ""; return; }
+  if (S.step < 3 || !S.motif || !S.anchor) { el.hidden = true; if ($("#islSize").textContent) { $("#islSize").textContent = ""; syncIsland(); } return; }
   el.hidden = false;
   const { w, h } = sizeCm(), sc = S.scale || {}, rot = Math.round(((S.rot % 360) + 540) % 360 - 180);
-  // beim Platzieren steht die Größe schon in der Leiste; die Karte oben zeigt dann den Maßstab
-  $("#infoTitle").textContent = S.step === 3 ? (sc.part ? `Maßstab · ${sc.part}` : "Maßstab") : `${fmt(w)} × ${fmt(h)} cm`;
-  $("#sizeRead").textContent = `${fmt(w)} × ${fmt(h)} cm`;
+  $("#infoTitle").textContent = S.step === 3 ? (sc.part ? `Maßstab · ${sc.part}` : "Maßstab") : "Zusammenfassung"; // die Größe steht oben in der Insel
+  const sz = `${fmt(w)} × ${fmt(h)} cm`; if ($("#islSize").textContent !== sz) { $("#islSize").textContent = sz; syncIsland(); }
   if ($("#infoBody").contains(document.activeElement)) return; // do not rebuild while the user types
   const rows = [];
   if (S.step === 4 && S.summary) {
