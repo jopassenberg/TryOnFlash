@@ -36,7 +36,7 @@ async function modelFile(url) {
 // The browser encrypts the flashes (AES-GCM, 256 bit) before upload; the key never reaches us, it only
 // lives in the link's #fragment. We store ciphertext under a random 128-bit id with a fixed lifetime
 // (KV deletes it on its own), plus the hash of a separate delete token so the artist can end it early.
-const TTLS = { 3600: "1 h", 86400: "24 h", 604800: "7 d", 2592000: "30 d" };
+const TTLS = { 3600: "1 h", 86400: "24 h", 259200: "3 d", 604800: "7 d", 2592000: "30 d", 0: "bis beendet" };
 const MAX_BYTES = 15 * 1024 * 1024;
 const PRIVATE = { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow", "X-Content-Type-Options": "nosniff" };
 
@@ -45,19 +45,19 @@ async function share(req, env, url) {
   const id = url.pathname.split("/")[3] || "";
   if (req.method === "POST" && !id) {
     const ttl = Number(url.searchParams.get("ttl"));
-    if (!TTLS[ttl]) return json({ error: "bad_ttl" }, 400);
+    if (!url.searchParams.has("ttl") || !(ttl in TTLS)) return json({ error: "bad_ttl" }, 400);
     const len = Number(req.headers.get("content-length") || 0);
     if (len > MAX_BYTES) return json({ error: "too_large" }, 413);
     const body = await req.arrayBuffer();
     if (!body.byteLength || body.byteLength > MAX_BYTES) return json({ error: body.byteLength ? "too_large" : "empty" }, body.byteLength ? 413 : 400);
-    const sid = token(16), del = token(24), exp = Date.now() + ttl * 1000;
-    await env.SHARES.put("s:" + sid, body, { expirationTtl: ttl, metadata: { exp, del: await sha256(del) } });
+    const sid = token(16), del = token(24), exp = ttl ? Date.now() + ttl * 1000 : 0; // 0 = unbegrenzt, bis der Artist ihn beendet
+    await env.SHARES.put("s:" + sid, body, { ...(ttl ? { expirationTtl: ttl } : {}), metadata: { exp, del: await sha256(del) } });
     return json({ id: sid, del, exp });
   }
   if (!/^[A-Za-z0-9_-]{16,64}$/.test(id)) return json({ error: "not_found" }, 404);
   if (req.method === "GET") {
     const { value, metadata } = await env.SHARES.getWithMetadata("s:" + id, { type: "arrayBuffer" });
-    if (!value || !metadata || metadata.exp < Date.now()) return json({ error: "expired" }, 404);
+    if (!value || !metadata || (metadata.exp && metadata.exp < Date.now())) return json({ error: "expired" }, 404);
     return new Response(value, { headers: { ...PRIVATE, "Content-Type": "application/octet-stream", "X-Expires": String(metadata.exp) } });
   }
   if (req.method === "DELETE") {

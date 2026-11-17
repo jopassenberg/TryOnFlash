@@ -99,7 +99,7 @@ async function load() {
 }
 function tick() {
   if (exp && exp < Date.now()) { clearInterval(timer); $("#lb").hidden = true; $("#left").hidden = true; data = null; return state("Link abgelaufen", "Die Zeit für diesen Link ist um. Frag einfach nach einem neuen."); }
-  $("#left").hidden = false; $("#leftT").textContent = left(exp - Date.now());
+  $("#left").hidden = false; $("#leftT").textContent = exp ? left(exp - Date.now()) : "Unbegrenzt";
 }
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 function edt1d(f, n, d, v, z) { // Felzenszwalb & Huttenlocher, squared distances along one line

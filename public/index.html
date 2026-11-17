@@ -371,10 +371,14 @@
   .ttl-ends { display: flex; justify-content: space-between; font-size: 13px; color: oklch(100% 0 0 / .45); }
   .ttl-track { --p: .33; position: relative; height: 48px; border-radius: 24px; background: oklch(100% 0 0 / .07); touch-action: none; cursor: pointer; outline: none; }
   .ttl-track:focus-visible { box-shadow: 0 0 0 2px oklch(100% 0 0 / .5); }
+  /* der Knopf zieht einen Glow in den Markenfarben hinter sich her: Bordeaux auslaufend, Rot am Knopf */
   .ttl-track .fill { position: absolute; left: 0; top: 0; bottom: 0; width: calc(24px + var(--p) * (100% - 48px) + 24px); border-radius: 24px;
-    background: linear-gradient(90deg, oklch(100% 0 0 / .04), oklch(100% 0 0 / .2)); transition: width .4s var(--spring); }
-  .ttl-track .dot { position: absolute; top: 50%; left: calc(24px + var(--p) * (100% - 48px)); width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: oklch(100% 0 0 / .35); }
-  .ttl-track .knob { position: absolute; top: 4px; left: calc(var(--p) * (100% - 48px) + 4px); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(90deg, transparent, oklch(36.2% .132 15.2 / .55) 35%, #DB1A1D);
+    box-shadow: 0 0 22px -2px oklch(56.8% .221 27.7 / .55); transition: width .45s var(--spring); }
+  .ttl-track .fill::after { content: ""; position: absolute; right: 0; top: 50%; width: 64px; height: 64px; margin-top: -32px; border-radius: 50%;
+    background: radial-gradient(circle, oklch(56.8% .221 27.7 / .55), transparent 70%); filter: blur(6px); pointer-events: none; }
+  .ttl-track .dot { z-index: 1; position: absolute; top: 50%; left: calc(24px + var(--p) * (100% - 48px)); width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: oklch(100% 0 0 / .35); }
+  .ttl-track .knob { z-index: 2; position: absolute; top: 4px; left: calc(var(--p) * (100% - 48px) + 4px); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
     background: #fff; color: var(--ink); transition: left .4s var(--spring), transform .25s var(--spring); }
   .ttl-track.drag .knob { transition: transform .25s var(--spring); transform: scale(1.08); }
   .ttl-track.drag .fill { transition: none; }
@@ -2437,7 +2441,7 @@ async function idb(store, mode, fn) {
   return new Promise((res, rej) => { const tx = db.transaction(store, mode), r = fn(tx.objectStore(store)); tx.oncomplete = () => res(r?.result); tx.onerror = () => rej(tx.error); });
 }
 const FL = { items: [], links: [], urls: new Map(), sel: new Set(), selecting: false };
-const TTL_OPTS = [[3600, "1 Std"], [86400, "24 Std"], [604800, "7 Tage"], [2592000, "30 Tage"]];
+const TTL_OPTS = [[3600, "1 Std"], [86400, "24 Std"], [259200, "3 Tage"], [604800, "7 Tage"], [2592000, "30 Tage"], [0, "Unbegrenzt"]];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function timeLeft(ms) {
   const m = Math.max(0, Math.round(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60;
@@ -2456,8 +2460,8 @@ document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTa
 async function loadFlashes() {
   FL.items = (await idb("flashes", "readonly", s => s.getAll())).sort((a, b) => b.created - a.created);
   FL.links = (await idb("links", "readonly", s => s.getAll())).sort((a, b) => b.created - a.created);
-  const old = FL.links.filter(l => l.exp < Date.now());
-  if (old.length) { await idb("links", "readwrite", s => old.forEach(l => s.delete(l.id))); FL.links = FL.links.filter(l => l.exp >= Date.now()); }
+  const old = FL.links.filter(l => l.exp && l.exp < Date.now());
+  if (old.length) { await idb("links", "readwrite", s => old.forEach(l => s.delete(l.id))); FL.links = FL.links.filter(l => !old.includes(l)); }
   renderFlashes();
 }
 // Galerie-Bild: das Motiv als Die-Cut-Sticker (weißer Rand, feine graue Schnittkante). Wird einmal erzeugt und gespeichert.
@@ -2590,7 +2594,7 @@ function viewFlash(id) {
 $("#flLinksBtn").onclick = () => linksSheet();
 function linksSheet() {
   if (!FL.links.length) return sheet("");
-  sheet(`<h3>Geteilte Links</h3><ul class="fl-links">${FL.links.map(l => `<li><span>${l.count} Flash${l.count > 1 ? "es" : ""} <span class="dim">· noch ${timeLeft(l.exp - Date.now())}</span></span>
+  sheet(`<h3>Geteilte Links</h3><ul class="fl-links">${FL.links.map(l => `<li><span>${l.count} Flash${l.count > 1 ? "es" : ""} <span class="dim">· ${l.exp ? "noch " + timeLeft(l.exp - Date.now()) : "unbegrenzt"}</span></span>
     <span class="acts"><button class="ib-dark" data-copy="${l.id}" aria-label="Link kopieren"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button>
     <button class="ib-dark" data-end="${l.id}" aria-label="Link beenden"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button></span></li>`).join("")}</ul>
     <button class="btn ghost wide" data-close>Fertig</button>`);
@@ -2664,10 +2668,10 @@ async function createLink(ids, ttl, allowDownload, note) {
   return link;
 }
 function linkReady(l) {
-  const until = new Date(l.exp).toLocaleString("de-DE", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+  const until = l.exp ? new Date(l.exp).toLocaleString("de-DE", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
   sheet(`<h3>Link ist bereit</h3>
     <div class="linkbox"><code>${esc(l.url)}</code><button class="ib-dark" id="lrCopy" aria-label="Kopieren"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
-    <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-time"/></svg><span>Gültig bis ${until} Uhr, danach gelöscht. Du kannst ihn jederzeit früher beenden.</span></div>
+    <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-time"/></svg><span>${l.exp ? `Gültig bis ${until} Uhr, danach gelöscht. Du kannst ihn jederzeit früher beenden.` : "Gültig, bis du ihn beendest (unter „Geteilte Links“)."}</span></div>
     <div class="stack">${navigator.share ? `<button class="btn primary wide" id="lrShare"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg>Senden</button>` : ""}
     <button class="btn ${navigator.share ? "ghost" : "primary"} wide" data-close>Fertig</button></div>`);
   $("#lrCopy").onclick = () => copyLink(l.url, $("#lrCopy"));
