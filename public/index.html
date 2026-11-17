@@ -992,8 +992,7 @@ async function analyse() {
     status("");
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
-    if (pendingFlash) { const b = pendingFlash; pendingFlash = null; loadMotif(b); }
-    else if (!S.motif) status("Motiv hinzufügen", "ok");
+    if (!usePending() && !S.motif) status("Motiv hinzufügen", "ok");
   } catch (e) {
     console.error(e); scanStop();
     const m = String(e?.message || e);
@@ -2558,6 +2557,28 @@ async function idb(store, mode, fn) {
   const db = await DB();
   return new Promise((res, rej) => { const tx = db.transaction(store, mode), r = fn(tx.objectStore(store)); tx.oncomplete = () => res(r?.result); tx.onerror = () => rej(tx.error); });
 }
+// Safari auf dem iPhone kann Blobs, die in IndexedDB liegen, manchmal nicht mehr lesen (WebKit-Fehler).
+// Darum speichern wir Bilder als ArrayBuffer und machen beim Laden frische Blobs daraus.
+const BLOB_KEYS = ["blob", "sticker", "src", "mask"];
+async function packFlash(f) {
+  const o = { ...f };
+  for (const k of BLOB_KEYS) if (f[k] instanceof Blob) o[k] = { buf: await f[k].arrayBuffer(), type: f[k].type };
+  return o;
+}
+function unpackFlash(r) {
+  const o = { ...r };
+  for (const k of BLOB_KEYS) if (r[k]?.buf) o[k] = new Blob([r[k].buf], { type: r[k].type });
+  return o;
+}
+async function putFlash(f) { const p = await packFlash(f); await idb("flashes", "readwrite", s => s.put(p)); }
+async function putFlashes(list) { const ps = await Promise.all(list.map(packFlash)); await idb("flashes", "readwrite", s => ps.forEach(p => s.put(p))); }
+// Bild → Canvas, mit mehreren Wegen, weil einzelne auf iOS scheitern können
+async function blobToCanvas(blob) {
+  let img = null;
+  try { img = await createImageBitmap(blob); } catch {}
+  if (!img) { const url = URL.createObjectURL(blob); try { img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; }); } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); } }
+  const w = img.width || img.naturalWidth, h = img.height || img.naturalHeight, c = canvasOf(w, h); c.getContext("2d").drawImage(img, 0, 0); return c;
+}
 const FL = { items: [], links: [], urls: new Map(), sel: new Set(), selecting: false };
 const TTL_OPTS = [[3600, "1 Std"], [86400, "24 Std"], [259200, "3 Tage"], [604800, "7 Tage"], [2592000, "30 Tage"], [0, "Unbegrenzt"]];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -2570,13 +2591,17 @@ function setTab(tab) {
   $(".shell").dataset.tab = tab;
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tab === tab));
   $("main.card").hidden = tab !== "studio"; $("#flashesView").hidden = tab !== "flashes";
-  if (tab !== "flashes") { $("#flView").innerHTML = ""; sheet(""); }
+  if (tab !== "flashes") { // Galerie-Bilder freigeben: auf dem iPhone braucht die Analyse den Speicher
+    $("#flView").innerHTML = ""; sheet(""); $("#flGrid").innerHTML = ""; FL.urls.forEach(u => URL.revokeObjectURL(u)); FL.urls.clear(); layoutKey = ""; }
   if (tab === "flashes") loadFlashes();
 }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
 
 async function loadFlashes() {
-  FL.items = (await idb("flashes", "readonly", s => s.getAll())).sort((a, b) => b.created - a.created);
+  const raw = await idb("flashes", "readonly", s => s.getAll());
+  FL.items = raw.map(unpackFlash).sort((a, b) => b.created - a.created);
+  const legacy = FL.items.filter((f, i) => BLOB_KEYS.some(k => raw[i][k] instanceof Blob)); // alte Einträge einmal umspeichern
+  for (const f of legacy) putFlash(f).catch(() => {});
   FL.links = (await idb("links", "readonly", s => s.getAll())).sort((a, b) => b.created - a.created);
   const old = FL.links.filter(l => l.exp && l.exp < Date.now());
   if (old.length) { await idb("links", "readwrite", s => old.forEach(l => s.delete(l.id))); FL.links = FL.links.filter(l => !old.includes(l)); }
@@ -2592,7 +2617,7 @@ async function ensureSticker(f) {
   const img = await createImageBitmap(f.blob), c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height });
   c.getContext("2d").drawImage(img, 0, 0);
   f.sticker = await toBlob(dieCut(isOpaque(c) ? extract(c, null, true).canvas : c), "image/png");
-  FL.urls.delete(f.id); await idb("flashes", "readwrite", s => s.put(f));
+  FL.urls.delete(f.id); await putFlash(f);
 }
 const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type, q));
 function renderFlashes() {
@@ -2616,7 +2641,7 @@ async function layoutFlashes(force) {
   if (force || posKey() !== layoutKey) {
     const run = ++layoutRun, L = await layoutCollage(FL.items.map(f => ({ id: f.id, src: flashURL(f), fixed: f.pos || null })), W);
     if (run !== layoutRun) return;
-    for (const p of L.items) { const f = FL.items.find(x => x.id === p.id); if (f && !f.pos && f.sticker) { f.pos = { x: p.x, y: p.y, w: p.w, h: p.h, rot: p.rot }; idb("flashes", "readwrite", s => s.put(f)); } }
+    for (const p of L.items) { const f = FL.items.find(x => x.id === p.id); if (f && !f.pos && f.sticker) { f.pos = { x: p.x, y: p.y, w: p.w, h: p.h, rot: p.rot }; putFlash(f); } }
     layoutKey = posKey();
     let x1 = W, y1 = 0; for (const p of L.items) { x1 = Math.max(x1, p.x + p.w); y1 = Math.max(y1, p.y + p.h); }
     grid.style.width = x1 + "px"; grid.style.height = y1 + 40 + "px";
@@ -2632,7 +2657,7 @@ function fitBoard(x1) { // alles in die Breite passen, oben anfangen
   const V = $("#flashesView");
   VIEW.z = clamp((V.clientWidth - 32) / Math.max(x1, 1), .35, 1); VIEW.x = (V.clientWidth - x1 * VIEW.z) / 2; VIEW.y = 16; VIEW.fitted = true; applyView();
 }
-$("#flTidy").onclick = async () => { FL.items.forEach(f => { f.pos = null; }); await idb("flashes", "readwrite", s => FL.items.forEach(f => s.put(f))); VIEW.fitted = false; layoutFlashes(true); };
+$("#flTidy").onclick = async () => { FL.items.forEach(f => { f.pos = null; }); await putFlashes(FL.items); VIEW.fitted = false; layoutFlashes(true); };
 new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFlashes(); }).observe($("#flashesView"));
 // Gesten: ein Finger/Maus auf leerer Fläche = verschieben, auf einem Motiv = Motiv verschieben (oder antippen),
 // zwei Finger = zoomen, Mausrad = verschieben, Strg/Trackpad-Pinch = zoomen
@@ -2668,7 +2693,7 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
       G.tile.classList.remove("dragging");
       const f = FL.items.find(x => x.id === G.tile.dataset.id); if (!f) return;
       f.pos = { x: parseFloat(G.tile.style.left), y: parseFloat(G.tile.style.top), w: parseFloat(G.tile.style.width), h: parseFloat(G.tile.style.height), rot: parseFloat(G.tile.style.getPropertyValue("--r")) || 0 };
-      await idb("flashes", "readwrite", s => s.put(f));
+      await putFlash(f);
       const grid = $("#flGrid"); grid.style.height = Math.max(parseFloat(grid.style.height) || 0, f.pos.y + f.pos.h + 40) + "px";
     }
   };
@@ -2697,15 +2722,13 @@ async function flashRecord(c, meta, base) {
 }
 async function saveFlash(c, name, meta) {
   const rec = await flashRecord(c, meta, { id: crypto.randomUUID(), name, created: Date.now() });
-  await idb("flashes", "readwrite", s => s.put(rec)); FL.items.unshift(rec); renderFlashes();
+  await putFlash(rec); FL.items.unshift(rec); renderFlashes();
 }
 async function editFlash(f) {
-  const load = b => createImageBitmap(b).catch(() => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(b); }));
-  const img = await load(f.src || f.blob), c = canvasOf(img.width, img.height); c.getContext("2d").drawImage(img, 0, 0);
-  const mask = f.mask ? await load(f.mask) : null;
+  const c = await blobToCanvas(f.src || f.blob), mask = f.mask ? await blobToCanvas(f.mask) : null;
   openCut(c, { okLabel: "Speichern", restore: { mask, style: f.style || "orig", bg: f.src ? f.bg : false }, onDone: async (out, meta) => {
     const rec = await flashRecord(out, meta, { id: f.id, name: f.name, created: f.created, pos: f.pos ? { ...f.pos, h: f.pos.w * out.height / out.width } : null });
-    await idb("flashes", "readwrite", s => s.put(rec)); FL.items = FL.items.map(x => x.id === f.id ? rec : x); FL.urls.delete(f.id); layoutKey = ""; renderFlashes();
+    await putFlash(rec); FL.items = FL.items.map(x => x.id === f.id ? rec : x); FL.urls.delete(f.id); layoutKey = ""; renderFlashes();
   } });
 }
 function viewFlash(id) {
@@ -2778,17 +2801,16 @@ const b64 = buf => { let s = ""; const b = new Uint8Array(buf); for (let i = 0; 
 const b64url = buf => b64(buf).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 // Bild fürs Teilen frisch aus dem Motiv zeichnen (max. 1400 px, PNG): kleiner zum Hochladen und unabhängig davon,
 // ob Safari das gespeicherte Blob aus IndexedDB noch direkt lesen kann (bekannter WebKit-Fehler).
-async function shareBytes(f) {
-  let img;
-  try { img = await createImageBitmap(f.blob); }
-  catch { img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = flashURL(f); }); }
-  const w = img.width || img.naturalWidth, h = img.height || img.naturalHeight, k = Math.min(1, 1400 / Math.max(w, h));
-  const c = canvasOf(Math.round(w * k), Math.round(h * k)); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-  return (await toBlob(c, "image/png")).arrayBuffer();
+async function shareBytes(f) { // { buf, sticker }: sticker = true, wenn nur noch das Sticker-Bild lesbar war
+  let src, sticker = false;
+  try { src = await blobToCanvas(f.blob); } catch { src = await blobToCanvas(f.sticker); sticker = true; }
+  const k = Math.min(1, 1400 / Math.max(src.width, src.height)), c = canvasOf(Math.round(src.width * k), Math.round(src.height * k));
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+  return { buf: await (await toBlob(c, "image/png")).arrayBuffer(), sticker };
 }
 async function createLink(ids, ttl, allowDownload, note) {
   const flashes = [];
-  for (const id of ids) { const f = FL.items.find(x => x.id === id); if (f) flashes.push({ name: f.name, type: "image/png", w: f.w, h: f.h, data: b64(await shareBytes(f)) }); }
+  for (const id of ids) { const f = FL.items.find(x => x.id === id); if (f) { const s = await shareBytes(f); flashes.push({ name: f.name, type: "image/png", w: f.w, h: f.h, sticker: s.sticker, data: b64(s.buf) }); } }
   const plain = new TextEncoder().encode(JSON.stringify({ v: 1, flashes, allowDownload, note: note || "" }));
   const raw = crypto.getRandomValues(new Uint8Array(32)), iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt"]);
@@ -2822,18 +2844,27 @@ async function endLink(id) {
   try { await fetch(`/api/share/${id}`, { method: "DELETE", headers: { "X-Delete-Token": l.del } }); } catch {}
   await idb("links", "readwrite", s => s.delete(id)); FL.links = FL.links.filter(x => x.id !== id); renderFlashes();
 }
-// Ein Flash im Studio anprobieren: ist schon ein Foto analysiert, öffnet es sofort den Editor,
-// sonst wartet es, bis das Foto fertig ist.
+// Ein Flash anprobieren (aus den eigenen Flashes oder vom Kunden-Link): das Motiv ist schon ausgeschnitten,
+// also kein Editor, sondern direkt aufs Foto. Ohne Foto wartet es, bis die Analyse fertig ist. Damit nichts
+// verloren geht, falls Safari die Seite neu lädt, liegt es bis dahin auch in IndexedDB (als ArrayBuffer).
 let pendingFlash = null;
-function tryFlash(blob) {
+async function tryFlash(blob) {
   setTab("studio");
-  if (S.step >= 3 && S.skin) loadMotif(blob);
-  else { pendingFlash = blob; const h = $("#drop .hello span"); if (h) h.textContent = "jetzt ein Foto deiner Haut."; }
+  let c; try { c = await blobToCanvas(blob); } catch (e) { console.warn("flash", e); return status("Motiv nicht lesbar", "err"); }
+  if (S.step >= 3 && S.skin) { addMotif(trim(c) || c); return; }
+  pendingFlash = c; const h = $("#drop .hello span"); if (h) h.textContent = "jetzt ein Foto deiner Haut.";
+  try { const buf = await (await toBlob(c, "image/png")).arrayBuffer(); await idb("handoff", "readwrite", s => s.put({ buf, type: "image/png" }, "flash")); } catch {}
 }
-(async () => { // vom Kunden-Link übergeben
+function usePending() { // nach der Analyse aufgerufen
+  if (!pendingFlash) return false;
+  const c = pendingFlash; pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
+  addMotif(trim(c) || c); return true;
+}
+(async () => { // vom Kunden-Link übergeben oder nach einem Neuladen noch offen
   try {
     const h = await idb("handoff", "readonly", s => s.get("flash"));
-    if (h?.blob) { await idb("handoff", "readwrite", s => s.delete("flash")); tryFlash(h.blob); }
+    const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
+    if (blob) await tryFlash(blob);
   } catch (e) { console.warn("handoff", e); }
 })();
 

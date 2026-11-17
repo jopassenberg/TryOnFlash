@@ -151,7 +151,7 @@ async function render() {
   for (let i = 0; i < data.flashes.length; i++) {
     const f = data.flashes[i], img = new Image(); img.src = `data:${f.type};base64,${f.data}`; await img.decode();
     const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }); c.getContext("2d").drawImage(img, 0, 0);
-    stickers[i] = dieCut(c).toDataURL("image/png");
+    stickers[i] = f.sticker ? img.src : dieCut(c).toDataURL("image/png"); // schon ein Sticker: nicht doppelt umranden
   }
   await layout();
   new ResizeObserver(() => { if ($("#grid") && $("#grid").clientWidth !== laidW) layout(); }).observe($("#inner"));
@@ -180,7 +180,7 @@ $("#lbTry").onclick = async () => {
     const rq = indexedDB.open("stencit", 1);
     rq.onupgradeneeded = () => { const db = rq.result; if (!db.objectStoreNames.contains("flashes")) db.createObjectStore("flashes", { keyPath: "id" });
       if (!db.objectStoreNames.contains("links")) db.createObjectStore("links", { keyPath: "id" }); if (!db.objectStoreNames.contains("handoff")) db.createObjectStore("handoff"); };
-    rq.onsuccess = () => { const tx = rq.result.transaction("handoff", "readwrite"); tx.objectStore("handoff").put({ blob, name: current.name || "Flash" }, "flash"); tx.oncomplete = res; tx.onerror = rej; };
+    rq.onsuccess = () => { const tx = rq.result.transaction("handoff", "readwrite"); tx.objectStore("handoff").put({ buf: bin.buffer, type: current.type, name: current.name || "Flash" }, "flash"); tx.oncomplete = res; tx.onerror = rej; };
     rq.onerror = rej;
   });
   location.href = "/";
