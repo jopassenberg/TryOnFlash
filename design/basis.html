@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Basis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* ============ Stencit · Basis-Tokens ============
+     hell, weiß bis zartgrau · weiches Glas ohne Ränder · Rot nur als Akzent (Startseite)
+     Schrift: Plus Jakarta Sans Regular · Icons: IBM Carbon · Raster 4/8 · Buttons rund */
+  :root {
+    /* Neutral: leicht warmes Grau, in OKLCH gleichmäßige Stufen */
+    --n-0: oklch(100% 0 0);
+    --n-50: oklch(98.6% .002 75);
+    --n-100: oklch(97% .003 75);
+    --n-200: oklch(94.5% .003 75);
+    --n-300: oklch(91% .004 75);
+    --n-400: oklch(84% .004 75);
+    --n-500: oklch(68% .005 75);
+    --n-600: oklch(54% .005 75);
+    --n-800: oklch(32% .004 75);
+    --n-900: oklch(19% .003 75);
+    /* Akzent: Stencit-Rot, sparsam */
+    /* Marke (aus dem Logo): Bordeaux oben -> Rot unten, sparsam */
+    --bordeaux: oklch(36.2% 0.132 15.2);   /* #730F26 */
+    --accent: oklch(56.8% 0.221 27.7);     /* #DB1A1D */
+    --brand: linear-gradient(in srgb 180deg, #730F26, #DB1A1D);   /* linear in sRGB wie im Original */
+    /* Rollen */
+    --bg: var(--n-100);
+    --text: var(--n-900);
+    --text-2: var(--n-600);
+    --text-3: var(--n-500);
+    --fill: oklch(19% .003 75 / .05);      /* Flächen statt Linien */
+    --fill-2: oklch(19% .003 75 / .08);
+    /* Glas: milchig, ohne Rand, ohne Spiegelung */
+    --glass: oklch(100% 0 0 / .62);
+    --glass-strong: oklch(100% 0 0 / .82);
+    --glass-blur: blur(24px) saturate(1.6);
+    /* keine Schatten: Tiefe nur über Helligkeit und Glas */
+    /* Raster, Radien, Höhen */
+    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+    --h-sm: 32px; --h: 44px; --h-lg: 56px;
+    --r-card: 32px; --r-inner: 20px; --r-full: 999px;
+    /* Bewegung */
+    --ease: cubic-bezier(.22,1,.36,1); --spring: cubic-bezier(.34,1.4,.64,1);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body { margin: 0; color: var(--text); font: 400 15px/1.5 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em;
+    -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+  button { font: inherit; color: inherit; letter-spacing: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+  .ic { width: 20px; height: 20px; fill: currentColor; flex: none; }
+
+  /* weiche Aura im Hintergrund: fast weiß, ein Hauch Wärme */
+  .aura { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .aura i { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .9; animation: drift 24s ease-in-out infinite alternate; }
+  .aura i:nth-child(1) { width: 55vmax; height: 55vmax; left: -10vmax; top: -15vmax; background: oklch(99% .008 60); }
+  .aura i:nth-child(2) { width: 45vmax; height: 45vmax; right: -12vmax; top: 10vmax; background: oklch(95% .012 20); animation-duration: 30s; }
+  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 25vmax; bottom: -25vmax; background: oklch(96% .01 240); animation-duration: 28s; }
+  @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
+
+  /* ============ Text ============ */
+  .t-display { font-size: clamp(40px, 5vw, 64px); line-height: 1; letter-spacing: -.045em; }
+  .t-title { font-size: 28px; line-height: 1.15; letter-spacing: -.035em; }
+  .t-head { font-size: 19px; line-height: 1.3; letter-spacing: -.02em; }
+  .t-body { font-size: 15px; line-height: 1.5; }
+  .t-small { font-size: 13px; line-height: 1.45; }
+  .t-cap { font-size: 12px; line-height: 1.4; color: var(--text-3); }
+  .dim { color: var(--text-3); }
+
+  /* ============ Flächen ============ */
+  .glass { background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+  .card { border-radius: var(--r-card); padding: var(--s5); }
+  .well { background: var(--fill); border-radius: var(--r-inner); }
+
+  /* ============ Buttons ============ */
+  .btn { height: var(--h); padding: 0 var(--s5); border-radius: var(--r-full); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+    font-size: 15px; white-space: nowrap; transition: transform .25s var(--spring), background-color .2s var(--ease), opacity .2s; -webkit-tap-highlight-color: transparent; }
+  .btn:active { transform: scale(.96); }
+  .btn .ic { margin-left: -4px; }
+  .btn.primary { background: var(--n-900); color: var(--n-0); }
+  .btn.primary:hover { background: var(--n-800); }
+  .btn.secondary { background: var(--glass-strong); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+  .btn.secondary:hover { background: var(--n-0); }
+  .btn.tonal { background: var(--fill); }
+  .btn.tonal:hover { background: var(--fill-2); }
+  .btn.text { padding: 0 var(--s3); color: var(--text-2); }
+  .btn.text:hover { color: var(--text); }
+  .btn.accent { background: var(--accent); color: #fff; }
+  .btn.sm { height: var(--h-sm); padding: 0 var(--s4); font-size: 13px; }
+  .btn.sm .ic { width: 16px; height: 16px; }
+  .btn.lg { height: var(--h-lg); padding: 0 var(--s6); font-size: 16px; }
+  .btn.icon { width: var(--h); padding: 0; }
+  .btn.icon .ic { margin: 0; }
+  .btn.icon.sm { width: var(--h-sm); }
+  .btn.icon.lg { width: var(--h-lg); }
+  .btn.icon.lg .ic { width: 24px; height: 24px; }
+  .btn:disabled { opacity: .35; pointer-events: none; }
+
+  /* Chip / Toggle */
+  .chip { height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 6px; font-size: 13px; background: var(--fill); color: var(--text-2); transition: background-color .2s var(--ease), color .2s; }
+  .chip .ic { width: 16px; height: 16px; margin-left: -4px; }
+  .chip[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
+
+  /* Segment: ein Glas-Pill, die Auswahl ist eine weiße Pille, die gleitet */
+  .seg { position: relative; display: inline-flex; padding: 4px; border-radius: var(--r-full); background: var(--fill); }
+  .seg button { position: relative; z-index: 1; height: 36px; padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); transition: color .2s; }
+  .seg button .ic { width: 16px; height: 16px; }
+  .seg button[aria-selected="true"] { color: var(--text); }
+  .seg .knob { position: absolute; top: 4px; bottom: 4px; border-radius: var(--r-full); background: var(--n-0); transition: left .35s var(--spring), width .35s var(--spring); }
+
+  /* Schieber */
+  /* Schieber: eine runde Fläche, die sich schwarz füllt; Name und Wert stehen darin */
+  .slider { position: relative; height: var(--h); border-radius: var(--r-full); overflow: hidden; background: var(--fill); --p: 40%; }
+  .slider .fillbar { position: absolute; inset: 0 auto 0 0; width: max(var(--h), var(--p)); border-radius: var(--r-full); background: var(--n-900); transition: width .12s linear; }
+  .slider .fillbar::after { content: ""; position: absolute; right: 14px; top: 50%; width: 3px; height: 16px; margin-top: -8px; border-radius: 3px; background: oklch(100% 0 0 / .7); }
+  .slider span { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; pointer-events: none; }
+  .slider .name { left: var(--s4); color: var(--n-0); mix-blend-mode: difference; }
+  .slider .val { right: var(--s4); color: var(--text-2); }
+  .slider .name .ic { width: 16px; height: 16px; }
+  .slider input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+
+  /* ============ Seite ============ */
+  .wrap { max-width: 1120px; margin: 0 auto; padding: var(--s7) var(--s5) 96px; display: grid; gap: var(--s8); }
+  .head { display: flex; justify-content: space-between; align-items: center; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 20px; letter-spacing: -.045em; }
+  .logo svg { width: 22px; height: 22px; }
+  .sec { display: grid; gap: var(--s5); }
+  .sec > header { display: grid; gap: var(--s1); }
+  .grid { display: grid; gap: var(--s4); }
+  .g2 { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 860px) { .g2, .g3, .g4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .g2, .g3 { grid-template-columns: 1fr; } }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); }
+  .lbl { font-size: 12px; color: var(--text-3); }
+  .sw { display: grid; gap: var(--s2); }
+  .sw i { height: 72px; border-radius: var(--r-inner); display: block; }
+  .sw b { font-weight: 400; font-size: 13px; }
+  .neutrals { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+  .neutrals i { height: 56px; border-radius: 16px; display: block; }
+  .neutrals span { font-size: 11px; color: var(--text-3); display: block; margin-top: 6px; text-align: center; }
+  .typespec { display: grid; grid-template-columns: 120px 1fr; gap: var(--s4) var(--s5); align-items: baseline; }
+  .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s2); }
+  .icons div { display: grid; justify-items: center; gap: var(--s2); padding: var(--s4) var(--s1) var(--s3); border-radius: var(--r-inner); font-size: 11px; color: var(--text-3); text-align: center; }
+  .icons div:hover { background: var(--glass); }
+  .icons .ic { width: 24px; height: 24px; color: var(--text); }
+  .demo { position: relative; min-height: 340px; border-radius: var(--r-card); overflow: hidden; padding: var(--s5); display: grid; align-content: space-between;
+    background: radial-gradient(70% 80% at 30% 40%, oklch(80% .045 55), oklch(66% .05 45) 50%, oklch(52% .04 40)); }
+  /* Toolbar: Werkzeuge in einer Glaskapsel, Hauptaktion daneben, beide 56 hoch; Innenabstand 6 = (56-44)/2, also konzentrisch */
+  .toolbar { justify-self: center; display: flex; align-items: center; gap: var(--s2); }
+  .toolbar .bar { height: var(--h-lg); display: flex; align-items: center; gap: var(--s1); padding: 6px; border-radius: var(--r-full); }
+  .toolbar .bar .btn { color: var(--text); }
+  /* ============ Scan-Aura (Siri-artiger Kanten-Glow, rot) ============
+     Läuft komplett auf der GPU: ein großer Farbkreis dreht sich (transform) hinter zwei Masken,
+     einem weichen Band nach innen und einem feinen Rand. Keine Schatten, keine Neuzeichnung pro Bild. */
+  .aura-glow { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; opacity: 0; transition: opacity .6s var(--ease); }
+  .aura-glow.on { opacity: 1; }
+  .aura-glow i { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
+  .aura-glow i::before { content: ""; position: absolute; left: 50%; top: 50%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax; will-change: transform;
+    background: conic-gradient(from 0deg, #ff4a4f, #ff8a7a, #c8102e, #ff3d6e, #ffb199, #8e1427, #ff4a4f);
+    background: conic-gradient(in oklch from 0deg, #ff4a4f, #ff8a7a, #c8102e, #ff3d6e, #ffb199, #8e1427, #ff4a4f); animation: glow-spin 7s linear infinite; }
+  .aura-glow .band { --e: 44px; opacity: .45; animation: glow-breathe 2.6s ease-in-out infinite;
+    -webkit-mask: linear-gradient(to right, #000, transparent var(--e)), linear-gradient(to left, #000, transparent var(--e)), linear-gradient(to bottom, #000, transparent var(--e)), linear-gradient(to top, #000, transparent var(--e));
+    mask: linear-gradient(to right, #000, transparent var(--e)), linear-gradient(to left, #000, transparent var(--e)), linear-gradient(to bottom, #000, transparent var(--e)), linear-gradient(to top, #000, transparent var(--e)); }
+  .aura-glow .band::before { animation-duration: 9s; animation-direction: reverse; }
+  .aura-glow .ring { padding: 2.5px; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  @keyframes glow-spin { to { transform: rotate(360deg); } }
+  @keyframes glow-breathe { 50% { opacity: .75; } }
+  /* Loader: das Punkt-Logo, ein Licht läuft im Kreis */
+  .loader { position: absolute; left: 50%; top: 50%; width: 0; height: 0; opacity: 0; transition: opacity .35s var(--ease); }
+  .loader.on { opacity: 1; }
+  .loader i, .loader b { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: #fff; }
+  .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(14px); opacity: .25; animation: loader-dot 1.2s linear infinite; animation-delay: calc(var(--k) * .15s - 1.2s); }
+  .loader b { width: 6px; height: 6px; margin: -3px; opacity: .6; animation: glow-breathe 2.4s ease-in-out infinite; }
+  @keyframes loader-dot { 0% { opacity: 1; } 45%, 100% { opacity: .25; } }
+  .scan { position: relative; height: 420px; border-radius: var(--r-card); overflow: hidden;
+    background: radial-gradient(70% 80% at 40% 45%, oklch(80% .045 55), oklch(66% .05 45) 50%, oklch(50% .04 40)); }
+  .scan .status { position: absolute; top: var(--s4); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: flex; align-items: center; font-size: 13px; }
+  .scan .ctl { position: absolute; bottom: var(--s4); left: 50%; transform: translateX(-50%); }
+  @media (prefers-reduced-motion: reduce) { .aura-glow i::before, .aura-glow .band, .loader i, .loader b { animation: none; } }
+  .logo-hero { border-radius: var(--r-card); background: var(--brand); min-height: 320px; display: grid; place-items: center; padding: var(--s7); }
+  .logo-hero img { width: min(100%, 380px); }
+  .logo-tile { border-radius: var(--r-card); min-height: 180px; display: grid; place-items: center; padding: var(--s5); }
+  .logo-tile img { width: min(100%, 200px); height: auto; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol>
+<symbol id="i-ai-generate" viewBox="0 0 32 32"><path stroke-width="0" d="M19 22v-2h1v-7h-1v-2h4v2h-1v7h1v2h-4zM15.5005 22h2l-3.5005-11h-3l-3.4966 11h1.9988l.6018-2h4.7781l.6184 2zm-4.7947-4l1.6284-5.4111.2559-.0024 1.6736 5.4136h-3.5579zM32 4L28 4 28 0 26 0 26 4 22 4 22 6 26 6 26 10 28 10 28 6 32 6 32 4zM30 12H32V14H30zM18 0H20V2H18z"/><path stroke-width="0" d="M32 32L0 32 0 0 14 0 14 2 2 2 2 30 30 30 30 18 32 18 32 32z"/></symbol>
+<symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol>
+<symbol id="i-arrow--right" viewBox="0 0 32 32"><path d="M18 6L16.57 7.393 24.15 15 4 15 4 17 24.15 17 16.57 24.573 18 26 28 16 18 6z"/></symbol>
+<symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol>
+<symbol id="i-checkmark" viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></symbol>
+<symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol>
+<symbol id="i-close" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol>
+<symbol id="i-color-palette" viewBox="0 0 32 32"><circle cx="10" cy="12" r="2"/><circle cx="16" cy="9" r="2"/><circle cx="22" cy="12" r="2"/><circle cx="23" cy="18" r="2"/><circle cx="19" cy="23" r="2"/><path d="M16.54,2A14,14,0,0,0,2,16a4.82,4.82,0,0,0,6.09,4.65l1.12-.31A3,3,0,0,1,13,23.24V27a3,3,0,0,0,3,3A14,14,0,0,0,30,15.46,14.05,14.05,0,0,0,16.54,2Zm8.11,22.31A11.93,11.93,0,0,1,16,28a1,1,0,0,1-1-1V23.24a5,5,0,0,0-5-5,5.07,5.07,0,0,0-1.33.18l-1.12.31A2.82,2.82,0,0,1,4,16,12,12,0,0,1,16.47,4,12.18,12.18,0,0,1,28,15.53,11.89,11.89,0,0,1,24.65,24.32Z"/></symbol>
+<symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol>
+<symbol id="i-crop" viewBox="0 0 32 32"><path d="M25,20H23V9H12V7H23a2,2,0,0,1,2,2Z"/><path d="M9,23V2H7V7H2V9H7V23a2,2,0,0,0,2,2H23v5h2V25h5V23Z"/></symbol>
+<symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol>
+<symbol id="i-cut-out" viewBox="0 0 32 32"><path d="M19.05 13.7326L18.05 12 7.928 17.8457 6.9312 17.27a2.9524 2.9524 0 00.6672-.769A3 3 0 103.5 17.5986l2.428 1.4019L3.5 20.4023a3.0342 3.0342 0 103.4407.3223l.987-.5693L14.5914 24l1-1.7294-5.6634-3.27zM4.0344 15.26a1 1 0 11.4658.6069A.9929.9929 0 014.0344 15.26zM4.9988 22a1 1 0 11-.8645 1.5A1 1 0 014.9988 22zM17 26H21V28H17zM10 26H14V28H10z"/><path d="M28,28H24V26h4V4H7V8H5V4A2.0023,2.0023,0,0,1,7,2H28a2.0023,2.0023,0,0,1,2,2V26A2.0023,2.0023,0,0,1,28,28Z"/></symbol>
+<symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol>
+<symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol>
+<symbol id="i-home" viewBox="0 0 32 32"><path d="M16.6123,2.2138a1.01,1.01,0,0,0-1.2427,0L1,13.4194l1.2427,1.5717L4,13.6209V26a2.0041,2.0041,0,0,0,2,2H26a2.0037,2.0037,0,0,0,2-2V13.63L29.7573,15,31,13.4282ZM18,26H14V18h4Zm2,0V18a2.0023,2.0023,0,0,0-2-2H14a2.002,2.002,0,0,0-2,2v8H6V12.0615l10-7.79,10,7.8005V26Z"/></symbol>
+<symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol>
+<symbol id="i-information" viewBox="0 0 32 32"><path d="M17 22L17 14 13 14 13 16 15 16 15 22 12 22 12 24 20 24 20 22 17 22zM16 8a1.5 1.5 0 101.5 1.5A1.5 1.5 0 0016 8z"/><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/></symbol>
+<symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol>
+<symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol>
+<symbol id="i-magic-wand" viewBox="0 0 32 32"><path d="M29.4141,24,12,6.5859a2.0476,2.0476,0,0,0-2.8281,0l-2.586,2.586a2.0021,2.0021,0,0,0,0,2.8281L23.999,29.4141a2.0024,2.0024,0,0,0,2.8281,0l2.587-2.5865a1.9993,1.9993,0,0,0,0-2.8281ZM8,10.5859,10.5859,8l5,5-2.5866,2.5869-5-5ZM25.4131,28l-11-10.999L17,14.4141l11,11Z"/><path d="M2.586 14.586H5.414V17.414H2.586z" transform="rotate(-45 4 16)"/><path d="M14.586 2.586H17.414V5.414H14.586z" transform="rotate(-45 16 4)"/><path d="M2.586 2.586H5.414V5.414H2.586z" transform="rotate(-45 4 4)"/></symbol>
+<symbol id="i-overflow-menu--horizontal" viewBox="0 0 32 32"><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/><circle cx="24" cy="16" r="2"/></symbol>
+<symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol>
+<symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol>
+<symbol id="i-redo" viewBox="0 0 32 32"><path d="M12,10H24.1851L20.5977,6.4141,22,5,28,11,22,17l-1.4023-1.4146L24.1821,12H12a6,6,0,0,0,0,12h8v2H12a8,8,0,0,1,0-16Z"/></symbol>
+<symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 32 32"><path d="M17.91 26.82l.35 2a12.9 12.9 0 004.24-1.54l-1-1.73A10.88 10.88 0 0117.91 26.82zM24.42 23.07L26 24.35a13 13 0 002.24-3.91l-1.87-.68A11 11 0 0124.42 23.07zM9.5 27.25a12.9 12.9 0 004.24 1.54l.35-2a10.88 10.88 0 01-3.59-1.3zM5.67 19.76l-1.87.68A13 13 0 006 24.35l.32-.26 1.22-1h0a11 11 0 01-1.91-3.31zM29 16a12.85 12.85 0 00-.8-4.44l-1.87.68A11.18 11.18 0 0127 16zM26 7.65a13 13 0 00-20 0V4H4v8h8V10H6.81A11 11 0 0124.42 8.93z"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 32 32"><path d="M29,10H3a1,1,0,0,0-1,1V21a1,1,0,0,0,1,1H29a1,1,0,0,0,1-1V11A1,1,0,0,0,29,10ZM28,20H4V12H8v4h2V12h5v4h2V12h5v4h2V12h4Z"/></symbol>
+<symbol id="i-scale" viewBox="0 0 32 32"><path d="M13,17H7a2,2,0,0,0-2,2v6a2,2,0,0,0,2,2h6a2,2,0,0,0,2-2V19A2,2,0,0,0,13,17ZM7,25V19h6v6Z"/><path d="M19,21v2h6a2,2,0,0,0,2-2V7a2,2,0,0,0-2-2H11A2,2,0,0,0,9,7v6h2V7H25V21"/></symbol>
+<symbol id="i-settings" viewBox="0 0 32 32"><path d="M27,16.76c0-.25,0-.5,0-.76s0-.51,0-.77l1.92-1.68A2,2,0,0,0,29.3,11L26.94,7a2,2,0,0,0-1.73-1,2,2,0,0,0-.64.1l-2.43.82a11.35,11.35,0,0,0-1.31-.75l-.51-2.52a2,2,0,0,0-2-1.61H13.64a2,2,0,0,0-2,1.61l-.51,2.52a11.48,11.48,0,0,0-1.32.75L7.43,6.06A2,2,0,0,0,6.79,6,2,2,0,0,0,5.06,7L2.7,11a2,2,0,0,0,.41,2.51L5,15.24c0,.25,0,.5,0,.76s0,.51,0,.77L3.11,18.45A2,2,0,0,0,2.7,21L5.06,25a2,2,0,0,0,1.73,1,2,2,0,0,0,.64-.1l2.43-.82a11.35,11.35,0,0,0,1.31.75l.51,2.52a2,2,0,0,0,2,1.61h4.72a2,2,0,0,0,2-1.61l.51-2.52a11.48,11.48,0,0,0,1.32-.75l2.42.82a2,2,0,0,0,.64.1,2,2,0,0,0,1.73-1L29.3,21a2,2,0,0,0-.41-2.51ZM25.21,24l-3.43-1.16a8.86,8.86,0,0,1-2.71,1.57L18.36,28H13.64l-.71-3.55a9.36,9.36,0,0,1-2.7-1.57L6.79,24,4.43,20l2.72-2.4a8.9,8.9,0,0,1,0-3.13L4.43,12,6.79,8l3.43,1.16a8.86,8.86,0,0,1,2.71-1.57L13.64,4h4.72l.71,3.55a9.36,9.36,0,0,1,2.7,1.57L25.21,8,27.57,12l-2.72,2.4a8.9,8.9,0,0,1,0,3.13L27.57,20Z"/><path d="M16,22a6,6,0,1,1,6-6A5.94,5.94,0,0,1,16,22Zm0-10a3.91,3.91,0,0,0-4,4,3.91,3.91,0,0,0,4,4,3.91,3.91,0,0,0,4-4A3.91,3.91,0,0,0,16,12Z"/></symbol>
+<symbol id="i-share" viewBox="0 0 32 32"><path d="M23,20a5,5,0,0,0-3.89,1.89L11.8,17.32a4.46,4.46,0,0,0,0-2.64l7.31-4.57A5,5,0,1,0,18,7a4.79,4.79,0,0,0,.2,1.32l-7.31,4.57a5,5,0,1,0,0,6.22l7.31,4.57A4.79,4.79,0,0,0,18,25a5,5,0,1,0,5-5ZM23,4a3,3,0,1,1-3,3A3,3,0,0,1,23,4ZM7,19a3,3,0,1,1,3-3A3,3,0,0,1,7,19Zm16,9a3,3,0,1,1,3-3A3,3,0,0,1,23,28Z"/></symbol>
+<symbol id="i-time" viewBox="0 0 32 32"><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/><path d="M20.59 22L15 16.41 15 7 17 7 17 15.58 22 20.59 20.59 22z"/></symbol>
+<symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol>
+<symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol>
+<symbol id="i-view" viewBox="0 0 32 32"><path d="M30.94,15.66A16.69,16.69,0,0,0,16,5,16.69,16.69,0,0,0,1.06,15.66a1,1,0,0,0,0,.68A16.69,16.69,0,0,0,16,27,16.69,16.69,0,0,0,30.94,16.34,1,1,0,0,0,30.94,15.66ZM16,25c-5.3,0-10.9-3.93-12.93-9C5.1,10.93,10.7,7,16,7s10.9,3.93,12.93,9C26.9,21.07,21.3,25,16,25Z"/><path d="M16,10a6,6,0,1,0,6,6A6,6,0,0,0,16,10Zm0,10a4,4,0,1,1,4-4A4,4,0,0,1,16,20Z"/></symbol>
+<symbol id="mark" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="5" cy="5" r="2.2"/><circle cx="12" cy="5" r="2.2"/><circle cx="19" cy="5" r="2.2"/><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="12" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/></g></symbol>
+</defs></svg>
+<div class="aura"><i></i><i></i><i></i></div>
+
+<div class="wrap">
+  <div class="head">
+    <img src="logo/stencit-logo.svg" alt="Stencit" style="height:22px;width:auto;display:block">
+    <span class="t-cap">Basis · v0.2</span>
+  </div>
+
+  <div class="sec">
+    <div class="t-display">Leicht, hell,<br><span class="dim">ohne Linien.</span></div>
+    <p class="t-body" style="max-width:560px;color:var(--text-2);margin:0">Weiß und zartes Grau tragen alles. Flächen trennen statt Linien, Glas ist einfach milchig. Rot taucht nur einmal auf: auf der Startseite.</p>
+  </div>
+
+  <!-- ===== Logo ===== -->
+  <section class="sec">
+    <header><span class="lbl">00</span><div class="t-title">Logo</div></header>
+    <div class="logo-hero"><img src="logo/stencit-logo-white.svg" alt="Stencit auf dem Markenverlauf"></div>
+    <div class="grid g4">
+      <div class="logo-tile" style="background:var(--n-0)"><img src="logo/stencit-logo.svg" alt="Stencit schwarz"></div>
+      <div class="logo-tile" style="background:var(--n-900)"><img src="logo/stencit-logo-white.svg" alt="Stencit weiß"></div>
+      <div class="logo-tile" style="background:var(--n-0)"><img src="logo/stencit-mark.svg" alt="Stencit Zeichen" style="width:72px"></div>
+      <div class="logo-tile" style="background:var(--n-200)"><img src="logo/stencit-app-icon.svg" alt="Stencit App-Icon" style="width:96px"></div>
+    </div>
+    <p class="t-small" style="margin:0;color:var(--text-2)">Zeichen: 9er Round Liner, neun gleich große Punkte, acht um einen. Wortmarke Plus Jakarta Sans Regular als Pfade. Auf Hell schwarz, auf Dunkel oder Rot weiß. Schutzraum mindestens eine Zeichenbreite, Mindestbreite 72 px. Dateien und Konstruktion: <a href="logo.html" style="color:inherit">logo.html</a>, design/logo/.</p>
+  </section>
+
+  <!-- ===== Farben ===== -->
+  <section class="sec">
+    <header><span class="lbl">01</span><div class="t-title">Farben</div></header>
+    <div class="card glass">
+      <div class="neutrals">
+        <div><i style="background:var(--n-0)"></i><span>0</span></div>
+        <div><i style="background:var(--n-50)"></i><span>50</span></div>
+        <div><i style="background:var(--n-100)"></i><span>100</span></div>
+        <div><i style="background:var(--n-200)"></i><span>200</span></div>
+        <div><i style="background:var(--n-300)"></i><span>300</span></div>
+        <div><i style="background:var(--n-400)"></i><span>400</span></div>
+        <div><i style="background:var(--n-500)"></i><span>500</span></div>
+        <div><i style="background:var(--n-600)"></i><span>600</span></div>
+        <div><i style="background:var(--n-800)"></i><span>800</span></div>
+        <div><i style="background:var(--n-900)"></i><span>900</span></div>
+      </div>
+    </div>
+    <div class="grid g4">
+      <div class="sw"><i style="background:radial-gradient(80% 120% at 20% 0%, oklch(99% .008 60), transparent 60%), radial-gradient(70% 120% at 100% 100%, oklch(93% .016 20), transparent 60%), var(--n-200)"></i><b>Hintergrund</b><span class="t-cap">n-100 · mit weicher Aura</span></div>
+      <div class="sw"><i class="glass" style="background:var(--glass)"></i><b>Glas</b><span class="t-cap">Weiß 62 %, Blur 24, kein Rand, kein Schatten</span></div>
+      <div class="sw"><i style="background:var(--n-900)"></i><b>Text und Hauptaktion</b><span class="t-cap">n-900</span></div>
+      <div class="sw"><i style="background:var(--brand)"></i><b>Marke</b><span class="t-cap">Bordeaux → Rot · Startseite, Scan, Icon</span></div>
+    </div>
+  </section>
+
+  <!-- ===== Text ===== -->
+  <section class="sec">
+    <header><span class="lbl">02</span><div class="t-title">Text</div></header>
+    <div class="card glass typespec">
+      <span class="t-cap">Display · 64</span><span class="t-display">Erst sehen.</span>
+      <span class="t-cap">Titel · 28</span><span class="t-title">Platziere dein Motiv <span class="dim">auf dem Arm</span></span>
+      <span class="t-cap">Überschrift · 19</span><span class="t-head">Zusammenfassung</span>
+      <span class="t-cap">Text · 15</span><span class="t-body">Lade ein Foto hoch. Stencit misst Tiefe und Haut direkt auf deinem Gerät.</span>
+      <span class="t-cap">Klein · 13</span><span class="t-small">8 × 6 cm am Unterarm, Linien mit 7RL.</span>
+      <span class="t-cap">Hinweis · 12</span><span class="t-cap">± 12 % · Hand erkannt</span>
+    </div>
+    <p class="t-small" style="margin:0;color:var(--text-2)">Nur Plus Jakarta Sans Regular. Hierarchie über Größe und Grau, nie über Fett. Große Größen enger gesetzt (−4,5 %), Fließtext fast normal (−1,1 %). Zweite Satzhälfte gern grau.</p>
+  </section>
+
+  <!-- ===== Buttons ===== -->
+  <section class="sec">
+    <header><span class="lbl">03</span><div class="t-title">Buttons</div></header>
+    <div class="grid g2">
+      <div class="card glass" style="display:grid;gap:var(--s5)">
+        <div><div class="lbl" style="margin-bottom:12px">Stufen</div>
+          <div class="row">
+            <button class="btn primary"><svg class="ic"><use href="#i-upload"/></svg>Foto hochladen</button>
+            <button class="btn secondary">Abbrechen</button>
+            <button class="btn tonal">Motiv</button>
+            <button class="btn text">Später</button>
+          </div></div>
+        <div><div class="lbl" style="margin-bottom:12px">Größen 56 · 44 · 32</div>
+          <div class="row">
+            <button class="btn primary lg">Stechen</button>
+            <button class="btn primary">Stechen</button>
+            <button class="btn primary sm">Stechen</button>
+          </div></div>
+        <div><div class="lbl" style="margin-bottom:12px">Zustände</div>
+          <div class="row">
+            <button class="btn primary">Normal</button>
+            <button class="btn primary" style="background:var(--n-800)">Hover</button>
+            <button class="btn primary" style="transform:scale(.96)">Gedrückt</button>
+            <button class="btn primary" disabled>Inaktiv</button>
+          </div></div>
+      </div>
+      <div class="card glass" style="display:grid;gap:var(--s5);align-content:start">
+        <div><div class="lbl" style="margin-bottom:12px">Icon-Buttons, immer rund</div>
+          <div class="row">
+            <button class="btn icon primary lg" aria-label="Foto"><svg class="ic"><use href="#i-camera"/></svg></button>
+            <button class="btn icon primary" aria-label="Hinzufügen"><svg class="ic"><use href="#i-add"/></svg></button>
+            <button class="btn icon secondary" aria-label="Rückgängig"><svg class="ic"><use href="#i-undo"/></svg></button>
+            <button class="btn icon tonal" aria-label="Vergleichen"><svg class="ic"><use href="#i-compare"/></svg></button>
+            <button class="btn icon text sm" aria-label="Schließen"><svg class="ic"><use href="#i-close"/></svg></button>
+          </div></div>
+        <div><div class="lbl" style="margin-bottom:12px">Chips</div>
+          <div class="row">
+            <button class="chip" aria-pressed="true" onclick="this.ariaPressed=this.ariaPressed!=='true'"><svg class="ic"><use href="#i-cut-out"/></svg>Hintergrund weg</button>
+            <button class="chip" aria-pressed="false" onclick="this.ariaPressed=this.ariaPressed!=='true'">Farbe</button>
+            <button class="chip" aria-pressed="false" onclick="this.ariaPressed=this.ariaPressed!=='true'">Spiegeln</button>
+          </div></div>
+        <div><div class="lbl" style="margin-bottom:12px">Segment</div>
+          <div class="seg" role="tablist"><span class="knob"></span>
+            <button role="tab" aria-selected="true"><svg class="ic"><use href="#i-image"/></svg>Foto</button>
+            <button role="tab" aria-selected="false"><svg class="ic"><use href="#i-layers"/></svg>Tiefe</button>
+            <button role="tab" aria-selected="false"><svg class="ic"><use href="#i-cube"/></svg>3D</button>
+          </div></div>
+        <div><div class="lbl" style="margin-bottom:12px">Schieber</div>
+          <div class="slider"><i class="fillbar"></i><span class="name"><svg class="ic"><use href="#i-scale"/></svg>Größe</span><span class="val">8,2 cm</span>
+            <input type="range" min="2" max="20" step=".1" value="8.2" aria-label="Größe" oninput="const s=this.parentNode;s.style.setProperty('--p',((this.value-2)/18*100)+'%');s.querySelector('.val').textContent=String(this.value).replace('.',',')+' cm'"></div></div>
+      </div>
+    </div>
+    <div class="grid g2">
+      <div class="demo">
+        <span></span>
+        <div class="toolbar">
+          <div class="bar glass">
+            <button class="btn icon text" aria-label="Neues Foto"><svg class="ic"><use href="#i-camera"/></svg></button>
+            <button class="btn icon text" aria-label="Rückgängig"><svg class="ic"><use href="#i-undo"/></svg></button>
+            <button class="btn icon text" aria-label="Motiv hinzufügen"><svg class="ic"><use href="#i-add"/></svg></button>
+          </div>
+          <button class="btn primary lg">Stechen</button>
+        </div>
+      </div>
+      <div class="demo" style="background:var(--n-50)">
+        <div class="t-title" style="max-width:300px">Dein Tattoo, <span class="dim">bevor es eins ist.</span></div>
+        <div class="row" style="justify-content:space-between">
+          <button class="btn text" style="padding:0">Motiv zuerst</button>
+          <div class="row"><button class="btn icon secondary lg" aria-label="Hochladen"><svg class="ic"><use href="#i-upload"/></svg></button><button class="btn accent lg"><svg class="ic"><use href="#i-camera"/></svg>Foto aufnehmen</button></div>
+        </div>
+      </div>
+    </div>
+    <p class="t-small" style="margin:0;color:var(--text-2)">Links: Toolbar auf dem Foto, Werkzeuge in einer Glaskapsel, „Stechen“ gleich hoch daneben. Rechts: die eine Stelle, an der Rot vorkommt (Startseite).</p>
+  </section>
+
+  <!-- ===== Icons ===== -->
+  <section class="sec">
+    <header><span class="lbl">04</span><div class="t-title">Icons · IBM Carbon</div></header>
+    <div class="card glass icons" id="icons"></div>
+    <p class="t-small" style="margin:0;color:var(--text-2)">20 px in Buttons, 16 px in Chips, 24 px groß. Immer in Textfarbe, nie farbig.</p>
+  </section>
+  <!-- ===== Scan-Aura ===== -->
+  <section class="sec">
+    <header><span class="lbl">05</span><div class="t-title">Scan-Aura</div></header>
+    <div class="scan" id="scan">
+      <div class="aura-glow on" id="glow"><i class="band"></i><i class="ring"></i></div>
+      <div class="loader on" id="ld"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><b></b></div>
+      <span class="status glass" id="st">Tiefe …</span>
+      <button class="btn secondary sm ctl" id="scanBtn">Anhalten</button>
+    </div>
+    <p class="t-small" style="margin:0;color:var(--text-2)">Die zweite Stelle, an der Rot vorkommt: nur während des Scans, als Leuchten an der Kante. Weiches Band nach innen (44 px, atmet zwischen 45 und 75 %), dazu ein 2,5 px feiner Rand. Beides dreht sich langsam gegeneinander. In der Mitte das Punkt-Logo als Loader.</p>
+  </section>
+</div>
+
+<script>
+  const names = { camera: "Kamera", upload: "Hochladen", image: "Foto", layers: "Tiefe", cube: "3D", undo: "Zurück", redo: "Vor", add: "Hinzufügen", checkmark: "Fertig", close: "Schließen",
+    "arrow--right": "Weiter", "arrow--left": "Zurück", download: "Speichern", compare: "Vergleich", renew: "Kamera drehen", erase: "Radieren", pen: "Stift", "paint-brush": "Pinsel",
+    lasso: "Lasso", ruler: "Maßstab", time: "Zeit", "color-palette": "Farben", information: "Info", settings: "Einstellungen", "chevron--down": "Aufklappen", share: "Teilen",
+    "cut-out": "Freistellen", crop: "Zuschneiden", scale: "Skalieren", rotate: "Drehen", view: "Ansicht", home: "Start", "overflow-menu--horizontal": "Mehr", "magic-wand": "Auto", "ai-generate": "Erzeugen" };
+  const box = document.getElementById("icons");
+  for (const [k, v] of Object.entries(names)) box.insertAdjacentHTML("beforeend", `<div><svg class="ic"><use href="#i-${k}"/></svg>${v}</div>`);
+  // segment knob glides to the selected tab
+  document.querySelectorAll(".seg").forEach(seg => {
+    const knob = seg.querySelector(".knob"), place = b => { knob.style.left = b.offsetLeft + "px"; knob.style.width = b.offsetWidth + "px"; };
+    seg.querySelectorAll("button").forEach(b => b.onclick = () => { seg.querySelectorAll("button").forEach(x => x.ariaSelected = x === b); place(b); });
+    document.fonts.ready.then(() => place(seg.querySelector('[aria-selected="true"]')));
+  });
+  // Scan-Aura demo: status text cycles, button toggles
+  { const steps = ["Tiefe …", "Haut …", "3D-Modell …", "Maßstab …"]; let k = 0, on = true;
+    const st = document.getElementById("st"), glow = document.getElementById("glow"), ld = document.getElementById("ld"), btn = document.getElementById("scanBtn");
+    setInterval(() => { if (on) st.textContent = steps[k = (k + 1) % steps.length]; }, 1800);
+    btn.onclick = () => { on = !on; glow.classList.toggle("on", on); ld.classList.toggle("on", on); st.textContent = on ? steps[k] : "Fertig"; btn.textContent = on ? "Anhalten" : "Scan starten"; }; }
+</script>
+</body>
+</html>

@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Komponenten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Doto:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: oklch(96.5% .004 75); --ink: oklch(18% .003 75); --muted: oklch(58% .006 75); --line: oklch(0% 0 0 / .08);
+    --red: oklch(59% .21 26); --rose: oklch(72% .16 10); --peach: oklch(84% .08 45); --bord: oklch(36% .12 18);
+    --graph: oklch(22% .004 75); --graph-2: oklch(28% .005 75); --graph-3: oklch(34% .006 75);
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 13px/1.45 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.012em; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; letter-spacing: inherit; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .dot { font-family: "Doto", monospace; font-weight: 800; letter-spacing: 0; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 48px 24px 96px; }
+  header.top { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 48px; }
+  h1 { font-size: 34px; font-weight: 500; letter-spacing: -.05em; margin: 0; line-height: 1; }
+  .lead { color: var(--muted); max-width: 520px; margin: 12px 0 0; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 6px; justify-content: end; max-width: 520px; }
+  nav.toc a { font-size: 12px; padding: 6px 10px; border-radius: 99px; background: rgba(0,0,0,.05); color: inherit; text-decoration: none; }
+  section { margin-top: 72px; }
+  .sh { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .sh b { font-family: "Doto"; font-weight: 800; font-size: 15px; color: var(--muted); }
+  h2 { font-size: 22px; font-weight: 500; letter-spacing: -.04em; margin: 0; }
+  .sub { color: var(--muted); margin: 0 0 20px; max-width: 720px; }
+  .sub em { font-style: normal; color: var(--ink); }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .row { grid-template-columns: 1fr; } header.top { flex-direction: column; align-items: start; } nav.toc { justify-content: start; } }
+  .opt { display: grid; grid-template-rows: auto auto; gap: 10px; }
+  .opt figcaption { display: grid; gap: 2px; padding: 0 4px; }
+  .opt figcaption strong { font-weight: 500; }
+  .opt figcaption span { color: var(--muted); font-size: 12px; }
+  figure { margin: 0; }
+
+  /* the stage every option sits on: a slice of the app card over an "arm photo" */
+  .scr { position: relative; height: 260px; border-radius: 24px; overflow: hidden; color: #fff; isolation: isolate;
+    background: radial-gradient(120% 70% at 30% 55%, oklch(66% .07 50) 0%, oklch(52% .07 45) 45%, oklch(28% .03 40) 100%); }
+  .scr.dark { background: #0f0f10; }
+  .scr.light { background: oklch(94% .004 75); color: var(--ink); }
+  .scr.aura { background: radial-gradient(60% 60% at 30% 30%, oklch(70% .17 20) 0%, transparent 70%), radial-gradient(70% 70% at 80% 80%, oklch(82% .09 45) 0%, transparent 70%), radial-gradient(80% 80% at 70% 20%, oklch(45% .13 15) 0%, transparent 70%), oklch(62% .12 25); }
+  .scr .arm { position: absolute; left: -10%; right: -10%; top: 32%; height: 46%; border-radius: 50%; background: linear-gradient(180deg, oklch(78% .06 55), oklch(62% .07 48) 60%, oklch(45% .06 42)); transform: rotate(-8deg); filter: blur(.5px); }
+  .center { position: absolute; inset: 0; display: grid; place-items: center; }
+  .bottom { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; justify-content: center; }
+  .topbar { position: absolute; left: 12px; right: 12px; top: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+  /* ---------- shared bits ---------- */
+  .glass { background: rgba(18,18,18,.55); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+  .glass-l { background: rgba(255,255,255,.22); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+  .bezel { padding: 5px; border-radius: 24px; background: oklch(36% .004 75); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 18px 40px -20px rgba(0,0,0,.6); }
+  .bezel > .in { border-radius: 19px; background: var(--graph); }
+  .pill-w { height: 40px; padding: 0 18px; border-radius: 99px; background: #fff; color: var(--ink); display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+  .ib { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; }
+  .shimmer { background: linear-gradient(90deg, rgba(255,255,255,.95) 0 35%, rgba(255,255,255,.35) 50%, rgba(255,255,255,.95) 65% 100%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sh 2.2s linear infinite; }
+  .shimmer.dk { background-image: linear-gradient(90deg, var(--ink) 0 35%, oklch(70% 0 0) 50%, var(--ink) 65% 100%); }
+  @keyframes sh { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+  /* ---------- style guides ---------- */
+  .guides { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .guides { grid-template-columns: 1fr; } }
+  .guide { border-radius: 28px; padding: 24px; display: grid; gap: 20px; align-content: start; }
+  .guide h3 { margin: 0; font-size: 26px; font-weight: 500; letter-spacing: -.05em; line-height: 1; }
+  .guide p { margin: 0; font-size: 12.5px; opacity: .72; }
+  .guide .k { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .55; margin-bottom: 8px; }
+  .sw { display: flex; gap: 6px; }
+  .sw i { flex: 1; height: 44px; border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .typo { display: flex; align-items: baseline; gap: 14px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tags span { font-size: 11.5px; padding: 4px 9px; border-radius: 99px; }
+  .g-a { background: oklch(20% .004 75); color: #fff; }
+  .g-a .tags span { background: rgba(255,255,255,.08); }
+  .g-b { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 30px 60px -40px rgba(0,0,0,.35); }
+  .g-b .tags span { background: oklch(95% .004 75); }
+  .g-c { color: #fff; background: radial-gradient(70% 60% at 20% 20%, oklch(70% .17 20), transparent 70%), radial-gradient(70% 70% at 90% 90%, oklch(84% .08 45), transparent 70%), radial-gradient(60% 60% at 80% 10%, oklch(40% .12 15), transparent 70%), oklch(60% .13 22); }
+  .g-c .tags span { background: rgba(255,255,255,.18); }
+  .gel { height: 40px; padding: 0 20px; border-radius: 99px; color: #fff; font-weight: 500; display: inline-flex; align-items: center; gap: 8px;
+    background: radial-gradient(80% 120% at 35% 30%, oklch(78% .14 15), oklch(60% .21 25) 60%, oklch(50% .19 22)); box-shadow: inset 0 1px 1px rgba(255,255,255,.5), inset 0 -2px 6px rgba(80,0,10,.25), 0 10px 24px -10px oklch(55% .2 25 / .7); }
+  .ring-b { height: 40px; padding: 0 18px; border-radius: 14px; background: var(--graph); color: #fff; box-shadow: 0 0 0 2px oklch(88% .005 75); display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+
+  /* ---------- 01 progress ---------- */
+  .tl { width: 88%; display: grid; gap: 10px; }
+  .tl-band { position: relative; height: 52px; border-radius: 99px; padding: 6px; display: flex; align-items: center; justify-content: space-between;
+    background: rgba(20,10,8,.28); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .tl-band .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 68%; border-radius: 99px; background: linear-gradient(90deg, oklch(52% .19 22), oklch(64% .2 28) 70%, oklch(72% .17 40)); box-shadow: 0 8px 22px -8px oklch(60% .2 25 / .8); }
+  .tl-band::before { content: ""; position: absolute; left: 30px; right: 30px; top: 50%; border-top: 1.5px dashed rgba(255,255,255,.4); z-index: 1; }
+  .tl-n { position: relative; z-index: 2; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+  .tl-n.on { background: #fff; color: var(--red); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .tl-n.done { background: rgba(255,255,255,.28); }
+  .tl-n.todo { background: rgba(0,0,0,.25); color: rgba(255,255,255,.55); }
+  .tl-lbl { display: flex; justify-content: space-between; align-items: center; padding: 0 12px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+  .tl-lbl i { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,.5); }
+  .dash { display: flex; gap: 6px; align-items: center; }
+  .dash i { height: 2px; width: 14px; border-radius: 2px; background: rgba(255,255,255,.4); transition: width .4s var(--ease); }
+  .dash i.on { width: 36px; background: #fff; }
+  .mark9 { display: grid; grid-template-columns: repeat(3, 8px); gap: 5px; }
+  .mark9 i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.22); }
+  .mark9 i.f { background: #fff; }
+  .mark9 i.c { background: var(--rose); box-shadow: 0 0 10px var(--rose); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .4; } }
+
+  /* ---------- 02 layers ---------- */
+  .rail { position: absolute; right: 0; top: 34px; bottom: 34px; width: 74px; background: #0c0c0c; border-radius: 28px 0 0 28px; display: grid; align-content: center; gap: 16px; justify-items: center; }
+  .rail::before, .rail::after { content: ""; position: absolute; right: 0; width: 28px; height: 28px; background: radial-gradient(circle at 0 0, transparent 27.5px, #0c0c0c 28px); }
+  .rail::before { top: -28px; background: radial-gradient(circle at 0 0, transparent 27.5px, #0c0c0c 28px); transform: scaleY(-1); }
+  .rail::after { bottom: -28px; }
+  .ly { display: grid; justify-items: center; gap: 4px; font-size: 10.5px; color: rgba(255,255,255,.7); }
+  .ly .rg { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; position: relative; }
+  .ly .rg svg.ring { position: absolute; inset: 0; width: 40px; height: 40px; transform: rotate(-90deg); }
+  .ly.on { color: #fff; }
+  .stack { position: relative; width: 230px; height: 150px; }
+  .stack .c { position: absolute; left: 22px; right: 22px; height: 54px; border-radius: 18px; background: #1c1c1e; display: flex; align-items: center; gap: 12px; padding: 0 14px; color: rgba(255,255,255,.55); box-shadow: 0 10px 24px -12px rgba(0,0,0,.6); }
+  .stack .c:nth-child(1) { top: 0; transform: scale(.9); }
+  .stack .c:nth-child(3) { bottom: 0; transform: scale(.9); }
+  .stack .c.on { left: 0; right: 0; top: 40px; height: 70px; border-radius: 24px; color: #fff; background: #222224; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 34px -14px rgba(0,0,0,.7); z-index: 2; }
+  .stack .big { font-size: 26px; line-height: 1; }
+  .tb { display: inline-flex; gap: 4px; padding: 4px; border-radius: 18px; background: oklch(60% .004 75 / .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 1px 0 rgba(255,255,255,.25); }
+  .tb .g { display: flex; gap: 2px; padding: 3px; border-radius: 14px; background: #2a2a2b; }
+  .tb .g button { height: 36px; min-width: 40px; padding: 0 10px; border-radius: 11px; display: inline-flex; gap: 6px; align-items: center; justify-content: center; color: rgba(255,255,255,.55); font-size: 12px; }
+  .tb .g button.on { background: #3a3a3b; color: #fff; }
+  .tb .solo { width: 46px; border-radius: 14px; background: #2a2a2b; color: #fff; display: grid; place-items: center; box-shadow: inset 0 0 0 2px rgba(255,255,255,.85); }
+
+  /* ---------- 03 home ---------- */
+  .words { position: absolute; left: 22px; bottom: 58px; font-size: 30px; line-height: 1.02; letter-spacing: -.05em; font-weight: 500; }
+  .words span { display: block; color: rgba(255,255,255,.45); }
+  .words span.on { color: #fff; }
+  .words small { display: block; font-size: 11.5px; letter-spacing: -.01em; font-weight: 400; color: rgba(255,255,255,.85); margin: 2px 0 6px; }
+  .slide { width: 86%; height: 52px; border-radius: 99px; padding: 5px; display: flex; align-items: center; gap: 10px; }
+  .slide .knob { width: 42px; height: 42px; border-radius: 50%; background: #fff; color: var(--ink); display: grid; place-items: center; animation: nudge 2.4s var(--ease) infinite; }
+  @keyframes nudge { 0%, 60%, 100% { transform: none; } 75% { transform: translateX(10px); } }
+  .slide .t { flex: 1; text-align: center; font-weight: 500; }
+  .slide .ch { color: rgba(255,255,255,.5); letter-spacing: 2px; padding-right: 14px; font-size: 12px; }
+  .composer { width: 88%; border-radius: 26px; background: oklch(97.5% .003 75); box-shadow: inset 0 0 0 2px #fff, 0 30px 50px -30px rgba(0,0,0,.35); color: var(--ink); }
+  .composer .q { padding: 16px 20px; color: var(--muted); border-bottom: 1px solid var(--line); font-weight: 500; }
+  .composer .a { padding: 10px 12px 10px 14px; display: flex; align-items: center; gap: 4px; }
+  .composer .a .ib { width: 38px; height: 38px; }
+  .composer .gel { margin-left: auto; height: 42px; width: 64px; padding: 0; justify-content: center; }
+
+  /* ---------- 04 toolbar ---------- */
+  .thumbsm { display: flex; gap: 6px; }
+  .thumbsm i { width: 36px; height: 36px; border-radius: 11px; background: rgba(255,255,255,.08) center/70% no-repeat; display: block; }
+  .thumbsm i.on { box-shadow: inset 0 0 0 2px #fff; }
+  .island { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 10px; border-radius: 26px; background: #0d0d0d; box-shadow: 0 20px 40px -16px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06); }
+  .circ { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink); }
+  .lightbar { width: 92%; display: flex; align-items: center; gap: 4px; padding: 8px; border-radius: 24px; background: oklch(97.5% .003 75 / .92); color: var(--ink); box-shadow: inset 0 0 0 1.5px #fff, 0 20px 40px -24px rgba(0,0,0,.5); }
+  .lightbar .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+
+  /* ---------- 05 buttons ---------- */
+  .btnset { display: grid; gap: 12px; justify-items: center; }
+  .btnset .r { display: flex; gap: 10px; align-items: center; }
+  .ghost-g { height: 40px; padding: 0 16px; border-radius: 99px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+  .ghost-l { height: 40px; padding: 0 18px; border-radius: 99px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line), 0 6px 14px -8px rgba(0,0,0,.25); }
+  .icl { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line), 0 6px 14px -8px rgba(0,0,0,.25); }
+  .sq { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #2a2a2b; color: #fff; }
+  .sq.ring { box-shadow: inset 0 0 0 2px rgba(255,255,255,.9); }
+  .sq.dim { color: rgba(255,255,255,.5); }
+
+  /* ---------- 06 loader ---------- */
+  .loadpill { display: inline-flex; align-items: center; gap: 14px; height: 64px; padding: 0 24px 0 18px; border-radius: 22px; background: #050505; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); font-size: 22px; font-weight: 500; letter-spacing: -.03em; }
+  .dm { display: grid; grid-template-columns: repeat(5, 4px); gap: 3px; }
+  .dm i { width: 4px; height: 4px; border-radius: 1px; background: oklch(70% .2 25); opacity: .15; animation: dm 1.6s steps(1) infinite; }
+  @keyframes dm { 0%, 100% { opacity: .15; } 20% { opacity: 1; box-shadow: 0 0 6px oklch(70% .2 25); } 40% { opacity: .5; } }
+  .qcard { width: 88%; border-radius: 24px; overflow: hidden; background: linear-gradient(180deg, oklch(36% .1 18), oklch(58% .14 22)); box-shadow: 0 20px 40px -24px rgba(0,0,0,.6); }
+  .qcard .h { padding: 16px 18px 26px; display: grid; gap: 6px; }
+  .qcard .h b { font-weight: 500; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+  .qcard .h span { opacity: .75; font-size: 12px; }
+  .qcard .b { background: oklch(96% .004 75); color: var(--ink); border-radius: 22px 22px 0 0; padding: 16px 18px 18px; display: grid; gap: 10px; }
+  .qcard .b b { font-weight: 500; display: flex; gap: 8px; align-items: center; }
+  .spin { animation: rot 1.2s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .grid9 { display: grid; grid-template-columns: repeat(9, 10px); gap: 4px; }
+  .grid9 i { width: 10px; height: 10px; border-radius: 3px; background: rgba(255,255,255,.07); }
+  .grid9 i.f { background: oklch(66% .2 25); box-shadow: 0 0 8px oklch(66% .2 25 / .7); }
+  .grid9 i.h { background: oklch(66% .2 25 / .45); }
+
+  /* ---------- 07 camera ---------- */
+  .shutter { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; padding: 4px; }
+  .shutter::after { content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; }
+  .zoom { display: flex; gap: 2px; padding: 3px; border-radius: 99px; }
+  .zoom span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.7); }
+  .zoom span.on { background: rgba(255,255,255,.2); color: #fff; }
+  .vf { position: absolute; inset: 22px 46px 86px; }
+  .vf i { position: absolute; width: 22px; height: 22px; border: 2px solid #fff; }
+  .vf i:nth-child(1) { left: 0; top: 0; border-width: 2px 0 0 2px; border-radius: 8px 0 0 0; }
+  .vf i:nth-child(2) { right: 0; top: 0; border-width: 2px 2px 0 0; border-radius: 0 8px 0 0; }
+  .vf i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 2px 2px; border-radius: 0 0 0 8px; }
+  .vf i:nth-child(4) { right: 0; bottom: 0; border-width: 0 2px 2px 0; border-radius: 0 0 8px 0; }
+  .guide-arm { position: absolute; left: 76px; right: 76px; top: 40%; height: 64px; border: 1.5px dashed rgba(255,255,255,.6); border-radius: 40px; transform: translateY(-50%) rotate(-6deg); }
+  .hint { font-size: 11.5px; padding: 6px 10px; border-radius: 99px; }
+
+  /* ---------- 08 info ---------- */
+  .ipill { display: inline-flex; align-items: center; gap: 10px; height: 34px; padding: 0 8px 0 12px; border-radius: 99px; font-size: 12px; }
+  .ipill .sep { width: 1px; height: 14px; background: rgba(255,255,255,.25); }
+  .wcard { width: 170px; padding: 14px 16px; border-radius: 20px; background: #1d1d1f; box-shadow: inset 0 0 0 5px oklch(30% .004 75), 0 18px 34px -16px rgba(0,0,0,.6); display: grid; gap: 4px; }
+  .wcard .dot { font-size: 34px; line-height: 1; }
+  .wcard small { color: rgba(255,255,255,.55); font-size: 11px; }
+  .ruler { position: absolute; left: 50%; width: 132px; margin-left: -66px; top: 76px; height: 26px; display: grid; }
+  .ruler .ln { position: absolute; left: 0; right: 0; top: 12px; border-top: 1.5px solid #fff; }
+  .ruler .ln::before, .ruler .ln::after { content: ""; position: absolute; top: -6px; width: 1.5px; height: 12px; background: #fff; }
+  .ruler .ln::before { left: 0; } .ruler .ln::after { right: 0; }
+  .ruler b { justify-self: center; position: relative; padding: 2px 8px; border-radius: 99px; background: #fff; color: var(--ink); font-size: 11px; font-weight: 600; }
+  .motif { position: absolute; left: 50%; top: 56%; width: 120px; height: 90px; transform: translate(-50%, -50%) rotate(-6deg); }
+
+  /* ---------- 09 summary ---------- */
+  .tiles { position: absolute; inset: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { border-radius: 18px; background: #1d1d1f; padding: 12px 14px; display: grid; align-content: space-between; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
+  .tile small { color: rgba(255,255,255,.55); font-size: 11px; display: flex; justify-content: space-between; }
+  .tile .dot { font-size: 26px; line-height: 1; }
+  .needles { display: flex; gap: 3px; align-items: end; height: 26px; }
+  .needles i { width: 5px; border-radius: 3px; background: linear-gradient(180deg, oklch(80% .12 15), oklch(60% .2 25)); }
+  .sent { position: absolute; left: 20px; right: 20px; bottom: 20px; font-size: 21px; line-height: 1.18; letter-spacing: -.04em; font-weight: 500; }
+  .sent span { color: rgba(255,255,255,.5); }
+  .sent small { display: flex; gap: 6px; align-items: center; font-size: 11.5px; letter-spacing: -.01em; font-weight: 500; color: rgba(255,255,255,.8); margin-bottom: 10px; }
+  .bars { display: flex; gap: 8px; align-items: end; height: 110px; }
+  .bars div { width: 18px; display: grid; gap: 4px; justify-items: center; font-size: 10px; color: rgba(255,255,255,.55); }
+  .bars i { width: 14px; border-radius: 8px; background: rgba(255,255,255,.08); position: relative; overflow: hidden; display: block; }
+  .bars i::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--v); border-radius: 8px; background: linear-gradient(180deg, oklch(92% .04 15), oklch(70% .18 15) 60%, oklch(56% .2 25)); }
+
+  /* ---------- 10 motifs ---------- */
+  .stk { display: flex; gap: 10px; padding: 8px; border-radius: 20px; }
+  .stk .s { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 2px rgba(255,255,255,.9); }
+  .stk .s.off { box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); opacity: .7; }
+  .wallet { position: relative; width: 230px; height: 190px; }
+  .wallet .w { position: absolute; left: 10px; right: 10px; height: 70px; border-radius: 20px; padding: 10px 14px; font-size: 11px; display: flex; justify-content: space-between; }
+  .wallet .w:nth-child(1) { top: 0; background: linear-gradient(180deg, oklch(70% .05 120), oklch(55% .05 120)); }
+  .wallet .w:nth-child(2) { top: 32px; background: linear-gradient(180deg, oklch(70% .2 0), oklch(80% .1 350)); }
+  .wallet .front { position: absolute; left: 0; right: 0; bottom: 0; height: 112px; border-radius: 24px; background: #111; padding: 16px; display: grid; align-content: end; gap: 2px; box-shadow: 0 -10px 20px rgba(0,0,0,.25); }
+  .wallet .front .dot { font-size: 24px; }
+  .wallet .front small { color: rgba(255,255,255,.55); }
+  .circles { display: flex; align-items: center; gap: 16px; }
+  .circles i { border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.9); }
+  .circles i.sm { width: 54px; height: 54px; opacity: .6; }
+  .circles i.lg { width: 92px; height: 92px; box-shadow: 0 0 0 4px rgba(255,255,255,.35), 0 16px 30px -10px rgba(0,0,0,.5); }
+
+  /* ---------- 11 cutter ---------- */
+  .vrail { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); display: grid; gap: 4px; padding: 5px; border-radius: 18px; }
+  .vrail button { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; color: rgba(255,255,255,.6); }
+  .vrail button.on { background: #fff; color: var(--ink); }
+  .vrail hr { border: 0; height: 1px; background: rgba(255,255,255,.15); margin: 2px 6px; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px 14px; border-radius: 24px 24px 0 0; background: oklch(97.5% .003 75); color: var(--ink); display: grid; gap: 12px; }
+  .sheet .grab { width: 36px; height: 4px; border-radius: 4px; background: rgba(0,0,0,.15); justify-self: center; }
+  .tabs { display: flex; gap: 4px; padding: 3px; border-radius: 14px; background: oklch(93% .004 75); }
+  .tabs span { flex: 1; height: 34px; border-radius: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500; font-size: 12px; color: var(--muted); }
+  .tabs span.on { background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+  .slider { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+  .slider .tr { flex: 1; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--ink) 40%, oklch(90% .004 75) 40%); position: relative; }
+  .slider .tr::after { content: ""; position: absolute; left: 40%; top: 50%; width: 18px; height: 18px; margin: -9px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+
+  /* ---------- 12 sticker ---------- */
+  .stk-a { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-6deg); width: 140px; height: 110px; border-radius: 40px; background: rgba(255,255,255,.3); box-shadow: 0 0 0 2.5px rgba(255,255,255,.95); display: grid; place-items: center; }
+  .stk-b { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-6deg); width: 140px; height: 110px; display: grid; place-items: center; }
+  .stk-b::before { content: ""; position: absolute; inset: 0; border-radius: 40px; border: 1.5px dashed oklch(55% .15 290 / .9); }
+  .stk-c { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-6deg); width: 150px; height: 116px; border-radius: 22px; display: grid; place-items: center; }
+  .stk-c .h { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .chipsz { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); font-size: 11.5px; padding: 6px 10px; border-radius: 99px; display: flex; gap: 8px; }
+
+  .note { margin-top: 72px; padding: 24px; border-radius: 24px; background: #fff; display: grid; gap: 8px; }
+  .note h2 { margin-bottom: 4px; }
+  .note ol { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--muted); }
+  .note ol b { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="cam" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></symbol>
+    <symbol id="up" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="img" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="9.5" cy="9.5" r="1.5"/><path d="M20 15l-4-4-8 8"/></symbol>
+    <symbol id="depth" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+    <symbol id="mesh" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></symbol>
+    <symbol id="undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></symbol>
+    <symbol id="lasso" viewBox="0 0 24 24"><ellipse cx="12" cy="9" rx="8" ry="5"/><path d="M7 13c-1 2 0 4 2 4s2 3 0 4"/></symbol>
+    <symbol id="erase" viewBox="0 0 24 24"><path d="M4 16l9-9 6 6-7 7H8z"/><path d="M12 20h8"/></symbol>
+    <symbol id="brush" viewBox="0 0 24 24"><path d="M19 4l-9 9"/><path d="M10 13c-3 0-4 2-4 4s-1 3-2 3c5 1 8-1 8-4z"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="needle" viewBox="0 0 24 24"><path d="M4 20l7-7"/><path d="M10 8l6 6M13 5l6 6-5 5-6-6z"/></symbol>
+    <symbol id="flip" viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></symbol>
+    <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></symbol>
+    <symbol id="cmp" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="M12 3v18"/></symbol>
+    <symbol id="dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <!-- a simple flash motif: swallow -->
+    <symbol id="bird" viewBox="0 0 64 48"><path d="M4 30c10-2 18-10 22-20 2 8 6 12 12 13 6-6 14-8 22-6-8 2-12 6-14 12 4 2 6 6 6 10-6-4-12-5-18-3-6 4-14 6-30-6z" fill="currentColor" stroke="none"/><circle cx="40" cy="22" r="1.6" fill="#fff" stroke="none"/></symbol>
+    <symbol id="mark" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="5" cy="5" r="2.2"/><circle cx="12" cy="5" r="2.2"/><circle cx="19" cy="5" r="2.2"/><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="12" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Stencit · Komponenten</h1>
+      <p class="lead">Drei Style-Guides aus deiner Inspo, danach jede Komponente der App mit drei Optionen. Nummern merken, z. B. „Guide B, 01·1, 02·1, 04·3“.</p>
+    </div>
+    <nav class="toc">
+      <a href="#guides">Style-Guides</a><a href="#c01">01 Fortschritt</a><a href="#c02">02 Ebenen</a><a href="#c03">03 Start</a><a href="#c04">04 Toolbar</a><a href="#c05">05 Buttons</a><a href="#c06">06 Laden</a><a href="#c07">07 Kamera</a><a href="#c08">08 Maßstab</a><a href="#c09">09 Zusammenfassung</a><a href="#c10">10 Motive</a><a href="#c11">11 Stencil-Editor</a><a href="#c12">12 Sticker</a>
+    </nav>
+  </header>
+
+  <!-- ================= STYLE GUIDES ================= -->
+  <section id="guides" style="margin-top:0">
+    <div class="sh"><b>00</b><h2>Style-Guides</h2></div>
+    <p class="sub">Alle drei behalten Logo, Plus Jakarta Sans, das 4er-Raster und Rot nur für Aktion und Live-Feedback. Sie unterscheiden sich in Oberfläche, Tiefe und Stimmung.</p>
+    <div class="guides">
+      <article class="guide g-a">
+        <div><div class="k">Guide A</div><h3>Graphit</h3></div>
+        <p>Aus Bild 1, 5, 10: dunkle Widgets mit hellem Rahmen (Bezel), verschachtelte Gruppen, Zahlen in Punkt-Matrix wie das Logo. Rot glüht nur in Daten.</p>
+        <div><div class="k">Farben</div><div class="sw"><i style="background:oklch(20% .004 75)"></i><i style="background:oklch(28% .005 75)"></i><i style="background:oklch(36% .004 75)"></i><i style="background:oklch(96.5% .004 75)"></i><i style="background:linear-gradient(180deg,oklch(85% .08 15),oklch(60% .21 25))"></i></div></div>
+        <div><div class="k">Schrift</div><div class="typo"><span style="font-size:30px;font-weight:500;letter-spacing:-.05em">Aa</span><span class="dot" style="font-size:32px">8,2 cm</span></div></div>
+        <div><div class="k">Elemente</div><div style="display:flex;gap:10px;align-items:center"><span class="ring-b"><svg class="i"><use href="#needle"/></svg>Stechen</span><span class="sq dim" style="background:#2a2a2b"><svg class="i"><use href="#undo"/></svg></span></div></div>
+        <div class="tags"><span>Bezel 5 px</span><span>Radien 24/19/14</span><span>Doto für Zahlen</span><span>kein Schatten, nur Rahmen</span></div>
+      </article>
+      <article class="guide g-b">
+        <div><div class="k">Guide B</div><h3>Porzellan</h3></div>
+        <p>Aus Bild 2, 3, 4: helles, weiches Off-White, weißer Innenrand, großer diffuser Schatten. Die Hauptaktion ist ein Gel-Button in Rot, alles andere bleibt Linie.</p>
+        <div><div class="k">Farben</div><div class="sw"><i style="background:#fff"></i><i style="background:oklch(97.5% .003 75)"></i><i style="background:oklch(93% .004 75)"></i><i style="background:oklch(18% .003 75)"></i><i style="background:radial-gradient(circle at 35% 30%,oklch(78% .14 15),oklch(58% .21 25))"></i></div></div>
+        <div><div class="k">Schrift</div><div class="typo"><span style="font-size:30px;font-weight:500;letter-spacing:-.05em">Aa</span><span class="shimmer dk" style="font-size:20px;font-weight:500">Analysiere …</span></div></div>
+        <div><div class="k">Elemente</div><div style="display:flex;gap:10px;align-items:center"><span class="gel"><svg class="i"><use href="#needle"/></svg>Stechen</span><span class="icl"><svg class="i"><use href="#undo"/></svg></span></div></div>
+        <div class="tags"><span>Rand 2 px weiß</span><span>Radien 26/16/99</span><span>Schimmer-Text</span><span>ein Gel-Button pro Screen</span></div>
+      </article>
+      <article class="guide g-c">
+        <div><div class="k">Guide C</div><h3>Aura</h3></div>
+        <p>Aus Bild 6, 8, 9: weiche Verläufe aus Bordeaux, Rot und Pfirsich, Glas darüber, große Schrift mit gedimmten Folgewörtern. Am meisten Marke, am wenigsten Werkzeug.</p>
+        <div><div class="k">Farben</div><div class="sw"><i style="background:oklch(36% .12 18)"></i><i style="background:oklch(59% .21 26)"></i><i style="background:oklch(72% .16 10)"></i><i style="background:oklch(84% .08 45)"></i><i style="background:rgba(255,255,255,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)"></i></div></div>
+        <div><div class="k">Schrift</div><div class="typo"><span style="font-size:24px;font-weight:500;letter-spacing:-.05em;line-height:1.05">Platziere <span style="opacity:.5">dein Motiv</span></span></div></div>
+        <div><div class="k">Elemente</div><div style="display:flex;gap:10px;align-items:center"><span class="pill-w"><svg class="i"><use href="#needle"/></svg>Stechen</span><span class="ib glass-l" style="border-radius:50%"><svg class="i"><use href="#undo"/></svg></span></div></div>
+        <div class="tags"><span>Glas 20 px Blur</span><span>Radien 28/99</span><span>gedimmte Folgewörter</span><span>Verlauf bewegt sich langsam</span></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= 01 PROGRESS ================= -->
+  <section id="c01">
+    <div class="sh"><b>01</b><h2>Fortschritt</h2></div>
+    <p class="sub">Ersetzt die Pille „Platzieren 3 / 4“. Vorlage <em>Bild 6 (Timeline)</em> in unseren Farben. Gilt auch für ein späteres Onboarding.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="center"><div class="tl">
+        <div class="tl-band"><i class="fill"></i><span class="tl-n done"><svg class="i"><use href="#cam"/></svg></span><span class="tl-n done"><svg class="i"><use href="#mesh"/></svg></span><span class="tl-n on"><svg class="i"><use href="#bird"/></svg></span><span class="tl-n todo"><svg class="i"><use href="#needle"/></svg></span></div>
+        <div class="tl-lbl"><span>PLATZIEREN</span><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div></div>
+        <figcaption><strong>01·1 Timeline-Band</strong><span>Wie Bild 6: rotes Band füllt sich bis zum aktuellen Schritt, weißer Kreis = jetzt. Oben über dem Foto.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="topbar"><span class="glass hint" style="display:flex;gap:10px;align-items:center;padding:8px 12px">Platzieren <span class="dash"><i></i><i></i><i class="on"></i><i></i></span></span></div></div>
+        <figcaption><strong>01·2 Striche</strong><span>Aus Bild 9: vier Striche, der aktive ist lang. Kleinste Lösung, stört das Foto kaum.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="topbar"><span class="glass hint" style="display:flex;gap:12px;align-items:center;padding:8px 14px 8px 10px"><span class="mark9"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i></span>Platzieren</span></div></div>
+        <figcaption><strong>01·3 Logo füllt sich</strong><span>Die 9 Punkte des Logos sind der Fortschritt. Der aktuelle Punkt pulsiert rot. Eng an der Marke.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 02 LAYERS ================= -->
+  <section id="c02">
+    <div class="sh"><b>02</b><h2>Ebenen: Foto, Tiefe, 3D</h2></div>
+    <p class="sub">Ersetzt das Icon-Segment oben links. Vorlage <em>Bild 7 (Seitenschiene mit Ringen)</em>. Der Ring zeigt, wie sicher die Analyse für diese Ebene ist.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr"><div class="arm"></div>
+        <div class="rail">
+          <div class="ly on"><span class="rg" style="background:#fff;color:var(--ink)"><svg class="i"><use href="#img"/></svg></span>Foto</div>
+          <div class="ly"><span class="rg"><svg class="ring" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="3"/><circle cx="20" cy="20" r="17" fill="none" stroke="oklch(66% .2 25)" stroke-width="3" stroke-linecap="round" stroke-dasharray="98 107"/></svg><svg class="i"><use href="#depth"/></svg></span>92 %</div>
+          <div class="ly"><span class="rg"><svg class="ring" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="3"/><circle cx="20" cy="20" r="17" fill="none" stroke="oklch(85% .08 45)" stroke-width="3" stroke-linecap="round" stroke-dasharray="80 107"/></svg><svg class="i"><use href="#mesh"/></svg></span>3D</div>
+        </div></div>
+        <figcaption><strong>02·1 Seitenschiene</strong><span>Wie Bild 7: schwarze Schiene wächst aus der Kartenkante, mit weichen Ausrundungen. Ringe = Qualität.</span></figcaption></figure>
+      <figure class="opt"><div class="scr dark"><div class="center"><div class="stack">
+        <div class="c"><svg class="i"><use href="#img"/></svg>Foto</div>
+        <div class="c on"><svg class="ring" viewBox="0 0 40 40" width="44" height="44" style="transform:rotate(-90deg)"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle cx="20" cy="20" r="16" fill="none" stroke="oklch(66% .2 25)" stroke-width="5" stroke-linecap="round" stroke-dasharray="92 101"/></svg><div><div class="dot big">92%</div><small style="color:rgba(255,255,255,.55)">Tiefe</small></div></div>
+        <div class="c"><svg class="i"><use href="#mesh"/></svg>3D-Modell</div>
+      </div></div></div>
+        <figcaption><strong>02·2 Kartenstapel</strong><span>Aus Bild 1 (67 %): aktive Ebene vorne, die anderen lugen dahinter hervor. Wischen wechselt.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="topbar"><div class="tb"><div class="g"><button class="on"><svg class="i"><use href="#img"/></svg></button><button><svg class="i"><use href="#depth"/></svg></button><button><svg class="i"><use href="#mesh"/></svg></button></div></div></div></div>
+        <figcaption><strong>02·3 Gruppe im Bezel</strong><span>Aus Bild 10: dunkle Gruppe in hellem Rahmen, gleiche Sprache wie die Toolbar (04·1).</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 03 HOME ================= -->
+  <section id="c03">
+    <div class="sh"><b>03</b><h2>Startscreen / Upload</h2></div>
+    <p class="sub">Der leere Zustand vor dem ersten Foto. Vorlagen <em>Bild 8, 9 und 3</em>.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr aura"><div class="topbar"><span style="display:flex;gap:8px;align-items:center;font-weight:500;letter-spacing:-.05em;font-size:15px"><svg class="i" style="width:16px;height:16px"><use href="#mark"/></svg>Stencit</span></div>
+        <div class="words"><span>Rücken</span><span class="on">Unterarm</span><small>Hand mit ins Bild, dann stimmt die Größe.</small><span>Wade</span></div>
+        <div class="bottom" style="justify-content:space-between"><span class="ib glass-l" style="border-radius:50%"><svg class="i"><use href="#img"/></svg></span><span class="pill-w">Foto <svg class="i"><use href="#cam"/></svg></span></div></div>
+        <figcaption><strong>03·1 Körperstellen-Liste</strong><span>Wie Bild 8: große Wörter scrollen, die gewählte Stelle gibt einen passenden Foto-Tipp.</span></figcaption></figure>
+      <figure class="opt"><div class="scr aura"><div class="topbar"><span style="display:flex;gap:8px;align-items:center;font-weight:500;letter-spacing:-.05em;font-size:15px"><svg class="i" style="width:16px;height:16px"><use href="#mark"/></svg>Stencit</span></div>
+        <div style="position:absolute;left:22px;bottom:84px"><div style="font-size:11.5px;opacity:.85">Dein Motiv, deine Haut</div><div style="font-size:28px;letter-spacing:-.05em;line-height:1.05;font-weight:400">Erst <b style="font-weight:600">sehen</b>,<br>dann stechen.</div></div>
+        <div class="bottom"><div class="slide glass-l"><span class="knob"><svg class="i"><use href="#arrow"/></svg></span><span class="t">Foto aufnehmen</span><span class="ch">› › ›</span></div></div></div>
+        <figcaption><strong>03·2 Wisch zum Start</strong><span>Wie Bild 9: ein Satz, ein Schieber. Antippen = Kamera, kleiner Link darunter für Upload.</span></figcaption></figure>
+      <figure class="opt"><div class="scr light"><div class="center"><div class="composer"><div class="q">Foto vom Arm …</div><div class="a"><span class="ib"><svg class="i"><use href="#cam"/></svg></span><span class="ib"><svg class="i"><use href="#img"/></svg></span><span class="ib"><svg class="i"><use href="#bird"/></svg></span><span class="gel"><svg class="i"><use href="#arrow"/></svg></span></div></div></div></div>
+        <figcaption><strong>03·3 Composer</strong><span>Wie Bild 3: Kamera, Galerie und Motiv in einer Karte, der Gel-Button startet den Scan.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 04 TOOLBAR ================= -->
+  <section id="c04">
+    <div class="sh"><b>04</b><h2>Toolbar beim Platzieren</h2></div>
+    <p class="sub">Die Leiste unten. Heute: Motiv-Leiste, Neues Foto, Stechen. Vorlagen <em>Bild 10 und 3</em>.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="bottom"><div class="tb">
+        <div class="g"><button><svg class="i"><use href="#undo"/></svg></button><button><svg class="i"><use href="#cam"/></svg></button></div>
+        <div class="g"><button class="on" style="padding:0 6px"><svg class="i" style="width:22px;height:22px"><use href="#bird"/></svg></button><button><svg class="i"><use href="#plus"/></svg></button></div>
+        <button class="solo"><svg class="i"><use href="#needle"/></svg></button></div></div></div>
+        <figcaption><strong>04·1 Gruppen im Bezel</strong><span>Wie Bild 10: Bearbeiten | Motive | Stechen als drei Gruppen. Stechen ist das umrandete Quadrat rechts.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="bottom"><div class="island"><span class="ib" style="color:rgba(255,255,255,.7)"><svg class="i"><use href="#cam"/></svg></span><div class="thumbsm"><i class="on" style="display:grid;place-items:center;color:#fff"><svg class="i"><use href="#bird"/></svg></i><i></i><i style="display:grid;place-items:center;color:rgba(255,255,255,.6)"><svg class="i"><use href="#plus"/></svg></i></div><span class="circ"><svg class="i"><use href="#needle"/></svg></span></div></div></div>
+        <figcaption><strong>04·2 Insel</strong><span>Eine schwarze Insel, rechts ein runder weißer Stechen-Knopf. Nah am heutigen Stand, ruhiger.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="bottom"><div class="lightbar"><span class="ib"><svg class="i"><use href="#undo"/></svg></span><span class="ib"><svg class="i"><use href="#cam"/></svg></span><span class="sep"></span><span class="ib" style="box-shadow:inset 0 0 0 1.5px var(--ink)"><svg class="i"><use href="#bird"/></svg></span><span class="ib"><svg class="i"><use href="#plus"/></svg></span><span class="gel" style="margin-left:auto">Stechen</span></div></div></div>
+        <figcaption><strong>04·3 Helle Leiste</strong><span>Wie Bild 3: heller Balken mit Linien-Icons, nur „Stechen“ ist farbig. Passt zu Guide B.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 05 BUTTONS ================= -->
+  <section id="c05">
+    <div class="sh"><b>05</b><h2>Buttons</h2></div>
+    <p class="sub">Drei Stufen, überall gleich: Haupt (eine pro Screen), Neben, Icon. Alle 40 px hoch.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr dark"><div class="center"><div class="btnset"><div class="r"><span class="pill-w"><svg class="i"><use href="#dl"/></svg>Speichern</span></div><div class="r"><span class="ghost-g glass">Abbrechen</span><span class="ib glass" style="border-radius:50%"><svg class="i"><use href="#cmp"/></svg></span><span class="ib glass" style="border-radius:50%"><svg class="i"><use href="#back"/></svg></span></div></div></div></div>
+        <figcaption><strong>05·1 Weiß und Glas</strong><span>Haupt = weiße Pille, Rest = dunkles Glas. Ruhig, Foto bleibt im Fokus.</span></figcaption></figure>
+      <figure class="opt"><div class="scr light"><div class="center"><div class="btnset"><div class="r"><span class="gel"><svg class="i"><use href="#dl"/></svg>Speichern</span></div><div class="r"><span class="ghost-l">Abbrechen</span><span class="icl"><svg class="i"><use href="#cmp"/></svg></span><span class="icl"><svg class="i"><use href="#back"/></svg></span></div></div></div></div>
+        <figcaption><strong>05·2 Gel und Porzellan</strong><span>Wie Bild 3: Haupt = roter Gel-Button mit Glanz, Rest = weiß mit feinem Rand.</span></figcaption></figure>
+      <figure class="opt"><div class="scr dark"><div class="center"><div class="btnset"><div class="r"><span class="ring-b" style="box-shadow:0 0 0 2px #fff"><svg class="i"><use href="#dl"/></svg>Speichern</span></div><div class="r"><span class="sq dim" style="width:auto;padding:0 14px">Abbrechen</span><span class="sq"><svg class="i"><use href="#cmp"/></svg></span><span class="sq dim"><svg class="i"><use href="#back"/></svg></span></div></div></div></div>
+        <figcaption><strong>05·3 Bezel-Quadrate</strong><span>Wie Bild 10: dunkle Quadrate, die Hauptaktion bekommt einen weißen Ring statt Farbe.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 06 LOADER ================= -->
+  <section id="c06">
+    <div class="sh"><b>06</b><h2>Laden und Status</h2></div>
+    <p class="sub">Während des Scans, zusammen mit dem Glow am Rand. Vorlagen <em>Bild 5 und 4</em>. Der Text sagt, was gerade passiert.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr dark"><div class="center"><span class="loadpill"><span class="dm" id="dm"></span><span class="shimmer">Haut</span></span></div></div>
+        <figcaption><strong>06·1 Punkt-Matrix-Pille</strong><span>Wie Bild 5: kleine 5×5-Matrix leuchtet in Wellen, daneben ein Wort mit Schimmer: Tiefe, Haut, 3D, Maßstab.</span></figcaption></figure>
+      <figure class="opt"><div class="scr" style="background:oklch(22% .02 20)"><div class="center"><div class="qcard"><div class="h"><b><svg class="i"><use href="#img"/></svg>Dein Foto</b><span>Unterarm, links</span></div><div class="b"><b><svg class="i spin"><use href="#spark"/></svg>3D-Modell</b><span class="shimmer dk" style="font-size:13px">Rechne die Oberfläche …</span></div></div></div></div>
+        <figcaption><strong>06·2 Schritt-Karte</strong><span>Wie Bild 4: oben das Foto, darunter eine helle Karte mit dem aktuellen Schritt. Gut für langsame Handys.</span></figcaption></figure>
+      <figure class="opt"><div class="scr dark"><div class="center"><div style="display:grid;gap:14px;justify-items:center"><div class="grid9" id="g9"></div><span class="shimmer" style="font-size:15px;font-weight:500">Scanne Tiefe</span></div></div></div>
+        <figcaption><strong>06·3 Raster füllt sich</strong><span>Großes Punktraster füllt sich mit dem Fortschritt. Das Raster ist das Logo im Großen.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 07 CAMERA ================= -->
+  <section id="c07">
+    <div class="sh"><b>07</b><h2>Kamera</h2></div>
+    <p class="sub">Die Kamera direkt in der Karte. Unten Auslöser, Galerie, Wechseln.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="bottom" style="justify-content:space-around;align-items:center"><span class="ib glass" style="border-radius:14px"><svg class="i"><use href="#img"/></svg></span><span class="shutter"></span><span class="ib glass" style="border-radius:50%"><svg class="i"><use href="#flip"/></svg></span></div></div>
+        <figcaption><strong>07·1 Klassisch</strong><span>Wie heute, aufgeräumt: Auslöser in der Mitte, Galerie links, Wechseln rechts.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="bottom" style="flex-direction:column;align-items:center;gap:10px"><span class="zoom glass"><span>.5</span><span class="on">1×</span><span>2</span></span><div class="bezel"><div class="in" style="display:flex;align-items:center;gap:18px;padding:8px 14px"><span style="color:rgba(255,255,255,.7)"><svg class="i"><use href="#img"/></svg></span><span class="shutter" style="width:52px;height:52px"></span><span style="color:rgba(255,255,255,.7)"><svg class="i"><use href="#flip"/></svg></span></div></div></div></div>
+        <figcaption><strong>07·2 Im Bezel</strong><span>Steuerung in einer Bezel-Kapsel, darüber ein Zoom-Wahlschalter. Passt zu Guide A.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="vf"><i></i><i></i><i></i><i></i></div><div class="guide-arm"></div><div class="topbar" style="justify-content:center;top:34px"><span class="hint glass">Arm in den Rahmen, Hand mit drauf</span></div><div class="bottom" style="justify-content:space-between;align-items:center"><span class="ib glass" style="border-radius:50%"><svg class="i"><use href="#img"/></svg></span><span class="shutter" style="width:56px;height:56px"></span><span class="ib glass" style="border-radius:50%"><svg class="i"><use href="#flip"/></svg></span></div></div>
+        <figcaption><strong>07·3 Sucher mit Führung</strong><span>Ecken und eine gestrichelte Armform zeigen, wie das Foto gut wird. Bessere Fotos = genauere Größe.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 08 SCALE ================= -->
+  <section id="c08">
+    <div class="sh"><b>08</b><h2>Maßstab beim Platzieren</h2></div>
+    <p class="sub">Heute die Karte oben rechts. Sie zeigt Größe des Motivs, Körperstelle und wie sicher die Messung ist.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="topbar" style="justify-content:end"><span class="ipill glass"><b style="font-weight:600">8 × 6 cm</b><span class="sep"></span>Unterarm<span style="color:rgba(255,255,255,.55)">± 12 %</span></span></div><svg class="motif" style="color:#111"><use href="#bird"/></svg></div>
+        <figcaption><strong>08·1 Pille</strong><span>Eine Zeile oben rechts, antippen klappt Details auf. Minimal.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="topbar" style="justify-content:end"><div class="wcard"><small>Größe · Unterarm</small><span class="dot">8,2 cm</span><small>± 12 % · Hand erkannt</small></div></div><svg class="motif" style="color:#111;left:38%"><use href="#bird"/></svg></div>
+        <figcaption><strong>08·2 Widget</strong><span>Wie Bild 1: kleine dunkle Karte, Zahl in Punkt-Matrix. Die Zahl ändert sich live beim Skalieren.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="ruler"><div class="ln"></div><b>8,2 cm</b></div><svg class="motif" style="color:#111"><use href="#bird"/></svg><div class="bottom" style="justify-content:start"><span class="hint glass">Unterarm · ± 12 %</span></div></div>
+        <figcaption><strong>08·3 Lineal am Motiv</strong><span>Die Breite hängt direkt über dem Motiv wie ein Maßband. Am klarsten beim Skalieren.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 09 SUMMARY ================= -->
+  <section id="c09">
+    <div class="sh"><b>09</b><h2>Zusammenfassung nach dem Stechen</h2></div>
+    <p class="sub">Größe, Nadel, Farben, Zeit. Vorlagen <em>Bild 1 (Widgets)</em> und <em>Bild 6 (KI-Satz mit gedimmten Teilen)</em>.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr dark"><div class="tiles">
+        <div class="tile"><small>Größe</small><span class="dot">8×6</span><small>cm · 39 cm²</small></div>
+        <div class="tile"><small>Nadel <span>Linie</span></small><span class="dot">7RL</span><small>0,35 mm</small></div>
+        <div class="tile"><small>Farben</small><span style="display:flex;gap:4px"><i style="width:22px;height:22px;border-radius:50%;background:#111;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)"></i><i style="width:22px;height:22px;border-radius:50%;background:oklch(55% .2 25)"></i></span><small>Schwarz, Rot</small></div>
+        <div class="tile"><small>Zeit</small><span class="dot">1,5h</span><small>eine Sitzung</small></div>
+      </div></div>
+        <figcaption><strong>09·1 Widget-Raster</strong><span>Vier Kacheln wie Bild 1, Zahlen in Punkt-Matrix. Schnell zu erfassen, gut zum Teilen.</span></figcaption></figure>
+      <figure class="opt"><div class="scr aura"><div class="sent"><small><svg class="i" style="width:15px;height:15px"><use href="#mark"/></svg>Zusammenfassung</small>8 × 6 cm am Unterarm, <span>Linien mit</span> 7RL, <span>Füllung mit</span> 9M1. <span>Etwa</span> 1,5 Stunden.</div></div>
+        <figcaption><strong>09·2 Ein Satz</strong><span>Wie Bild 6: ein Satz, die Werte hell, die Füllwörter gedimmt. Sehr ruhig, sehr Marke.</span></figcaption></figure>
+      <figure class="opt"><div class="scr dark"><div style="position:absolute;inset:16px 18px;display:grid;grid-template-rows:auto 1fr;gap:10px"><div style="display:flex;justify-content:space-between;align-items:end"><div><small style="color:rgba(255,255,255,.55)">Nadeln für dieses Motiv</small><div class="dot" style="font-size:28px;line-height:1.1">7RL</div></div><span class="needles"><i style="height:40%"></i><i style="height:70%"></i><i style="height:100%"></i><i style="height:55%"></i></span></div>
+        <div class="bars" style="align-self:end"><div><i style="height:90px;--v:30%"></i>3RL</div><div><i style="height:90px;--v:55%"></i>5RL</div><div><i style="height:90px;--v:95%"></i>7RL</div><div><i style="height:90px;--v:40%"></i>9RL</div><div><i style="height:90px;--v:70%"></i>9M1</div><div><i style="height:90px;--v:20%"></i>13M</div></div></div></div>
+        <figcaption><strong>09·3 Nadel-Diagramm</strong><span>Aus Bild 1 (Balken): wie viel vom Motiv mit welcher Nadel gestochen wird. Für Tätowierer am nützlichsten.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 10 MOTIFS ================= -->
+  <section id="c10">
+    <div class="sh"><b>10</b><h2>Motiv-Auswahl</h2></div>
+    <p class="sub">Die Motive, die du hochgeladen hast. Vorlagen <em>Bild 1 (Wallet-Karten)</em> und <em>Bild 2 (Kreise)</em>.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="bottom"><div class="stk glass"><span class="s"><svg class="i" style="width:34px;height:34px;color:#111"><use href="#bird"/></svg></span><span class="s off"><svg class="i" style="width:30px;height:30px;color:#111;transform:scaleX(-1)"><use href="#bird"/></svg></span><span class="s off" style="color:#fff"><svg class="i"><use href="#plus"/></svg></span></div></div></div>
+        <figcaption><strong>10·1 Sticker-Reihe</strong><span>Jedes Motiv als kleiner Stencil-Sticker mit weißem Rand, wie auf dem Arm. Einheitlich mit 12·1.</span></figcaption></figure>
+      <figure class="opt"><div class="scr dark"><div class="center"><div class="wallet"><div class="w"><span>Rose</span><span>2</span></div><div class="w"><span>Schwalbe</span><span>1</span></div><div class="front"><small>Aktives Motiv</small><span class="dot">Schwalbe</span><small>8 × 6 cm · Linie + Rot</small></div></div></div></div>
+        <figcaption><strong>10·2 Kartenstapel</strong><span>Wie Bild 1 (Wallet): Motive als Karten, das aktive vorne mit Infos. Antippen fächert auf.</span></figcaption></figure>
+      <figure class="opt"><div class="scr light"><div class="center"><div class="circles"><i class="sm"><svg class="i" style="width:26px;height:26px;color:#111;transform:scaleX(-1)"><use href="#bird"/></svg></i><i class="lg" style="background:radial-gradient(circle at 40% 35%,oklch(85% .08 45),oklch(62% .19 25))"><svg class="i" style="width:52px;height:52px;color:#111"><use href="#bird"/></svg></i><i class="sm"><svg class="i"><use href="#plus"/></svg></i></div></div><div class="bottom"><span style="font-weight:500">Schwalbe</span></div></div>
+        <figcaption><strong>10·3 Kreis-Karussell</strong><span>Wie Bild 2: Motive in Kreisen, das gewählte groß in der Mitte. Wischen wechselt.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 11 CUTTER ================= -->
+  <section id="c11">
+    <div class="sh"><b>11</b><h2>Stencil-Editor</h2></div>
+    <p class="sub">Motiv aus Screenshot ausschneiden: Lasso, Radierer, Pinsel, Größe, Rückgängig, Übernehmen.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr light"><svg class="motif" style="color:#111;top:40%"><use href="#bird"/></svg><div class="bottom"><div class="tb">
+        <div class="g"><button><svg class="i"><use href="#undo"/></svg></button><button><svg class="i"><use href="#redo"/></svg></button></div>
+        <div class="g"><button class="on"><svg class="i"><use href="#lasso"/></svg></button><button><svg class="i"><use href="#erase"/></svg></button><button><svg class="i"><use href="#brush"/></svg></button><button style="font-family:Doto;font-weight:800;font-size:14px">24</button></div>
+        <button class="solo"><svg class="i"><use href="#check"/></svg></button></div></div></div>
+        <figcaption><strong>11·1 Eine Leiste</strong><span>1:1 Bild 10: Verlauf | Werkzeuge + Größe | Fertig. Alles in einer Zeile, Daumen-Reichweite.</span></figcaption></figure>
+      <figure class="opt"><div class="scr dark"><svg class="motif" style="color:#fff;left:58%"><use href="#bird"/></svg><div class="vrail glass"><button class="on"><svg class="i"><use href="#lasso"/></svg></button><button><svg class="i"><use href="#erase"/></svg></button><button><svg class="i"><use href="#brush"/></svg></button><hr><button><svg class="i"><use href="#undo"/></svg></button></div><div class="topbar" style="justify-content:end;gap:8px"><span class="ghost-g glass" style="height:34px">Abbrechen</span><span class="pill-w" style="height:34px">Fertig</span></div></div>
+        <figcaption><strong>11·2 Seitenschiene</strong><span>Werkzeuge links senkrecht (wie 02·1), das Bild bekommt die volle Breite. Gut am Desktop.</span></figcaption></figure>
+      <figure class="opt"><div class="scr" style="background:oklch(90% .004 75)"><svg class="motif" style="color:#111;top:28%"><use href="#bird"/></svg><div class="sheet"><span class="grab"></span><div class="tabs"><span class="on"><svg class="i" style="width:16px;height:16px"><use href="#lasso"/></svg>Lasso</span><span><svg class="i" style="width:16px;height:16px"><use href="#erase"/></svg>Radieren</span><span><svg class="i" style="width:16px;height:16px"><use href="#brush"/></svg>Malen</span></div><div class="slider">Größe<span class="tr"></span>24</div></div></div>
+        <figcaption><strong>11·3 Bottom-Sheet</strong><span>Werkzeuge als Tabs mit Text, Größe als Schieber. Am verständlichsten für Erstnutzer.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ================= 12 STICKER ================= -->
+  <section id="c12">
+    <div class="sh"><b>12</b><h2>Motiv beim Platzieren</h2></div>
+    <p class="sub">Wie das Motiv auf dem Arm liegt, bevor gestochen wird.</p>
+    <div class="row">
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="stk-a"><svg style="width:96px;height:72px;color:#111;opacity:.85"><use href="#bird"/></svg></div></div>
+        <figcaption><strong>12·1 Sticker (heute)</strong><span>Durchscheinende Fläche mit weißem Rand und Abstand zum Motiv.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="stk-b"><svg style="width:96px;height:72px;color:oklch(42% .17 290);opacity:.85"><use href="#bird"/></svg></div><div class="chipsz glass">Schwalbe <b style="font-weight:600">8 cm</b></div></div>
+        <figcaption><strong>12·2 Echter Stencil</strong><span>Motiv in Stencil-Lila wie das Transferpapier im Studio, gestrichelte Schnittkante. Sofort als Stencil lesbar.</span></figcaption></figure>
+      <figure class="opt"><div class="scr"><div class="arm"></div><div class="stk-c glass-l"><svg style="width:96px;height:72px;color:#111;opacity:.85"><use href="#bird"/></svg><i class="h" style="left:-7px;top:-7px"></i><i class="h" style="right:-7px;top:-7px"></i><i class="h" style="left:-7px;bottom:-7px"></i><i class="h" style="right:-7px;bottom:-7px"></i></div><div class="chipsz glass">8,2 × 6,1 cm · −6°</div></div>
+        <figcaption><strong>12·3 Glas mit Griffen</strong><span>Glas-Rahmen mit vier Eckgriffen und Maß-Chip. Am Desktop eindeutig, ersetzt das heutige Gizmo.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <div class="note">
+    <h2>Meine Empfehlung</h2>
+    <ol>
+      <li><b>Guide A Graphit</b> für die Werkzeuge (dunkle Karte bleibt, Foto steht im Fokus), mit <b>Guide C Aura</b> nur für Start und Zusammenfassung. Guide B wirkt auf einem Hautfoto zu hell.</li>
+      <li><b>01·1</b> Timeline-Band, <b>02·1</b> Seitenschiene, <b>03·1</b> Körperstellen-Liste: deine drei Wunschvorlagen.</li>
+      <li><b>04·1</b> und <b>11·1</b> als eine gemeinsame Toolbar-Sprache, <b>05·3</b> passend dazu.</li>
+      <li><b>06·1</b> Laden, <b>07·3</b> Kamera mit Führung (verbessert auch die Größenmessung), <b>08·3</b> Lineal, <b>09·1</b> Widgets, <b>10·1</b> und <b>12·2</b> Stencil-Lila.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+  // 06·1 dot matrix wave
+  const dm = document.getElementById("dm");
+  for (let i = 0; i < 25; i++) { const x = i % 5, y = (i / 5) | 0, e = document.createElement("i"); e.style.animationDelay = ((x + y) * .12) + "s"; dm.append(e); }
+  // 06·3 grid filling in a loop
+  const g9 = document.getElementById("g9"), cells = [];
+  for (let i = 0; i < 45; i++) { const e = document.createElement("i"); g9.append(e); cells.push(e); }
+  let n = 0;
+  setInterval(() => { n = (n + 1) % 52; cells.forEach((c, i) => c.className = i < n - 1 ? "f" : i === n - 1 ? "h" : ""); }, 90);
+</script>
+</body>
+</html>

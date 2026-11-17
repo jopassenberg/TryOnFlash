@@ -6,203 +6,191 @@
 <title>Stencit Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
 <style>
-  /* Stencit · design system
-     spacing: 4 · 8 · 12 · 16 · 24 · 32 · 48     control height: 40 (on-image overlays: 32)
-     radii nest: frame 28 = stage 20 + frame padding 8; controls 12; overlays 10
-     type: 13 body · 12 small · 22 title; Plus Jakarta Sans 400/500, tracking -1.2 % (-5 % for brand/title)
-     colour: neutral greys; red only for the primary action and live feedback */
+  /* Stencit · Designsystem (design/basis.html)
+     hell: Weiß und zartes Grau, weiches Glas ohne Ränder und ohne Schatten
+     Rot (Marke) nur auf der Startseite und im Scan-Glow · Plus Jakarta Sans Regular · Carbon-Icons
+     Raster 4/8 · Höhen 32 / 44 / 56 · alle Buttons rund · Leiste 56 = Button 44 + 2 × 6 (konzentrisch) */
   :root {
-    /* colours in OKLCH: perceptually even steps, neutral greys with a hint of warmth */
-    --bg: oklch(96.5% .004 75); --ink: oklch(18% .003 75); --muted: oklch(62% .006 75); --line: oklch(0% 0 0 / .08);
-    --red: oklch(59% .21 26); --red-2: oklch(66% .21 24);
-    /* motion: snappy ease-out for state changes, a spring with slight overshoot for things that arrive */
-    --ease-out: cubic-bezier(.22, 1, .36, 1); --spring: cubic-bezier(.34, 1.56, .64, 1); --fast: 140ms; --med: 240ms;
-    --frame: #161616; --on-dark: rgba(255,255,255,.08); --on-dark-2: rgba(255,255,255,.14); --text-dim: rgba(255,255,255,.6);
-    --overlay: rgba(14,14,14,.6);
-    --a1: #e9e5e1; --a2: #f1dfdb; --a3: #e2dfdc; --a4: #eeebe7;
+    --n-0: oklch(100% 0 0); --n-50: oklch(98.6% .002 75); --n-100: oklch(97% .003 75); --n-200: oklch(94.5% .003 75); --n-300: oklch(91% .004 75);
+    --n-400: oklch(84% .004 75); --n-500: oklch(68% .005 75); --n-600: oklch(54% .005 75); --n-800: oklch(32% .004 75); --n-900: oklch(19% .003 75);
+    --bordeaux: #730F26; --accent: #DB1A1D; --brand: linear-gradient(in srgb 180deg, #730F26, #DB1A1D);
+    --bg: var(--n-100); --ink: var(--n-900); --text-2: var(--n-600); --text-3: var(--n-500); --muted: var(--n-500);
+    --fill: oklch(19% .003 75 / .06); --fill-2: oklch(19% .003 75 / .1);
+    --glass: oklch(100% 0 0 / .66); --glass-strong: oklch(100% 0 0 / .84); --blur: blur(24px) saturate(1.6);
     --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
-    --h: 40px; --h-sm: 32px;
-    --r-frame: 28px; --r-stage: 20px; --r: 12px; --r-sm: 10px;
-    --track: -.05em; --track-ui: -.012em;
+    --h-sm: 32px; --h: 44px; --h-lg: 56px; --r-card: 32px; --r-inner: 20px; --r-full: 999px;
+    --ease-out: cubic-bezier(.22, 1, .36, 1); --spring: cubic-bezier(.34, 1.4, .64, 1); --fast: 140ms; --med: 240ms;
+    --red-2: var(--accent);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
-  body { background: var(--bg); color: var(--ink); font: 400 13px/1.4 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: var(--track-ui); hyphens: auto; text-wrap: pretty;
-    -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+  body { background: var(--bg); color: var(--ink); font: 400 15px/1.5 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: -.011em;
+    hyphens: auto; text-wrap: pretty; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
   button, input { font: inherit; color: inherit; letter-spacing: inherit; }
-  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
   svg { flex: none; }
+  .ic { width: 20px; height: 20px; fill: currentColor; }
 
-  .aura { position: fixed; inset: -20vmax; z-index: -1; pointer-events: none; filter: blur(80px); opacity: .6; }
-  .aura i { position: absolute; border-radius: 50%; mix-blend-mode: multiply; animation: drift 18s ease-in-out infinite alternate; }
-  .aura i:nth-child(1) { width: 60vmax; height: 60vmax; left: 8vmax; top: 4vmax; background: radial-gradient(circle, var(--a1) 0%, transparent 65%); }
-  .aura i:nth-child(2) { width: 42vmax; height: 42vmax; right: 10vmax; top: 16vmax; background: radial-gradient(circle, var(--a2) 0%, transparent 62%); animation-duration: 22s; }
-  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 32vmax; bottom: 2vmax; background: radial-gradient(circle, var(--a3) 0%, transparent 62%); animation-duration: 26s; }
-  .aura i:nth-child(4) { width: 40vmax; height: 40vmax; left: 2vmax; bottom: 8vmax; background: radial-gradient(circle, var(--a4) 0%, transparent 62%); animation-duration: 20s; }
-  @keyframes drift { from { transform: translate(-4vmax, -3vmax) scale(.95); } to { transform: translate(5vmax, 4vmax) scale(1.08); } }
-  @media (prefers-reduced-motion: reduce) { .aura i { animation: none; } }
+  /* weiche Aura im Hintergrund: fast weiß, ein Hauch Wärme */
+  .aura { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .aura i { position: absolute; border-radius: 50%; filter: blur(90px); animation: drift 24s ease-in-out infinite alternate; }
+  .aura i:nth-child(1) { width: 55vmax; height: 55vmax; left: -10vmax; top: -15vmax; background: oklch(99% .008 60); }
+  .aura i:nth-child(2) { width: 45vmax; height: 45vmax; right: -12vmax; top: 10vmax; background: oklch(95% .012 20); animation-duration: 30s; }
+  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 25vmax; bottom: -25vmax; background: oklch(96% .01 240); animation-duration: 28s; }
+  .aura i:nth-child(4) { display: none; }
+  @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 
-  /* ---------- layout: one large photo card with a light margin, controls float on it ---------- */
-  .shell { height: 100vh; height: 100dvh; padding: 0 var(--s5) var(--s5); display: grid; grid-template-rows: 64px 1fr; }
-  .card { position: relative; min-height: 0; overflow: hidden; color: #fff; background: #0e0e0e; border-radius: var(--r-frame);
-    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 24px 48px -36px rgba(0,0,0,.45); }
+  /* ---------- Layout: Kopfzeile, darunter eine große Karte ---------- */
+  .shell { height: 100vh; height: 100dvh; padding: 0 var(--s5) var(--s5); display: grid; grid-template-rows: 72px 1fr; }
   .top { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); }
-  .brand { display: inline-flex; align-items: center; gap: var(--s2); font-size: clamp(16px, 12px + .5vw, 19px); font-weight: 500; letter-spacing: var(--track); }
-  .brand svg { width: 22px; height: 22px; }
-  /* steps: one glass pill with the current step, "Platzieren · 3 / 4" */
-  .steps { height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; border-radius: var(--r-sm); font-size: 12px; background: rgba(0,0,0,.05); }
+  .brand { display: inline-flex; color: var(--ink); }
+  .brand .logo { height: 22px; width: auto; display: block; }
+  .steps { height: var(--h-sm); padding: 0 var(--s4); display: inline-flex; align-items: center; border-radius: var(--r-full); font-size: 13px; background: var(--fill); }
   .step { display: none; align-items: center; gap: var(--s2); }
   .step.on { display: inline-flex; }
   .step::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
   .step span { order: 1; }
-  .step i { order: 2; font-style: normal; color: var(--muted); }
+  .step i { order: 2; font-style: normal; color: var(--text-3); }
   .step i::after { content: " / 4"; }
 
+  .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: var(--n-0); border-radius: var(--r-card); }
   .stage { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; touch-action: none; }
-  /* the photo always covers the whole card (sized in fitView), centred, overflow cut by the card */
   #viewWrap { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
   #view { display: block; position: relative; }
-  #cam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #0e0e0e; }
+  #overlay { position: absolute; pointer-events: none; }
+  #cam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--n-200); }
   #cam.mirror { transform: scaleX(-1); }
   .shot { position: absolute; inset: 0; z-index: 6; background: #fff; opacity: 0; pointer-events: none; }
   .shot.go { animation: shot .45s ease-out; }
   @keyframes shot { 0% { opacity: .85; } 100% { opacity: 0; } }
-  .shutter { width: 56px; height: 56px; border-radius: 50%; border: 2px solid #fff; padding: 4px; }
-  .shutter::after { content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; transition: transform .15s ease; }
-  .shutter:active::after { transform: scale(.88); }
-  #panelCam .group { gap: var(--s5); padding: 0 var(--s2); }
-  #overlay { position: absolute; pointer-events: none; }
+  .shutter { width: var(--h-lg); height: var(--h-lg); border-radius: 50%; padding: 5px; background: var(--fill-2); }
+  .shutter::after { content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; background: var(--n-900); transition: transform .25s var(--spring); }
+  .shutter:active::after { transform: scale(.86); }
 
-  /* empty state */
-  .drop { display: grid; justify-items: center; gap: var(--s4); padding: var(--s7) var(--s5); text-align: center; }
-  .drop .row { display: flex; gap: var(--s2); }
-  .drop .mark { width: 32px; height: 32px; color: #fff; opacity: .9; }
-  .drop.over { background: rgba(255,255,255,.04); }
+  /* ---------- Startseite (leere Karte) ---------- */
+  .drop { display: grid; justify-items: center; gap: var(--s6); padding: var(--s7) var(--s5); text-align: center; }
+  .drop .hello { margin: 0; font-weight: 400; font-size: clamp(34px, 4.2vw, 56px); line-height: 1.02; letter-spacing: -.045em; }
+  .drop .hello span { color: var(--text-3); }
+  .drop .row { display: flex; gap: var(--s2); align-items: center; }
+  .drop.over .hello { opacity: .5; }
 
-  /* ---------- controls ---------- */
-  .btn, .chip, .field, .thumb { height: var(--h); border-radius: var(--r); }
-  .btn { padding: 0 var(--s4); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); font-weight: 500; white-space: nowrap;
-    transition: transform .12s ease, filter .15s ease, background .15s ease; }
-  .btn, .chip, .thumb, .seg button, .views button { transition: transform .38s var(--spring), background var(--fast) var(--ease-out), color var(--fast) var(--ease-out), box-shadow var(--fast) var(--ease-out); }
+  /* ---------- Buttons: rund, flächig, ohne Rand und Schatten ---------- */
+  .btn { height: var(--h); padding: 0 var(--s5); border-radius: var(--r-full); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+    font-size: 15px; white-space: nowrap; text-box: trim-both cap alphabetic; }
+  .btn, .chip, .thumb, .seg button, .views button { transition: transform .38s var(--spring), background-color var(--fast) var(--ease-out), color var(--fast) var(--ease-out), opacity var(--fast); }
   .btn:active, .chip:active, .thumb:active, .seg button:active, .views button:active { transform: scale(.94); transition-duration: 80ms; transition-timing-function: var(--ease-out); }
-  .btn, .chip, .seg button, .views button, .status, .steps { text-box: trim-both cap alphabetic; }
-  /* bigger hit areas than the drawn shape (Fitts): small targets get 4–6 px invisible margin */
-  .btn.icon, .thumb, .views button, .seg button { position: relative; }
-  .btn.icon::after, .thumb::after, .views button::after { content: ""; position: absolute; inset: -5px; }
-  .btn svg { width: 16px; height: 16px; }
+  .btn .ic { margin-left: -4px; }
+  .btn.lg { height: var(--h-lg); padding: 0 var(--s6); font-size: 16px; }
   .btn.icon { width: var(--h); padding: 0; }
-  .btn.white { background: #fff; color: var(--ink); }
-  .btn.primary { background: #fff; color: var(--ink); }
-  .btn.primary:hover { background: #ececea; }
-  .btn.ghost { background: var(--on-dark); color: #fff; }
-  .btn.ghost:hover { background: var(--on-dark-2); }
-  .btn.ghost[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  .btn.icon .ic { margin: 0; }
+  .btn.icon, .thumb, .views button { position: relative; }
+  .btn.icon::after, .thumb::after, .views button::after { content: ""; position: absolute; inset: -4px; }  /* größere Trefferfläche */
+  .btn.primary { background: var(--n-900); color: var(--n-0); }
+  .btn.primary:hover { background: var(--n-800); }
+  .btn.accent { background: var(--accent); color: #fff; }
+  .btn.accent:hover { background: oklch(52% .2 27); }
+  .btn.soft { background: var(--fill); }
+  .btn.soft:hover { background: var(--fill-2); }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.ghost:hover { background: var(--fill); }
+  .btn.ghost[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
+  .btn.lg.soft.icon, .btn.lg.icon { width: var(--h-lg); }
   .btn:disabled { opacity: .35; cursor: default; }
 
-  .panel { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
-  .group { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
-  /* dock: the step's controls float in one glass bar at the bottom of the card */
-  .card > .panel { position: absolute; z-index: 5; left: 50%; bottom: var(--s2); transform: translateX(-50%); flex-wrap: nowrap; max-width: calc(100% - 32px);
-    padding: var(--s2); border-radius: 20px; background: oklch(26% .003 75 / .62); backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3);
-    box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .08), inset 0 1px 0 oklch(100% 0 0 / .06), 0 8px 24px -12px oklch(0% 0 0 / .5); }
+  /* Leiste: eine Glaskapsel unten in der Karte */
+  .panel { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); flex-wrap: wrap; }
+  .group { display: flex; align-items: center; gap: var(--s1); min-width: 0; }
+  .card > .panel { position: absolute; z-index: 5; left: 50%; bottom: var(--s4); transform: translateX(-50%); flex-wrap: nowrap; max-width: calc(100% - 32px);
+    min-height: var(--h-lg); padding: 6px; gap: var(--s2); border-radius: var(--r-full); background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .card > .panel:not([hidden]) { animation: dock-in .5s var(--spring) both; }
   .card > .panel:not([hidden]) .group > * { animation: item-in .45s var(--spring) both; }
   .card > .panel .group > :nth-child(2) { animation-delay: 30ms; } .card > .panel .group > :nth-child(3) { animation-delay: 60ms; }
   .card > .panel .group + .group > :nth-child(1) { animation-delay: 60ms; } .card > .panel .group + .group > :nth-child(2) { animation-delay: 90ms; }
   @keyframes dock-in { from { translate: 0 24px; scale: .96; opacity: 0; } }
   @keyframes item-in { from { translate: 0 6px; opacity: 0; } }
-  /* the card edge: a faint alpha border keeps the photo from bleeding into the page */
-  .card::after { content: ""; position: absolute; inset: 0; z-index: 7; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .07); }
-  /* text that changes (step, status) swaps with a short blur instead of jumping */
   .swap { animation: swap .32s var(--ease-out); }
   @keyframes swap { from { filter: blur(4px); opacity: 0; translate: 0 3px; } }
   @media (prefers-reduced-motion: reduce) { .card > .panel, .card > .panel .group > *, .swap, .thumb.pop { animation: none !important; } }
-  .card > .panel .group + .group { padding-left: var(--s2); border-left: 1px solid rgba(255,255,255,.12); }
-  .thumbs { display: flex; gap: var(--s2); overflow-x: auto; scrollbar-width: none; max-width: 40vw; padding: 5px; margin: -5px;
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(90deg, transparent, #000 6px, #000 calc(100% - 14px), transparent); }
+  #panelCam .group { gap: var(--s5); padding: 0 var(--s2); }
+
+  /* Motive: runde Sticker-Kreise */
+  .thumbs { display: flex; gap: var(--s1); overflow-x: auto; scrollbar-width: none; max-width: 40vw; padding: 4px; margin: -4px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 4px, #000 calc(100% - 12px), transparent); mask-image: linear-gradient(90deg, transparent, #000 4px, #000 calc(100% - 12px), transparent); }
   .thumbs::-webkit-scrollbar { display: none; }
-  .thumb { flex: none; }
+  .thumb { flex: none; width: var(--h); height: var(--h); border-radius: 50%; background: var(--fill); display: grid; place-items: center; overflow: hidden; }
+  .thumb img { max-width: 78%; max-height: 78%; }
+  .thumb[aria-pressed="true"] { background: var(--n-0); }
+  .thumb.add { color: var(--ink); background: transparent; }
+  .thumb.add:hover { background: var(--fill); }
   .thumb.pop { animation: pop .5s var(--spring); }
   @keyframes pop { 0% { transform: scale(.7); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
-  .thumb { width: var(--h); background: var(--on-dark); display: grid; place-items: center; overflow: hidden; }
-  .thumb img { max-width: 84%; max-height: 84%; }
-  .thumb[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px #fff; background: var(--on-dark-2); }
-  .thumb.add { background: var(--on-dark); color: #fff; }
-  .thumb.add:hover { background: var(--on-dark-2); }
-  .chip { padding: 0 var(--s4); background: var(--on-dark); color: var(--text-dim); transition: background .15s, color .15s; }
-  .chip:hover { color: #fff; }
-  .chip { display: inline-flex; align-items: center; gap: var(--s2); }
-  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
-  .chip[aria-pressed="true"] { background: var(--on-dark-2); color: #fff; }
-  .chip[aria-pressed="true"]::before { background: #fff; border-color: #fff; }
-  .field { display: inline-flex; align-items: center; gap: var(--s2); padding: 0 var(--s1) 0 var(--s3); background: var(--on-dark); color: var(--text-dim); }
-  .field input { width: 48px; height: var(--h-sm); border: 0; border-radius: 8px; background: rgba(0,0,0,.35); color: #fff; text-align: center; }
-  .field em { font-style: normal; padding-right: var(--s2); }
 
+  /* Chip: Schalter als Fläche, an = schwarz */
+  .chip { height: var(--h); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 14px; background: var(--fill); color: var(--text-2); }
+  .chip:hover { color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
 
-  /* on-image overlays: inset 16, height 32, radius 10 */
-  .status, .views, .info { position: absolute; z-index: 4; border-radius: var(--r-sm); background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-  .status { top: var(--s4); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; gap: var(--s2); font-size: 12px; white-space: nowrap; }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
-  .status[data-s="busy"] .dot { background: var(--red-2); animation: blink .9s infinite; }
-  .status[data-s="ok"] .dot { background: var(--red-2); }
-  .status[data-s="err"] .dot { background: #ffb020; }
+  /* ---------- Overlays auf dem Foto: weißes Glas ---------- */
+  .status, .views, .info { position: absolute; z-index: 4; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); color: var(--ink); }
+  .status { top: var(--s4); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
+  .status[data-s="busy"] .dot { background: var(--accent); animation: blink .9s infinite; }
+  .status[data-s="err"] .dot { background: oklch(75% .16 70); }
   @keyframes blink { 50% { opacity: .25; } }
-  /* view switch: a quiet icon segment in the top-left corner, same height as the status pill */
-  .views { left: var(--s3); top: var(--s3); display: flex; gap: 2px; padding: 3px; }
-  .views button { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: var(--text-dim); }
-  .views button svg { width: 16px; height: 16px; }
-  .views button[aria-pressed="true"] { background: oklch(100% 0 0 / .16); color: #fff; }
-  /* info card (top right): size + scale while placing, the full summary after stechen */
-  .info { right: var(--s3); top: var(--s3); width: 248px; border-radius: 16px; overflow: hidden; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .08); }
-  .info-head { width: 100%; height: 32px; padding: 0 var(--s2) 0 var(--s3); display: flex; align-items: center; justify-content: space-between; gap: var(--s2); color: #fff; font-weight: 500; }
-  .info-head svg { width: 16px; height: 16px; color: var(--text-dim); transition: transform var(--med) var(--ease-out); }
-  .info[data-open="true"] .info-head svg { transform: rotate(180deg); }
-  .info-body { display: none; padding: 2px var(--s3) var(--s3); }
-  .info[data-open="true"] .info-body { display: grid; gap: 0; animation: swap .3s var(--ease-out); }
-  .info dl { display: grid; grid-template-columns: auto 1fr; margin: 0; }
-  .info dt, .info dd { margin: 0; padding: 7px 0; border-top: 1px solid oklch(100% 0 0 / .08); }
-  .info dt { color: var(--text-dim); padding-right: var(--s3); }
-  .info dd { text-align: right; color: #fff; }
-  .info dd small { display: block; color: var(--text-dim); font-size: 11px; }
-  .info .note { margin-top: var(--s2); color: var(--text-dim); font-size: 11px; line-height: 1.45; }
-  .info .scale-edit { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s2); }
-  .info .scale-edit input { width: 56px; height: 28px; border: 0; border-radius: 8px; background: oklch(0% 0 0 / .35); color: #fff; text-align: center; }
-  .info .link { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: oklch(100% 0 0 / .4); }
+  .views { left: var(--s4); top: var(--s4); display: flex; gap: 2px; padding: 4px; border-radius: var(--r-full); }
+  .views button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--text-2); }
+  .views button .ic { width: 18px; height: 18px; }
+  .views button:hover { color: var(--ink); }
+  .views button[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
+  .info { right: var(--s4); top: var(--s4); width: 260px; border-radius: var(--r-inner); overflow: hidden; font-size: 13px; }
+  .info-head { width: 100%; height: var(--h); padding: 0 var(--s3) 0 var(--s4); display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+  .info-head .ic { width: 16px; height: 16px; color: var(--text-3); transition: transform var(--med) var(--ease-out); }
+  .info[data-open="true"] .info-head .ic { transform: rotate(180deg); }
+  .info-body { display: none; padding: 0 var(--s4) var(--s4); }
+  .info[data-open="true"] .info-body { display: grid; animation: swap .3s var(--ease-out); }
+  .info dl { display: grid; grid-template-columns: auto 1fr; margin: 0; row-gap: var(--s2); }
+  .info dt, .info dd { margin: 0; }
+  .info dt { color: var(--text-2); padding-right: var(--s3); }
+  .info dd { text-align: right; }
+  .info dd small { display: block; color: var(--text-3); font-size: 12px; }
+  .info .note { margin-top: var(--s3); color: var(--text-3); font-size: 12px; line-height: 1.45; }
+  .info .scale-edit { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s3); }
+  .info .scale-edit input { width: 64px; height: var(--h-sm); border: 0; border-radius: var(--r-full); background: var(--fill); text-align: center; }
+  .info .link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--n-400); }
 
-  .needle { position: absolute; z-index: 4; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px oklch(100% 0 0 / .18), 0 0 0 10px oklch(100% 0 0 / .07); pointer-events: none; }
-  .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,.3); cursor: ew-resize; pointer-events: auto; }
-  .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .needle { position: absolute; z-index: 4; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px oklch(100% 0 0 / .2), 0 0 0 10px oklch(100% 0 0 / .08); pointer-events: none; }
+  .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; cursor: ew-resize; pointer-events: auto; }
+  .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; }
 
-  /* cutter */
-  .cut { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: var(--s4); background: rgba(20,20,20,.4);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: fadein .25s ease; }
+  /* ---------- Stencil-Editor ---------- */
+  .cut { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: var(--s4); background: oklch(97% .003 75 / .6);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: fadein .25s ease; }
   @keyframes fadein { from { opacity: 0; } }
-  .cutbox { width: min(940px, 100%); display: grid; gap: var(--s2); padding: var(--s2); color: #fff; background: var(--frame); border-radius: var(--r-frame); }
-  .cutstage .status { left: var(--s3); top: var(--s3); transform: none; }
-  .cutstage { position: relative; overflow: hidden; background: #0e0e0e; border-radius: var(--r-stage); height: min(68vh, 680px); touch-action: none;
-    background-image: radial-gradient(circle at center, rgba(255,255,255,.06) 1px, transparent 1.4px); background-size: 16px 16px; }
+  .cutbox { width: min(940px, 100%); display: grid; gap: var(--s2); padding: var(--s2); color: var(--ink); background: var(--n-0); border-radius: var(--r-card); }
+  .cutstage { position: relative; overflow: hidden; border-radius: calc(var(--r-card) - var(--s2)); height: min(68vh, 680px); touch-action: none;
+    background: var(--n-100) radial-gradient(circle at center, oklch(19% .003 75 / .09) 1px, transparent 1.4px) 0 0 / 16px 16px; }
   #cutCanvas { position: absolute; left: 50%; top: 50%; display: block; touch-action: none; transform-origin: center; }
-  .cuttools { position: absolute; z-index: 4; top: var(--s3); right: var(--s3); display: flex; gap: var(--s2); }
-  .cuttools .btn { background: var(--overlay); color: #fff; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-  .seg { display: inline-flex; gap: 2px; padding: 3px; height: var(--h); border-radius: var(--r); background: var(--on-dark); }
-  .seg button { padding: 0 var(--s3); border-radius: 9px; color: var(--text-dim); transition: background .15s, color .15s; }
-  .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); }
-  .size { display: inline-flex; align-items: center; gap: var(--s2); height: var(--h); padding: 0 var(--s3); border-radius: var(--r); background: var(--on-dark); color: var(--text-dim); }
-  .size input { -webkit-appearance: none; appearance: none; width: 120px; height: 2px; border-radius: 2px; margin: 0; background: rgba(255,255,255,.3); }
-  .size input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
-  .size input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; }
-  .cutstage .status { pointer-events: none; }
-
-  @supports (corner-shape: squircle) {
-    .card, .cutbox, .cutstage, .btn, .chip, .field, .thumb, .status, .views, .info { corner-shape: squircle; }
-    .siri, .siri i { corner-shape: squircle; }
-    .card, .cutbox { border-radius: calc(var(--r-frame) * 1.6); } .cutstage { border-radius: calc(var(--r-stage) * 1.6); }
-    .btn, .chip, .field, .thumb { border-radius: calc(var(--r) * 1.6); } .status, .views { border-radius: calc(var(--r-sm) * 1.6); }
-  }
+  .cutstage .status { left: var(--s3); top: var(--s3); transform: none; pointer-events: none; }
+  .cuttools { position: absolute; z-index: 4; top: var(--s3); right: var(--s3); display: flex; gap: var(--s1); padding: 4px; border-radius: var(--r-full); background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+  .cuttools .btn { width: 36px; height: 36px; }
+  .cuttools .btn:hover { background: var(--fill); }
+  .cutbox > .panel { padding: var(--s1); row-gap: var(--s2); }
+  .cutbox > .panel .group.end { margin-left: auto; }
+  .seg { display: inline-flex; gap: 2px; padding: 4px; height: var(--h); border-radius: var(--r-full); background: var(--fill); }
+  .seg button { padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-2); }
+  .seg button .ic { width: 16px; height: 16px; }
+  .seg button:hover { color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: var(--n-0); color: var(--ink); }
+  /* Schieber: eine runde Fläche, die sich schwarz füllt */
+  .size { position: relative; width: 180px; height: var(--h); border-radius: var(--r-full); overflow: hidden; background: var(--fill); --p: 30%; }
+  .size .fillbar { position: absolute; inset: 0 auto 0 0; width: max(var(--h), var(--p)); border-radius: var(--r-full); background: var(--n-900); }
+  .size .fillbar::after { content: ""; position: absolute; right: 14px; top: 50%; width: 3px; height: 16px; margin-top: -8px; border-radius: 3px; background: oklch(100% 0 0 / .7); }
+  .size span { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; font-size: 14px; pointer-events: none; }
+  .size .val { right: var(--s4); color: var(--text-2); }
+  .size input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
 
   /* Siri-style edge glow, built so the GPU animates it on its own (smooth even while the analysis keeps
      the main thread busy): a soft inner band and a thin bright rim, each a masked window onto a large
@@ -232,32 +220,37 @@
   .scan-dim.on { opacity: 1; }
   @media (prefers-reduced-motion: reduce) { .siri i::before, .siri .band, .loader i, .loader b { animation: none; } }
 
-  /* ---------- phones: the card becomes the whole screen ---------- */
+
+  /* ---------- Handy: die Karte füllt den Bildschirm ---------- */
   @media (max-width: 680px) {
-    .shell { padding: 0 var(--s2) var(--s2); grid-template-rows: 56px 1fr; }
+    .shell { padding: 0 var(--s2) max(var(--s2), env(safe-area-inset-bottom)); grid-template-rows: 60px 1fr; }
     .top { padding: 0 var(--s2); }
-    .card { border-radius: var(--r-frame); }
-    .shell { padding-bottom: max(var(--s2), env(safe-area-inset-bottom)); }
-    .status { top: var(--s3); }
-    #panelCam .group { justify-content: space-between; padding: 0 var(--s3); }
-    .info { width: calc(100% - 120px); max-width: 260px; }
-    .card > .panel { left: var(--s2); right: var(--s2); bottom: var(--s2); transform: none; max-width: none; border-radius: 20px; }
+    .brand .logo { height: 20px; }
+    .card { border-radius: 28px; }
+    .views { left: var(--s3); top: var(--s3); }
+    /* status unter Ebenen und Maßstab, damit sich nichts überlappt */
+    .stage > .status { top: calc(var(--s3) + 44px + var(--s2)); }
+    .info { right: var(--s3); top: var(--s3); width: calc(100% - 160px); min-width: 150px; max-width: 260px; }
+    .card > .panel { left: var(--s2); right: var(--s2); bottom: var(--s2); transform: none; max-width: none; }
     .card > .panel .group:first-child { flex: 1; min-width: 0; }
-    #panelCam .group { flex: 1; }
+    #panelCam .group { flex: 1; justify-content: space-between; padding: 0 var(--s2); }
     .thumbs { max-width: 100%; }
     .cut { padding: var(--s2); }
     .cutstage { height: 58vh; }
     .cutbox .panel .group { width: 100%; }
     .cutbox .panel .group.end > .btn { flex: 1; }
-    .size { flex: 1; } .size input { flex: 1; width: auto; }
+    .size { flex: 1; width: auto; }
+    .drop .row { flex-direction: column; width: 100%; max-width: 320px; }
+    .drop .row .btn { width: 100%; }
   }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol><symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol><symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol><symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol><symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol><symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol><symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol><symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol><symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol><symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-center-to-fit" viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></symbol><symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol><symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol><symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol></defs></svg>
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <div class="shell">
   <header class="top">
-    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>Stencit</div>
+    <a class="brand" href="/" aria-label="Stencit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4410 834" class="logo" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M914 6Q842 6 803.0 -36.0Q764 -78 764 -156V-461H665V-536H690Q724 -536 744.0 -558.5Q764 -581 764 -615V-660H839V-536H957V-461H839V-156Q839 -129 847.0 -108.5Q855 -88 874.5 -76.0Q894 -64 927 -64Q935 -64 946.0 -65.0Q957 -66 965 -67V0Q953 3 938.0 4.5Q923 6 914 6Z M1307 12Q1232 12 1171.5 -24.5Q1111 -61 1076.0 -125.0Q1041 -189 1041 -270Q1041 -351 1075.0 -413.5Q1109 -476 1167.5 -512.0Q1226 -548 1299 -548Q1357 -548 1402.5 -526.5Q1448 -505 1480.0 -468.5Q1512 -432 1529.0 -386.5Q1546 -341 1546 -293Q1546 -283 1545.0 -270.5Q1544 -258 1542 -245H1089V-315H1499L1463 -285Q1472 -340 1450.5 -383.5Q1429 -427 1389.0 -452.5Q1349 -478 1299 -478Q1249 -478 1206.5 -452.0Q1164 -426 1140.0 -379.5Q1116 -333 1121 -269Q1116 -205 1141.5 -157.5Q1167 -110 1211.5 -84.0Q1256 -58 1307 -58Q1366 -58 1406.0 -86.0Q1446 -114 1471 -156L1535 -122Q1519 -86 1486.0 -55.5Q1453 -25 1407.5 -6.5Q1362 12 1307 12Z M1664 0V-536H1739V-432L1722 -436Q1742 -488 1787.5 -518.0Q1833 -548 1893 -548Q1950 -548 1995.5 -522.0Q2041 -496 2067.5 -450.5Q2094 -405 2094 -348V0H2019V-319Q2019 -368 2001.5 -402.0Q1984 -436 1952.5 -454.5Q1921 -473 1880 -473Q1839 -473 1807.0 -454.5Q1775 -436 1757.0 -401.5Q1739 -367 1739 -319V0Z M2468 12Q2389 12 2329.0 -25.0Q2269 -62 2235.0 -125.5Q2201 -189 2201 -269Q2201 -349 2235.0 -412.0Q2269 -475 2329.0 -511.5Q2389 -548 2468 -548Q2518 -548 2562.0 -530.0Q2606 -512 2640.0 -481.5Q2674 -451 2691 -411L2623 -376Q2603 -419 2562.0 -446.0Q2521 -473 2468 -473Q2415 -473 2372.5 -446.5Q2330 -420 2305.5 -373.5Q2281 -327 2281 -268Q2281 -210 2305.5 -163.5Q2330 -117 2372.5 -90.0Q2415 -63 2468 -63Q2521 -63 2561.5 -90.0Q2602 -117 2623 -162L2691 -125Q2674 -86 2640.0 -55.0Q2606 -24 2562.0 -6.0Q2518 12 2468 12Z M2809 0V-536H2884V0ZM2809 -635V-745H2884V-635Z M3229 6Q3157 6 3118.0 -36.0Q3079 -78 3079 -156V-461H2980V-536H3005Q3039 -536 3059.0 -558.5Q3079 -581 3079 -615V-660H3154V-536H3272V-461H3154V-156Q3154 -129 3162.0 -108.5Q3170 -88 3189.5 -76.0Q3209 -64 3242 -64Q3250 -64 3261.0 -65.0Q3272 -66 3280 -67V0Q3268 3 3253.0 4.5Q3238 6 3229 6Z" fill="currentColor"/></g></svg></a>
     <nav class="steps" aria-label="Schritte">
       <div class="step" data-step="1"><i>1</i><span>Foto</span></div>
       <div class="step" data-step="2"><i>2</i><span>Analyse</span></div>
@@ -271,10 +264,10 @@
     <div class="loader" id="loader"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><b></b></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop">
-        <svg viewBox="0 0 32 32" aria-hidden="true" class="mark"><g fill="currentColor"><circle cx="16" cy="16" r="3.4"/><circle cx="26.00" cy="16.00" r="2.6"/><circle cx="23.07" cy="23.07" r="2.6"/><circle cx="16.00" cy="26.00" r="2.6"/><circle cx="8.93" cy="23.07" r="2.6"/><circle cx="6.00" cy="16.00" r="2.6"/><circle cx="8.93" cy="8.93" r="2.6"/><circle cx="16.00" cy="6.00" r="2.6"/><circle cx="23.07" cy="8.93" r="2.6"/></g></svg>
+        <h1 class="hello">Dein Tattoo,<br><span>bevor es eins ist.</span></h1>
         <div class="row">
-          <button class="btn white" id="camBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Kamera</button>
-          <button class="btn ghost" id="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Hochladen</button>
+          <button class="btn accent lg" id="camBtn"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Kamera</button>
+          <button class="btn soft lg" id="pick"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>Hochladen</button>
         </div>
       </div>
       <video id="cam" playsinline muted autoplay hidden></video>
@@ -287,41 +280,41 @@
       </div>
       <div class="status" id="status" hidden data-s="idle"><span class="dot"></span><span id="statusText"></span></div>
       <div class="views" id="views" hidden>
-        <button data-view="photo" aria-pressed="true" title="Foto" aria-label="Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M4 16l5-5 4 4 2-2 5 5"/></svg></button>
-        <button data-view="depth" aria-pressed="false" title="Tiefe" aria-label="Tiefe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-2 5-2 8 0s5 2 8 0M4 12c3-2 5-2 8 0s5 2 8 0M4 7c3-2 5-2 8 0s5 2 8 0"/></svg></button>
-        <button data-view="mesh" aria-pressed="false" title="3D-Modell" aria-label="3D-Modell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></button>
+        <button data-view="photo" aria-pressed="true" title="Foto" aria-label="Foto"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
+        <button data-view="depth" aria-pressed="false" title="Tiefe" aria-label="Tiefe"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></button>
+        <button data-view="mesh" aria-pressed="false" title="3D-Modell" aria-label="3D-Modell"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg></button>
       </div>
       <div class="info" id="info" hidden>
-        <button class="info-head" id="infoHead" aria-expanded="false"><span id="infoTitle"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg></button>
+        <button class="info-head" id="infoHead" aria-expanded="false"><span id="infoTitle"></span><svg class="ic" aria-hidden="true"><use href="#i-chevron--down"/></svg></button>
         <div class="info-body" id="infoBody"></div>
       </div>
     </div>
 
     <div class="panel" id="panelCam" hidden>
       <div class="group">
-        <button class="btn ghost icon" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9.5" cy="9.5" r="1.5"/><path d="M20 15l-4-4-8 8"/></svg></button>
+        <button class="btn ghost icon" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
         <button class="shutter" id="shoot" title="Foto aufnehmen" aria-label="Foto aufnehmen"></button>
-        <button class="btn ghost icon" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg></button>
+        <button class="btn ghost icon" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></button>
       </div>
     </div>
 
     <div class="panel" id="panelPlace" hidden>
       <div class="group">
-        <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+        <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button></div>
       </div>
       <div class="group end">
-        <button class="btn ghost icon" id="newPhoto" title="Neues Foto" aria-label="Neues Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
+        <button class="btn ghost icon" id="newPhoto" title="Neues Foto" aria-label="Neues Foto"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></button>
         <button class="btn primary" id="ink" disabled>Stechen</button>
       </div>
     </div>
 
     <div class="panel" id="panelDone" hidden>
       <div class="group">
-        <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-        <button class="btn ghost icon" id="cmp" aria-pressed="false" title="Vorher / Nachher" aria-label="Vorher / Nachher"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M12 3v18"/></svg></button>
+        <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg class="ic" aria-hidden="true"><use href="#i-arrow--left"/></svg></button>
+        <button class="btn ghost icon" id="cmp" aria-pressed="false" title="Vorher / Nachher" aria-label="Vorher / Nachher"><svg class="ic" aria-hidden="true"><use href="#i-compare"/></svg></button>
       </div>
       <div class="group end">
-        <button class="btn primary" id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Speichern</button>
+        <button class="btn primary" id="save"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Speichern</button>
       </div>
     </div>
   </main>
@@ -332,18 +325,18 @@
         <canvas id="cutCanvas"></canvas>
         <div class="status" data-s="ok"><span class="dot"></span><span id="cutHint">Tattoo umfahren</span></div>
         <div class="cuttools">
-          <button class="btn icon" id="cutUndo" title="Rückgängig" aria-label="Rückgängig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-          <button class="btn icon" id="cutFit" title="Einpassen" aria-label="Einpassen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+          <button class="btn icon" id="cutUndo" title="Rückgängig" aria-label="Rückgängig"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+          <button class="btn icon" id="cutFit" title="Einpassen" aria-label="Einpassen"><svg class="ic" aria-hidden="true"><use href="#i-center-to-fit"/></svg></button>
         </div>
       </div>
       <div class="panel">
         <div class="group">
           <div class="seg" id="cutTools">
-            <button data-tool="lasso" aria-pressed="true">Lasso</button>
-            <button data-tool="erase" aria-pressed="false">Radierer</button>
-            <button data-tool="paint" aria-pressed="false">Pinsel</button>
+            <button data-tool="lasso" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg>Lasso</button>
+            <button data-tool="erase" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg>Radierer</button>
+            <button data-tool="paint" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-paint-brush"/></svg>Pinsel</button>
           </div>
-          <label class="size" id="cutSizeWrap" hidden title="Pinselgröße"><svg viewBox="0 0 24 24" width="10" height="10"><circle cx="12" cy="12" r="6" fill="currentColor"/></svg><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"><svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg></label>
+          <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
         </div>
         <div class="group end">
           <button class="chip" id="cutBg" aria-pressed="true">Hintergrund weg</button>
@@ -997,7 +990,9 @@ function setTool(t) {
   cutC.style.cursor = t === "lasso" ? "crosshair" : "none";
 }
 document.querySelectorAll("#cutTools button").forEach(b => b.onclick = () => setTool(b.dataset.tool));
-$("#cutSize").oninput = e => { CUT.size = +e.target.value; };
+$("#cutSize").oninput = e => { CUT.size = +e.target.value; sizeFill(); };
+function sizeFill() { const i = $("#cutSize"); $("#cutSizeWrap").style.setProperty("--p", ((i.value - i.min) / (i.max - i.min) * 100) + "%"); $("#cutSizeVal").textContent = i.value; }
+sizeFill();
 const brushPx = () => Math.max(CUT.img.width, CUT.img.height) * CUT.size / 100 * .12;
 
 // view transform: the canvas is fitted into the stage, then zoomed and panned with CSS

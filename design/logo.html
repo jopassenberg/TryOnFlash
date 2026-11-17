@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Logo</title>
+<link rel="icon" href="logo/stencit-app-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --n-0: oklch(100% 0 0); --n-100: oklch(97% .003 75); --n-200: oklch(94.5% .003 75); --n-500: oklch(68% .005 75); --n-600: oklch(54% .005 75); --n-900: oklch(19% .003 75);
+    --bordeaux: oklch(36.2% 0.132 15.2); --red: oklch(56.8% 0.221 27.7);
+    /* wie im Original: linear in sRGB (CSS würde bei oklch-Farben sonst in Oklab mischen, das wirkt blasser) */
+    --brand: linear-gradient(in srgb 180deg, #730F26, #DB1A1D);
+    --fill: oklch(19% .003 75 / .05); --glass: oklch(100% 0 0 / .62);
+    --r-card: 32px; --r-inner: 20px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--n-100); color: var(--n-900); font: 400 15px/1.5 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 48px 24px 96px; display: grid; gap: 64px; }
+  .lbl { font-size: 12px; color: var(--n-500); }
+  .title { font-size: 28px; line-height: 1.15; letter-spacing: -.035em; }
+  .dim { color: var(--n-500); }
+  .sec { display: grid; gap: 24px; }
+  .grid { display: grid; gap: 16px; }
+  .g3 { grid-template-columns: repeat(3, 1fr); } .g2 { grid-template-columns: repeat(2, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 860px) { .g3, .g4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .g3, .g2, .g4 { grid-template-columns: 1fr; } }
+  .tile { border-radius: var(--r-card); background: var(--n-0); padding: 24px; display: grid; gap: 16px; }
+  .tile p { margin: 0; font-size: 13px; color: var(--n-600); }
+  .tile b { font-weight: 400; font-size: 15px; }
+  .stage { aspect-ratio: 1; border-radius: var(--r-inner); background: var(--n-100); display: grid; place-items: center; }
+  .stage svg { width: 72%; height: 72%; overflow: visible; }
+  .lock { border-radius: var(--r-card); min-height: 260px; display: grid; place-items: center; padding: 48px; }
+  .lock img { width: min(100%, 360px); height: auto; }
+  .hero { border-radius: var(--r-card); background: var(--brand); min-height: 420px; display: grid; place-items: center; padding: 48px; }
+  .hero img { width: min(100%, 460px); }
+  .sw { display: grid; gap: 8px; } .sw i { height: 96px; border-radius: var(--r-inner); display: block; } .sw span { font-size: 12px; color: var(--n-500); }
+  .icons { display: flex; align-items: end; gap: 24px; flex-wrap: wrap; }
+  .icons img { display: block; }
+  .seg { justify-self: start; display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--fill); }
+  .seg button { font: inherit; border: 0; cursor: pointer; height: 36px; padding: 0 16px; border-radius: 999px; background: none; color: var(--n-600); font-size: 13px; }
+  .seg button[aria-pressed="true"] { background: var(--n-0); color: var(--n-900); }
+  .files { display: grid; gap: 4px; font-size: 13px; color: var(--n-600); }
+  .files a { color: var(--n-900); text-decoration: none; }
+  ul { margin: 0; padding-left: 18px; color: var(--n-600); font-size: 13px; display: grid; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sec">
+    <span class="lbl">Logo · v1</span>
+    <div style="font-size:clamp(40px,5vw,64px);line-height:1;letter-spacing:-.045em">Neun Nadeln,<br><span class="dim">eine Round Liner.</span></div>
+  </div>
+
+  <div class="hero"><img id="heroImg" src="logo/stencit-logo-white.svg" alt="Stencit"></div>
+
+  <section class="sec">
+    <div><span class="lbl">01</span><div class="title">Das Zeichen</div></div>
+    <div class="grid g3">
+      <div class="tile"><div class="stage"><svg viewBox="0 0 100 100" data-mark="orig"></svg></div><b>Vorher</b><p>Alle Punkte gleich groß. Zwischen den Ringpunkten 3 px Luft, zur Mitte 7 px. Der Ring liest sich deshalb als Achteck mit Loch.</p></div>
+      <div class="tile"><div class="stage"><svg viewBox="0 0 100 100" data-mark="ring"></svg></div><b>Neu · 9RL</b><p>Wie eine echte 9er Round Liner von vorne: neun gleich große Nadeln, acht dicht im Kreis um eine. Ein Punkt sitzt oben, keine waagrechten Paare, die Kontur ist ein Kreis.</p></div>
+      <div class="tile"><div class="stage"><svg viewBox="0 0 100 100" data-mark="hex"></svg></div><b>Alternative · 7RL</b><p>Sechs um einen, wie ein 7er Round Liner von vorne. Jeder Abstand ist exakt gleich, ruhiger geht es geometrisch nicht.</p></div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="seg" id="guides"><button aria-pressed="true" data-v="1">Konstruktion an</button><button aria-pressed="false" data-v="0">aus</button></span></div>
+  </section>
+
+  <section class="sec">
+    <div><span class="lbl">02</span><div class="title">Wortmarke <span class="dim">und Abstände</span></div></div>
+    <div class="seg" id="variant"><button aria-pressed="true" data-v="">9RL</button><button aria-pressed="false" data-v="-7rl">7RL</button></div>
+    <div class="grid g3">
+      <div class="lock" style="background:var(--n-0)"><img data-src="logo/stencit-logo{v}.svg" alt="Stencit schwarz"></div>
+      <div class="lock" style="background:var(--n-200)"><img data-src="logo/stencit-logo{v}.svg" alt="Stencit auf Grau"></div>
+      <div class="lock" style="background:var(--n-900)"><img data-src="logo/stencit-logo{v}-white.svg" alt="Stencit weiß"></div>
+    </div>
+    <ul>
+      <li>Schrift: Plus Jakarta Sans Regular, in Pfade umgewandelt, Laufweite −1,4 %, Kerning aus der Schrift.</li>
+      <li>Zeichen = 1,12 × Versalhöhe, mittig auf der Versalhöhe, damit der Kreis optisch gleich groß wirkt wie das „S“.</li>
+      <li>Abstand Zeichen zu Text = 0,42 × Zeichen. Schutzraum rundherum mindestens 1 Zeichenbreite.</li>
+      <li>Mindestgröße: Zeichen 16 px, ganzes Logo 72 px breit.</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <div><span class="lbl">03</span><div class="title">App-Icon</div></div>
+    <div class="tile"><div class="icons" id="icons"></div></div>
+  </section>
+
+  <section class="sec">
+    <div><span class="lbl">04</span><div class="title">Markenfarben</div></div>
+    <div class="grid g4">
+      <div class="sw"><i style="background:var(--bordeaux)"></i>Bordeaux<span>#730F26 · oklch(36.2% 0.132 15.2)</span></div>
+      <div class="sw"><i style="background:var(--red)"></i>Rot<span>#DB1A1D · oklch(56.8% 0.221 27.7)</span></div>
+      <div class="sw"><i style="background:var(--brand)"></i>Verlauf<span>Bordeaux oben → Rot unten</span></div>
+      <div class="sw"><i style="background:var(--n-900)"></i>Ink<span>#141414 · Logo auf Hell</span></div>
+    </div>
+    <p style="margin:0;font-size:13px;color:var(--n-600)">Rot und Bordeaux nur für Marke: Logo-Fläche, App-Icon, die eine Stelle auf der Startseite und der Scan-Glow. Die App selbst bleibt weiß und grau.</p>
+  </section>
+
+  <section class="sec">
+    <div><span class="lbl">05</span><div class="title">Dateien</div></div>
+    <div class="tile files" id="files"></div>
+  </section>
+</div>
+
+<script>
+  const NS = "http://www.w3.org/2000/svg";
+  let guides = true;
+  fetch("logo-marks.json").then(r => r.json()).then(M => {
+    const draw = () => document.querySelectorAll("[data-mark]").forEach(svg => {
+      const dots = M[svg.dataset.mark]; svg.innerHTML = "";
+      if (guides) {
+        // outer circle, and the gap between neighbours drawn as short dashed bridges
+        const [cx, cy] = [50, 50], far = Math.max(...dots.map(([x, y, r]) => Math.hypot(x - cx, y - cy) + r));
+        svg.insertAdjacentHTML("beforeend", `<circle cx="50" cy="50" r="${far}" fill="none" stroke="oklch(58% .2 25 / .5)" stroke-width=".35" stroke-dasharray="1.2 1.2"/>`);
+        const ring = dots.slice(0, -1), c = dots[dots.length - 1];
+        const bridge = (a, b) => { const d = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / d, uy = (b[1] - a[1]) / d;
+          const p = [a[0] + ux * a[2], a[1] + uy * a[2]], q = [b[0] - ux * b[2], b[1] - uy * b[2]], g = d - a[2] - b[2];
+          svg.insertAdjacentHTML("beforeend", `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="oklch(58% .2 25)" stroke-width=".6"/><text x="${(p[0] + q[0]) / 2}" y="${(p[1] + q[1]) / 2 - 1.2}" font-size="3" text-anchor="middle" fill="oklch(58% .2 25)">${g.toFixed(1)}</text>`); };
+        bridge(ring[0], ring[1]); bridge(c, ring[ring.length > 6 ? 6 : 3]);
+      }
+      for (const [x, y, r] of dots) { const e = document.createElementNS(NS, "circle"); e.setAttribute("cx", x); e.setAttribute("cy", y); e.setAttribute("r", r); e.setAttribute("fill", "#141414"); e.setAttribute("fill-opacity", guides ? .9 : 1); svg.prepend(e); }
+    });
+    draw();
+    document.querySelectorAll("#guides button").forEach(b => b.onclick = () => { guides = b.dataset.v === "1"; document.querySelectorAll("#guides button").forEach(x => x.ariaPressed = x === b); draw(); });
+  });
+  const files = ["stencit-logo", "stencit-logo-white", "stencit-logo-red", "stencit-mark", "stencit-mark-white", "stencit-app-icon"];
+  const setVariant = v => {
+    document.querySelectorAll("[data-src]").forEach(i => i.src = i.dataset.src.replace("{v}", v));
+    document.getElementById("heroImg").src = `logo/stencit-logo${v}-white.svg`;
+    document.getElementById("icons").innerHTML = [180, 96, 60, 40, 29].map(s => `<img src="logo/stencit-app-icon${v}.svg" width="${s}" height="${s}" alt="">`).join("");
+    document.getElementById("files").innerHTML = files.map(f => { const n = f.replace(/^(stencit-(?:logo|mark|app-icon))/, `$1${v}`) + ".svg"; return `<a href="logo/${n}" download>design/logo/${n}</a>`; }).join("");
+  };
+  document.querySelectorAll("#variant button").forEach(b => b.onclick = () => { document.querySelectorAll("#variant button").forEach(x => x.ariaPressed = x === b); setVariant(b.dataset.v); });
+  setVariant("");
+</script>
+</body>
+</html>
