@@ -23,6 +23,7 @@
     --h-sm: 32px; --h: 44px; --h-lg: 56px; --r-card: 32px; --r-inner: 20px; --r-full: 999px;
     --ease-out: cubic-bezier(.22, 1, .36, 1); --spring: cubic-bezier(.34, 1.4, .64, 1); --fast: 140ms; --med: 240ms;
     --red-2: var(--accent);
+    --frame: oklch(17% .003 75); --frame-w: 6px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
@@ -56,7 +57,8 @@
   .step i { order: 2; font-style: normal; color: var(--text-3); }
   .step i::after { content: " / 4"; }
 
-  .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: var(--n-0); border-radius: var(--r-card); }
+  /* die Karte hat einen dunklen Rahmen wie ein Gerät; die Insel oben wächst aus diesem Rahmen */
+  .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: var(--n-0); border-radius: var(--r-card); border: var(--frame-w) solid var(--frame); }
   .stage { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; touch-action: none; }
   #viewWrap { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
   #view { display: block; position: relative; }
@@ -134,17 +136,36 @@
   .chip[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
 
   /* ---------- Overlays auf dem Foto: weißes Glas ---------- */
-  .status, .views, .info { position: absolute; z-index: 4; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); color: var(--ink); }
-  .status { top: var(--s4); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
+  .status, .info { position: absolute; z-index: 4; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); color: var(--ink); }
+  .status { bottom: calc(var(--s4) + var(--h-lg) + var(--s3)); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
   .status[data-s="busy"] .dot { background: var(--accent); animation: blink .9s infinite; }
   .status[data-s="err"] .dot { background: oklch(75% .16 70); }
   @keyframes blink { 50% { opacity: .25; } }
-  .views { left: var(--s4); top: var(--s4); display: flex; gap: 2px; padding: 4px; border-radius: var(--r-full); }
-  .views button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--text-2); }
+  /* ---------- Insel: kommt aus dem Rahmen oben, zeigt erst die Analyse, wird dann zum Ebenen-Umschalter ---------- */
+  .island { position: absolute; z-index: 6; top: 0; left: 50%; height: 48px; min-width: 48px; color: #fff; background: var(--frame);
+    border-radius: 0 0 24px 24px; translate: -50% -110%; transition: translate .6s var(--spring), width .5s var(--spring); }
+  .island[data-mode="status"], .island[data-mode="views"] { translate: -50% 0; }
+  /* weiche Hohlkehlen links und rechts, damit die Insel aus dem Rahmen fließt */
+  .island::before, .island::after { content: ""; position: absolute; top: 0; width: 16px; height: 16px; }
+  .island::before { right: 100%; background: radial-gradient(circle at 0 100%, transparent 15.5px, var(--frame) 16px); }
+  .island::after { left: 100%; background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--frame) 16px); }
+  .island > div { position: absolute; left: 50%; top: 0; height: 100%; translate: -50% 0; display: flex; align-items: center; white-space: nowrap;
+    opacity: 0; filter: blur(4px); transition: opacity .25s var(--ease-out), filter .25s var(--ease-out); pointer-events: none; }
+  .island[data-mode="status"] .isl-status, .island[data-mode="views"] .views { opacity: 1; filter: none; pointer-events: auto; transition-delay: .12s; }
+  .isl-status { gap: 10px; padding: 0 22px 0 18px; font-size: 13px; }
+  .isl-status[data-s="err"] { color: oklch(85% .12 70); }
+  .isl-status .loader { position: relative; left: auto; top: auto; width: 18px; height: 18px; opacity: 1; z-index: auto; }
+  .isl-status .loader i, .isl-status .loader b { left: 9px; top: 9px; width: 3px; height: 3px; margin: -1.5px; }
+  .isl-status .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(7px); }
+  .isl-status .loader b { width: 3px; height: 3px; }
+  .isl-status[data-s="err"] .loader { visibility: hidden; width: 0; margin-right: -10px; }
+  .views { gap: 4px; padding: 0 6px; }
+  .views button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: oklch(100% 0 0 / .55); }
   .views button .ic { width: 18px; height: 18px; }
-  .views button:hover { color: var(--ink); }
-  .views button[aria-pressed="true"] { background: var(--n-900); color: var(--n-0); }
+  .views button:hover { color: #fff; }
+  .views button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .island, .island > div { transition: none; } }
   .info { right: var(--s4); top: var(--s4); width: 260px; border-radius: var(--r-inner); overflow: hidden; font-size: 13px; }
   .info-head { width: 100%; height: var(--h); padding: 0 var(--s3) 0 var(--s4); display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
   .info-head .ic { width: 16px; height: 16px; color: var(--text-3); transition: transform var(--med) var(--ease-out); }
@@ -173,7 +194,7 @@
   .cutstage { position: relative; overflow: hidden; border-radius: calc(var(--r-card) - var(--s2)); height: min(68vh, 680px); touch-action: none;
     background: var(--n-100) radial-gradient(circle at center, oklch(19% .003 75 / .09) 1px, transparent 1.4px) 0 0 / 16px 16px; }
   #cutCanvas { position: absolute; left: 50%; top: 50%; display: block; touch-action: none; transform-origin: center; }
-  .cutstage .status { left: var(--s3); top: var(--s3); transform: none; pointer-events: none; }
+  .cutstage .status { left: var(--s3); top: var(--s3); bottom: auto; transform: none; pointer-events: none; }
   .cuttools { position: absolute; z-index: 4; top: var(--s3); right: var(--s3); display: flex; gap: var(--s1); padding: 4px; border-radius: var(--r-full); background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .cuttools .btn { width: 36px; height: 36px; }
   .cuttools .btn:hover { background: var(--fill); }
@@ -227,10 +248,10 @@
     .top { padding: 0 var(--s2); }
     .brand .logo { height: 20px; }
     .card { border-radius: 28px; }
-    .views { left: var(--s3); top: var(--s3); }
-    /* status unter Ebenen und Maßstab, damit sich nichts überlappt */
-    .stage > .status { top: calc(var(--s3) + 44px + var(--s2)); }
-    .info { right: var(--s3); top: var(--s3); width: calc(100% - 160px); min-width: 150px; max-width: 260px; }
+    .card { --frame-w: 5px; }
+    .stage > .status { bottom: calc(var(--s2) + var(--h-lg) + var(--s2)); }
+    /* Maßstab-Karte: volle Breite unter der Insel */
+    .info { left: var(--s2); right: var(--s2); top: 56px; width: auto; }
     .card > .panel { left: var(--s2); right: var(--s2); bottom: var(--s2); transform: none; max-width: none; }
     .card > .panel .group:first-child { flex: 1; min-width: 0; }
     #panelCam .group { flex: 1; justify-content: space-between; padding: 0 var(--s2); }
@@ -261,7 +282,6 @@
   <main class="card">
     <div class="scan-dim" id="scanDim"></div>
     <div class="siri" id="siri" hidden><i class="band"></i><i class="ring"></i></div>
-    <div class="loader" id="loader"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><b></b></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop">
         <h1 class="hello">Dein Tattoo,<br><span>bevor es eins ist.</span></h1>
@@ -279,10 +299,13 @@
         <div class="needle" id="needle" hidden></div>
       </div>
       <div class="status" id="status" hidden data-s="idle"><span class="dot"></span><span id="statusText"></span></div>
-      <div class="views" id="views" hidden>
+      <div class="island" id="island" data-mode="hidden">
+        <div class="isl-status" id="islStatus"><div class="loader" id="loader"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><b></b></div><span id="islText"></span></div>
+      <div class="views" id="views">
         <button data-view="photo" aria-pressed="true" title="Foto" aria-label="Foto"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
         <button data-view="depth" aria-pressed="false" title="Tiefe" aria-label="Tiefe"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></button>
         <button data-view="mesh" aria-pressed="false" title="3D-Modell" aria-label="3D-Modell"><svg class="ic" aria-hidden="true"><use href="#i-cube"/></svg></button>
+      </div>
       </div>
       <div class="info" id="info" hidden>
         <button class="info-head" id="infoHead" aria-expanded="false"><span id="infoTitle"></span><svg class="ic" aria-hidden="true"><use href="#i-chevron--down"/></svg></button>
@@ -397,10 +420,23 @@ function setStep(n) {
   infoKey = ""; updateInfo();
 }
 function status(text, s = "busy") {
-  const el = $("#status"), changed = text && text !== $("#statusText").textContent;
-  el.hidden = !text; $("#statusText").textContent = text || ""; el.dataset.s = s;
-  if (changed) swapAnim(el);
+  // während der Analyse spricht die Insel oben, sonst die Hinweis-Pille über der Leiste
+  const inIsland = S.step === 2, el = $("#status"), changed = text && text !== $("#statusText").textContent;
+  el.hidden = !text || inIsland; $("#statusText").textContent = inIsland ? "" : text || ""; el.dataset.s = s;
+  if (changed && !inIsland) swapAnim(el);
+  if (inIsland) { const t = $("#islText"); if (text && t.textContent !== text) { t.textContent = text; swapAnim(t); } $("#islStatus").dataset.s = s; }
+  islandText = inIsland ? text || "" : "";
+  syncIsland();
 }
+// Insel: "status" während der Analyse, danach "views" (Foto / Tiefe / 3D), sonst eingefahren
+let islandText = "";
+function syncIsland() {
+  const isl = $("#island"), mode = islandText ? "status" : !$("#views").hidden ? "views" : "hidden";
+  const part = mode === "status" ? $("#islStatus") : mode === "views" ? $("#views") : null;
+  if (part) isl.style.width = part.scrollWidth + "px";
+  isl.dataset.mode = mode;
+}
+new MutationObserver(syncIsland).observe($("#views"), { attributes: true, attributeFilter: ["hidden"] });
 setStep(1);
 
 /* ---------- 1 · Photo ---------- */
