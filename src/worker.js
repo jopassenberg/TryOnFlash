@@ -9,7 +9,8 @@ export default {
     if (url.pathname.startsWith("/hf/")) return modelFile(url);
     if (url.pathname === "/api/share" || url.pathname.startsWith("/api/share/")) return share(req, env, url);
     if (/^\/f\/[A-Za-z0-9_-]{16,64}\/?$/.test(url.pathname)) {
-      const page = await env.ASSETS.fetch(new Request(new URL("/share.html", url), req));
+      // Cloudflare liefert HTML-Dateien ohne Endung aus (/share.html leitet auf /share um)
+      const page = await env.ASSETS.fetch(new Request(new URL("/share", url), { headers: req.headers }));
       const headers = new Headers(page.headers);
       for (const [k, v] of Object.entries(PRIVATE)) headers.set(k, v);
       return new Response(page.body, { status: page.status, headers });
