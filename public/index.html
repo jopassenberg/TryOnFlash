@@ -80,7 +80,7 @@
   .drop { display: grid; justify-items: center; gap: var(--s6); padding: var(--s7) var(--s5); text-align: center; }
   .drop { color: #fff; }
   .drop .hello { margin: 0; font-weight: 400; font-size: clamp(34px, 4.2vw, 56px); line-height: 1.02; letter-spacing: -.045em; }
-  .drop .hello span { color: oklch(100% 0 0 / .42); }
+  .drop .hello span { color: oklch(100% 0 0 / .32); }
   /* Glas-Buttons auf dunklem Grund: Fläche statt Farbe, die Hauptaktion etwas heller */
   .btn.glass-btn { background: oklch(100% 0 0 / .1); color: #fff; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .btn.glass-btn:hover { background: oklch(100% 0 0 / .16); }
@@ -186,7 +186,7 @@
   @media (prefers-reduced-motion: reduce) { .sumcard.in, .sumcard.out, .sumcard > * { animation: none; } }
   /* zwei Größen: 28 für die Größe, sonst überall 14; Hierarchie nur über Weiß und Grau */
   .sum-body { padding: 22px 22px 20px; display: grid; gap: 18px; font-size: 14px; line-height: 1.35; }
-  .sum-body .dim { color: oklch(100% 0 0 / .5); }
+  .sum-body .dim { color: oklch(100% 0 0 / .38); }
   .sum-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 2px 2px 4px; }
   .sum-size { font-size: 28px; line-height: 1.05; letter-spacing: -.04em; margin-bottom: 4px; }
   .sum-x { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .12); }
