@@ -542,7 +542,7 @@ function loadPhoto(file) {
 function usePhoto(img) {
   closeCam();
   S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
-  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.scale = S.summary = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
+  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
   view.width = S.photo.width; view.height = S.photo.height;
   $("#drop").hidden = true; $("#viewWrap").hidden = false;
   fitView(); S.view = "photo"; syncViews(); redraw();
@@ -664,7 +664,7 @@ async function getSegmenter() {
   if (segmenter) return segmenter;
   const { ImageSegmenter } = await import(VISION);
   const fs = await visionFS();
-  segmenter = await ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL }, runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: false });
+  segmenter = await ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL }, runningMode: "IMAGE", outputCategoryMask: false, outputConfidenceMasks: true });
   return segmenter;
 }
 
@@ -715,16 +715,58 @@ function resizeTensor(t, w, h) {
 }
 // Skin mask: the segmenter's coarse mask is upsampled smoothly, then snapped to the real arm outline
 // in the photo with a guided filter, so edges and round parts have no stair steps.
+// Kleidung: Das Modell liefert pro Klasse eine Wahrscheinlichkeit. Haut zählt nur, wo sie deutlich über
+// "Kleidung" liegt. Danach prüft ein Hautfarben-Modell aus dem sicheren Hautinneren jeden unsicheren Rand:
+// was farblich nicht zur Haut passt (Ärmel, Stoff), fliegt raus. Das sichere Innere bleibt, auch wenn es
+// anders aussieht (alte Tattoos, Schatten), weil das Modell dort sicher Haut sieht.
+const CLOTHES_CLASS = 4;
 function skinMask(seg) {
-  const res = seg.segment(S.proc), cat = res.categoryMask, c = cat.getAsUint8Array(), cw = cat.width, ch = cat.height;
-  const b = new Float32Array(cw * ch); for (let i = 0; i < b.length; i++) b[i] = c[i] === SKIN_CLASS ? 1 : 0;
-  cat.close(); res.close?.();
+  const res = seg.segment(S.proc), cm = res.confidenceMasks, cw = cm[0].width, ch = cm[0].height;
+  const skin = cm[SKIN_CLASS].getAsFloat32Array(), cloth = cm[CLOTHES_CLASS].getAsFloat32Array();
+  const b = new Float32Array(cw * ch); for (let i = 0; i < b.length; i++) b[i] = clamp(skin[i] - .8 * cloth[i], 0, 1);
+  cm.forEach(x => x.close()); res.close?.();
   const bs = blurField(b, cw, ch, 1), m = new Float32Array(S.pw * S.ph);
   for (let y = 0; y < S.ph; y++) for (let x = 0; x < S.pw; x++) { // bilinear
     const fx = clamp((x + .5) * cw / S.pw - .5, 0, cw - 1.001), fy = clamp((y + .5) * ch / S.ph - .5, 0, ch - 1.001), x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * cw + x0;
     m[y * S.pw + x] = (bs[i] * (1 - ax) + bs[i + 1] * ax) * (1 - ay) + (bs[i + cw] * (1 - ax) + bs[i + cw + 1] * ax) * ay;
   }
-  return refineMask(m);
+  return colourGate(refineMask(m), m);
+}
+// Chroma (Cr, Cb) per Pixel aus dem Analysebild
+function chroma() {
+  if (S.chroma && S.chroma.length === S.pw * S.ph * 2) return S.chroma;
+  const px = S.geo.getContext("2d").getImageData(0, 0, S.pw, S.ph).data, C = new Float32Array(S.pw * S.ph * 2);
+  for (let i = 0; i < S.pw * S.ph; i++) {
+    const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
+    C[i * 2] = .5 * r - .4187 * g - .0813 * b + 128; C[i * 2 + 1] = -.1687 * r - .3313 * g + .5 * b + 128;
+  }
+  return (S.chroma = C);
+}
+// m: verfeinerte Maske, raw: hochskalierte Modell-Wahrscheinlichkeit (sicheres Inneres = hoch)
+function colourGate(m, raw) {
+  const n = m.length, C = chroma();
+  let k = 0, sr = 0, sb = 0, srr = 0, sbb = 0, srb = 0;
+  for (let i = 0; i < n; i += 3) if (raw[i] > .9 && m[i] > .9) { const r = C[i * 2], b = C[i * 2 + 1]; k++; sr += r; sb += b; srr += r * r; sbb += b * b; srb += r * b; }
+  if (k < 150) return m; // zu wenig sichere Haut für ein Farbmodell
+  const mr = sr / k, mb = sb / k, vr = srr / k - mr * mr + 4, vb = sbb / k - mb * mb + 4, cv = srb / k - mr * mb, det = vr * vb - cv * cv;
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    if (m[i] <= 0) continue;
+    const dr = C[i * 2] - mr, db = C[i * 2 + 1] - mb, d = Math.sqrt(Math.max(0, (vb * dr * dr - 2 * cv * dr * db + vr * db * db) / det));
+    const g = clamp((4.5 - d) / 2, 0, 1), conf = clamp((raw[i] - .75) / .2, 0, 1);
+    out[i] = m[i] * (g + (1 - g) * conf);
+  }
+  return blurField(out, S.pw, S.ph, Math.max(1, Math.round(S.pw / 500)));
+}
+// ohne Modell (Fallback über die Tiefe): grobe, allgemeine Hautfarbe, damit Stoff nicht mitkommt
+function genericSkinGate(m) {
+  const C = chroma(), out = new Float32Array(m.length);
+  for (let i = 0; i < m.length; i++) {
+    const cr = C[i * 2], cb = C[i * 2 + 1];
+    const g = clamp(Math.min(cr - 131, 178 - cr) / 6, 0, 1) * clamp(Math.min(cb - 76, 130 - cb) / 6, 0, 1);
+    out[i] = m[i] * g;
+  }
+  return coverage(out) > .03 ? out : m;
 }
 function geoLum() {
   if (S.lum && S.lum.length === S.pw * S.ph) return S.lum;
@@ -768,7 +810,7 @@ function depthMask(d) {
     for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1])
       if (j >= 0 && near[j] && !m[j]) { m[j] = 1; stack.push(j); }
   }
-  return refineMask(m);
+  return genericSkinGate(refineMask(m));
 }
 const coverage = m => { let s = 0; for (let i = 0; i < m.length; i++) s += m[i] > .5; return s / m.length; };
 function blurField(a, w, h, r) { // separable box blur, two passes ~ gaussian
@@ -793,7 +835,17 @@ function fillHoles(m, w, h) {
   for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
   for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
   while (st.length) { const i = st.pop(), x = i % w; if (x > 0) seed(i - 1); if (x < w - 1) seed(i + 1); if (i >= w) seed(i - w); if (i < n - w) seed(i + w); }
-  for (let i = 0; i < n; i++) if (!out[i]) o[i] = Math.max(o[i], 1);
+  // nur kleine Löcher füllen (Tattoo, Uhr, Schatten); große umschlossene Flächen sind eher Kleidung
+  let area = 0; for (let i = 0; i < n; i++) area += m[i] > .5;
+  const maxHole = .08 * area, seen = new Uint8Array(n);
+  for (let s = 0; s < n; s++) {
+    if (out[s] || seen[s] || m[s] > .5) continue;
+    const comp = [s], q = [s]; seen[s] = 1;
+    while (q.length) { const i = q.pop(), x = i % w;
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1])
+        if (j >= 0 && !seen[j] && !out[j] && m[j] <= .5) { seen[j] = 1; q.push(j); comp.push(j); } }
+    if (comp.length <= maxHole) for (const i of comp) o[i] = 1;
+  }
   return o;
 }
 function buildGeometry() {
