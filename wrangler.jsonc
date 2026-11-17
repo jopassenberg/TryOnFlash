@@ -1,9 +1,10 @@
 {
-  // Cloudflare Worker: serves the static app from public/ and mirrors the depth model under /hf/*.
+  // Cloudflare Worker: serves the static app from public/, mirrors the depth model under /hf/*
+  // and stores encrypted flash links (/api/share, viewer at /f/:id). Needs the KV namespace SHARES.
   "name": "tryonflash",
   "main": "src/worker.js",
   "compatibility_date": "2025-09-01",
-  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/hf/*"] },
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/hf/*", "/api/*", "/f/*"] },
   "workers_dev": true,
   "preview_urls": true
 }

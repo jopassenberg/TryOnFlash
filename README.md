@@ -23,3 +23,12 @@ Dateien aus `public/` aus und hat eine eigene Route (`src/worker.js`, konfigurie
 Jeder Push auf `main` wird automatisch veröffentlicht.
 
 - `/hf/*`: lädt die Dateien des Tiefenmodells über die eigene Domain (Safari blockiert sonst die Weiterleitung von Hugging Face).
+- `/api/share`, `/api/share/:id`, `/f/:id`: verschlüsselte Flash-Links. Der Browser verschlüsselt die Flashes (AES-GCM),
+  der Schlüssel steht nur im `#`-Teil des Links. Der Worker speichert nur den verschlüsselten Inhalt im KV-Namespace
+  `SHARES` mit fester Laufzeit (1 Std bis 30 Tage) und einem Lösch-Token für das vorzeitige Beenden.
+
+## Flashes
+
+Im Menü unten gibt es neben dem Studio den Bereich **Flashes**: eigene Flash-Bögen hochladen (bleiben im Browser
+des Geräts, IndexedDB), auswählen und per Link mit Ablaufzeit an Kunden schicken. Kunden sehen sie unter `/f/:id`
+und können ein Flash direkt im Studio auf ihrer Haut ansehen.
