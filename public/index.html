@@ -462,23 +462,33 @@
   .size .val { right: var(--s4); color: var(--text-2); }
   .size input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
 
-  /* Siri-style edge glow, built so the GPU animates it on its own (smooth even while the analysis keeps
-     the main thread busy): a soft inner band and a thin bright rim, each a masked window onto a large
-     conic gradient that only rotates (transform) and breathes (opacity). No repaints per frame. */
-  .siri { position: absolute; inset: 0; pointer-events: none; z-index: 3; border-radius: var(--r-inner-card); opacity: 0; transition: opacity .6s var(--ease-out); }
+  /* Siri-artiger Kanten-Glow, lebendiger: vier Schichten (feiner Rand, schmales Band, breites Band, weicher Hauch),
+     jede ein Fenster auf einen großen Farbkreis, der sich um einen leicht versetzten Mittelpunkt dreht (dadurch
+     wandern und wogen die Farben statt nur zu rotieren). Tempo und Richtung je Schicht verschieden, dazu
+     zeitversetztes Atmen. Alles nur transform/opacity: läuft flüssig auf der GPU, auch während gerechnet wird. */
+  .siri { position: absolute; inset: 0; pointer-events: none; z-index: 3; border-radius: var(--r-inner-card); opacity: 0; transition: opacity .7s var(--ease-out); }
   .siri.on { opacity: 1; }
   .siri i { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
-  .siri i::before { content: ""; position: absolute; left: 50%; top: 50%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax; will-change: transform;
-    background: conic-gradient(from 0deg, #ff4a4f, #ff8a7a, #c8102e, #ff3d6e, #ffb199, #8e1427, #ff4a4f);
-    background: conic-gradient(in oklch from 0deg, #ff4a4f, #ff8a7a, #c8102e, #ff3d6e, #ffb199, #8e1427, #ff4a4f); animation: siri-spin 7s linear infinite; }
-  .siri .band { --e: 44px; opacity: .4; will-change: opacity; animation: siri-breathe 2.6s ease-in-out infinite;
+  .siri i::before { content: ""; position: absolute; left: 50%; top: 50%; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; will-change: transform;
+    background: conic-gradient(from 0deg, #ff4a4f, #ffb199, #c8102e, #ff3d6e, #ff8a7a, #8e1427, #ff6a3d, #ff4a4f);
+    background: conic-gradient(in oklch from 0deg, #ff4a4f, #ffb199, #c8102e, #ff3d6e, #ff8a7a, #8e1427, #ff6a3d, #ff4a4f);
+    animation: siri-orbit var(--d, 7s) linear infinite var(--dir, normal); }
+  .siri i:nth-child(2)::before { background: conic-gradient(in oklch from 120deg, #ff8a7a, #8e1427, #ff3d6e, #ffd0b8, #c8102e, #ff4a4f, #ff8a7a); }
+  .siri i:nth-child(3)::before { background: conic-gradient(in oklch from 240deg, #c8102e, #ff6a3d, #ffb199, #8e1427, #ff3d6e, #c8102e); }
+  .siri .band { --e: 22px; --d: 5.5s; opacity: .55; animation: siri-breathe 2.2s ease-in-out infinite; }
+  .siri .wide { --e: 52px; --d: 9s; --dir: reverse; opacity: .35; animation: siri-breathe 3.1s ease-in-out infinite -.9s; }
+  .siri .haze { --e: 110px; --d: 13s; opacity: .18; animation: siri-breathe 4.3s ease-in-out infinite -2s; }
+  .siri .band, .siri .wide, .siri .haze { will-change: opacity;
     -webkit-mask: linear-gradient(to right, #000, transparent var(--e)), linear-gradient(to left, #000, transparent var(--e)), linear-gradient(to bottom, #000, transparent var(--e)), linear-gradient(to top, #000, transparent var(--e));
     mask: linear-gradient(to right, #000, transparent var(--e)), linear-gradient(to left, #000, transparent var(--e)), linear-gradient(to bottom, #000, transparent var(--e)), linear-gradient(to top, #000, transparent var(--e)); }
-  .siri .band::before { animation-duration: 9s; animation-direction: reverse; }
-  .siri .ring { padding: 2.5px; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
-  @keyframes siri-spin { to { transform: rotate(360deg); } }
-  @keyframes siri-breathe { 50% { opacity: .7; } }
+  .siri .ring { --d: 4.2s; padding: 2px; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: siri-flicker 1.7s ease-in-out infinite; }
+  /* Drehung um einen versetzten Punkt: die hellen Stellen laufen nicht stur im Kreis, sondern schwappen über die Kanten */
+  @keyframes siri-orbit { from { transform: rotate(0deg) translate(6%, -3%) rotate(0deg); } to { transform: rotate(360deg) translate(6%, -3%) rotate(-140deg); } }
+  @keyframes siri-breathe { 50% { opacity: calc(var(--o, 1) * .85); } }
+  @keyframes siri-flicker { 0%, 100% { opacity: .85; } 50% { opacity: 1; } }
+  .siri .band { --o: 1; } .siri .wide { --o: .7; } .siri .haze { --o: .4; }
+  @media (prefers-reduced-motion: reduce) { .siri i::before, .siri i { animation: none !important; } }
   /* loader: the Stencit mark, a highlight running round the 8 dots (pure CSS opacity, GPU-driven) */
   .loader { position: absolute; z-index: 4; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .35s var(--ease-out); }
   .loader.on { opacity: 1; }
@@ -565,7 +575,7 @@
   </header>
   <main class="card">
     <div class="scan-dim" id="scanDim"></div>
-    <div class="siri" id="siri" hidden><i class="band"></i><i class="ring"></i></div>
+    <div class="siri" id="siri" hidden><i class="haze"></i><i class="wide"></i><i class="band"></i><i class="ring"></i></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop">
         <h1 class="hello">Dein Tattoo,<br><span>bevor es eins ist.</span></h1>
