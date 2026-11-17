@@ -35,8 +35,11 @@
     --text-3: var(--n-500);
     --fill: oklch(19% .003 75 / .05);      /* Flächen statt Linien */
     --fill-2: oklch(19% .003 75 / .08);
-    /* Glas: milchig, ohne Rand, ohne Spiegelung */
+    /* Glas ohne Rand und Spiegelung: hell auf hellen Flächen, rauchig auf dem Foto */
     --glass: oklch(100% 0 0 / .62);
+    --glass-photo: oklch(26% .004 75 / .42); --on-glass: oklch(100% 0 0); --on-glass-fill: oklch(100% 0 0 / .12);
+    /* Rahmen und konzentrische Radien: außen 42 → innen 36 → Leiste 28 bei 8 Abstand → Buttons 22 */
+    --frame: oklch(17% .003 75); --frame-w: 6px; --r-outer: 42px; --r-inner-card: 36px; --inset: 8px;
     --glass-strong: oklch(100% 0 0 / .82);
     --glass-blur: blur(24px) saturate(1.6);
     /* keine Schatten: Tiefe nur über Helligkeit und Glas */
@@ -150,9 +153,19 @@
   .demo { position: relative; min-height: 340px; border-radius: var(--r-card); overflow: hidden; padding: var(--s5); display: grid; align-content: space-between;
     background: radial-gradient(70% 80% at 30% 40%, oklch(80% .045 55), oklch(66% .05 45) 50%, oklch(52% .04 40)); }
   /* Toolbar: Werkzeuge in einer Glaskapsel, Hauptaktion daneben, beide 56 hoch; Innenabstand 6 = (56-44)/2, also konzentrisch */
-  .toolbar { justify-self: center; display: flex; align-items: center; gap: var(--s2); }
-  .toolbar .bar { height: var(--h-lg); display: flex; align-items: center; gap: var(--s1); padding: 6px; border-radius: var(--r-full); }
-  .toolbar .bar .btn { color: var(--text); }
+  .demo.app { border: var(--frame-w) solid var(--frame); border-radius: var(--r-outer); padding: 0; }
+  .dock { position: absolute; left: var(--inset); right: var(--inset); bottom: var(--inset); height: var(--h-lg); padding: 6px; display: flex; align-items: center; gap: var(--s1);
+    border-radius: calc(var(--r-inner-card) - var(--inset)); background: var(--glass-photo); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); color: var(--on-glass); }
+  .dock .btn.text { color: var(--on-glass); }
+  .dock .btn.text:hover { background: var(--on-glass-fill); }
+  .dock .btn.primary { margin-left: auto; background: var(--on-glass); color: var(--n-900); }
+  .isl { position: absolute; top: 0; left: 50%; translate: -50% 0; height: 48px; padding: 0 6px; display: flex; align-items: center; gap: 4px; border-radius: 0 0 24px 24px; background: var(--frame); color: #fff; }
+  .isl::before, .isl::after { content: ""; position: absolute; top: 0; width: 16px; height: 16px; }
+  .isl::before { right: 100%; background: radial-gradient(circle at 0 100%, transparent 15.5px, var(--frame) 16px); }
+  .isl::after { left: 100%; background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--frame) 16px); }
+  .isl span { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: oklch(100% 0 0 / .55); }
+  .isl span.on { background: #fff; color: var(--n-900); }
+  .isl .ic { width: 18px; height: 18px; }
   /* ============ Scan-Aura (Siri-artiger Kanten-Glow, rot) ============
      Läuft komplett auf der GPU: ein großer Farbkreis dreht sich (transform) hinter zwei Masken,
      einem weichen Band nach innen und einem feinen Rand. Keine Schatten, keine Neuzeichnung pro Bild. */
@@ -177,7 +190,7 @@
   .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(14px); opacity: .25; animation: loader-dot 1.2s linear infinite; animation-delay: calc(var(--k) * .15s - 1.2s); }
   .loader b { width: 6px; height: 6px; margin: -3px; opacity: .6; animation: glow-breathe 2.4s ease-in-out infinite; }
   @keyframes loader-dot { 0% { opacity: 1; } 45%, 100% { opacity: .25; } }
-  .scan { position: relative; height: 420px; border-radius: var(--r-card); overflow: hidden;
+  .scan { position: relative; height: 420px; border-radius: var(--r-outer); border: var(--frame-w) solid var(--frame); overflow: hidden;
     background: radial-gradient(70% 80% at 40% 45%, oklch(80% .045 55), oklch(66% .05 45) 50%, oklch(50% .04 40)); }
   .scan .status { position: absolute; top: var(--s4); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: flex; align-items: center; font-size: 13px; }
   .scan .ctl { position: absolute; bottom: var(--s4); left: 50%; transform: translateX(-50%); }
@@ -232,12 +245,12 @@
 <div class="wrap">
   <div class="head">
     <img src="logo/stencit-logo.svg" alt="Stencit" style="height:22px;width:auto;display:block">
-    <span class="t-cap">Basis · v0.2</span>
+    <span class="t-cap">Basis · v0.3</span>
   </div>
 
   <div class="sec">
     <div class="t-display">Leicht, hell,<br><span class="dim">ohne Linien.</span></div>
-    <p class="t-body" style="max-width:560px;color:var(--text-2);margin:0">Weiß und zartes Grau tragen alles. Flächen trennen statt Linien, Glas ist einfach milchig. Rot taucht nur einmal auf: auf der Startseite.</p>
+    <p class="t-body" style="max-width:560px;color:var(--text-2);margin:0">Weiß und zartes Grau tragen alles. Flächen trennen statt Linien. Auf dem Foto liegt rauchiges Glas, darum ein fast schwarzer Rahmen. Rot taucht nur einmal auf: auf der Startseite.</p>
   </div>
 
   <!-- ===== Logo ===== -->
@@ -272,7 +285,7 @@
     </div>
     <div class="grid g4">
       <div class="sw"><i style="background:radial-gradient(80% 120% at 20% 0%, oklch(99% .008 60), transparent 60%), radial-gradient(70% 120% at 100% 100%, oklch(93% .016 20), transparent 60%), var(--n-200)"></i><b>Hintergrund</b><span class="t-cap">n-100 · mit weicher Aura</span></div>
-      <div class="sw"><i class="glass" style="background:var(--glass)"></i><b>Glas</b><span class="t-cap">Weiß 62 %, Blur 24, kein Rand, kein Schatten</span></div>
+      <div class="sw"><i style="background:linear-gradient(var(--glass-photo),var(--glass-photo)),radial-gradient(80% 120% at 30% 40%, oklch(80% .045 55), oklch(52% .04 40))"></i><b>Glas auf dem Foto</b><span class="t-cap">Rauchgrau 42 %, Blur 24, Inhalt weiß</span></div>
       <div class="sw"><i style="background:var(--n-900)"></i><b>Text und Hauptaktion</b><span class="t-cap">n-900</span></div>
       <div class="sw"><i style="background:var(--brand)"></i><b>Marke</b><span class="t-cap">Bordeaux → Rot · Startseite, Scan, Icon</span></div>
     </div>
@@ -345,15 +358,13 @@
       </div>
     </div>
     <div class="grid g2">
-      <div class="demo">
-        <span></span>
-        <div class="toolbar">
-          <div class="bar glass">
-            <button class="btn icon text" aria-label="Neues Foto"><svg class="ic"><use href="#i-camera"/></svg></button>
-            <button class="btn icon text" aria-label="Rückgängig"><svg class="ic"><use href="#i-undo"/></svg></button>
-            <button class="btn icon text" aria-label="Motiv hinzufügen"><svg class="ic"><use href="#i-add"/></svg></button>
-          </div>
-          <button class="btn primary lg">Stechen</button>
+      <div class="demo app">
+        <div class="isl"><span class="on"><svg class="ic"><use href="#i-image"/></svg></span><span><svg class="ic"><use href="#i-layers"/></svg></span><span><svg class="ic"><use href="#i-cube"/></svg></span></div>
+        <div class="dock">
+          <button class="btn icon text" aria-label="Motiv hinzufügen"><svg class="ic"><use href="#i-add"/></svg></button>
+          <button class="btn icon text" aria-label="Neues Foto"><svg class="ic"><use href="#i-camera"/></svg></button>
+          <button class="btn icon text" aria-label="Rückgängig"><svg class="ic"><use href="#i-undo"/></svg></button>
+          <button class="btn primary">Stechen</button>
         </div>
       </div>
       <div class="demo" style="background:var(--n-50)">
@@ -364,7 +375,7 @@
         </div>
       </div>
     </div>
-    <p class="t-small" style="margin:0;color:var(--text-2)">Links: Toolbar auf dem Foto, Werkzeuge in einer Glaskapsel, „Stechen“ gleich hoch daneben. Rechts: die eine Stelle, an der Rot vorkommt (Startseite).</p>
+    <p class="t-small" style="margin:0;color:var(--text-2)">Links: die App-Karte mit fast schwarzem Rahmen, oben die Insel (Foto / Tiefe / 3D), unten die Leiste aus rauchigem Glas. Alle Ecken konzentrisch: außen 42, innen 36, Leiste 28 bei 8 Abstand, Buttons 22. Rechts: die eine Stelle, an der Rot vorkommt (Startseite).</p>
   </section>
 
   <!-- ===== Icons ===== -->
@@ -379,7 +390,7 @@
     <div class="scan" id="scan">
       <div class="aura-glow on" id="glow"><i class="band"></i><i class="ring"></i></div>
       <div class="loader on" id="ld"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><b></b></div>
-      <span class="status glass" id="st">Tiefe …</span>
+      <span class="status" id="st" style="background:var(--glass-photo);color:#fff;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur)">Tiefe …</span>
       <button class="btn secondary sm ctl" id="scanBtn">Anhalten</button>
     </div>
     <p class="t-small" style="margin:0;color:var(--text-2)">Die zweite Stelle, an der Rot vorkommt: nur während des Scans, als Leuchten an der Kante. Weiches Band nach innen (44 px, atmet zwischen 45 und 75 %), dazu ein 2,5 px feiner Rand. Beides dreht sich langsam gegeneinander. In der Mitte das Punkt-Logo als Loader.</p>
