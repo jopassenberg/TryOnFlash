@@ -76,6 +76,8 @@
   .shutter { width: var(--h-lg); height: var(--h-lg); border-radius: 50%; padding: 5px; background: var(--fill-2); }
   .shutter::after { content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; background: var(--n-900); transition: transform .25s var(--spring); }
   .shutter:active::after { transform: scale(.86); }
+  .screen-flash { position: fixed; inset: 0; z-index: 100; background: #fff; pointer-events: none; animation: fade .12s ease-out; }
+  #camFlash[aria-pressed="true"] { background: oklch(84% .2 115); color: var(--ink); }
 
   /* ---------- Startseite (leere Karte) ---------- */
   .drop { display: grid; justify-items: center; gap: var(--s6); padding: var(--s7) var(--s5); text-align: center; }
@@ -549,7 +551,7 @@
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol><symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol><symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol><symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol><symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol><symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol><symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol><symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol><symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol><symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-center-to-fit" viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></symbol><symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol><symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol><symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol><symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol><symbol id="i-arrows--horizontal" viewBox="0 0 32 32"><path d="M11.41 26.59L7.83 23 28 23 28 21 7.83 21 11.41 17.41 10 16 4 22 10 28 11.41 26.59zM28 10L22 4 20.59 5.41 24.17 9 4 9 4 11 24.17 11 20.59 14.59 22 16 28 10z"/></symbol><symbol id="i-chevron--up" viewBox="0 0 32 32"><path d="M16 10L26 20 24.6 21.4 16 12.8 7.4 21.4 6 20z"/></symbol><symbol id="i-grid" viewBox="0 0 32 32"><path d="M12 4H6A2 2 0 004 6v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0012 4zm0 8H6V6h6zM26 4H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0026 4zm0 8H20V6h6zM12 18H6a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0012 18zm0 8H6V20h6zM26 18H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0026 18zm0 8H20V20h6z"/></symbol><symbol id="i-link" viewBox="0 0 32 32"><path d="M29.25,6.76a6,6,0,0,0-8.5,0l1.42,1.42a4,4,0,1,1,5.67,5.67l-8,8a4,4,0,1,1-5.67-5.66l1.41-1.42-1.41-1.42-1.42,1.42a6,6,0,0,0,0,8.5A6,6,0,0,0,17,25a6,6,0,0,0,4.27-1.76l8-8A6,6,0,0,0,29.25,6.76Z"/><path d="M4.19,24.82a4,4,0,0,1,0-5.67l8-8a4,4,0,0,1,5.67,0A3.94,3.94,0,0,1,19,14a4,4,0,0,1-1.17,2.85L15.71,19l1.42,1.42,2.12-2.12a6,6,0,0,0-8.51-8.51l-8,8a6,6,0,0,0,0,8.51A6,6,0,0,0,7,28a6.07,6.07,0,0,0,4.28-1.76L9.86,24.82A4,4,0,0,1,4.19,24.82Z"/></symbol><symbol id="i-trash-can" viewBox="0 0 32 32"><path d="M12 12H14V24H12zM18 12H20V24H18z"/><path d="M4 6V8H6V28a2 2 0 002 2H24a2 2 0 002-2V8h2V6zM8 28V8H24V28zM12 2H20V4H12z"/></symbol><symbol id="i-locked" viewBox="0 0 32 32"><path d="M24,14H22V8A6,6,0,0,0,10,8v6H8a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H24a2,2,0,0,0,2-2V16A2,2,0,0,0,24,14ZM12,8a4,4,0,0,1,8,0v6H12ZM24,28H8V16H24Z"/></symbol><symbol id="i-copy" viewBox="0 0 32 32"><path d="M28,10V28H10V10H28m0-2H10a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V10a2,2,0,0,0-2-2Z"/><path d="M4,18H2V4A2,2,0,0,1,4,2H18V4H4Z"/></symbol><symbol id="i-close" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol><symbol id="i-checkmark" viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></symbol><symbol id="i-time" viewBox="0 0 32 32"><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/><path d="M20.59 22L15 16.41 15 7 17 7 17 15.58 22 20.59 20.59 22z"/></symbol><symbol id="i-share" viewBox="0 0 32 32"><path d="M23,20a5,5,0,0,0-3.89,1.89L11.8,17.32a4.46,4.46,0,0,0,0-2.64l7.31-4.57A5,5,0,1,0,18,7a4.79,4.79,0,0,0,.2,1.32l-7.31,4.57a5,5,0,1,0,0,6.22l7.31,4.57A4.79,4.79,0,0,0,18,25a5,5,0,1,0,5-5ZM23,4a3,3,0,1,1-3,3A3,3,0,0,1,23,4ZM7,19a3,3,0,1,1,3-3A3,3,0,0,1,7,19Zm16,9a3,3,0,1,1,3-3A3,3,0,0,1,23,28Z"/></symbol><symbol id="i-mark" viewBox="0 0 240 240"><circle cx="120.00" cy="26.48" r="26.48" fill="currentColor"/><circle cx="186.13" cy="53.87" r="26.48" fill="currentColor"/><circle cx="213.52" cy="120.00" r="26.48" fill="currentColor"/><circle cx="186.13" cy="186.13" r="26.48" fill="currentColor"/><circle cx="120.00" cy="213.52" r="26.48" fill="currentColor"/><circle cx="53.87" cy="186.13" r="26.48" fill="currentColor"/><circle cx="26.48" cy="120.00" r="26.48" fill="currentColor"/><circle cx="53.87" cy="53.87" r="26.48" fill="currentColor"/><circle cx="120.00" cy="120.00" r="26.48" fill="currentColor"/></symbol></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol><symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol><symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol><symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol><symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol><symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol><symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol><symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol><symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol><symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-center-to-fit" viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></symbol><symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol><symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol><symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol><symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol><symbol id="i-arrows--horizontal" viewBox="0 0 32 32"><path d="M11.41 26.59L7.83 23 28 23 28 21 7.83 21 11.41 17.41 10 16 4 22 10 28 11.41 26.59zM28 10L22 4 20.59 5.41 24.17 9 4 9 4 11 24.17 11 20.59 14.59 22 16 28 10z"/></symbol><symbol id="i-chevron--up" viewBox="0 0 32 32"><path d="M16 10L26 20 24.6 21.4 16 12.8 7.4 21.4 6 20z"/></symbol><symbol id="i-grid" viewBox="0 0 32 32"><path d="M12 4H6A2 2 0 004 6v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0012 4zm0 8H6V6h6zM26 4H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0026 4zm0 8H20V6h6zM12 18H6a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0012 18zm0 8H6V20h6zM26 18H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0026 18zm0 8H20V20h6z"/></symbol><symbol id="i-link" viewBox="0 0 32 32"><path d="M29.25,6.76a6,6,0,0,0-8.5,0l1.42,1.42a4,4,0,1,1,5.67,5.67l-8,8a4,4,0,1,1-5.67-5.66l1.41-1.42-1.41-1.42-1.42,1.42a6,6,0,0,0,0,8.5A6,6,0,0,0,17,25a6,6,0,0,0,4.27-1.76l8-8A6,6,0,0,0,29.25,6.76Z"/><path d="M4.19,24.82a4,4,0,0,1,0-5.67l8-8a4,4,0,0,1,5.67,0A3.94,3.94,0,0,1,19,14a4,4,0,0,1-1.17,2.85L15.71,19l1.42,1.42,2.12-2.12a6,6,0,0,0-8.51-8.51l-8,8a6,6,0,0,0,0,8.51A6,6,0,0,0,7,28a6.07,6.07,0,0,0,4.28-1.76L9.86,24.82A4,4,0,0,1,4.19,24.82Z"/></symbol><symbol id="i-trash-can" viewBox="0 0 32 32"><path d="M12 12H14V24H12zM18 12H20V24H18z"/><path d="M4 6V8H6V28a2 2 0 002 2H24a2 2 0 002-2V8h2V6zM8 28V8H24V28zM12 2H20V4H12z"/></symbol><symbol id="i-locked" viewBox="0 0 32 32"><path d="M24,14H22V8A6,6,0,0,0,10,8v6H8a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H24a2,2,0,0,0,2-2V16A2,2,0,0,0,24,14ZM12,8a4,4,0,0,1,8,0v6H12ZM24,28H8V16H24Z"/></symbol><symbol id="i-copy" viewBox="0 0 32 32"><path d="M28,10V28H10V10H28m0-2H10a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V10a2,2,0,0,0-2-2Z"/><path d="M4,18H2V4A2,2,0,0,1,4,2H18V4H4Z"/></symbol><symbol id="i-close" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol><symbol id="i-checkmark" viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></symbol><symbol id="i-time" viewBox="0 0 32 32"><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/><path d="M20.59 22L15 16.41 15 7 17 7 17 15.58 22 20.59 20.59 22z"/></symbol><symbol id="i-share" viewBox="0 0 32 32"><path d="M23,20a5,5,0,0,0-3.89,1.89L11.8,17.32a4.46,4.46,0,0,0,0-2.64l7.31-4.57A5,5,0,1,0,18,7a4.79,4.79,0,0,0,.2,1.32l-7.31,4.57a5,5,0,1,0,0,6.22l7.31,4.57A4.79,4.79,0,0,0,18,25a5,5,0,1,0,5-5ZM23,4a3,3,0,1,1-3,3A3,3,0,0,1,23,4ZM7,19a3,3,0,1,1,3-3A3,3,0,0,1,7,19Zm16,9a3,3,0,1,1,3-3A3,3,0,0,1,23,28Z"/></symbol><symbol id="i-mark" viewBox="0 0 240 240"><circle cx="120.00" cy="26.48" r="26.48" fill="currentColor"/><circle cx="186.13" cy="53.87" r="26.48" fill="currentColor"/><circle cx="213.52" cy="120.00" r="26.48" fill="currentColor"/><circle cx="186.13" cy="186.13" r="26.48" fill="currentColor"/><circle cx="120.00" cy="213.52" r="26.48" fill="currentColor"/><circle cx="53.87" cy="186.13" r="26.48" fill="currentColor"/><circle cx="26.48" cy="120.00" r="26.48" fill="currentColor"/><circle cx="53.87" cy="53.87" r="26.48" fill="currentColor"/><circle cx="120.00" cy="120.00" r="26.48" fill="currentColor"/></symbol><symbol id="i-flash" viewBox="0 0 32 32"><path d="M11.61,29.92a1,1,0,0,1-.6-1.07L12.83,17H8a1,1,0,0,1-1-1.23l3-13A1,1,0,0,1,11,2H21a1,1,0,0,1,.78.37,1,1,0,0,1,.2.85L20.25,11H25a1,1,0,0,1,.9.56,1,1,0,0,1-.11,1l-13,17A1,1,0,0,1,12,30,1.09,1.09,0,0,1,11.61,29.92ZM17.75,13l2-9H11.8L9.26,15h5.91L13.58,25.28,23,13Z"/></symbol><symbol id="i-flash--off" viewBox="0 0 32 32"><path d="M11.13 6.89L11.8 4h8l-2 9H23l-2.49 3.25 1.43 1.43 3.87-5.07a1 1 0 00.11-1A1 1 0 0025 11H20.25L22 3.22a1 1 0 00-.2-.85A1 1 0 0021 2H11a1 1 0 00-1 .77L9.46 5.22zM30 28.59l-9.31-9.31h0l-1.42-1.43h0L10.6 9.19h0L8.93 7.52h0L3.41 2 2 3.41 8.4 9.82 7 15.77A1 1 0 008 17h4.83L11 28.85a1 1 0 00.6 1.07A1.09 1.09 0 0012 30a1 1 0 00.79-.39l6.68-8.73L28.59 30zM9.26 15l.81-3.52L13.59 15zm4.32 10.28L15 16.37 18 19.45z"/></symbol></defs></svg>
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <div class="shell" data-tab="studio">
   <header class="top">
@@ -609,6 +611,7 @@
 
     <div class="panel" id="panelCam" hidden>
       <div class="group">
+        <button class="btn ghost icon" id="camFlash" title="Blitz" aria-label="Blitz" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-flash--off"/></svg></button>
         <button class="btn ghost icon" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
         <button class="shutter" id="shoot" title="Foto aufnehmen" aria-label="Foto aufnehmen"></button>
         <button class="btn ghost icon" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></button>
@@ -841,15 +844,34 @@ async function openCam() {
     status(e?.name === "NotAllowedError" ? "Kein Kamerazugriff – im Browser erlauben" : "Kamera nicht verfügbar", "err"); return;
   }
   const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false;
-  v.play().catch(() => {}); status("");
+  v.play().catch(() => {}); status(""); applyFlash();
 }
+// Blitz: hinten als Dauerlicht (Taschenlampe), wenn der Browser es kann (Android/Chrome);
+// vorne als Bildschirm-Blitz (weißer Bildschirm im Moment der Aufnahme). Safari auf dem iPhone erlaubt
+// der Webseite die Taschenlampe nicht, dann sagt die App das.
+let flashOn = false;
+const torchTrack = () => camStream?.getVideoTracks?.()[0];
+const canTorch = () => { try { return !!torchTrack()?.getCapabilities?.().torch; } catch { return false; } };
+async function applyFlash() {
+  const b = $("#camFlash"); b.setAttribute("aria-pressed", flashOn); b.querySelector("use").setAttribute("href", flashOn ? "#i-flash" : "#i-flash--off");
+  if (canTorch()) { try { await torchTrack().applyConstraints({ advanced: [{ torch: flashOn && camFacing !== "user" }] }); } catch {} }
+}
+$("#camFlash").onclick = () => {
+  if (!flashOn && camFacing !== "user" && !canTorch()) { status("Blitz geht hier nicht: Safari gibt die Lampe nicht frei. Mehr Licht oder Frontkamera nutzen.", "err"); return; }
+  flashOn = !flashOn; applyFlash(); status(flashOn ? (camFacing === "user" ? "Bildschirm-Blitz an" : "Blitz an") : "", "ok");
+};
 function closeCam() {
+  try { if (canTorch()) torchTrack().applyConstraints({ advanced: [{ torch: false }] }); } catch {}
   camStream?.getTracks().forEach(t => t.stop()); camStream = null;
   const v = $("#cam"); v.srcObject = null; v.hidden = true; $("#panelCam").hidden = true;
 }
 $("#camFlip").onclick = () => { camFacing = camFacing === "user" ? "environment" : "user"; openCam(); };
-$("#shoot").onclick = () => {
+$("#shoot").onclick = async () => {
   const v = $("#cam"), vw = v.videoWidth, vh = v.videoHeight; if (!vw) return;
+  if (flashOn && camFacing === "user") { // Bildschirm hell aufleuchten lassen, kurz warten, dann auslösen
+    const fl = Object.assign(document.createElement("div"), { className: "screen-flash" }); document.body.append(fl);
+    await new Promise(r => setTimeout(r, 260)); setTimeout(() => fl.remove(), 220);
+  }
   const r = stage.clientWidth / stage.clientHeight; let cw = vw, ch = vw / r; if (ch > vh) { ch = vh; cw = vh * r; }
   const c = document.createElement("canvas"); c.width = Math.round(cw); c.height = Math.round(ch);
   const g = c.getContext("2d"); if (camFacing === "user") { g.translate(c.width, 0); g.scale(-1, 1); }
@@ -1110,7 +1132,7 @@ function tidySkin(m) {
   for (let i = 0; i < n; i++) { const l = lab[i]; bin[i] = l && keep[l] ? 1 : 0; out[i] = l && !keep[l] ? 0 : m[i]; }
   // Armbreite grob aus dem größten Stück: Fläche / Länge der Diagonale
   let area = 0; for (let i = 0; i < n; i++) area += bin[i];
-  const r = clamp(.22 * area / Math.hypot(w, h), 3, .08 * Math.min(w, h));
+  const r = clamp(.34 * area / Math.hypot(w, h), 3, .12 * Math.min(w, h)); // Kerben bis ca. ein Drittel der Armbreite (Tattoos am Rand)
   const dOut = distanceField(bin, w, h), dil = new Uint8Array(n); for (let i = 0; i < n; i++) dil[i] = dOut[i] <= r ? 0 : 1;
   const dIn = distanceField(dil, w, h);
   for (let i = 0; i < n; i++) { const c = clamp(dIn[i] - r + .5, 0, 1); if (c > out[i]) out[i] = c; }
@@ -1141,7 +1163,8 @@ function fillHoles(m, w, h) {
   while (st.length) { const i = st.pop(), x = i % w; if (x > 0) seed(i - 1); if (x < w - 1) seed(i + 1); if (i >= w) seed(i - w); if (i < n - w) seed(i + w); }
   // nur kleine Löcher füllen (Tattoo, Uhr, Schatten); große umschlossene Flächen sind eher Kleidung
   let area = 0; for (let i = 0; i < n; i++) area += m[i] > .5;
-  const maxHole = .12 * area, seen = new Uint8Array(n);
+  // auch große umschlossene Flächen (Tattoos) gehören zur Haut
+  const maxHole = .4 * area, seen = new Uint8Array(n);
   for (let s = 0; s < n; s++) {
     if (out[s] || seen[s] || m[s] > .5) continue;
     const comp = [s], q = [s]; seen[s] = 1;
@@ -1277,17 +1300,42 @@ function scanStart() { siriOn(true); scanT0 = performance.now(); cancelAnimation
 function scanStop() { siriOn(false); cancelAnimationFrame(scanRaf); scanDone = null; octx.clearRect(0, 0, overlay.width, overlay.height); }
 function scanFinish() { $("#loader").classList.remove("on"); return new Promise(r => { scanDone = { t0: performance.now(), r }; }); }
 const ease = p => 1 - (1 - clamp(p, 0, 1)) ** 3;
+// Scan-Bild, dezent: keine Punktwolke und kein Gitter mehr. Sobald die Haut erkannt ist, liegt sie als
+// zarter heller Schleier mit feiner Kante über dem Foto, ein weiches Licht streicht einmal darüber. So sieht
+// man, was als Haut gilt (inklusive vorhandener Tattoos), ohne dass es laut wird.
+let skinLayer = null;
+function skinCanvases() {
+  if (skinLayer?.src === S.skin) return skinLayer;
+  const w = S.pw, h = S.ph, m = canvasOf(w, h), g = m.getContext("2d"), id = g.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = 255; id.data[i * 4 + 3] = S.skin[i] * 255; }
+  g.putImageData(id, 0, 0);
+  const edge = canvasOf(w, h), eg = edge.getContext("2d"), r = Math.max(1, w / 400);
+  for (let a = 0; a < 12; a++) eg.drawImage(m, Math.cos(a * Math.PI / 6) * r, Math.sin(a * Math.PI / 6) * r);
+  eg.globalCompositeOperation = "destination-out"; eg.drawImage(m, 0, 0);
+  return (skinLayer = { src: S.skin, m, edge, tmp: canvasOf(w, h) });
+}
+function drawSkin(a, sweep) {
+  if (!S.skin || a <= .01) return;
+  const L = skinCanvases(), W = overlay.width, H = overlay.height, g = L.tmp.getContext("2d"), w = S.pw, h = S.ph;
+  octx.save(); octx.globalAlpha = a * .16; octx.drawImage(L.m, 0, 0, W, H); octx.globalAlpha = a * .55; octx.drawImage(L.edge, 0, 0, W, H); octx.restore();
+  if (sweep >= 0 && sweep <= 1) { // weiches Lichtband, nur auf der Haut
+    g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, w, h);
+    const x = (-.3 + 1.6 * sweep) * w, gr = g.createLinearGradient(x - w * .25, 0, x + w * .25, 0);
+    gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(.5, "rgba(255,255,255,.35)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, w, h); g.globalCompositeOperation = "destination-in"; g.drawImage(L.m, 0, 0);
+    octx.save(); octx.globalAlpha = a; octx.drawImage(L.tmp, 0, 0, W, H); octx.restore();
+  }
+}
 function drawScan(t) {
-  const W = overlay.width, H = overlay.height, el = (t - scanT0) / 1000; octx.clearRect(0, 0, W, H);
+  const W = overlay.width, H = overlay.height; octx.clearRect(0, 0, W, H);
   if (scanDone) {
-    const p = (t - scanDone.t0) / 3000, fade = 1 - clamp((p - .86) / .14, 0, 1), lf = 1 - clamp(p / .25, 0, 1);
-    drawCloud(el, (1 - clamp(p / .4, 0, 1)) * fade, W, H);
-    if (S.mesh) drawMesh3D(octx, W / view.width, H / view.height, S.mesh.maxR * 1.04 * ease(p / .62), fade, true);
-    if (p > .7) siriOn(false);
+    const p = (t - scanDone.t0) / 2200, fade = 1 - clamp((p - .7) / .3, 0, 1);
+    drawSkin(fade, ease(clamp(p / .75, 0, 1)));
+    if (p > .55) siriOn(false);
     if (p >= 1) { octx.clearRect(0, 0, W, H); const r = scanDone.r; scanDone = null; r(); return false; }
     return true;
   }
-  drawCloud(el, 1, W, H);
+  if (S.skin) drawSkin(.7, ((t - scanT0) / 2400) % 1.4); // schon während der Analyse: Haut zart zeigen
   return true; // keep scanning until scanFinish()
 }
 // Glow, loader and dim are CSS (GPU) animations; JS only switches them on and off
@@ -1978,7 +2026,7 @@ function sizeCm() { const { w, h } = motifSizePx(1), k = pxPerCm(); return { w: 
 function updateInfo() {
   const el = $("#info");
   if (S.step < 3 || !S.motif || !S.anchor) { el.hidden = true; if ($("#islSize").textContent) { $("#islSize").textContent = ""; syncIsland(); } return; }
-  el.hidden = S.step === 4; // nach dem Stechen steht alles in der Insel
+  el.hidden = true; // Maßstab-Karte vorerst ausgeblendet (Größe steht in der Insel, Zusammenfassung nach dem Stechen)
   const { w, h } = sizeCm(), sc = S.scale || {}, rot = Math.round(((S.rot % 360) + 540) % 360 - 180);
   $("#infoTitle").textContent = S.step === 3 ? (sc.part ? `Maßstab · ${sc.part}` : "Maßstab") : "Zusammenfassung"; // die Größe steht oben in der Insel
   const sz = `${fmt(w)} × ${fmt(h)} cm`; if ($("#islSize").textContent !== sz) { $("#islSize").textContent = sz; syncIsland(); }
@@ -1992,7 +2040,7 @@ function updateInfo() {
         <button class="sum-x" id="sumClose" aria-label="Zusammenfassung schließen"><svg class="ic" aria-hidden="true"><use href="#i-chevron--up"/></svg></button></header>
       <ul class="needles">${s.needles.map(n => `<li><span class="nic">${needleIcon(n)}</span><span class="nname"><span>${n.name}</span><span class="dim">${n.role}</span></span><span class="dim">${n.detail}</span></li>`).join("")}</ul>
       <div class="swatches">${s.colours.map(c => `<span><i style="background:${SWATCH[c] || "#888"}"></i>${c}</span>`).join("")}</div>
-      <label class="sum-scale"><span>Maßstab <span class="dim">± ${sc.tol ?? 20} %</span></span><span><input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}" aria-label="Breite an der Stelle in cm"> <span class="dim">cm Breite</span></span></label>`;
+`;
     return syncIsland();
   }
   const rows = [["Drehung", `${rot}°`]];
