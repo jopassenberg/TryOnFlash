@@ -2918,7 +2918,7 @@ function usePending() { // nach der Analyse aufgerufen
 // Standard A4 hoch, nur die gewählte Größe. Optional weitere Größen (längste Seite −2 … +2 cm), jede mit
 // Größen-Tag. Unten auf jeder Seite ein 5-cm-Kontrollmaß: stimmt es nach dem Druck, ist alles maßstabsgetreu.
 const PAPERS = [["A5", 148, 210], ["A4", 210, 297], ["A3", 297, 420], ["Letter", 215.9, 279.4]];
-const PS = { paper: "A4", land: false, multi: false, steps: new Set([-2, -1, 0, 1, 2]), tags: true };
+const PS = { paper: "A4", land: false, multi: false, steps: new Set([-2, -1, 0, 1, 2]), tags: true, mirror: false };
 const fmtCm = v => fmt(Math.round(v * 10) / 10);
 function sheetItems() {
   const { w, h } = sizeCm(), long = Math.max(w, h), steps = PS.multi ? [...PS.steps].sort((a, b) => a - b) : [0];
@@ -2940,8 +2940,8 @@ function sheetPages(items) { // Regale: Zeile für Zeile, nebeneinander, so viel
 function pageHTML(L, pg) {
   const url = S.motif.url;
   return `<div class="pp" style="width:${L.W}mm;height:${L.H}mm">${pg.map(i => `<div class="it" style="left:${i.x}mm;top:${i.y}mm;width:${i.bw}mm">
-      <img alt="" src="${url}" style="width:${i.w}mm;height:${i.h}mm">${PS.tags ? `<span class="tag">${fmtCm(i.w / 10)} × ${fmtCm(i.h / 10)} cm</span>` : ""}</div>`).join("")}
-    <div class="foot"><span>Stencit · Flash-Sheet · ${PS.paper}</span><span class="ruler"><i></i>5 cm · mit 100 % drucken</span></div></div>`;
+      <img alt="" src="${url}" style="width:${i.w}mm;height:${i.h}mm${PS.mirror ? ";transform:scaleX(-1)" : ""}">${PS.tags ? `<span class="tag">${fmtCm(i.w / 10)} × ${fmtCm(i.h / 10)} cm</span>` : ""}</div>`).join("")}
+    <div class="foot"><span>Stencit · Flash-Sheet · ${PS.paper}${PS.mirror ? " · gespiegelt" : ""}</span><span class="ruler"><i></i>5 cm · mit 100 % drucken</span></div></div>`;
 }
 function printSheet() {
   const box = $("#printSheet");
@@ -2955,6 +2955,7 @@ function printSheet() {
       <button class="sw" id="psMulti" role="switch" aria-checked="${PS.multi}"><span class="t">Mehrere Größen<small>Zum Vergleichen, jeweils ± 1 cm</small></span><span class="track"></span></button>
       ${PS.multi ? `<div class="row">${[-2, -1, 0, 1, 2].map(d => `<button class="opt" data-step="${d}" aria-pressed="${PS.steps.has(d)}">${d ? (d > 0 ? "+" : "−") + Math.abs(d) + " cm" : "Gewählt"}</button>`).join("")}</div>` : ""}
       <button class="sw" id="psTags" role="switch" aria-checked="${PS.tags}"><span class="t">Größe beschriften<small>Tag mit Breite × Höhe unter jedem Motiv</small></span><span class="track"></span></button>
+      <button class="sw" id="psMirror" role="switch" aria-checked="${PS.mirror}"><span class="t">Gespiegelt<small>Für Thermo-Stencil und Umdruckpapier</small></span><span class="track"></span></button>
       <div class="ps-prev" id="psPrev">${L.pages.map(pg => `<div class="pw">${pageHTML(L, pg)}</div>`).join("") || `<span class="ps-note">Nichts zu drucken</span>`}</div>
       <div class="ps-note">${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? ` · ${L.tooBig.map(i => fmtCm(i.w / 10) + " × " + fmtCm(i.h / 10) + " cm").join(", ")} passt nicht auf ${PS.paper}` : ""} · im Druckdialog „100 %“ bzw. „Tatsächliche Größe“ wählen</div>
       <div class="stack"><button class="btn primary wide" id="psGo" ${n ? "" : "disabled"}><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg>Drucken oder senden</button>
@@ -2968,6 +2969,7 @@ function printSheet() {
     box.querySelectorAll("[data-step]").forEach(b => b.onclick = () => { const d = +b.dataset.step; PS.steps.has(d) ? PS.steps.delete(d) : PS.steps.add(d); if (!PS.steps.size) PS.steps.add(0); render(); });
     $("#psMulti").onclick = () => { PS.multi = !PS.multi; render(); };
     $("#psTags").onclick = () => { PS.tags = !PS.tags; render(); };
+    $("#psMirror").onclick = () => { PS.mirror = !PS.mirror; render(); };
     $("#psGo").onclick = () => {
       $("#pageSize").textContent = `@page { size: ${L.W}mm ${L.H}mm; margin: 0; }`;
       $("#printRoot").innerHTML = L.pages.map(pg => pageHTML(L, pg)).join("");
