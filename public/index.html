@@ -18,12 +18,15 @@
     --bordeaux: #730F26; --accent: #DB1A1D; --brand: linear-gradient(in srgb 180deg, #730F26, #DB1A1D);
     --bg: var(--n-100); --ink: var(--n-900); --text-2: var(--n-600); --text-3: var(--n-500); --muted: var(--n-500);
     --fill: oklch(19% .003 75 / .06); --fill-2: oklch(19% .003 75 / .1);
-    --glass: oklch(100% 0 0 / .66); --glass-strong: oklch(100% 0 0 / .84); --blur: blur(24px) saturate(1.6);
+    --glass: oklch(26% .004 75 / .42); --glass-light: oklch(100% 0 0 / .66); --glass-strong: oklch(100% 0 0 / .84); --blur: blur(24px) saturate(1.6);
+    --on-glass: oklch(100% 0 0); --on-glass-2: oklch(100% 0 0 / .62); --on-glass-fill: oklch(100% 0 0 / .12);
     --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
     --h-sm: 32px; --h: 44px; --h-lg: 56px; --r-card: 32px; --r-inner: 20px; --r-full: 999px;
     --ease-out: cubic-bezier(.22, 1, .36, 1); --spring: cubic-bezier(.34, 1.4, .64, 1); --fast: 140ms; --med: 240ms;
     --red-2: var(--accent);
     --frame: oklch(17% .003 75); --frame-w: 6px;
+    /* konzentrisch: Karte außen 42 → innen 36 (Rahmen 6) → Leiste 28 bei 8 Abstand → Buttons 22 bei 6 Innenabstand */
+    --r-outer: 42px; --r-inner-card: calc(var(--r-outer) - var(--frame-w)); --inset: 8px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
@@ -58,7 +61,7 @@
   .step i::after { content: " / 4"; }
 
   /* die Karte hat einen dunklen Rahmen wie ein Gerät; die Insel oben wächst aus diesem Rahmen */
-  .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: var(--n-0); border-radius: var(--r-card); border: var(--frame-w) solid var(--frame); }
+  .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: var(--n-0); border-radius: var(--r-outer); border: var(--frame-w) solid var(--frame); }
   .stage { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; touch-action: none; }
   #viewWrap { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
   #view { display: block; position: relative; }
@@ -105,7 +108,7 @@
   /* Leiste: eine Glaskapsel unten in der Karte */
   .panel { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); flex-wrap: wrap; }
   .group { display: flex; align-items: center; gap: var(--s1); min-width: 0; }
-  .card > .panel { position: absolute; z-index: 5; left: 50%; bottom: var(--s4); transform: translateX(-50%); flex-wrap: nowrap; max-width: calc(100% - 32px);
+  .card > .panel { position: absolute; z-index: 5; left: 50%; bottom: var(--inset); transform: translateX(-50%); flex-wrap: nowrap; max-width: calc(100% - 2 * var(--inset));
     min-height: var(--h-lg); padding: 6px; gap: var(--s2); border-radius: var(--r-full); background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .card > .panel:not([hidden]) { animation: dock-in .5s var(--spring) both; }
   .card > .panel:not([hidden]) .group > * { animation: item-in .45s var(--spring) both; }
@@ -137,7 +140,7 @@
 
   /* ---------- Overlays auf dem Foto: weißes Glas ---------- */
   .status, .info { position: absolute; z-index: 4; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); color: var(--ink); }
-  .status { bottom: calc(var(--s4) + var(--h-lg) + var(--s3)); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
+  .status { bottom: calc(var(--inset) + var(--h-lg) + var(--s3)); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
   .status[data-s="busy"] .dot { background: var(--accent); animation: blink .9s infinite; }
   .status[data-s="err"] .dot { background: oklch(75% .16 70); }
@@ -166,7 +169,7 @@
   .views button:hover { color: #fff; }
   .views button[aria-pressed="true"] { background: #fff; color: var(--ink); }
   @media (prefers-reduced-motion: reduce) { .island, .island > div { transition: none; } }
-  .info { right: var(--s4); top: var(--s4); width: 260px; border-radius: var(--r-inner); overflow: hidden; font-size: 13px; }
+  .info { right: var(--s3); top: var(--s3); width: 260px; border-radius: calc(var(--r-inner-card) - var(--s3)); overflow: hidden; font-size: 13px; }
   .info-head { width: 100%; height: var(--h); padding: 0 var(--s3) 0 var(--s4); display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
   .info-head .ic { width: 16px; height: 16px; color: var(--text-3); transition: transform var(--med) var(--ease-out); }
   .info[data-open="true"] .info-head .ic { transform: rotate(180deg); }
@@ -182,6 +185,26 @@
   .info .scale-edit input { width: 64px; height: var(--h-sm); border: 0; border-radius: var(--r-full); background: var(--fill); text-align: center; }
   .info .link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--n-400); }
 
+
+  /* auf dem Foto: rauchiges Glas, Inhalt weiß; Hauptaktion = weiße Pille */
+  .card > .panel, .stage > .status, .info { color: var(--on-glass); }
+  .card > .panel .btn.ghost { color: var(--on-glass); }
+  .card > .panel .btn.ghost:hover { background: var(--on-glass-fill); }
+  .card > .panel .btn.ghost[aria-pressed="true"] { background: var(--on-glass); color: var(--ink); }
+  .card > .panel .btn.primary { background: var(--on-glass); color: var(--ink); }
+  .card > .panel .btn.primary:hover { background: var(--n-200); }
+  .card > .panel .thumb { background: var(--on-glass-fill); }
+  .card > .panel .thumb[aria-pressed="true"] { background: var(--on-glass); }
+  .card > .panel .thumb.add { background: transparent; color: var(--on-glass); }
+  .card > .panel .thumb.add:hover { background: var(--on-glass-fill); }
+  #panelCam .shutter { background: var(--on-glass-fill); }
+  #panelCam .shutter::after { background: var(--on-glass); }
+  .stage > .status .dot { background: var(--on-glass); }
+  .stage > .status[data-s="busy"] .dot { background: var(--accent); }
+  .info-head .ic, .info dd small, .info .note { color: var(--on-glass-2); }
+  .info dt { color: var(--on-glass-2); }
+  .info .scale-edit input { background: var(--on-glass-fill); color: var(--on-glass); }
+  .info .link { color: var(--on-glass); text-decoration-color: var(--on-glass-2); }
   .needle { position: absolute; z-index: 4; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px oklch(100% 0 0 / .2), 0 0 0 10px oklch(100% 0 0 / .08); pointer-events: none; }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; }
@@ -195,7 +218,7 @@
     background: var(--n-100) radial-gradient(circle at center, oklch(19% .003 75 / .09) 1px, transparent 1.4px) 0 0 / 16px 16px; }
   #cutCanvas { position: absolute; left: 50%; top: 50%; display: block; touch-action: none; transform-origin: center; }
   .cutstage .status { left: var(--s3); top: var(--s3); bottom: auto; transform: none; pointer-events: none; }
-  .cuttools { position: absolute; z-index: 4; top: var(--s3); right: var(--s3); display: flex; gap: var(--s1); padding: 4px; border-radius: var(--r-full); background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+  .cuttools { position: absolute; z-index: 4; top: var(--s3); right: var(--s3); display: flex; gap: var(--s1); padding: 4px; border-radius: var(--r-full); background: var(--glass-light); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .cuttools .btn { width: 36px; height: 36px; }
   .cuttools .btn:hover { background: var(--fill); }
   .cutbox > .panel { padding: var(--s1); row-gap: var(--s2); }
@@ -216,7 +239,7 @@
   /* Siri-style edge glow, built so the GPU animates it on its own (smooth even while the analysis keeps
      the main thread busy): a soft inner band and a thin bright rim, each a masked window onto a large
      conic gradient that only rotates (transform) and breathes (opacity). No repaints per frame. */
-  .siri { position: absolute; inset: 0; pointer-events: none; z-index: 3; border-radius: inherit; opacity: 0; transition: opacity .6s var(--ease-out); }
+  .siri { position: absolute; inset: 0; pointer-events: none; z-index: 3; border-radius: var(--r-inner-card); opacity: 0; transition: opacity .6s var(--ease-out); }
   .siri.on { opacity: 1; }
   .siri i { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
   .siri i::before { content: ""; position: absolute; left: 50%; top: 50%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax; will-change: transform;
@@ -247,12 +270,11 @@
     .shell { padding: 0 var(--s2) max(var(--s2), env(safe-area-inset-bottom)); grid-template-rows: 60px 1fr; }
     .top { padding: 0 var(--s2); }
     .brand .logo { height: 20px; }
-    .card { border-radius: 28px; }
-    .card { --frame-w: 5px; }
-    .stage > .status { bottom: calc(var(--s2) + var(--h-lg) + var(--s2)); }
+    .card { --frame-w: 5px; --r-outer: 40px; }
+    .stage > .status { bottom: calc(var(--inset) + var(--h-lg) + var(--s2)); }
     /* Maßstab-Karte: volle Breite unter der Insel */
     .info { left: var(--s2); right: var(--s2); top: 56px; width: auto; }
-    .card > .panel { left: var(--s2); right: var(--s2); bottom: var(--s2); transform: none; max-width: none; }
+    .card > .panel { left: var(--inset); right: var(--inset); bottom: var(--inset); transform: none; max-width: none; }
     .card > .panel .group:first-child { flex: 1; min-width: 0; }
     #panelCam .group { flex: 1; justify-content: space-between; padding: 0 var(--s2); }
     .thumbs { max-width: 100%; }
@@ -1284,7 +1306,7 @@ function makeSticker(c) {
   const img = mg.createImageData(mw, mh), px = img.data;
   for (let i = 0; i < n; i++) {
     const inner = clamp(P - D[i] + .5, 0, 1), outer = clamp(P + SW - D[i] + .5, 0, 1), ring = outer - inner;
-    px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = 255; px[i * 4 + 3] = (ring * .95 + inner * .3) * 255;
+    px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = 255; px[i * 4 + 3] = (ring * .6 + inner * .12) * 255;
   }
   mg.putImageData(img, 0, 0);
   const res = canvas(W, H), g = res.getContext("2d", { willReadFrequently: true });
