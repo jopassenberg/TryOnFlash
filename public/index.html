@@ -486,6 +486,9 @@
   .siri .ring { --d: 4.2s; padding: 2px; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: siri-flicker 1.7s ease-in-out infinite; }
   /* Drehung um einen versetzten Punkt: die hellen Stellen laufen nicht stur im Kreis, sondern schwappen über die Kanten */
+  /* Handy: jede Schicht ist eine eigene GPU-Fläche. Auf dem iPhone (Faktor 3) wären vier Flächen à 170vmax ~300 MB,
+     das lässt Safari mitten in der Analyse abstürzen. Darum nur Band und Ring, und kleiner. */
+  @media (pointer: coarse) { .siri .haze, .siri .wide { display: none; } .siri i::before { width: 125vmax; height: 125vmax; margin: -62.5vmax 0 0 -62.5vmax; will-change: auto; } }
   @keyframes siri-orbit { from { transform: rotate(0deg) translate(6%, -3%) rotate(0deg); } to { transform: rotate(360deg) translate(6%, -3%) rotate(-140deg); } }
   @keyframes siri-breathe { 50% { opacity: calc(var(--o, 1) * .85); } }
   @keyframes siri-flicker { 0%, 100% { opacity: .85; } 50% { opacity: 1; } }
@@ -974,7 +977,9 @@ async function analyse() {
   let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
     status("Lädt Modelle …");
-    const [, seg] = await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]);
+    // Handy: nacheinander laden, nie zwei Modelle gleichzeitig im Speicher
+    const seg = MOBILE ? null : (await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]))[1];
+    if (MOBILE) await getDepth();
     status("Tiefe …"); stage = "Tiefe berechnen";
     const out = await runDepth(S.geo);
     stage = "Haut erkennen";
@@ -984,7 +989,7 @@ async function analyse() {
     // page when it runs out). Desktop keeps them for the next photo.
     if (MOBILE) { await depthPipe?.dispose?.().catch(() => {}); depthPipe = null; }
     status("Haut …");
-    await frame(); S.skin = seg ? skinMask(seg) : null;
+    await frame(); const sg = seg || (MOBILE ? await getSegmenter().catch(e => (console.warn("segmenter", e), null)) : null); S.skin = sg ? skinMask(sg) : null;
     if (MOBILE && segmenter) { segmenter.close(); segmenter = null; }
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
     S.skin = tidySkin(S.skin);
