@@ -727,7 +727,7 @@ const MOBILE = matchMedia("(pointer: coarse)").matches || /iPhone|iPad|iPod|Andr
 // Merkt sich, ob eine Analyse lief: Ist die Marke beim Laden noch da, hat iOS die Seite mitten in der Analyse
 // wegen Speichermangels neu geladen. Dann rechnet die App ab jetzt (in diesem Tab) mit kleinerer Auflösung.
 const ss = { get: k => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} } };
-const CRASHED = !!ss.get("stencit-busy"); ss.set("stencit-busy", null); if (CRASHED) ss.set("stencit-lite", "1");
+const CRASHED = ss.get("stencit-busy"); ss.set("stencit-busy", null); if (CRASHED) ss.set("stencit-lite", "1");
 const LITE = MOBILE && !!ss.get("stencit-lite");
 const RENDER_MAX = LITE ? 1024 : MOBILE ? 1280 : 1600, PROC_MAX = LITE ? 512 : 640, GEO_MAX = LITE ? 576 : MOBILE ? 768 : 1024, PREVIEW_MAX = MOBILE ? 720 : 900;
 // Depth model input side: desktop GPUs get ~1.6x the model's default 518 px for finer relief
@@ -973,14 +973,14 @@ async function getSegmenter() {
 }
 
 async function analyse() {
-  setStep(2); scanStart(); ss.set("stencit-busy", "1");
+  setStep(2); scanStart(); const mark = st => ss.set("stencit-busy", st); mark("Modelle laden");
   let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
     status("Lädt Modelle …");
     // Handy: nacheinander laden, nie zwei Modelle gleichzeitig im Speicher
     const seg = MOBILE ? null : (await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]))[1];
     if (MOBILE) await getDepth();
-    status("Tiefe …"); stage = "Tiefe berechnen";
+    status("Tiefe …"); stage = "Tiefe berechnen"; mark("Tiefe");
     const out = await runDepth(S.geo);
     stage = "Haut erkennen";
     S.pw = S.geo.width; S.ph = S.geo.height;
@@ -988,22 +988,23 @@ async function analyse() {
     // Phones: free each model as soon as it is done, so the next one fits into memory (iOS reloads the
     // page when it runs out). Desktop keeps them for the next photo.
     if (MOBILE) { await depthPipe?.dispose?.().catch(() => {}); depthPipe = null; }
-    status("Haut …");
+    status("Haut …"); mark("Haut-Modell");
     await frame(); const sg = seg || (MOBILE ? await getSegmenter().catch(e => (console.warn("segmenter", e), null)) : null); S.skin = sg ? skinMask(sg) : null;
     if (MOBILE && segmenter) { segmenter.close(); segmenter = null; }
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
-    S.skin = tidySkin(S.skin);
-    stage = "3D-Modell"; status("3D-Modell …");
+    mark("Haut aufräumen"); S.skin = tidySkin(S.skin);
+    stage = "3D-Modell"; status("3D-Modell …"); mark("3D-Modell");
     // one heavy step per frame, so the scan animation and the page stay responsive
     await frame(); refineDepth(); await frame(); buildGeometry(); await frame(); buildMesh(); await frame();
-    stage = "Maßstab"; status("Maßstab …");
+    stage = "Maßstab"; status("Maßstab …"); mark("Hand/Pose");
     S.scale = computeScale(await detectBody(S.proc).catch(e => (console.warn("body", e), null)));
-    await scanFinish();
+    mark("Scan-Ende"); await scanFinish();
     status("");
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
-    ss.set("stencit-busy", null);
+    mark("Motiv platzieren");
     if (!usePending() && !S.motif) status("Motiv hinzufügen", "ok");
+    setTimeout(() => mark(null), 4000); // das erste Rendern des Motivs gehört noch dazu
   } catch (e) {
     ss.set("stencit-busy", null); console.error(e); scanStop();
     const m = String(e?.message || e);
@@ -2884,7 +2885,7 @@ function usePending() { // nach der Analyse aufgerufen
     const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
     if (blob) await tryFlash(blob);
   } catch (e) { console.warn("handoff", e); }
-  if (CRASHED) status("Speicher voll · Foto nochmal", "err");
+  if (CRASHED) status(`Absturz bei: ${CRASHED}`, "err");
 })();
 
 window.__studio = { S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
