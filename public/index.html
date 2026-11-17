@@ -369,16 +369,18 @@
   .ttl-head { display: flex; align-items: baseline; gap: 10px; font-size: 16px; }
   .ttl-head b { font-weight: 400; }
   .ttl-ends { display: flex; justify-content: space-between; font-size: 13px; color: oklch(100% 0 0 / .45); }
-  .ttl-track { --p: .33; position: relative; height: 48px; border-radius: 24px; background: oklch(100% 0 0 / .07); touch-action: none; cursor: pointer; outline: none; }
+  .ttl-track { --p: .33; position: relative; isolation: isolate; height: 48px; border-radius: 24px; background: oklch(100% 0 0 / .07); touch-action: none; cursor: pointer; outline: none; }
   .ttl-track:focus-visible { box-shadow: 0 0 0 2px oklch(100% 0 0 / .5); }
   /* Spur in den Markenfarben: weicher Verlauf, der mit dem Ziehen kräftiger und heller wird
      (Bordeaux bei kurzer Laufzeit → helles Rot bei unbegrenzt). Kein Schein nach außen, nur ein leichter am Ende. */
-  .ttl-track { overflow: hidden; }
   .ttl-track .fill { --end: color-mix(in oklch, #DB1A1D calc(var(--p) * 100%), #730F26); --tip: color-mix(in oklch, oklch(68% .2 28) calc(var(--p) * 100%), #DB1A1D);
     position: absolute; left: 0; top: 0; bottom: 0; width: calc(24px + var(--p) * (100% - 48px) + 24px); border-radius: 24px;
-    background: linear-gradient(90deg, transparent, var(--end) 75%, var(--tip)); opacity: calc(.55 + .45 * var(--p)); transition: width .45s var(--spring), opacity .3s; }
+    background: linear-gradient(90deg, transparent, var(--end) 75%, var(--tip)); opacity: calc(.55 + .45 * var(--p));
+    /* Glow nach außen nur ganz leicht, wächst mit dem Wert: links keiner, rechts ein weicher Schein */
+    box-shadow: 4px 0 calc(6px + 16px * var(--p)) -4px color-mix(in oklch, var(--tip) calc(var(--p) * 55%), transparent);
+    transition: width .45s var(--spring), opacity .3s, box-shadow .3s; }
   .ttl-track .fill::after { content: ""; position: absolute; right: 4px; top: 50%; width: 40px; height: 40px; margin-top: -20px; border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in oklch, var(--tip) 60%, transparent), transparent 70%); pointer-events: none; }
+    background: radial-gradient(circle, color-mix(in oklch, var(--tip) calc(var(--p) * 60%), transparent), transparent 70%); pointer-events: none; }
   .ttl-track .dot { z-index: 1; position: absolute; top: 50%; left: calc(24px + var(--p) * (100% - 48px)); width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: oklch(100% 0 0 / .35); }
   .ttl-track .knob { z-index: 2; position: absolute; top: 4px; left: calc(var(--p) * (100% - 48px) + 4px); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
     background: #fff; color: var(--ink); transition: left .4s var(--spring), transform .25s var(--spring); }
