@@ -386,6 +386,16 @@
   .ttl-track.drag .knob { transition: transform .25s var(--spring); transform: scale(1.08); }
   .ttl-track.drag .fill { transition: none; }
   .ttl-track .knob .ic { width: 20px; height: 20px; }
+  /* Schalter (An/Aus): Text links, rechts ein Schalter wie in iOS. An = Knopf rechts, Spur Lime → Gelb */
+  .sw { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 22px; background: var(--fill); text-align: left; color: inherit; }
+  .sw .t { display: grid; } .sw small { font-size: 12px; opacity: .5; }
+  .sw .track { flex: none; position: relative; width: 50px; height: 30px; border-radius: 15px; background: oklch(19% .003 75 / .14); transition: background-color .25s var(--ease-out); }
+  .sw .track::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, oklch(88% .2 125), oklch(92% .17 100)); opacity: 0; transition: opacity .25s var(--ease-out); }
+  .sw .track::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .35s var(--spring); }
+  .sw[aria-checked="true"] .track::before { opacity: 1; }
+  .sw[aria-checked="true"] .track::after { transform: translateX(20px); }
+  .sheet .sw { background: oklch(100% 0 0 / .07); }
+  .sheet .sw .track { background: oklch(100% 0 0 / .16); }
   .linkbox { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 16px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
   .linkbox code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; color: oklch(100% 0 0 / .8); }
   .sec-note { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: oklch(100% 0 0 / .5); }
@@ -506,7 +516,7 @@
     .cutbox .seg { width: 100%; }
     .cutbox .seg button { flex: 1; justify-content: center; padding: 0 var(--s2); white-space: nowrap; font-size: 13px; }
     .cutbox .panel .group.end { flex-wrap: wrap; }
-    .cutbox .panel .group.end > .chip { flex: 1 1 100%; justify-content: center; }
+    .cutbox .panel .group.end > .sw { flex: 1 1 100%; }
     .cutstage .status { max-width: calc(100% - 120px); }
     .cutstage .status #cutHint { overflow: hidden; text-overflow: ellipsis; }
     .drop .row { flex-direction: column; width: 100%; max-width: 320px; }
@@ -654,7 +664,7 @@
           <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
         </div>
         <div class="group end">
-          <button class="chip" id="cutBg" aria-pressed="true">Hintergrund weg</button>
+          <button class="sw" id="cutBg" role="switch" aria-checked="true"><span class="t">Hintergrund weg</span><span class="track"></span></button>
           <button class="btn ghost" id="cutCancel">Abbrechen</button>
           <button class="btn primary" id="cutOk">Übernehmen</button>
         </div>
@@ -1414,7 +1424,7 @@ function openCut(c, opts = {}) {
   $("#cutOk").textContent = opts.okLabel || "Übernehmen";
   if (CUT.opaque && CUT.bg && autoMask()) $("#cutHint").textContent = "Motiv erkannt · mit Lasso oder Radierer anpassen";
   cutC.width = c.width; cutC.height = c.height;
-  $("#cutBg").hidden = !CUT.opaque; $("#cutBg").setAttribute("aria-pressed", CUT.bg);
+  $("#cutBg").hidden = !CUT.opaque; $("#cutBg").setAttribute("aria-checked", CUT.bg);
   lookThumbs();
   const hint = $("#cutHint").textContent; $("#cut").hidden = false; setTool("lasso"); if (CUT.hasMask) $("#cutHint").textContent = hint; fitCut();
   cancelAnimationFrame(CUT.raf);
@@ -1609,7 +1619,7 @@ cutStage.addEventListener("wheel", e => {
   if (zoomy) zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)), e.clientX, e.clientY);
   else if (CUT.zoom > 1) { CUT.px -= e.deltaX; CUT.py -= e.deltaY; applyCut(); }
 }, { passive: false });
-$("#cutBg").onclick = () => { CUT.bg = !CUT.bg; $("#cutBg").setAttribute("aria-pressed", CUT.bg); CUT.dirty = true; lookThumbs(); };
+$("#cutBg").onclick = () => { CUT.bg = !CUT.bg; $("#cutBg").setAttribute("aria-checked", CUT.bg); CUT.dirty = true; lookThumbs(); };
 $("#cutCancel").onclick = closeCut;
 $("#cutOk").onclick = () => {
   const src = source(), r = canvasOf(src.width, src.height), g = r.getContext("2d");
@@ -2618,7 +2628,7 @@ function shareSheet() {
       <div class="ttl-track" id="ttlTrack" role="slider" tabindex="0" aria-label="Gültig für" aria-valuemin="0" aria-valuemax="${TTL_OPTS.length - 1}">
         <i class="fill"></i>${TTL_OPTS.map((_, i) => `<i class="dot" style="--p:${i / (TTL_OPTS.length - 1)}"></i>`).join("")}
         <span class="knob"><svg class="ic" aria-hidden="true"><use href="#i-mark"/></svg></span></div></div>
-    <div class="row"><button class="opt" id="shDl" aria-pressed="false">Speichern erlauben</button></div>
+    <button class="sw" id="shDl" role="switch" aria-checked="false"><span class="t">Speichern erlauben<small>Kunde darf die Flashes herunterladen</small></span><span class="track"></span></button>
     <textarea id="shNote" maxlength="280" placeholder="Nachricht an deinen Kunden (optional)"></textarea>
     <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Die Flashes werden auf diesem Gerät verschlüsselt. Der Schlüssel steckt nur im Link, unser Server sieht die Bilder nie. Nach Ablauf wird alles gelöscht.</span></div>
     <div class="stack"><button class="btn primary wide" id="shGo"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Link erstellen</button>
@@ -2632,7 +2642,7 @@ function shareSheet() {
     const mv = ev => setTtl(atX(ev.clientX)), up = () => { tr.classList.remove("drag"); tr.removeEventListener("pointermove", mv); tr.removeEventListener("pointerup", up); };
     tr.addEventListener("pointermove", mv); tr.addEventListener("pointerup", up); });
   tr.addEventListener("keydown", e => { const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key]; if (d) { e.preventDefault(); setTtl(+tr.getAttribute("aria-valuenow") + d); } });
-  $("#shDl").onclick = () => { dl = !dl; $("#shDl").setAttribute("aria-pressed", dl); };
+  $("#shDl").onclick = () => { dl = !dl; $("#shDl").setAttribute("aria-checked", dl); };
   $("#shGo").onclick = async () => {
     const go = $("#shGo"); go.disabled = true; go.textContent = "Verschlüsselt …";
     try { const link = await createLink(ids, ttl, dl, $("#shNote").value.trim()); linkReady(link); }
