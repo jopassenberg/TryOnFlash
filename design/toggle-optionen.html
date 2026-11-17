@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Schalter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: oklch(19% .003 75); --n-100: oklch(97% .003 75); --dim: oklch(54% .005 75); --fill: oklch(19% .003 75 / .06); --frame: oklch(17% .003 75);
+    --red: #DB1A1D; --bord: #730F26; --spring: cubic-bezier(.34,1.4,.64,1); --ease: cubic-bezier(.22,1,.36,1); }
+  * { box-sizing: border-box; } body { margin: 0; background: var(--n-100); color: var(--ink); font: 400 15px/1.45 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; letter-spacing: inherit; -webkit-tap-highlight-color: transparent; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 24px 96px; display: grid; gap: 64px; }
+  h1 { margin: 0; font-weight: 400; font-size: 44px; letter-spacing: -.045em; line-height: 1; } h1 span { color: var(--dim); }
+  h2 { margin: 4px 0 6px; font-weight: 400; font-size: 26px; letter-spacing: -.035em; } .lbl { font-size: 12px; color: var(--dim); } .sub { margin: 0 0 20px; color: var(--dim); max-width: 680px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; } @media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+  .panel { border-radius: 28px; padding: 22px; display: grid; gap: 12px; align-content: start; }
+  .dark { background: var(--frame); color: #fff; } .light { background: #fff; }
+  .panel .cap { font-size: 12px; opacity: .5; margin-bottom: 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  ul { margin: 12px 0 0; padding-left: 18px; color: var(--dim); font-size: 13px; display: grid; gap: 4px; }
+
+  /* ===== A · Schalter: Zeile mit Text, rechts ein Schalter. An = Knopf rechts, Spur in Markenrot ===== */
+  .sw { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 20px; background: var(--f, oklch(100% 0 0 / .07)); text-align: left; }
+  .light .sw { --f: var(--fill); }
+  .sw .t { display: grid; } .sw small { font-size: 12px; opacity: .5; }
+  .sw .track { flex: none; position: relative; width: 50px; height: 30px; border-radius: 15px; background: oklch(100% 0 0 / .16); transition: background-color .25s var(--ease); }
+  .light .sw .track { background: oklch(19% .003 75 / .14); }
+  .sw .track::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .35s var(--spring); }
+  .sw[aria-checked="true"] .track { background: linear-gradient(90deg, var(--bord), var(--red)); }
+  .sw[aria-checked="true"] .track::after { transform: translateX(20px); }
+
+  /* ===== B · Häkchen-Chip: aus = Umriss mit leerem Kreis, an = gefüllt (invertiert) mit Häkchen ===== */
+  .ck { height: 44px; padding: 0 18px 0 8px; border-radius: 22px; display: inline-flex; align-items: center; gap: 10px; background: oklch(100% 0 0 / .07); color: oklch(100% 0 0 / .75); transition: background-color .25s, color .25s; }
+  .light .ck { background: var(--fill); color: oklch(19% .003 75 / .7); }
+  .ck .c { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px currentColor; opacity: .7; transition: all .3s var(--spring); }
+  .ck .c svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 20; stroke-dashoffset: 20; transition: stroke-dashoffset .3s var(--ease) .05s; }
+  .ck[aria-pressed="true"] { background: #fff; color: var(--ink); }
+  .light .ck[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .ck[aria-pressed="true"] .c { opacity: 1; box-shadow: none; background: var(--ink); color: #fff; }
+  .light .ck[aria-pressed="true"] .c { background: #fff; color: var(--ink); }
+  .ck[aria-pressed="true"] .c svg { stroke-dashoffset: 0; }
+
+  /* ===== C · Zustand in Worten: Pille mit Leuchtpunkt und „An / Aus“ rechts ===== */
+  .st { height: 44px; padding: 0 6px 0 16px; border-radius: 22px; display: inline-flex; align-items: center; gap: 12px; background: oklch(100% 0 0 / .07); }
+  .light .st { background: var(--fill); }
+  .st .dot { width: 8px; height: 8px; border-radius: 50%; background: oklch(100% 0 0 / .25); transition: background-color .25s, box-shadow .25s; }
+  .light .st .dot { background: oklch(19% .003 75 / .2); }
+  .st .val { min-width: 44px; height: 32px; padding: 0 12px; border-radius: 16px; display: grid; place-items: center; font-size: 13px; background: oklch(100% 0 0 / .08); color: oklch(100% 0 0 / .55); transition: all .25s; }
+  .light .st .val { background: oklch(19% .003 75 / .06); color: var(--dim); }
+  .st[aria-pressed="true"] .dot { background: var(--red); box-shadow: 0 0 8px oklch(56.8% .221 27.7 / .7); }
+  .st[aria-pressed="true"] .val { background: #fff; color: var(--ink); }
+  .light .st[aria-pressed="true"] .val { background: var(--ink); color: #fff; }
+</style></head><body>
+<div class="wrap">
+  <div><span class="lbl">Schalter · drei Entwürfe</span><h1>An oder aus,<br><span>auf einen Blick.</span></h1>
+    <p class="sub" style="margin-top:16px">Gilt für alle Knöpfe, die etwas ein- oder ausschalten: „Speichern erlauben“, „Hintergrund weg“ und spätere Optionen. Alle sind anklickbar, jeweils auf dunkel (Teilen-Dialog) und hell (Editor).</p></div>
+
+  <section><span class="lbl">A</span><h2>Schalter wie in iOS</h2><p class="sub">Text links mit kurzer Erklärung, rechts ein Schalter. An = Knopf rechts, Spur im Marken-Verlauf. Am eindeutigsten, weil jeder diesen Schalter kennt.</p>
+    <div class="pair">
+      <div class="panel dark"><div class="cap">Teilen-Dialog</div>
+        <button class="sw" role="switch" aria-checked="false"><span class="t">Speichern erlauben<small>Kunde darf die Flashes herunterladen</small></span><span class="track"></span></button>
+        <button class="sw" role="switch" aria-checked="true"><span class="t">Nachricht anhängen<small>Erscheint oben auf der Seite</small></span><span class="track"></span></button></div>
+      <div class="panel light"><div class="cap">Editor</div>
+        <button class="sw" role="switch" aria-checked="true"><span class="t">Hintergrund weg<small>Papier und Haut entfernen</small></span><span class="track"></span></button></div>
+    </div><ul><li>Am klarsten, auch für Erstnutzer</li><li>Braucht eine ganze Zeile pro Option</li></ul></section>
+
+  <section><span class="lbl">B</span><h2>Häkchen-Chip</h2><p class="sub">Kompakte Pille. Aus: leerer Kreis, zurückhaltend. An: die Pille kehrt sich um (weiß auf dunkel, schwarz auf hell) und im Kreis zeichnet sich ein Häkchen.</p>
+    <div class="pair">
+      <div class="panel dark"><div class="cap">Teilen-Dialog</div><div class="row">
+        <button class="ck" aria-pressed="false"><span class="c"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Speichern erlauben</button>
+        <button class="ck" aria-pressed="true"><span class="c"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Nachricht</button></div></div>
+      <div class="panel light"><div class="cap">Editor</div><div class="row">
+        <button class="ck" aria-pressed="true"><span class="c"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Hintergrund weg</button></div></div>
+    </div><ul><li>Kompakt, mehrere in einer Reihe</li><li>Häkchen ist ein eindeutiges „an“</li></ul></section>
+
+  <section><span class="lbl">C</span><h2>Zustand in Worten</h2><p class="sub">Die Pille sagt es aus: links ein Punkt, der bei „An“ rot leuchtet, rechts ein kleines Feld „An“ oder „Aus“. Kein Rätselraten, nah an unserem Glow.</p>
+    <div class="pair">
+      <div class="panel dark"><div class="cap">Teilen-Dialog</div><div class="row">
+        <button class="st" aria-pressed="false"><span class="dot"></span>Speichern erlauben<span class="val">Aus</span></button>
+        <button class="st" aria-pressed="true"><span class="dot"></span>Nachricht<span class="val">An</span></button></div></div>
+      <div class="panel light"><div class="cap">Editor</div><div class="row">
+        <button class="st" aria-pressed="true"><span class="dot"></span>Hintergrund weg<span class="val">An</span></button></div></div>
+    </div><ul><li>Liest sich wie ein Satz</li><li>Etwas mehr Text als B</li></ul></section>
+</div>
+<script>
+  document.querySelectorAll(".sw").forEach(b => b.onclick = () => b.setAttribute("aria-checked", b.getAttribute("aria-checked") !== "true"));
+  document.querySelectorAll(".ck, .st").forEach(b => b.onclick = () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); const v = b.querySelector(".val"); if (v) v.textContent = on ? "An" : "Aus"; });
+</script>
+</body></html>
