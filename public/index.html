@@ -390,7 +390,7 @@
   .sw { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 22px; background: var(--fill); text-align: left; color: inherit; }
   .sw .t { display: grid; } .sw small { font-size: 12px; opacity: .5; }
   .sw .track { flex: none; position: relative; width: 50px; height: 30px; border-radius: 15px; background: oklch(19% .003 75 / .14); transition: background-color .25s var(--ease-out); }
-  .sw .track::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, oklch(66% .19 136), oklch(76% .18 112)); opacity: 0; transition: opacity .25s var(--ease-out); }
+  .sw .track::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, oklch(73% .25 138), oklch(85% .23 115)); opacity: 0; /* grelles, „bratty“ Neon-Lime */ transition: opacity .25s var(--ease-out); }
   .sw .track::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .35s var(--spring), background-color .25s; }
   .sw[aria-checked="true"] .track::before { opacity: 1; }
   .sw[aria-checked="true"] .track::after { transform: translateX(20px); } /* heller Knopf auf sattem Lime-Grün: genug Kontrast */
