@@ -157,7 +157,6 @@
   .island { position: absolute; z-index: 6; top: 0; left: 50%; width: 220px; height: 48px; color: #fff; background: var(--frame);
     border-radius: 0 0 24px 24px; translate: -50% -110%; transition: translate .6s var(--spring), width .5s var(--spring), height .5s var(--spring), border-radius .5s var(--spring); }
   .island[data-mode="status"], .island[data-mode="size"], .island[data-mode="summary"] { translate: -50% 0; }
-  .island[data-open="true"] { width: min(380px, calc(100% - 24px)); border-radius: 0 0 32px 32px; }
   /* weiche Hohlkehlen links und rechts, damit die Insel aus dem Rahmen fließt */
   .island::before, .island::after { content: ""; position: absolute; top: 0; width: 16px; height: 16px; }
   .island::before { right: 100%; background: radial-gradient(circle at 0 100%, transparent 15.5px, var(--frame) 16px); }
@@ -167,21 +166,47 @@
   .island[data-mode="status"] .isl-status, .island[data-mode="size"] .isl-size, .island[data-mode="summary"] .isl-sum { opacity: 1; filter: none; pointer-events: auto; transition-delay: .12s; }
   .isl-status > span, .isl-size { max-width: 196px; overflow: hidden; text-overflow: ellipsis; }
   /* Zusammenfassung: Kopfzeile ist ein Knopf, darunter klappt der Inhalt auf */
-  .island > .isl-sum { left: 0; right: 0; translate: none; height: auto; display: block; white-space: normal; }
+  .island > .isl-sum { left: 0; right: 0; translate: none; }
   .isl-sum-head { width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
   .isl-sum-head .ic { width: 16px; height: 16px; padding: 4px; box-sizing: content-box; border-radius: 50%; background: oklch(100% 0 0 / .14); transition: rotate .4s var(--spring); }
   .island[data-open="true"] .isl-sum-head .ic { rotate: 180deg; }
-  .isl-sum-body { padding: 4px 22px 22px; font-size: 13px; opacity: 0; transition: opacity .25s var(--ease-out); }
-  .island[data-open="true"] .isl-sum-body { opacity: 1; transition-delay: .15s; }
-  .isl-sum-body .big { font-size: 30px; line-height: 1; letter-spacing: -.04em; margin: 2px 0 16px; text-align: center; }
-  .isl-sum-body dl { display: grid; grid-template-columns: auto 1fr; row-gap: 8px; margin: 0; }
-  .isl-sum-body dt { color: oklch(100% 0 0 / .55); padding-right: 12px; }
-  .isl-sum-body dd { margin: 0; text-align: right; }
-  .isl-sum-body dd small { display: block; color: oklch(100% 0 0 / .5); font-size: 12px; }
-  .isl-sum-body .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px; vertical-align: 0; box-shadow: 0 0 0 1px oklch(100% 0 0 / .25); }
-  .isl-sum-body .scale-edit { display: flex; align-items: center; gap: 8px; margin-top: 16px; color: oklch(100% 0 0 / .55); }
-  .isl-sum-body .scale-edit input { width: 64px; height: 32px; border: 0; border-radius: 999px; background: oklch(100% 0 0 / .12); color: #fff; text-align: center; }
-  .isl-sum-body .note { margin-top: 12px; font-size: 12px; line-height: 1.45; color: oklch(100% 0 0 / .45); }
+
+  /* Zusammenfassung: eine eigene schwarze Karte, die mit einem „Plop“ aus der Insel wächst.
+     Volle Breite mit 8 px Abstand zum Rahmen, Ecken konzentrisch (36 − 8 = 28). */
+  .sumcard { position: absolute; z-index: 7; left: var(--inset); right: var(--inset); top: calc(48px + var(--s2)); max-height: calc(100% - 48px - var(--s2) - var(--h-lg) - 2 * var(--inset));
+    overflow: auto; overscroll-behavior: contain; scrollbar-width: none; border-radius: calc(var(--r-inner-card) - var(--inset)); background: var(--frame); color: #fff;
+    transform-origin: 50% -56px; }
+  .sumcard::-webkit-scrollbar { display: none; }
+  .sumcard.in { animation: plop .62s var(--spring) both; }
+  .sumcard.out { animation: plop-out .28s var(--ease-out) both; }
+  @keyframes plop { 0% { opacity: 0; transform: translateY(-40px) scale(.32, .08); border-radius: 40px; } 45% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+  @keyframes plop-out { to { opacity: 0; transform: translateY(-36px) scale(.4, .1); } }
+  .sumcard > * { animation: sum-item .5s var(--ease-out) both; animation-delay: .18s; }
+  @keyframes sum-item { from { opacity: 0; translate: 0 6px; } }
+  @media (prefers-reduced-motion: reduce) { .sumcard.in, .sumcard.out, .sumcard > * { animation: none; } }
+  .sum-body { padding: 22px 22px 20px; display: grid; gap: 18px; font-size: 13px; }
+  .sum-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .sum-size { font-size: 34px; line-height: 1; letter-spacing: -.045em; }
+  .sum-sub { margin-top: 8px; color: oklch(100% 0 0 / .55); }
+  .sum-x { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .12); }
+  .sum-x .ic { width: 16px; height: 16px; }
+  .sum-sec { display: grid; gap: 8px; }
+  .sum-label { font-size: 12px; color: oklch(100% 0 0 / .45); }
+  .needles { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .needles li { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 12px; padding: 6px 14px 6px 6px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
+  .nic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: oklch(100% 0 0 / .08); }
+  .nic svg { width: 36px; height: 36px; }
+  .needles b { display: block; font-weight: 400; font-size: 17px; letter-spacing: -.02em; }
+  .needles span { color: oklch(100% 0 0 / .55); font-size: 12px; }
+  .needles em { font-style: normal; text-align: right; font-size: 12px; color: oklch(100% 0 0 / .7); line-height: 1.35; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+  .swatches span { height: 32px; padding: 0 12px 0 6px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: oklch(100% 0 0 / .07); }
+  .swatches i { width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .2); }
+  .sum-scale { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 6px 6px 14px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
+  .sum-scale small { display: block; color: oklch(100% 0 0 / .45); font-size: 12px; }
+  .sum-scale label { display: flex; align-items: center; gap: 6px; color: oklch(100% 0 0 / .55); white-space: nowrap; }
+  .sum-scale input { width: 60px; height: 36px; border: 0; border-radius: 999px; background: oklch(100% 0 0 / .12); color: #fff; text-align: center; }
+  .sum-note { margin: 0; font-size: 12px; line-height: 1.45; color: oklch(100% 0 0 / .4); }
   .isl-size { padding: 0 24px; font-size: 15px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   .isl-status { gap: 10px; padding: 0 22px 0 18px; font-size: 13px; }
   .isl-status[data-s="err"] { color: oklch(85% .12 70); }
@@ -391,9 +416,9 @@
       <div class="isl-size" id="islSize"></div>
         <div class="isl-sum" id="islSum">
           <button class="isl-sum-head" id="islSumHead" aria-expanded="false">Zusammenfassung<svg class="ic" aria-hidden="true"><use href="#i-chevron--down"/></svg></button>
-          <div class="isl-sum-body" id="islSumBody"></div>
         </div>
       </div>
+      <section class="sumcard" id="sumCard" hidden aria-label="Zusammenfassung"><div class="sum-body" id="islSumBody"></div></section>
       <div class="info" id="info" hidden>
         <button class="info-head" id="infoHead" aria-expanded="false"><span id="infoTitle"></span><svg class="ic" aria-hidden="true"><use href="#i-chevron--down"/></svg></button>
         <div class="info-body" id="infoBody"></div>
@@ -536,9 +561,13 @@ function syncIsland() {
 }
 // Zusammenfassung klappt aus der Insel nach unten auf (Tippen oder nach unten ziehen)
 function openSummary(open) {
-  const isl = $("#island"); isl.dataset.open = open; $("#islSumHead").setAttribute("aria-expanded", open);
-  isl.style.height = open ? 48 + $("#islSumBody").scrollHeight + "px" : "";
+  const isl = $("#island"), card = $("#sumCard"); if ((isl.dataset.open === "true") === open) return;
+  isl.dataset.open = open; $("#islSumHead").setAttribute("aria-expanded", open);
+  card.classList.remove("in", "out"); void card.offsetWidth;
+  if (open) { card.hidden = false; card.scrollTop = 0; card.classList.add("in"); }
+  else { card.classList.add("out"); card.addEventListener("animationend", () => { if (isl.dataset.open !== "true") card.hidden = true; }, { once: true }); }
 }
+$("#sumCard").addEventListener("click", e => { if (e.target.closest("#sumClose")) openSummary(false); });
 $("#islSumHead").onclick = () => openSummary($("#island").dataset.open !== "true");
 { let y0 = null; const isl = $("#island");
   isl.addEventListener("pointerdown", e => { if (isl.dataset.mode === "summary" && !e.target.closest("input")) y0 = e.clientY; });
@@ -1572,29 +1601,29 @@ function updateInfo() {
   $("#infoTitle").textContent = S.step === 3 ? (sc.part ? `Maßstab · ${sc.part}` : "Maßstab") : "Zusammenfassung"; // die Größe steht oben in der Insel
   const sz = `${fmt(w)} × ${fmt(h)} cm`; if ($("#islSize").textContent !== sz) { $("#islSize").textContent = sz; syncIsland(); }
   if ($("#infoBody").contains(document.activeElement) || $("#islSumBody").contains(document.activeElement)) return; // nicht neu bauen, während getippt wird
-  const rows = [];
-  if (S.step === 4 && S.summary) {
-    const s = S.summary;
-    rows.push(["Fläche", `${fmt(s.area, 0)} cm²`]);
-    if (sc.part) rows.push(["Stelle", sc.part]);
-    rows.push(["Linien", `${s.lineNeedle}<small>${fmt(s.lineMm)} mm Strich</small>`]);
-    if (s.fillNeedle) rows.push(["Füllung", s.fillNeedle]);
-    if (s.shadeNeedle) rows.push(["Schattierung", s.shadeNeedle]);
-    rows.push(["Farben", s.colours.map(c => `${c}<i class="sw" style="background:${SWATCH[c] || "#888"}"></i>`).join("<br>")]);
-    rows.push(["Dauer", `${s.time}<small>Richtwert</small>`]);
-  } else {
-    rows.push(["Drehung", `${rot}°`]);
-    if (sc.part) rows.push(["Stelle", sc.part]);
-  }
-  rows.push(["Maßstab", `${sc.source || "–"}<small>± ${sc.tol ?? 20} %</small>`]);
   const limb = S.armPx / pxPerCm();
+  if (S.step === 4 && S.summary) {
+    const s = S.summary, key = JSON.stringify([s, sc, fmt(limb), sz]); if (key === infoKey) return syncIsland(); infoKey = key;
+    $("#infoBody").innerHTML = "";
+    $("#islSumBody").innerHTML = `
+      <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="sum-sub">${fmt(s.area, 0)} cm² Fläche${sc.part ? " · " + sc.part : ""}</div></div>
+        <button class="sum-x" id="sumClose" aria-label="Zusammenfassung schließen"><svg class="ic" aria-hidden="true"><use href="#i-chevron--up"/></svg></button></header>
+      <div class="sum-sec"><div class="sum-label">Empfohlene Nadeln</div><ul class="needles">${s.needles.map(n => `
+        <li><span class="nic">${needleIcon(n)}</span><div><b>${n.name}</b><span>${n.role}</span></div><em>${n.detail}</em></li>`).join("")}</ul></div>
+      <div class="sum-sec"><div class="sum-label">Farben</div><div class="swatches">${s.colours.map(c => `<span><i style="background:${SWATCH[c] || "#888"}"></i>${c}</span>`).join("")}</div></div>
+      <div class="sum-sec"><div class="sum-label">Maßstab</div><div class="sum-scale"><div>${sc.source || "–"}<small>± ${sc.tol ?? 20} %</small></div>
+        <label>Breite <input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}" aria-label="Breite an der Stelle in cm"> cm</label></div></div>
+      <p class="sum-note">Richtwerte aus Strichbreite und Flächen deines Motivs in echter Größe. Die finale Wahl trifft dein Artist. Mit Maßband nachmessen und Breite eintragen, dann stimmt die Größe genau.</p>`;
+    return syncIsland();
+  }
+  const rows = [["Drehung", `${rot}°`]];
+  if (sc.part) rows.push(["Stelle", sc.part]);
+  rows.push(["Maßstab", `${sc.source || "–"}<small>± ${sc.tol ?? 20} %</small>`]);
   const key = JSON.stringify([rows, S.step, fmt(limb)]); if (key === infoKey) return; infoKey = key;
-  const body = S.step === 4 ? $("#islSumBody") : $("#infoBody");
-  (S.step === 4 ? $("#infoBody") : $("#islSumBody")).innerHTML = "";
-  body.innerHTML = (S.step === 4 ? `<div class="big">${sz}</div>` : "") + `<dl>${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
+  $("#islSumBody").innerHTML = "";
+  $("#infoBody").innerHTML = `<dl>${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
     <label class="scale-edit">Breite an der Stelle <input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}"> cm</label>
-    <div class="note">${S.step === 4 ? "Nadeln und Dauer sind Richtwerte, die finale Wahl trifft dein Artist. " : ""}Mit Maßband nachmessen und eintragen, dann stimmt die Größe genau.</div>`;
-  if (S.step === 4 && $("#island").dataset.open === "true") openSummary(true); // Höhe an neuen Inhalt anpassen
+    <div class="note">Mit Maßband nachmessen und eintragen, dann stimmt die Größe genau.</div>`;
   syncIsland();
 }
 const SWATCH = { Schwarz: "#151515", Grau: "#7a7a7a", Rot: "#c4231f", Orange: "#e07020", Gelb: "#e6c229", Grün: "#2f8f4e", Türkis: "#2a9d9d", Blau: "#2f5fb3", Lila: "#7a3fa6", Violett: "#7a3fa6", Pink: "#d64f8f", Braun: "#7a4a2a", Weiß: "#f2f2f2" };
@@ -1640,19 +1669,66 @@ function motifStats(m) {
   if (shade > ink * .08 && !colours.includes("Grau")) colours.push("Grau");
   return (m.stats = { w, h, ink: ink / n, shade: shade / Math.max(ink, 1), ridge, inside, D, colours });
 }
-const RL = [[.45, "1RL"], [.75, "3RL"], [1, "5RL"], [1.3, "7RL"], [1.6, "9RL"], [1.9, "11RL"], [Infinity, "14RL"]];
+// ---------- Nadeln ----------
+// Round Liner: n Nadeln dicht im Kreis gelötet. Der Durchmesser der Gruppe folgt der dichtesten Kreispackung
+// (Verhältnis Gruppe/Nadel: 3 → 2,155 · 5 → 2,701 · 7 → 3 · 9 → 3,613 · 11 → 3,923 · 14 → 4,328 · 18 → 4,863).
+// Strich auf der Haut ≈ Gruppendurchmesser + ca. 0,15 mm Verlauf der Tinte. Nadelstärken: 0,25 (#08),
+// 0,30 (#10), 0,35 mm (#12); feine Gruppen gibt es meist in dünnen Nadeln, große fast nur in 0,35.
+// Magnum: zwei versetzte Reihen; Breite ≈ ⌈n/2⌉ · d + d/2 (+ Verlauf). Für Flächen wird die Magnum gewählt,
+// deren Breite etwa die Hälfte der typischen Flächenbreite ist (genug Kontrolle am Rand).
+const PACK = { 1: 1, 3: 2.155, 5: 2.701, 7: 3, 9: 3.613, 11: 3.923, 14: 4.328, 18: 4.863 }, SPREAD = .15;
+const GAUGES = [.25, .3, .35];
+function pickLiner(mm) {
+  let best = null;
+  for (const [ns, k] of Object.entries(PACK)) for (const d of GAUGES) {
+    const n = +ns; if ((n >= 7 && d < .3) || (n >= 11 && d < .35) || (n === 1 && d > .3)) continue;
+    const w = d * k + SPREAD, err = Math.abs(w - mm) + (d === .35 ? 0 : .02); // bei Gleichstand Standardnadel
+    if (!best || err < best.err) best = { n, d, w, err };
+  }
+  return best;
+}
+const magWidth = (n, d = .35) => Math.ceil(n / 2) * d + d / 2 + SPREAD;
+// gängige Größen: gestapelte Magnum (M1) bis 15, Curved Magnum (RM) bis 23
+function pickMagnum(width, max = 15) { // width: typische Breite der Fläche in mm
+  let n = 5; for (const k of [7, 9, 11, 13, 15, 17, 19, 21, 23]) if (k <= max && magWidth(k) <= width * .5) n = k;
+  return n;
+}
 function summarise() {
   const st = motifStats(S.motif), { w, h } = sizeCm(), mmPerPx = h * 10 / st.h;
   const lines = st.ridge.filter(v => v * mmPerPx < 3), lineMm = (lines.length ? lines[Math.floor(lines.length / 2)] : st.ridge[0] || 2) * mmPerPx;
-  let thick = 0; for (let i = 0; i < st.D.length; i++) if (st.D[i] * 2 * mmPerPx > 3) thick++;
-  const area = st.ink * w * h, fillShare = thick / Math.max(st.inside, 1), fill = fillShare > .2;
-  const fillNeedle = fill ? (area > 25 ? "11–13 RM (Magnum)" : "7–9 M1 (Magnum)") : null;
-  const shadeNeedle = st.shade > .12 ? (area > 25 ? "9–13 RM (Soft-Magnum)" : "7 M1 (Magnum)") : null;
-  const lineNeedle = RL.find(([mm]) => lineMm <= mm)[1];
-  const min = 20 + area * (fill ? 1.6 : .7) + (shadeNeedle ? area * .8 : 0) + (st.colours.length > 1 ? 15 : 0);
-  const lo = Math.round(min * .75 / 15) * 15, hi = Math.round(min * 1.3 / 15) * 15;
-  const time = hi < 90 ? `${Math.max(15, lo)}–${hi} min` : `${fmt(lo / 60)}–${fmt(hi / 60)} h`;
-  return { area, lineMm, lineNeedle, fillNeedle, shadeNeedle, colours: st.colours, time };
+  const thick = []; for (let i = 0; i < st.D.length; i++) { const v = st.D[i] * 2 * mmPerPx; if (v > 3) thick.push(v); }
+  thick.sort((a, b) => a - b);
+  const area = st.ink * w * h, fillShare = thick.length / Math.max(st.inside, 1), fill = fillShare > .2;
+  const fillW = thick.length ? thick[Math.floor(thick.length * .9)] : 0; // breiteste typische Stelle der Flächen
+  const needles = [], L = pickLiner(lineMm);
+  needles.push({ type: "RL", n: L.n, name: `${L.n}RL`, role: "Linien", detail: `Strich ≈ ${fmt(L.w)} mm<br>Nadel ${fmt(L.d, 2)} mm` });
+  if (fill) {
+    if (fillW < 4) needles.push({ type: "RS", n: fillW < 3 ? 5 : 7, name: `${fillW < 3 ? 5 : 7}RS`, role: "Kleine Flächen", detail: `Flächen ≈ ${fmt(fillW)} mm` });
+    else { const n = pickMagnum(fillW); needles.push({ type: "M1", n, name: `${n}M1`, role: "Füllen", detail: `Flächen bis ≈ ${fmt(fillW, 0)} mm<br>Breite ≈ ${fmt(magWidth(n))} mm` }); }
+  }
+  if (st.shade > .12) { const n = Math.max(7, pickMagnum(Math.max(fillW, lineMm * 6), 23)); needles.push({ type: "RM", n, name: `${n}RM`, role: "Schattieren", detail: "weiche Übergänge" }); }
+  return { area, lineMm, needles, colours: st.colours };
+}
+// Nadel-Icon im Stil des Logos: Punkte wie Nadelspitzen von vorne. Round Liner dicht im Kreis,
+// Round Shader lockerer, Magnum in zwei versetzten Reihen, Curved Magnum auf einem Bogen.
+function needleIcon(nd) {
+  const ring = (m, R, rot = -Math.PI / 2) => Array.from({ length: m }, (_, k) => [R * Math.cos(rot + k * 2 * Math.PI / m), R * Math.sin(rot + k * 2 * Math.PI / m)]);
+  let P = [], r;
+  if (nd.type === "RL" || nd.type === "RS") {
+    const n = nd.n, L = {
+      1: () => [[0, 0]], 3: () => ring(3, 1), 5: () => ring(5, 1), 7: () => [...ring(6, 1), [0, 0]], 9: () => [...ring(8, 1), [0, 0]],
+      11: () => [...ring(9, 1), [-.3, 0], [.3, 0]], 14: () => [...ring(10, 1), ...ring(4, .38, Math.PI / 4)], 18: () => [...ring(12, 1), ...ring(6, .5)] }[n] || (() => ring(n, 1));
+    P = L(); const outer = n === 1 ? 0 : 1, m = n === 1 ? 1 : n <= 5 ? n : n <= 9 ? n - 1 : n <= 11 ? 9 : n <= 14 ? 10 : 12;
+    r = n === 1 ? 1 : Math.sin(Math.PI / m) * (nd.type === "RS" ? .62 : .84);
+    const s = 15 / (outer + r); P = P.map(([x, y]) => [20 + x * s, 20 + y * s]); r *= s;
+  } else {
+    const n = nd.n, top = Math.ceil(n / 2), bot = n - top, pitch = Math.min(35 / (top - .5 + 1e-9), 8);
+    r = pitch * .46; const x0 = 20 - (top - 1) * pitch / 2 - pitch / 4, curve = nd.type === "RM" ? 5 / ((top * pitch / 2) ** 2) : 0;
+    for (let k = 0; k < top; k++) { const x = x0 + k * pitch; P.push([x, 17 + curve * (x - 20) ** 2]); }
+    for (let k = 0; k < bot; k++) { const x = x0 + pitch / 2 + k * pitch; P.push([x, 17 + pitch * .8 + curve * (x - 20) ** 2]); }
+    const ys = P.map(p => p[1]), dy = 20 - (Math.min(...ys) + Math.max(...ys)) / 2; P = P.map(([x, y]) => [x, y + dy]);
+  }
+  return `<svg viewBox="0 0 40 40" aria-hidden="true">${P.map(([x, y]) => `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r.toFixed(2)}" fill="#fff"/>`).join("")}</svg>`;
 }
 
 /* ---------- surface-true mapping ---------- */
