@@ -147,7 +147,7 @@
 
   /* ---------- Overlays auf dem Foto: weißes Glas ---------- */
   .status, .info { position: absolute; z-index: 4; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); color: var(--ink); }
-  .status { bottom: calc(var(--inset) + var(--h-lg) + var(--s3)); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
+  .status { top: calc(48px + var(--s2)); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
   .status[data-s="busy"] .dot { background: var(--accent); animation: blink .9s infinite; }
   .status[data-s="err"] .dot { background: oklch(75% .16 70); }
@@ -170,7 +170,8 @@
   .isl-status .loader i, .isl-status .loader b { left: 9px; top: 9px; width: 3px; height: 3px; margin: -1.5px; }
   .isl-status .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(7px); }
   .isl-status .loader b { width: 3px; height: 3px; }
-  .isl-status[data-s="err"] .loader { visibility: hidden; width: 0; margin-right: -10px; }
+  .isl-status:not([data-s="busy"]) .loader { display: none; }
+  .isl-status:not([data-s="busy"]) { padding-left: 22px; }
   .views { display: flex; gap: 2px; }
   .views button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: oklch(100% 0 0 / .55); }
   .views button .ic { width: 18px; height: 18px; }
@@ -305,7 +306,8 @@
     .top { padding: 0 var(--s2); }
     .brand .logo { height: 20px; }
     .card { --frame-w: 5px; --r-outer: 40px; }
-    .stage > .status { bottom: calc(var(--inset) + var(--h-lg) + var(--s2)); }
+    /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
+    .card:has(#info:not([hidden])) .stage > .status { top: calc(56px + 44px + var(--s2)); }
     #panelPlace { flex-direction: column; align-items: stretch; }
     .motifs { align-self: flex-start; }
     .motif-card { width: 76px; height: 76px; }
@@ -316,7 +318,6 @@
     #newPhoto span { display: none; }
     .tray { left: calc(100% + var(--s2)); bottom: 0; }
     .tray .thumbs { max-width: calc(100vw - 140px); }
-    .card:has(#panelPlace:not([hidden])) .stage > .status { bottom: calc(var(--inset) + var(--h-lg) + var(--s2) + 76px + var(--s2)); }
     /* Maßstab-Karte: volle Breite unter der Insel */
     .info { left: var(--s2); right: var(--s2); top: 56px; width: auto; }
     .card > .panel { left: var(--inset); right: var(--inset); bottom: var(--inset); transform: none; max-width: none; }
@@ -494,7 +495,8 @@ function setStep(n) {
 }
 function status(text, s = "busy") {
   // während der Analyse spricht die Insel oben, sonst die Hinweis-Pille über der Leiste
-  const inIsland = S.step === 2, el = $("#status"), changed = text && text !== $("#statusText").textContent;
+  // Analyse und Hinweise ohne Größe in der Insel; mit Größe in der Insel als Pille direkt darunter
+  const inIsland = S.step === 2 || (!!text && !$("#islSize").textContent), el = $("#status"), changed = text && text !== $("#statusText").textContent;
   el.hidden = !text || inIsland; $("#statusText").textContent = inIsland ? "" : text || ""; el.dataset.s = s;
   if (changed && !inIsland) swapAnim(el);
   if (inIsland) { const t = $("#islText"); if (text && t.textContent !== text) { t.textContent = text; swapAnim(t); } $("#islStatus").dataset.s = s; }
@@ -686,6 +688,7 @@ async function analyse() {
     await frame(); S.skin = seg ? skinMask(seg) : null;
     if (MOBILE && segmenter) { segmenter.close(); segmenter = null; }
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
+    S.skin = tidySkin(S.skin);
     stage = "3D-Modell"; status("3D-Modell …");
     // one heavy step per frame, so the scan animation and the page stay responsive
     await frame(); refineDepth(); await frame(); buildGeometry(); await frame(); buildMesh(); await frame();
@@ -753,7 +756,8 @@ function colourGate(m, raw) {
   for (let i = 0; i < n; i++) {
     if (m[i] <= 0) continue;
     const dr = C[i * 2] - mr, db = C[i * 2 + 1] - mb, d = Math.sqrt(Math.max(0, (vb * dr * dr - 2 * cv * dr * db + vr * db * db) / det));
-    const g = clamp((4.5 - d) / 2, 0, 1), conf = clamp((raw[i] - .75) / .2, 0, 1);
+    const ink = clamp(1 - (Math.abs(C[i * 2] - 128) + Math.abs(C[i * 2 + 1] - 128)) / 26, 0, 1); // Tattoo-Tinte ist fast farblos
+    const g = Math.max(clamp((4.5 - d) / 2, 0, 1), .9 * ink), conf = clamp((raw[i] - .75) / .2, 0, 1);
     out[i] = m[i] * (g + (1 - g) * conf);
   }
   return blurField(out, S.pw, S.ph, Math.max(1, Math.round(S.pw / 500)));
@@ -812,6 +816,33 @@ function depthMask(d) {
   }
   return genericSkinGate(refineMask(m));
 }
+// Aufräumen der Hautmaske:
+// 1 · nur der Arm bleibt: kleine, abgetrennte Flächen (Kissen, Stoff in Hautfarbe) fliegen raus
+// 2 · Lücken am Rand schließen (Closing über exakte Distanzfelder): Tattoos, Schatten oder Haare am Armrand
+//     reißen sonst Kerben und Löcher in die Haut. Der Radius ist an die Armbreite gekoppelt, darum
+//     wachsen keine großen Flächen zwischen Arm und Umgebung zu.
+function tidySkin(m) {
+  const w = S.pw, h = S.ph, n = w * h, lab = new Int32Array(n), sizes = [0];
+  for (let s = 0; s < n; s++) {
+    if (lab[s] || m[s] <= .5) continue;
+    const id = sizes.length, st = [s]; lab[s] = id; let a = 0;
+    while (st.length) { const i = st.pop(), x = i % w; a++;
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1])
+        if (j >= 0 && !lab[j] && m[j] > .5) { lab[j] = id; st.push(j); } }
+    sizes.push(a);
+  }
+  const big = Math.max(0, ...sizes), keep = sizes.map(a => a >= .3 * big);
+  if (!big) return m;
+  const bin = new Uint8Array(n), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const l = lab[i]; bin[i] = l && keep[l] ? 1 : 0; out[i] = l && !keep[l] ? 0 : m[i]; }
+  // Armbreite grob aus dem größten Stück: Fläche / Länge der Diagonale
+  let area = 0; for (let i = 0; i < n; i++) area += bin[i];
+  const r = clamp(.22 * area / Math.hypot(w, h), 3, .08 * Math.min(w, h));
+  const dOut = distanceField(bin, w, h), dil = new Uint8Array(n); for (let i = 0; i < n; i++) dil[i] = dOut[i] <= r ? 0 : 1;
+  const dIn = distanceField(dil, w, h);
+  for (let i = 0; i < n; i++) { const c = clamp(dIn[i] - r + .5, 0, 1); if (c > out[i]) out[i] = c; }
+  return out;
+}
 const coverage = m => { let s = 0; for (let i = 0; i < m.length; i++) s += m[i] > .5; return s / m.length; };
 function blurField(a, w, h, r) { // separable box blur, two passes ~ gaussian
   let src = a, tmp = new Float32Array(a.length), out = new Float32Array(a.length);
@@ -837,7 +868,7 @@ function fillHoles(m, w, h) {
   while (st.length) { const i = st.pop(), x = i % w; if (x > 0) seed(i - 1); if (x < w - 1) seed(i + 1); if (i >= w) seed(i - w); if (i < n - w) seed(i + w); }
   // nur kleine Löcher füllen (Tattoo, Uhr, Schatten); große umschlossene Flächen sind eher Kleidung
   let area = 0; for (let i = 0; i < n; i++) area += m[i] > .5;
-  const maxHole = .08 * area, seen = new Uint8Array(n);
+  const maxHole = .12 * area, seen = new Uint8Array(n);
   for (let s = 0; s < n; s++) {
     if (out[s] || seen[s] || m[s] > .5) continue;
     const comp = [s], q = [s]; seen[s] = 1;
