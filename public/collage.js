@@ -18,20 +18,25 @@ function load(src) {
   return loaded.get(src);
 }
 
-// items: [{ id, src }]; returns [{ id, x, y, w, h, rot }] and the total height (px)
+// items: [{ id, src, fixed? }]; fixed = { x, y, w, h, rot } bleibt, wo es ist (vom Nutzer verschoben oder schon gelegt).
+// Neue Sticker werden nach Größe sortiert (große zuerst) in die freien Stellen gelegt: das nutzt den Platz am besten.
+// returns [{ id, x, y, w, h, rot }] and the total height (px)
 export async function layoutCollage(items, width, opts = {}) {
-  const gap = opts.gap ?? (width < 520 ? 10 : 18), perRow = opts.perRow ?? (width < 520 ? 2 : width < 900 ? 3 : 4);
+  const gap = opts.gap ?? (width < 520 ? 6 : 10), perRow = opts.perRow ?? (width < 520 ? 2.3 : width < 900 ? 3.3 : 4.4);
   const cols = Math.max(4, Math.floor(width / CELL)), unit = width / perRow;
   const rows = []; const row = y => rows[y] || (rows[y] = new Uint8Array(cols));
   const out = [];
-  for (const it of items) {
-    const img = await load(it.src).catch(() => null); if (!img) continue;
-    const rnd = seeded(it.id), ar = img.naturalWidth / img.naturalHeight;
+  const prepared = [];
+  for (const it of items) { const img = await load(it.src).catch(() => null); if (img) prepared.push({ it, img, area: img.naturalWidth * img.naturalHeight }); }
+  const wide = p => p.img.naturalWidth / p.img.naturalHeight > 2.2 ? 1 : 0; // breite Motive zuerst, die brauchen die längsten freien Strecken
+  const ordered = [...prepared.filter(p => p.it.fixed), ...prepared.filter(p => !p.it.fixed).sort((a, b) => wide(b) - wide(a))];
+  for (const { it, img } of ordered) {
+    const rnd = seeded(it.id), ar = img.naturalWidth / img.naturalHeight, F = it.fixed;
     // gleiche „Masse“ für alle: Fläche statt Breite angleichen, dazu etwas Zufall; sehr breite Motive dürfen breiter sein
     const s = unit * (.86 + .26 * rnd()) * (ar > 2.2 ? 1.25 : 1);
-    let w = s * Math.sqrt(ar), h = s / Math.sqrt(ar);
-    const maxW = width * .96; if (w > maxW) { h *= maxW / w; w = maxW; }
-    const rot = (rnd() * 2 - 1) * 7 * Math.PI / 180;
+    let w = F ? F.w : s * Math.sqrt(ar), h = F ? F.h : s / Math.sqrt(ar);
+    const maxW = width * .96; if (!F && w > maxW) { h *= maxW / w; w = maxW; }
+    const r0 = (rnd() * 2 - 1) * 7, rot = (F ? F.rot : r0) * Math.PI / 180;
     // gedrehte Form ins Raster legen, um den Abstand erweitert
     const bw = Math.abs(w * Math.cos(rot)) + Math.abs(h * Math.sin(rot)), bh = Math.abs(w * Math.sin(rot)) + Math.abs(h * Math.cos(rot));
     const g = Math.ceil(gap / CELL), mw = Math.ceil(bw / CELL) + 2 * g, mh = Math.ceil(bh / CELL) + 2 * g;
@@ -48,6 +53,7 @@ export async function layoutCollage(items, width, opts = {}) {
     const fits = (px, py) => { for (let k = 0; k < mask.length; k += 2) { const cx = px + mask[k]; if (cx < 0 || cx >= cols) return false; if (row(py + mask[k + 1])[cx]) return false; } return true; };
     let best = null;
     const xMax = cols - mw + g; // die äußere Abstandszone darf über den Rand ragen
+    if (F) best = [Math.round((F.x + F.w / 2) / CELL - mw / 2), Math.round((F.y + F.h / 2) / CELL - mh / 2)];
     for (let py = -g; !best; py++) {
       // pro Zeile in zufälliger Reihenfolge der Startspalte suchen, sonst klebt alles links
       const start = Math.floor(rnd() * Math.max(1, xMax + g)), span = xMax + g + 1;
@@ -57,6 +63,7 @@ export async function layoutCollage(items, width, opts = {}) {
     if (!best) continue;
     const [px, py] = best;
     for (let k = 0; k < mask.length; k += 2) { const cx = px + mask[k], cy = py + mask[k + 1]; if (cx >= 0 && cx < cols && cy >= 0) row(cy)[cx] = 1; }
+    if (F) { out.push({ id: it.id, ...F }); continue; }
     const cxp = (px + mw / 2) * CELL, cyp = (py + mh / 2) * CELL;
     out.push({ id: it.id, x: cxp - w / 2, y: cyp - h / 2, w, h, rot: rot * 180 / Math.PI });
   }

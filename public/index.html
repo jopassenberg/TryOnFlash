@@ -302,13 +302,16 @@
   .rb[aria-pressed="true"] { background: var(--n-900); color: #fff; }
   .rb .ic { width: 18px; height: 18px; }
   .rb .badge { position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; line-height: 18px; text-align: center; background: var(--n-900); color: #fff; }
-  .flashes { position: relative; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
-  .flashes::-webkit-scrollbar { display: none; }
+  /* Flashes sind ein Canvas: ziehen zum Verschieben, zwei Finger oder Strg+Scrollen zum Zoomen, Motive mit der Maus/dem Finger verschieben */
+  .flashes { position: relative; min-height: 0; overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .flashes.panning { cursor: grabbing; }
+  .fl-board { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
   /* Collage: Positionen und Drehung kommen aus collage.js */
-  .fl-grid { position: relative; margin: 16px 8px 120px; min-height: 40px; }
-  .fl-tile { position: absolute; display: grid; place-items: center; transform: rotate(var(--r, 0deg)); animation: pop .5s var(--spring) both; transition: transform .45s var(--spring), opacity .25s; }
+  .fl-grid { position: relative; min-height: 40px; }
+  .fl-tile { position: absolute; display: grid; place-items: center; cursor: pointer; transform: rotate(var(--r, 0deg)); animation: pop .5s var(--spring) both; transition: transform .45s var(--spring), opacity .25s; }
   .fl-tile:hover { transform: rotate(var(--r, 0deg)) translateY(-4px) scale(1.02); }
   .fl-tile:active { transform: rotate(var(--r, 0deg)) scale(.96); }
+  .fl-tile.dragging { z-index: 5; transition: none; transform: rotate(var(--r, 0deg)) scale(1.05); filter: drop-shadow(0 18px 24px oklch(0% 0 0 / .12)); cursor: grabbing; }
   .fl-tile img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
   .fl-tile .chk { position: absolute; right: 6%; top: 6%; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--fill-2); color: transparent; }
   .fl-tile .chk .ic { width: 15px; height: 15px; }
@@ -382,6 +385,7 @@
   .cuttools .btn { width: 36px; height: 36px; background: var(--fill); }
   .cuttools .btn:hover { background: var(--fill); }
   .cutbox > .panel { padding: var(--s1); row-gap: var(--s2); }
+  .cutbox > .panel.cut-look { justify-content: flex-start; gap: var(--s2); padding-bottom: 0; }
   .cutbox > .panel .group.end { margin-left: auto; }
   .seg { display: inline-flex; gap: 2px; padding: 4px; height: var(--h); border-radius: var(--r-full); background: var(--fill); }
   .seg button { padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-2); }
@@ -433,7 +437,6 @@
     .card { --frame-w: 5px; --r-outer: 40px; }
     .tabbar { justify-self: stretch; margin-top: var(--s2); }
     .tabbar button { flex: 1; justify-content: center; }
-    .fl-grid { margin: 8px 4px 120px; }
     .fl-dock { left: var(--s2); right: var(--s2); translate: none; bottom: calc(max(var(--s2), env(safe-area-inset-bottom)) + 48px + var(--s3)); }
     /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
     .card:has(#info:not([hidden])) .stage > .status { top: calc(56px + 44px + var(--s2)); }
@@ -485,6 +488,7 @@
     </nav>
     <div class="fl-tools">
       <button class="rb" id="flLinksBtn" hidden aria-label="Geteilte Links"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg><span class="badge" id="flLinksN"></span></button>
+      <button class="rb" id="flTidy" hidden aria-label="Neu anordnen"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg></button>
       <button class="rb" id="flSelect" hidden aria-pressed="false" aria-label="Auswählen zum Teilen"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg></button>
       <button class="rb main" id="flUpload" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button>
     </div>
@@ -565,11 +569,11 @@
   <!-- Flashes: eigene Seite, Galerie der ausgeschnittenen Motive. Teilen erzeugt einen verschlüsselten Link mit Ablauf -->
   <section class="flashes" id="flashesView" hidden aria-label="Flashes">
     <div class="fl-empty" id="flEmpty" hidden><button class="rb main" id="flUpload2" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button><span>Flash-Bögen hochladen</span></div>
-    <div class="fl-grid" id="flGrid"></div>
+    <div class="fl-board" id="flBoard"><div class="fl-grid" id="flGrid"></div></div>
     <div class="fl-dock" id="flDock" hidden><span id="flSelInfo"></span>
       <button class="btn ghost" id="flSelCancel">Abbrechen</button>
       <button class="btn primary" id="flShare" disabled><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Link</button></div>
-    <input type="file" id="flashInput" accept="image/*" multiple hidden>
+    <input type="file" id="flashInput" accept="image/*" hidden>
   </section>
   <div id="flSheet"></div>
   <div id="flView"></div>
@@ -589,6 +593,14 @@
           <button class="btn icon" id="cutUndo" title="Rückgängig" aria-label="Rückgängig"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
           <button class="btn icon" id="cutFit" title="Einpassen" aria-label="Einpassen"><svg class="ic" aria-hidden="true"><use href="#i-center-to-fit"/></svg></button>
         </div>
+      </div>
+      <div class="panel cut-look">
+        <div class="seg" id="cutLook" role="group" aria-label="Farbe">
+          <button data-look="color" aria-pressed="true">Farbe</button>
+          <button data-look="bw" aria-pressed="false">Schwarz-Weiß</button>
+          <button data-look="black" aria-pressed="false">Nur Schwarz</button>
+        </div>
+        <button class="chip" id="cutShade" aria-pressed="true">Schattierung</button>
       </div>
       <div class="panel">
         <div class="group">
@@ -1352,12 +1364,16 @@ function loadMotif(file) {
   img.onerror = () => { URL.revokeObjectURL(url); status("Bild nicht lesbar", "err"); };
   img.src = url;
 }
-function openCut(c) {
+function openCut(c, opts = {}) {
   Object.assign(CUT, { img: c, ink: null, mask: canvasOf(c.width, c.height), comp: canvasOf(c.width, c.height), hasMask: false, dirty: true,
-    opaque: isOpaque(c), hist: [], path: null, drawing: false, zoom: 1, px: 0, py: 0, ptrs: new Map(), pinch: null });
+    opaque: isOpaque(c), hist: [], path: null, drawing: false, zoom: 1, px: 0, py: 0, ptrs: new Map(), pinch: null,
+    look: "color", shade: true, lookKey: "", lookCanvas: null, onDone: opts.onDone || null });
+  document.querySelectorAll("#cutLook button").forEach(x => x.setAttribute("aria-pressed", x.dataset.look === "color")); $("#cutShade").setAttribute("aria-pressed", true);
+  $("#cutOk").textContent = opts.okLabel || "Übernehmen";
+  if (CUT.opaque && CUT.bg && autoMask()) $("#cutHint").textContent = "Motiv erkannt · mit Lasso oder Radierer anpassen";
   cutC.width = c.width; cutC.height = c.height;
   $("#cutBg").hidden = !CUT.opaque; $("#cutBg").setAttribute("aria-pressed", CUT.bg);
-  $("#cut").hidden = false; setTool("lasso"); fitCut();
+  const hint = $("#cutHint").textContent; $("#cut").hidden = false; setTool("lasso"); if (CUT.hasMask) $("#cutHint").textContent = hint; fitCut();
   cancelAnimationFrame(CUT.raf);
   const loop = t => { if ($("#cut").hidden) return; drawCut(t); CUT.raf = requestAnimationFrame(loop); };
   CUT.raf = requestAnimationFrame(loop);
@@ -1393,9 +1409,31 @@ $("#cutFit").onclick = fitCut;
 new ResizeObserver(() => { if (!$("#cut").hidden && CUT.img) fitCut(); }).observe(cutStage);
 
 function source() { // what the motif is made of: the ink without background, or the image as it is
-  if (CUT.bg && CUT.opaque) { if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas; return CUT.ink; }
-  return CUT.img;
+  let base = CUT.img;
+  if (CUT.bg && CUT.opaque) { if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas; base = CUT.ink; }
+  if (CUT.look === "color" && CUT.shade) return base;
+  const key = (base === CUT.ink ? "ink" : "img") + CUT.look + CUT.shade;
+  if (CUT.lookKey !== key) { CUT.lookCanvas = applyLook(base, CUT.look, CUT.shade); CUT.lookKey = key; }
+  return CUT.lookCanvas;
 }
+// Farbe: wie es ist · Schwarz-Weiß: Graustufen · Nur Schwarz: nur die dunkle Linienarbeit, als sattes Schwarz.
+// Schattierung aus: weiche, halbtransparente oder mittelgraue Tinte (Schatten, Punkte) fällt weg.
+function applyLook(src, look, shade) {
+  const c = canvasOf(src.width, src.height), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(src, 0, 0);
+  const id = g.getImageData(0, 0, c.width, c.height), d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i], gg = d[i + 1], b = d[i + 2], a = d[i + 3] / 255; if (a <= 0) continue;
+    const l = (.299 * r + .587 * gg + .114 * b) / 255, ch = (Math.max(r, gg, b) - Math.min(r, gg, b)) / 255;
+    if (!shade && (a < .6 || (l > .32 && ch < .18 && a < .9))) { d[i + 3] = 0; continue; }
+    if (look === "bw") { const v = l * 255; r = gg = b = v; }
+    if (look === "black") { const k = clamp((.55 - l) / .25, 0, 1) * clamp((a - .25) / .35, 0, 1); r = gg = b = 18; a = k; }
+    d[i] = r; d[i + 1] = gg; d[i + 2] = b; d[i + 3] = a * 255;
+  }
+  g.putImageData(id, 0, 0); return c;
+}
+document.querySelectorAll("#cutLook button").forEach(b => b.onclick = () => {
+  CUT.look = b.dataset.look; document.querySelectorAll("#cutLook button").forEach(x => x.setAttribute("aria-pressed", x === b)); CUT.dirty = true; });
+$("#cutShade").onclick = () => { CUT.shade = !CUT.shade; $("#cutShade").setAttribute("aria-pressed", CUT.shade); CUT.dirty = true; };
 function drawCut() {
   const c = CUT.img, g = cutG, W = c.width, H = c.height;
   if (CUT.dirty) { // result preview: (ink on paper | image) inside the mask
@@ -1517,10 +1555,44 @@ $("#cutOk").onclick = () => {
   const src = source(), r = canvasOf(src.width, src.height), g = r.getContext("2d");
   g.drawImage(src, 0, 0);
   if (CUT.hasMask) { g.globalCompositeOperation = "destination-in"; g.drawImage(CUT.mask, 0, 0); }
-  const t = trim(r); closeCut();
+  const t = trim(r), done = CUT.onDone || addMotif; CUT.onDone = null; closeCut();
   if (!t) return status("Auswahl ist leer", "err");
-  addMotif(t);
+  done(t);
 };
+// Smart ausstechen: nach dem Entfernen des Hintergrunds die größte zusammenhängende Tinte (plus was in ihrem
+// Rahmen liegt) als Auswahl vorgeben. Text, Wasserzeichen oder Nachbarmotive im Screenshot bleiben draußen.
+function autoMask() {
+  if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas;
+  const c = CUT.ink, k = Math.min(1, 480 / Math.max(c.width, c.height)), w = Math.max(2, Math.round(c.width * k)), h = Math.max(2, Math.round(c.height * k));
+  const s = canvasOf(w, h), sg = s.getContext("2d", { willReadFrequently: true }); sg.drawImage(c, 0, 0, w, h);
+  const d = sg.getImageData(0, 0, w, h).data, n = w * h, ink = new Uint8Array(n); let total = 0;
+  for (let i = 0; i < n; i++) if (d[i * 4 + 3] > 110) { ink[i] = 1; total++; }
+  if (total < 30) return false;
+  const D = distanceField(ink, w, h), r = Math.max(2, Math.max(w, h) * .02), grow = new Uint8Array(n); for (let i = 0; i < n; i++) grow[i] = D[i] <= r ? 1 : 0;
+  const lab = new Int32Array(n), boxes = [];
+  for (let s0 = 0; s0 < n; s0++) {
+    if (!grow[s0] || lab[s0]) continue;
+    const id = boxes.length + 1, st = [s0], b = { ids: [id], x0: w, y0: h, x1: 0, y1: 0, ink: 0 }; lab[s0] = id;
+    while (st.length) { const i = st.pop(), x = i % w, y = (i / w) | 0;
+      if (ink[i]) { b.ink++; b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y); }
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]) if (j >= 0 && grow[j] && !lab[j]) { lab[j] = id; st.push(j); } }
+    boxes.push(b);
+  }
+  if (boxes.length < 2) return false; // nur ein Motiv: keine Auswahl nötig
+  boxes.sort((a, b) => b.ink - a.ink);
+  const main = boxes[0];
+  for (const b of boxes.slice(1)) { // was größtenteils im Rahmen des Hauptmotivs liegt, gehört dazu
+    const ix = Math.min(main.x1, b.x1) - Math.max(main.x0, b.x0), iy = Math.min(main.y1, b.y1) - Math.max(main.y0, b.y0);
+    if (ix > 0 && iy > 0 && ix * iy > .7 * (b.x1 - b.x0 + 1) * (b.y1 - b.y0 + 1)) main.ids.push(...b.ids);
+  }
+  if (main.ink < total * .35) return false; // kein klares Hauptmotiv: lieber nichts vorgeben
+  const own = new Set(main.ids), m = new Uint8Array(n); for (let i = 0; i < n; i++) m[i] = own.has(lab[i]) ? 1 : 0;
+  const D2 = distanceField(m, w, h), md = sg.createImageData(w, h); // noch etwas Luft um die Auswahl
+  for (let i = 0; i < n; i++) md.data[i * 4 + 3] = clamp(r * 1.5 - D2[i] + .5, 0, 1) * 255;
+  sg.putImageData(md, 0, 0);
+  const mg = CUT.mask.getContext("2d"); mg.clearRect(0, 0, CUT.mask.width, CUT.mask.height); mg.imageSmoothingQuality = "high"; mg.drawImage(s, 0, 0, CUT.mask.width, CUT.mask.height);
+  CUT.hasMask = true; CUT.dirty = true; return true;
+}
 // Crop to the lasso, optionally remove the background, then mask with the (anti-aliased) lasso shape
 function extract(img, P, removeBg) {
   let x0 = 0, y0 = 0, x1 = img.width, y1 = img.height;
@@ -1650,7 +1722,7 @@ function distanceField(inside, w, h) { // distance (px) from every pixel to the 
   return D;
 }
 function makeSticker(c) {
-  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .07, sw = Math.max(2, M * .014), o = Math.ceil(pad + sw) + 2;
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .07, sw = Math.max(2, M * .014), o = Math.ceil(pad + sw + M * .05) + 2;
   const W = w + 2 * o, H = h + 2 * o, canvas = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
   // work on a mask of at most ~640 px (padding included), then scale the result up smoothly
   const k = Math.min(1, 640 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
@@ -1663,21 +1735,27 @@ function makeSticker(c) {
   for (let y = 0; y < mh; y++) { seed(y * mw); seed(y * mw + mw - 1); }
   while (stack.length) { const i = stack.pop(), x = i % mw; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (i >= mw) seed(i - mw); if (i < n - mw) seed(i + mw); }
   const inside = new Uint8Array(n); for (let i = 0; i < n; i++) inside[i] = outside[i] ? 0 : 1;
-  const D = distanceField(inside, mw, mh), P = pad * k, SW = sw * k;
+  const { fill, ring } = smoothCut(inside, mw, mh, pad * k + sw * k, sw * k, M * .05 * k);
   const img = mg.createImageData(mw, mh), px = img.data;
-  for (let i = 0; i < n; i++) {
-    const inner = clamp(P - D[i] + .5, 0, 1), outer = clamp(P + SW - D[i] + .5, 0, 1), ring = outer - inner;
-    px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = 255; px[i * 4 + 3] = (ring * .6 + inner * .12) * 255;
-  }
+  for (let i = 0; i < n; i++) { px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = 255; px[i * 4 + 3] = (ring[i] * .6 + fill[i] * .12) * 255; }
   mg.putImageData(img, 0, 0);
   const res = canvas(W, H), g = res.getContext("2d", { willReadFrequently: true });
   g.imageSmoothingQuality = "high"; g.drawImage(mc, 0, 0, W, H); g.drawImage(c, o, o);
   return { canvas: res, data: g.getImageData(0, 0, W, H), grow: [W / w, H / h] };
 }
 
+// Ruhiger Rand: die Form wird erst „geschlossen“ (Lücken und Kerben bis R zugemacht), dann um den Rand
+// verschoben. So bleibt die Kontur rund, aber ohne die vielen kleinen Hügel jeder Linie.
+function smoothCut(inside, w, h, pad, sw, R) {
+  const n = w * h, D1 = distanceField(inside, w, h), grown = new Uint8Array(n);
+  for (let i = 0; i < n; i++) grown[i] = D1[i] <= R + pad ? 0 : 1; // 1 = draußen
+  const D2 = distanceField(grown, w, h), fill = new Float32Array(n), ring = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const e = D2[i] - R; fill[i] = clamp(e - sw + .5, 0, 1); ring[i] = clamp(e + .5, 0, 1) - fill[i]; }
+  return { fill, ring };
+}
 // Die-Cut für die Galerie: Motiv, weißer Rand (6 %) und eine feine graue Schnittkante, transparent drumherum
 function dieCut(c) {
-  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .075, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw) + 2;
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .075, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw + M * .07) + 2;
   const W = w + 2 * o, H = h + 2 * o, cv = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
   const k = Math.min(1, 900 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
   const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
@@ -1688,10 +1766,9 @@ function dieCut(c) {
   for (let y = 0; y < mh; y++) { seed(y * mw); seed(y * mw + mw - 1); }
   while (st.length) { const i = st.pop(), x = i % mw; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (i >= mw) seed(i - mw); if (i < n - mw) seed(i + mw); }
   const inside = new Uint8Array(n); for (let i = 0; i < n; i++) inside[i] = outside[i] ? 0 : 1;
-  const D = distanceField(inside, mw, mh), P = pad * k, SW = sw * k, img = mg.createImageData(mw, mh), px = img.data;
+  const { fill, ring } = smoothCut(inside, mw, mh, pad * k + sw * k, sw * k, M * .07 * k), img = mg.createImageData(mw, mh), px = img.data;
   for (let i = 0; i < n; i++) {
-    const inner = clamp(P - D[i] + .5, 0, 1), outer = clamp(P + SW - D[i] + .5, 0, 1), ring = outer - inner, a = inner + ring;
-    const v = a > 0 ? (inner * 255 + ring * 196) / a : 255; // innen weiß, Kante hellgrau
+    const a = fill[i] + ring[i], v = a > 0 ? (fill[i] * 255 + ring[i] * 196) / a : 255; // innen weiß, Kante hellgrau
     px[i * 4] = px[i * 4 + 1] = v; px[i * 4 + 2] = v - 2; px[i * 4 + 3] = a * 255;
   }
   mg.putImageData(img, 0, 0);
@@ -2336,7 +2413,7 @@ async function ensureSticker(f) {
 const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type, q));
 function renderFlashes() {
   const n = FL.items.length;
-  $("#flEmpty").hidden = !!n; $("#flSelect").hidden = !n;
+  $("#flEmpty").hidden = !!n; $("#flSelect").hidden = !n; $("#flTidy").hidden = n < 2;
   $("#flashesView").classList.toggle("selecting", FL.selecting); $("#flSelect").setAttribute("aria-pressed", FL.selecting);
   layoutFlashes();
   $("#flDock").hidden = !FL.selecting;
@@ -2344,98 +2421,93 @@ function renderFlashes() {
   $("#flLinksBtn").hidden = !FL.links.length; $("#flLinksN").textContent = FL.links.length;
   for (const f of FL.items) if (!f.sticker) ensureSticker(f).then(renderFlashes).catch(e => console.warn("sticker", e));
 }
-// Collage neu berechnen, wenn sich Motive oder die Breite ändern; nur Auswahl ändert die Kacheln direkt
+// Collage: jedes Flash bekommt einmal eine Position und behält sie (Canvas). Neue Flashes kommen in freie
+// Stellen, „Neu anordnen“ packt alles frisch und dicht.
 let layoutKey = "", layoutRun = 0;
-async function layoutFlashes() {
-  const grid = $("#flGrid"), W = grid.clientWidth; if (!W) return;
-  const key = W + "|" + FL.items.map(f => f.id + (f.sticker ? "s" : "")).join(",");
-  if (key !== layoutKey) {
-    const run = ++layoutRun, L = await layoutCollage(FL.items.map(f => ({ id: f.id, src: flashURL(f) })), W);
-    if (run !== layoutRun) return; layoutKey = key;
-    grid.style.height = L.height + "px";
+const VIEW = { x: 16, y: 16, z: 1, fitted: false };
+const posKey = () => FL.items.map(f => f.id + (f.sticker ? "s" : "") + (f.pos ? "p" : "")).join(",");
+async function layoutFlashes(force) {
+  const V = $("#flashesView"), grid = $("#flGrid"); if (!V.clientWidth) return;
+  const W = Math.max(280, V.clientWidth - 32);
+  if (force || posKey() !== layoutKey) {
+    const run = ++layoutRun, L = await layoutCollage(FL.items.map(f => ({ id: f.id, src: flashURL(f), fixed: f.pos || null })), W);
+    if (run !== layoutRun) return;
+    for (const p of L.items) { const f = FL.items.find(x => x.id === p.id); if (f && !f.pos && f.sticker) { f.pos = { x: p.x, y: p.y, w: p.w, h: p.h, rot: p.rot }; idb("flashes", "readwrite", s => s.put(f)); } }
+    layoutKey = posKey();
+    let x1 = W, y1 = 0; for (const p of L.items) { x1 = Math.max(x1, p.x + p.w); y1 = Math.max(y1, p.y + p.h); }
+    grid.style.width = x1 + "px"; grid.style.height = y1 + 40 + "px";
     grid.innerHTML = L.items.map((p, i) => { const f = FL.items.find(x => x.id === p.id);
       return `<button class="fl-tile" data-id="${p.id}" style="left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;width:${p.w.toFixed(1)}px;height:${p.h.toFixed(1)}px;--r:${p.rot.toFixed(2)}deg;animation-delay:${Math.min(i, 14) * 35}ms" aria-label="${esc(f.name)}">
-        <img alt="" src="${flashURL(f)}"><span class="chk"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg></span></button>`; }).join("");
-    grid.querySelectorAll(".fl-tile").forEach(b => b.onclick = () => FL.selecting ? toggleSel(b.dataset.id) : viewFlash(b.dataset.id));
+        <img alt="" src="${flashURL(f)}" draggable="false"><span class="chk"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg></span></button>`; }).join("");
+    if (!VIEW.fitted && L.items.length) fitBoard(x1);
   }
   grid.querySelectorAll(".fl-tile").forEach(b => b.setAttribute("aria-pressed", FL.sel.has(b.dataset.id)));
 }
-new ResizeObserver(() => { if (!$("#flashesView").hidden) layoutFlashes(); }).observe($("#flashesView"));
+function applyView() { $("#flBoard").style.transform = `translate(${VIEW.x}px, ${VIEW.y}px) scale(${VIEW.z})`; }
+function fitBoard(x1) { // alles in die Breite passen, oben anfangen
+  const V = $("#flashesView");
+  VIEW.z = clamp((V.clientWidth - 32) / Math.max(x1, 1), .35, 1); VIEW.x = (V.clientWidth - x1 * VIEW.z) / 2; VIEW.y = 16; VIEW.fitted = true; applyView();
+}
+$("#flTidy").onclick = async () => { FL.items.forEach(f => { f.pos = null; }); await idb("flashes", "readwrite", s => FL.items.forEach(f => s.put(f))); VIEW.fitted = false; layoutFlashes(true); };
+new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFlashes(); }).observe($("#flashesView"));
+// Gesten: ein Finger/Maus auf leerer Fläche = verschieben, auf einem Motiv = Motiv verschieben (oder antippen),
+// zwei Finger = zoomen, Mausrad = verschieben, Strg/Trackpad-Pinch = zoomen
+{ const V = $("#flashesView"), P = new Map(); let g = null;
+  const zoomAt = (z, cx, cy) => { const r = V.getBoundingClientRect(), ox = cx - r.left, oy = cy - r.top, nz = clamp(z, .35, 3);
+    VIEW.x = ox - (ox - VIEW.x) * nz / VIEW.z; VIEW.y = oy - (oy - VIEW.y) * nz / VIEW.z; VIEW.z = nz; applyView(); };
+  V.addEventListener("pointerdown", e => {
+    if (e.button > 0) return;
+    P.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { V.setPointerCapture(e.pointerId); } catch {}
+    if (P.size === 2) { const [a, b] = [...P.values()]; if (g?.tile) { g.tile.classList.remove("dragging"); g.tile.style.left = g.l + "px"; g.tile.style.top = g.t + "px"; }
+      g = { pinch: true, d: Math.hypot(b.x - a.x, b.y - a.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, z: VIEW.z, x: VIEW.x, y: VIEW.y }; return; }
+    const tile = e.target.closest(".fl-tile");
+    g = { tile, sx: e.clientX, sy: e.clientY, vx: VIEW.x, vy: VIEW.y, moved: false, l: tile ? parseFloat(tile.style.left) : 0, t: tile ? parseFloat(tile.style.top) : 0 };
+  });
+  V.addEventListener("pointermove", e => {
+    if (!P.has(e.pointerId) || !g) return; P.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (g.pinch) { if (P.size < 2) return; const [a, b] = [...P.values()], d = Math.hypot(b.x - a.x, b.y - a.y);
+      VIEW.z = g.z; VIEW.x = g.x; VIEW.y = g.y; zoomAt(g.z * d / g.d, g.mx, g.my); VIEW.x += (a.x + b.x) / 2 - g.mx; VIEW.y += (a.y + b.y) / 2 - g.my; applyView(); return; }
+    const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+    if (!g.moved && Math.hypot(dx, dy) < 6) return;
+    g.moved = true;
+    if (g.tile && !FL.selecting) { g.tile.classList.add("dragging"); g.tile.style.left = g.l + dx / VIEW.z + "px"; g.tile.style.top = g.t + dy / VIEW.z + "px"; }
+    else { V.classList.add("panning"); VIEW.x = g.vx + dx; VIEW.y = g.vy + dy; applyView(); }
+  });
+  const end = async e => {
+    P.delete(e.pointerId); V.classList.remove("panning");
+    if (!g) return;
+    if (g.pinch) { if (!P.size) g = null; return; }
+    if (P.size) return;
+    const G = g; g = null;
+    if (G.tile && !G.moved) { const id = G.tile.dataset.id; FL.selecting ? toggleSel(id) : viewFlash(id); return; }
+    if (G.tile && G.moved && !FL.selecting) {
+      G.tile.classList.remove("dragging");
+      const f = FL.items.find(x => x.id === G.tile.dataset.id); if (!f) return;
+      f.pos = { x: parseFloat(G.tile.style.left), y: parseFloat(G.tile.style.top), w: parseFloat(G.tile.style.width), h: parseFloat(G.tile.style.height), rot: parseFloat(G.tile.style.getPropertyValue("--r")) || 0 };
+      await idb("flashes", "readwrite", s => s.put(f));
+      const grid = $("#flGrid"); grid.style.height = Math.max(parseFloat(grid.style.height) || 0, f.pos.y + f.pos.h + 40) + "px";
+    }
+  };
+  V.addEventListener("pointerup", end); V.addEventListener("pointercancel", end);
+  V.addEventListener("wheel", e => { e.preventDefault();
+    if (e.ctrlKey) zoomAt(VIEW.z * Math.exp(-e.deltaY * .01), e.clientX, e.clientY); else { VIEW.x -= e.deltaX; VIEW.y -= e.deltaY; applyView(); } }, { passive: false });
+}
 function toggleSel(id) { FL.sel.has(id) ? FL.sel.delete(id) : FL.sel.add(id); renderFlashes(); }
 $("#flSelect").onclick = () => { FL.selecting = !FL.selecting; if (!FL.selecting) FL.sel.clear(); renderFlashes(); };
 $("#flSelCancel").onclick = () => { FL.selecting = false; FL.sel.clear(); renderFlashes(); };
 $("#flUpload").onclick = $("#flUpload2").onclick = () => $("#flashInput").click();
-$("#flashInput").onchange = async e => {
-  const files = [...e.target.files]; e.target.value = "";
-  const busy = Object.assign(document.createElement("div"), { className: "fl-busy", textContent: "Motive werden ausgeschnitten …" }); document.body.append(busy);
-  for (const f of files) {
-    try { const recs = await storeFlash(f); FL.items.unshift(...recs); renderFlashes(); await frame(); } catch (err) { console.warn("flash", err); }
-  }
-  busy.remove(); renderFlashes();
+// Ein Bild pro Flash: erst wird das Motiv smart ausgestochen, dann öffnet der Editor zum Anpassen
+// (Auswahl, Farbe, Schwarz-Weiß, nur Schwarz, Schattierung). „Speichern“ legt es in die Flashes.
+$("#flashInput").onchange = e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const img = new Image(), url = URL.createObjectURL(f), name = f.name.replace(/\.[^.]+$/, "").slice(0, 60) || "Flash";
+  img.onload = () => { URL.revokeObjectURL(url); openCut(scaled(img, MOBILE ? 1600 : 2000), { okLabel: "Speichern", onDone: c => saveFlash(c, name) }); };
+  img.src = url;
 };
-// Hochladen: Papier entfernen, einen Bogen mit mehreren Motiven in einzelne Flashes zerlegen,
-// jedes als ausgeschnittenes PNG (für Studio und Links) plus Sticker-Bild (für die Galerie) speichern.
-async function storeFlash(file) {
-  const img = await createImageBitmap(file), k = Math.min(1, 2400 / Math.max(img.width, img.height));
-  const c = Object.assign(document.createElement("canvas"), { width: Math.round(img.width * k), height: Math.round(img.height * k) });
-  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-  const cut = isOpaque(c) ? extract(c, null, true).canvas : c, parts = splitSheet(cut), base = file.name.replace(/\.[^.]+$/, "").slice(0, 50) || "Flash", recs = [];
-  for (let i = 0; i < parts.length; i++) {
-    const p = parts[i], blob = await toBlob(p, "image/png"), sticker = await toBlob(dieCut(p), "image/png");
-    const rec = { id: crypto.randomUUID(), name: parts.length > 1 ? `${base} ${i + 1}` : base, blob, sticker, w: p.width, h: p.height, created: Date.now() + i };
-    await idb("flashes", "readwrite", s => s.put(rec)); recs.push(rec);
-  }
-  return recs.reverse();
-}
-// Bogen zerlegen: Tinte etwas „zusammenwachsen“ lassen (Abstand), dann zusammenhängende Gruppen suchen.
-// Gruppen unter 1,5 % der Tinte (Schmutz, Signaturen) gehören zur nächsten großen Gruppe oder fallen weg.
-function splitSheet(c) {
-  const k = Math.min(1, 640 / Math.max(c.width, c.height)), w = Math.max(2, Math.round(c.width * k)), h = Math.max(2, Math.round(c.height * k));
-  const s = Object.assign(document.createElement("canvas"), { width: w, height: h }), g = s.getContext("2d", { willReadFrequently: true });
-  g.drawImage(c, 0, 0, w, h);
-  const d = g.getImageData(0, 0, w, h).data, n = w * h, ink = new Uint8Array(n); let total = 0;
-  // nur kräftige Tinte verbindet (helle Punkte, Schattierung und Hilfslinien verbinden Motive sonst über die Lücke)
-  for (let i = 0; i < n; i++) if (d[i * 4 + 3] > 110) { ink[i] = 1; total++; }
-  if (total < 20) return [trim(c) || c];
-  const D = distanceField(ink, w, h), r = Math.max(1.5, Math.max(w, h) * .004), grow = new Uint8Array(n); for (let i = 0; i < n; i++) grow[i] = D[i] <= r ? 1 : 0;
-  const lab = new Int32Array(n), boxes = [];
-  for (let s0 = 0; s0 < n; s0++) {
-    if (!grow[s0] || lab[s0]) continue;
-    const id = boxes.length + 1, st = [s0]; lab[s0] = id; const b = { x0: w, y0: h, x1: 0, y1: 0, ink: 0 };
-    while (st.length) { const i = st.pop(), x = i % w, y = (i / w) | 0;
-      if (ink[i]) { b.ink++; b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y); }
-      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]) if (j >= 0 && grow[j] && !lab[j]) { lab[j] = id; st.push(j); } }
-    boxes.push(b);
-  }
-  boxes.forEach((b, i) => { b.id = i + 1; b.ids = [i + 1]; });
-  // Eine Gruppe, die zum größten Teil im Rahmen einer anderen liegt (z. B. Punkt im Ring), gehört zu ihr.
-  // Nur leicht überlappende Rahmen (verschachtelte Motive auf einem Bogen) bleiben getrennt.
-  let merged = true;
-  while (merged) {
-    merged = false;
-    for (let i = 0; i < boxes.length && !merged; i++) for (let j = i + 1; j < boxes.length && !merged; j++) {
-      const A = boxes[i], B = boxes[j];
-      const ix = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0), iy = Math.min(A.y1, B.y1) - Math.max(A.y0, B.y0);
-      const small = Math.min((A.x1 - A.x0 + 1) * (A.y1 - A.y0 + 1), (B.x1 - B.x0 + 1) * (B.y1 - B.y0 + 1));
-      if (ix > 0 && iy > 0 && ix * iy > .7 * small) {
-        Object.assign(A, { x0: Math.min(A.x0, B.x0), y0: Math.min(A.y0, B.y0), x1: Math.max(A.x1, B.x1), y1: Math.max(A.y1, B.y1), ink: A.ink + B.ink, ids: A.ids.concat(B.ids) });
-        boxes.splice(j, 1); merged = true;
-      }
-    }
-  }
-  const big = boxes.filter(b => b.ink >= total * .015).slice(0, 24);
-  if (big.length <= 1) return [trim(c) || c];
-  return big.map(b => {
-    const pad = 3, x0 = Math.max(0, (b.x0 - pad) / k), y0 = Math.max(0, (b.y0 - pad) / k), x1 = Math.min(c.width, (b.x1 + 1 + pad) / k), y1 = Math.min(c.height, (b.y1 + 1 + pad) / k);
-    // nur die Tinte dieser Gruppe übernehmen (Maske aus den Labels), damit Nachbarn nicht hineinragen
-    const out = Object.assign(document.createElement("canvas"), { width: Math.max(1, Math.round(x1 - x0)), height: Math.max(1, Math.round(y1 - y0)) }), og = out.getContext("2d");
-    og.drawImage(c, -x0, -y0);
-    const m = Object.assign(document.createElement("canvas"), { width: w, height: h }), mg = m.getContext("2d"), md = mg.createImageData(w, h);
-    const own = new Set(b.ids); for (let i = 0; i < n; i++) if (own.has(lab[i])) md.data[i * 4 + 3] = 255;
-    mg.putImageData(md, 0, 0);
-    og.globalCompositeOperation = "destination-in"; og.drawImage(m, 0, 0, w, h, -x0, -y0, c.width, c.height);
-    return trim(out) || out;
-  });
+async function saveFlash(c, name) {
+  const blob = await toBlob(c, "image/png"), sticker = await toBlob(dieCut(c), "image/png");
+  const rec = { id: crypto.randomUUID(), name, blob, sticker, w: c.width, h: c.height, created: Date.now() };
+  await idb("flashes", "readwrite", s => s.put(rec)); FL.items.unshift(rec); renderFlashes();
 }
 function viewFlash(id) {
   const f = FL.items.find(x => x.id === id); if (!f) return;
@@ -2541,7 +2613,7 @@ function tryFlash(blob) {
   } catch (e) { console.warn("handoff", e); }
 })();
 
-window.__studio = { splitSheet: (...a) => splitSheet(...a), S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
+window.__studio = { S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>
