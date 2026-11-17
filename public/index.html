@@ -184,29 +184,22 @@
   .sumcard > * { animation: sum-item .5s var(--ease-out) both; animation-delay: .18s; }
   @keyframes sum-item { from { opacity: 0; translate: 0 6px; } }
   @media (prefers-reduced-motion: reduce) { .sumcard.in, .sumcard.out, .sumcard > * { animation: none; } }
-  .sum-body { padding: 22px 22px 20px; display: grid; gap: 18px; font-size: 13px; }
-  .sum-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  .sum-size { font-size: 34px; line-height: 1; letter-spacing: -.045em; }
-  .sum-sub { margin-top: 8px; color: oklch(100% 0 0 / .55); }
+  /* zwei Größen: 28 für die Größe, sonst überall 14; Hierarchie nur über Weiß und Grau */
+  .sum-body { padding: 20px; display: grid; gap: 14px; font-size: 14px; line-height: 1.35; }
+  .sum-body .dim { color: oklch(100% 0 0 / .5); }
+  .sum-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 2px 2px 4px; }
+  .sum-size { font-size: 28px; line-height: 1.05; letter-spacing: -.04em; margin-bottom: 4px; }
   .sum-x { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .12); }
   .sum-x .ic { width: 16px; height: 16px; }
-  .sum-sec { display: grid; gap: 8px; }
-  .sum-label { font-size: 12px; color: oklch(100% 0 0 / .45); }
-  .needles { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  .needles li { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 12px; padding: 6px 14px 6px 6px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
-  .nic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: oklch(100% 0 0 / .08); }
-  .nic svg { width: 36px; height: 36px; }
-  .needles b { display: block; font-weight: 400; font-size: 17px; letter-spacing: -.02em; }
-  .needles span { color: oklch(100% 0 0 / .55); font-size: 12px; }
-  .needles em { font-style: normal; text-align: right; font-size: 12px; color: oklch(100% 0 0 / .7); line-height: 1.35; }
-  .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
-  .swatches span { height: 32px; padding: 0 12px 0 6px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: oklch(100% 0 0 / .07); }
-  .swatches i { width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .2); }
-  .sum-scale { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 6px 6px 14px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
-  .sum-scale small { display: block; color: oklch(100% 0 0 / .45); font-size: 12px; }
-  .sum-scale label { display: flex; align-items: center; gap: 6px; color: oklch(100% 0 0 / .55); white-space: nowrap; }
-  .sum-scale input { width: 60px; height: 36px; border: 0; border-radius: 999px; background: oklch(100% 0 0 / .12); color: #fff; text-align: center; }
-  .sum-note { margin: 0; font-size: 12px; line-height: 1.45; color: oklch(100% 0 0 / .4); }
+  .needles { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .needles li { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px; padding: 4px 14px 4px 4px; border-radius: 18px; background: oklch(100% 0 0 / .07); }
+  .nic { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: oklch(100% 0 0 / .08); }
+  .nic svg { width: 30px; height: 30px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 4px; }
+  .swatches span { height: 36px; padding: 0 14px 0 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: oklch(100% 0 0 / .07); }
+  .swatches i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .2); }
+  .sum-scale { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 4px 14px; border-radius: 18px; background: oklch(100% 0 0 / .07); }
+  .sum-scale input { width: 56px; height: 32px; border: 0; border-radius: 999px; background: oklch(100% 0 0 / .12); color: #fff; text-align: center; font-size: 14px; }
   .isl-size { padding: 0 24px; font-size: 15px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   .isl-status { gap: 10px; padding: 0 22px 0 18px; font-size: 13px; }
   .isl-status[data-s="err"] { color: oklch(85% .12 70); }
@@ -284,7 +277,7 @@
   .btn.soft-on:hover { background: oklch(100% 0 0 / .2); }
   .tools .btn.primary { background: var(--on-glass); color: var(--ink); padding: 0 20px; }
   .tools .btn.primary:hover { background: var(--n-200); }
-  .needle { position: absolute; z-index: 4; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px oklch(100% 0 0 / .2), 0 0 0 10px oklch(100% 0 0 / .08); pointer-events: none; }
+  .needle { position: absolute; z-index: 4; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px oklch(100% 0 0 / .18), 0 0 0 7px oklch(100% 0 0 / .06); pointer-events: none; }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; }
 
@@ -1606,14 +1599,11 @@ function updateInfo() {
     const s = S.summary, key = JSON.stringify([s, sc, fmt(limb), sz]); if (key === infoKey) return syncIsland(); infoKey = key;
     $("#infoBody").innerHTML = "";
     $("#islSumBody").innerHTML = `
-      <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="sum-sub">${fmt(s.area, 0)} cm² Fläche${sc.part ? " · " + sc.part : ""}</div></div>
+      <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="dim">${fmt(s.area, 0)} cm²${sc.part ? " · " + sc.part : ""}</div></div>
         <button class="sum-x" id="sumClose" aria-label="Zusammenfassung schließen"><svg class="ic" aria-hidden="true"><use href="#i-chevron--up"/></svg></button></header>
-      <div class="sum-sec"><div class="sum-label">Empfohlene Nadeln</div><ul class="needles">${s.needles.map(n => `
-        <li><span class="nic">${needleIcon(n)}</span><div><b>${n.name}</b><span>${n.role}</span></div><em>${n.detail}</em></li>`).join("")}</ul></div>
-      <div class="sum-sec"><div class="sum-label">Farben</div><div class="swatches">${s.colours.map(c => `<span><i style="background:${SWATCH[c] || "#888"}"></i>${c}</span>`).join("")}</div></div>
-      <div class="sum-sec"><div class="sum-label">Maßstab</div><div class="sum-scale"><div>${sc.source || "–"}<small>± ${sc.tol ?? 20} %</small></div>
-        <label>Breite <input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}" aria-label="Breite an der Stelle in cm"> cm</label></div></div>
-      <p class="sum-note">Richtwerte aus Strichbreite und Flächen deines Motivs in echter Größe. Die finale Wahl trifft dein Artist. Mit Maßband nachmessen und Breite eintragen, dann stimmt die Größe genau.</p>`;
+      <ul class="needles">${s.needles.map(n => `<li><span class="nic">${needleIcon(n)}</span><span>${n.name} <span class="dim">${n.role}</span></span><span class="dim">${n.detail}</span></li>`).join("")}</ul>
+      <div class="swatches">${s.colours.map(c => `<span><i style="background:${SWATCH[c] || "#888"}"></i>${c}</span>`).join("")}</div>
+      <label class="sum-scale"><span>Maßstab <span class="dim">± ${sc.tol ?? 20} %</span></span><span><input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}" aria-label="Breite an der Stelle in cm"> <span class="dim">cm Breite</span></span></label>`;
     return syncIsland();
   }
   const rows = [["Drehung", `${rot}°`]];
@@ -1701,12 +1691,12 @@ function summarise() {
   const area = st.ink * w * h, fillShare = thick.length / Math.max(st.inside, 1), fill = fillShare > .2;
   const fillW = thick.length ? thick[Math.floor(thick.length * .9)] : 0; // breiteste typische Stelle der Flächen
   const needles = [], L = pickLiner(lineMm);
-  needles.push({ type: "RL", n: L.n, name: `${L.n}RL`, role: "Linien", detail: `Strich ≈ ${fmt(L.w)} mm<br>Nadel ${fmt(L.d, 2)} mm` });
+  needles.push({ type: "RL", n: L.n, name: `${L.n}RL`, role: "Linien", detail: `${fmt(L.w)} mm` });
   if (fill) {
-    if (fillW < 4) needles.push({ type: "RS", n: fillW < 3 ? 5 : 7, name: `${fillW < 3 ? 5 : 7}RS`, role: "Kleine Flächen", detail: `Flächen ≈ ${fmt(fillW)} mm` });
-    else { const n = pickMagnum(fillW); needles.push({ type: "M1", n, name: `${n}M1`, role: "Füllen", detail: `Flächen bis ≈ ${fmt(fillW, 0)} mm<br>Breite ≈ ${fmt(magWidth(n))} mm` }); }
+    if (fillW < 4) needles.push({ type: "RS", n: fillW < 3 ? 5 : 7, name: `${fillW < 3 ? 5 : 7}RS`, role: "Kleine Flächen", detail: "" });
+    else { const n = pickMagnum(fillW); needles.push({ type: "M1", n, name: `${n}M1`, role: "Füllen", detail: "" }); }
   }
-  if (st.shade > .12) { const n = Math.max(7, pickMagnum(Math.max(fillW, lineMm * 6), 23)); needles.push({ type: "RM", n, name: `${n}RM`, role: "Schattieren", detail: "weiche Übergänge" }); }
+  if (st.shade > .12) { const n = Math.max(7, pickMagnum(Math.max(fillW, lineMm * 6), 23)); needles.push({ type: "RM", n, name: `${n}RM`, role: "Schattieren", detail: "" }); }
   return { area, lineMm, needles, colours: st.colours };
 }
 // Nadel-Icon im Stil des Logos: Punkte wie Nadelspitzen von vorne. Round Liner dicht im Kreis,
@@ -1924,13 +1914,18 @@ function prepareInk() {
     sp[j] = clamp(s, 0, Math.min(R[j], G[j], B[j]) * .92);
   }
   const spec = blurField(sp, bw, bh, 1);
+  // feine Hautdetails (Haare, Poren, kleine Lichter und Schatten): Helligkeit relativ zur lokalen Umgebung.
+  // Unter dunkler Tinte gehen sie sonst fast ganz verloren; so bleiben sie sichtbar, ohne Unschärfe.
+  const lum = new Float32Array(n); for (let j = 0; j < n; j++) lum[j] = .2126 * R[j] + .7152 * G[j] + .0722 * B[j];
+  const lumB = blurField(lum, bw, bh, Math.max(2, Math.round(W / 260))), det = new Float32Array(n);
+  for (let j = 0; j < n; j++) det[j] = clamp(lum[j] / Math.max(lumB[j], 1e-3), .4, 2.2);
   // base surface normal per pixel (from the smooth 3D surface)
   const nrm = new Float32Array(n * 3), kx = S.pw / W;
   for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
     const gi = Math.min(S.ph - 1, ((y + y0) * kx) | 0) * S.pw + Math.min(S.pw - 1, ((x + x0) * kx) | 0), j = y * bw + x;
     nrm[j * 3] = S.nrm[gi * 3]; nrm[j * 3 + 1] = S.nrm[gi * 3 + 1]; nrm[j * 3 + 2] = S.nrm[gi * 3 + 2];
   }
-  S.ink = { x0, y0, bw, bh, alpha, pr, pg, pb, R, G, B, spec, nrm };
+  S.ink = { x0, y0, bw, bh, alpha, pr, pg, pb, R, G, B, spec, nrm, det };
   S.inkBox = { x0, y0, w: bw, h: bh }; S.inkAlpha = alpha;
 }
 function renderInk(t) {
@@ -1948,7 +1943,8 @@ function renderInk(t) {
   const halo = fresh > 0 ? blurField(I.alpha, bw, bh, Math.round(W / 95)) : null;
   const bump = fresh > 0 ? blurField(I.alpha, bw, bh, Math.max(1, Math.round(unit * 1.6))) : null;
   const l = S.light, hl = Math.hypot(l[0], l[1], l[2] + 1), hv = [l[0] / hl, l[1] / hl, (l[2] + 1) / hl];
-  const sat = 1 - .05 * t - .2 * aged, dens = 1 - .02 * t - .07 * aged, veil = .01 + .03 * t + .05 * aged;
+  // minimal blasser als vorher: etwas weniger Deckkraft und ein Hauch Haut, der immer durch die Tinte scheint
+  const sat = 1 - .07 * t - .2 * aged, dens = .93 - .03 * t - .07 * aged, veil = .035 + .03 * t + .05 * aged;
   // Light the ink layer scatters back on its own (it is not a perfect absorber): neutral to slightly
   // blue, and bluer/greener with age (Tyndall effect, why old black tattoos look blue-grey).
   // Scaled by the local light level (skin brightness / typical skin albedo), not tinted by the skin.
@@ -1957,7 +1953,8 @@ function renderInk(t) {
   for (let j = 0; j < n; j++) {
     const s = I.spec[j]; let R = I.R[j] - s, G = I.G[j] - s, B = I.B[j] - s;
     if (halo) { const hh = clamp(halo[j] * 2, 0, 1) * .6 * fresh * (1 - clamp(a[j], 0, 1) * .7); R *= 1 + hh * .05; G *= 1 - hh * .4; B *= 1 - hh * .44; }
-    const aj = clamp(a[j], 0, 1) * dens;
+    const dj = I.det[j], hair = clamp((.82 - dj) / .25, 0, 1) * .45; // dunkle feine Linien (Haare) liegen über der Tinte
+    const aj = clamp(a[j], 0, 1) * dens * (1 - hair);
     if (aj > .002) {
       const inv = 1 / Math.max(ca[j], .02);
       let ir = clamp(cr[j] * inv, 0, 1), ig = clamp(cg[j] * inv, 0, 1), ib = clamp(cbl[j] * inv, 0, 1);
@@ -1967,6 +1964,8 @@ function renderInk(t) {
       R = R * (veil + (1 - veil) * (1 - aj + aj * ir)) + E * tyn[0];
       G = G * (veil + (1 - veil) * (1 - aj + aj * ig)) + E * tyn[1];
       B = B * (veil + (1 - veil) * (1 - aj + aj * ib)) + E * tyn[2];
+      // Details der Haut verstärkt zurückgeben, je dichter die Tinte, desto mehr (die Tinte liegt in der Haut, nicht darauf)
+      const dm = dj ** (.55 * aj); R *= dm; G *= dm; B *= dm;
     }
     let gloss = 0;
     if (bump) { // fresh lines are slightly raised: tilt the surface normal by the ink's slope and light it
@@ -2010,7 +2009,7 @@ function hash(i) { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math
 // strokes instead of scanning rows). Each puncture flashes white and settles into ink; when all dots
 // are in, the gaps close and the dots melt into solid ink.
 function needlePath(box) {
-  const I = S.ink, sp = Math.max(7, Math.round(view.width / 120)), pts = [];
+  const I = S.ink, sp = Math.max(5, Math.round(view.width / 175)), pts = [];
   for (let y = sp / 2; y < I.bh; y += sp) for (let x = sp / 2; x < I.bw; x += sp) {
     const j = (y | 0) * I.bw + (x | 0); if (I.alpha[j] > .2) pts.push(x + I.x0, y + I.y0);
   }
@@ -2035,31 +2034,31 @@ function needlePath(box) {
 function needleReveal(res, box) {
   return new Promise(resolve => {
     const { pts, order, n, sp } = needlePath(box), nd = $("#needle");
-    const ox = overlay.width / view.width, oy = overlay.height / view.height, T = clamp(1200 + n * 1.4, 1600, 2600), t0 = performance.now(), recent = [];
+    const ox = overlay.width / view.width, oy = overlay.height / view.height, T = clamp(1500 + n * .8, 1900, 3200), t0 = performance.now(), recent = [];
     let done = 0;
     vctx.drawImage(S.photo, 0, 0); nd.hidden = !n;
     const step = t => {
       const p = clamp((t - t0) / T, 0, 1), target = Math.floor(p * p * (3 - 2 * p) * n);
       if (target > done) { // punch the new dots: each reveals the finished ink in a small circle
         vctx.save(); vctx.beginPath();
-        for (let o = done; o < target; o++) { const i = order[o], x = pts[i * 2], y = pts[i * 2 + 1]; vctx.moveTo(x + sp * .5, y); vctx.arc(x, y, sp * .5, 0, 7); recent.push({ x, y, t }); }
+        for (let o = done; o < target; o++) { const i = order[o], x = pts[i * 2], y = pts[i * 2 + 1]; vctx.moveTo(x + sp * .56, y); vctx.arc(x, y, sp * .56, 0, 7); recent.push({ x, y, t }); }
         vctx.clip(); vctx.drawImage(res, 0, 0); vctx.restore(); done = target;
       }
       octx.clearRect(0, 0, overlay.width, overlay.height);
-      while (recent.length && (t - recent[0].t > 180 || recent.length > 8)) recent.shift(); // only the last few punctures flash
+      while (recent.length && (t - recent[0].t > 140 || recent.length > 6)) recent.shift(); // nur die letzten Einstiche blitzen kurz, fein
       octx.fillStyle = "#fff";
-      for (const d of recent) { const a = 1 - (t - d.t) / 180; octx.globalAlpha = a * .75; octx.beginPath(); octx.arc(d.x * ox, d.y * oy, sp * ox * (.15 + .3 * a), 0, 7); octx.fill(); }
+      for (const d of recent) { const a = 1 - (t - d.t) / 140; octx.globalAlpha = a * .45; octx.beginPath(); octx.arc(d.x * ox, d.y * oy, sp * ox * (.1 + .18 * a), 0, 7); octx.fill(); }
       octx.globalAlpha = 1;
       if (done > 0) { // the needle sits on the last dot and vibrates like a machine
         const i = order[Math.min(done, n) - 1], b = view.getBoundingClientRect(), wrap = $("#viewWrap").getBoundingClientRect();
-        nd.style.left = (b.left - wrap.left + pts[i * 2] * b.width / view.width + Math.sin(t / 9) * 1.2) + "px";
-        nd.style.top = (b.top - wrap.top + pts[i * 2 + 1] * b.height / view.height + Math.cos(t / 7) * 1.2) + "px";
+        nd.style.left = (b.left - wrap.left + pts[i * 2] * b.width / view.width + Math.sin(t / 9) * .7) + "px";
+        nd.style.top = (b.top - wrap.top + pts[i * 2 + 1] * b.height / view.height + Math.cos(t / 7) * .7) + "px";
       }
       if (p < 1) return requestAnimationFrame(step);
       nd.hidden = true; octx.clearRect(0, 0, overlay.width, overlay.height);
       const f0 = performance.now(), melt = tt => { // close the gaps between the dots
-        const q = clamp((tt - f0) / 520, 0, 1);
-        vctx.save(); vctx.globalAlpha = .18; vctx.drawImage(res, 0, 0); vctx.restore();
+        const q = clamp((tt - f0) / 700, 0, 1);
+        vctx.save(); vctx.globalAlpha = .1 + .1 * q; vctx.drawImage(res, 0, 0); vctx.restore();
         if (q < 1) requestAnimationFrame(melt); else { vctx.drawImage(res, 0, 0); resolve(); }
       };
       requestAnimationFrame(melt);
