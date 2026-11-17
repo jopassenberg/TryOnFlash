@@ -428,7 +428,21 @@
   .cuttools .btn { width: 36px; height: 36px; background: var(--fill); }
   .cuttools .btn:hover { background: var(--fill); }
   .cutbox > .panel { padding: var(--s1); row-gap: var(--s2); }
-  .looks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); padding: var(--s1) var(--s1) 0; }
+  .looks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); padding: 0 var(--s1); }
+  .looks.bgs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .looks.bgs button { grid-template-columns: 56px 1fr; justify-items: start; align-items: center; text-align: left; padding: 6px 12px 6px 6px; }
+  .looks.bgs canvas { max-width: 56px; }
+  /* Schachbrett zeigt, dass der Hintergrund wirklich weg (durchsichtig) ist */
+  .looks.bgs button[data-bg="remove"] canvas, .cut.no-bg .cutstage { background-color: #fff;
+    background-image: conic-gradient(oklch(92% .003 75) 25%, transparent 0 50%, oklch(92% .003 75) 0 75%, transparent 0); background-size: 16px 16px; }
+  .sec-title { padding: var(--s1) var(--s2) 0; font-size: 13px; color: var(--text-2); }
+  .sec-title .dim { color: var(--text-3); margin-left: 6px; }
+  .quickbar { display: none; justify-items: center; gap: 2px; padding: var(--s3) var(--s2) var(--s1); text-align: center; font-size: 15px; }
+  .quickbar .dim { font-size: 13px; color: var(--text-3); }
+  /* Schnellansicht: nur Ergebnis + Anpassen/Übernehmen; Werkzeuge erst nach „Anpassen“ */
+  .cut.quick .quickbar { display: grid; }
+  .cut.quick .looks, .cut.quick .sec-title, .cut.quick .panel:has(#cutTools) .group:first-child, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
+  .cut:not(.quick) #cutEdit { display: none; }
   .looks button { display: grid; justify-items: center; gap: 6px; padding: 6px 6px 8px; border-radius: 20px; font-size: 13px; color: var(--text-2); background: var(--fill); transition: background-color .2s, color .2s, transform .3s var(--spring); }
   .looks button:active { transform: scale(.96); }
   .looks canvas { width: 100%; max-width: 72px; aspect-ratio: 1; border-radius: 14px; background: #f4f3f0; }
@@ -647,7 +661,16 @@
           <button class="btn icon" id="cutFit" title="Einpassen" aria-label="Einpassen"><svg class="ic" aria-hidden="true"><use href="#i-center-to-fit"/></svg></button>
         </div>
       </div>
+      <!-- Schnellansicht nach dem Hochladen: das automatisch ausgeschnittene Motiv, darunter Anpassen / Übernehmen -->
+      <div class="quickbar" id="cutQuick"><span>Automatisch ausgeschnitten</span><span class="dim">Passt es? Sonst anpassen.</span></div>
+      <!-- Hintergrund: zwei Bilder statt Schalter, damit man sieht, was passiert -->
+      <div class="sec-title" id="cutBgTitle">Hintergrund</div>
+      <div class="looks bgs" id="cutBg" role="radiogroup" aria-label="Hintergrund">
+        <button data-bg="keep" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Behalten</span></button>
+        <button data-bg="remove" role="radio" aria-checked="true"><canvas width="96" height="96"></canvas><span>Entfernen</span></button>
+      </div>
       <!-- Stil: jede Option zeigt sofort, wie das Motiv damit aussieht -->
+      <div class="sec-title">Stil <span class="dim" id="lookDesc"></span></div>
       <div class="looks" id="cutLook" role="radiogroup" aria-label="Stil">
         <button data-style="orig" role="radio" aria-checked="true"><canvas width="96" height="96"></canvas><span>Original</span></button>
         <button data-style="gray" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Graustufen</span></button>
@@ -664,8 +687,8 @@
           <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
         </div>
         <div class="group end">
-          <button class="sw" id="cutBg" role="switch" aria-checked="true"><span class="t">Hintergrund weg</span><span class="track"></span></button>
           <button class="btn ghost" id="cutCancel">Abbrechen</button>
+          <button class="btn soft" id="cutEdit">Anpassen</button>
           <button class="btn primary" id="cutOk">Übernehmen</button>
         </div>
       </div>
@@ -1424,7 +1447,7 @@ function openCut(c, opts = {}) {
   $("#cutOk").textContent = opts.okLabel || "Übernehmen";
   if (CUT.opaque && CUT.bg && autoMask()) $("#cutHint").textContent = "Motiv erkannt · mit Lasso oder Radierer anpassen";
   cutC.width = c.width; cutC.height = c.height;
-  $("#cutBg").hidden = !CUT.opaque; $("#cutBg").setAttribute("aria-checked", CUT.bg);
+  $("#cutBg").hidden = $("#cutBgTitle").hidden = !CUT.opaque; setBg(CUT.bg); CUT.quick = true; $("#cut").classList.add("quick");
   lookThumbs();
   const hint = $("#cutHint").textContent; $("#cut").hidden = false; setTool("lasso"); if (CUT.hasMask) $("#cutHint").textContent = hint; fitCut();
   cancelAnimationFrame(CUT.raf);
@@ -1479,7 +1502,7 @@ function applyLook(src, look, shade) {
     const l = (.299 * r + .587 * gg + .114 * b) / 255, ch = (Math.max(r, gg, b) - Math.min(r, gg, b)) / 255;
     if (!shade && (a < .6 || (l > .32 && ch < .18 && a < .9))) { d[i + 3] = 0; continue; }
     if (look === "bw") { const v = l * 255; r = gg = b = v; }
-    if (look === "black") { const k = clamp((.66 - l) / .22, 0, 1) * clamp((a - .3) / .3, 0, 1); r = gg = b = 18; a = k; }
+    if (look === "black") { const k = clamp((.66 - l) / .22, 0, 1) * clamp((a - .3) / .3, 0, 1) * (l < .2 ? 1 : clamp((.32 - ch) / .14, 0, 1)); r = gg = b = 18; a = k; } // dunkle, unbunte Striche bleiben; farbige Flächen fallen weg (tiefes Schwarz immer)
     d[i] = r; d[i + 1] = gg; d[i + 2] = b; d[i + 3] = a * 255;
   }
   g.putImageData(id, 0, 0); return c;
@@ -1487,12 +1510,20 @@ function applyLook(src, look, shade) {
 // Stile: Original · Graustufen (Farbe weg, Schatten bleiben grau) · Ohne Schatten (Farben, aber ohne
 // Schattierung und Punkte) · Nur Linien (nur die Kontur, schwarz, z. B. als Stencil-Vorlage)
 const STYLES = { orig: ["color", true], gray: ["bw", true], clean: ["color", false], lines: ["black", false] };
+const STYLE_DESC = { orig: "Farben und Schatten wie im Bild", gray: "ohne Farbe, Schatten werden grau", clean: "Farben bleiben, weiche Schatten fallen weg", lines: "nur die Konturen in Schwarz, z. B. als Vorlage" };
 function setStyle(s) {
-  [CUT.look, CUT.shade] = STYLES[s]; CUT.style = s; CUT.dirty = true;
+  [CUT.look, CUT.shade] = STYLES[s]; CUT.style = s; CUT.dirty = true; $("#lookDesc").textContent = "· " + STYLE_DESC[s];
   document.querySelectorAll("#cutLook button").forEach(x => x.setAttribute("aria-checked", x.dataset.style === s));
 }
 document.querySelectorAll("#cutLook button").forEach(b => b.onclick = () => setStyle(b.dataset.style));
 function lookThumbs() { // kleine Vorschau je Stil, aus dem Motiv (mit Auswahl, falls schon eine da ist)
+  if (CUT.opaque) { // Hintergrund-Kacheln: Original mit Papier · freigestellt auf Schachbrett
+    if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas;
+    for (const [sel, img] of [['[data-bg="keep"]', CUT.img], ['[data-bg="remove"]', CUT.ink]]) {
+      const c = document.querySelector(`#cutBg ${sel} canvas`), g = c.getContext("2d"), s = Math.min(96 / img.width, 96 / img.height);
+      g.clearRect(0, 0, 96, 96); g.drawImage(img, (96 - img.width * s) / 2, (96 - img.height * s) / 2, img.width * s, img.height * s);
+    }
+  }
   let base = CUT.img; if (CUT.bg && CUT.opaque) { if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas; base = CUT.ink; }
   const k = 160 / Math.max(base.width, base.height), w = Math.max(1, Math.round(base.width * k)), h = Math.max(1, Math.round(base.height * k)), sm = canvasOf(w, h), sg = sm.getContext("2d");
   sg.drawImage(base, 0, 0, w, h);
@@ -1508,13 +1539,12 @@ function drawCut() {
   const c = CUT.img, g = cutG, W = c.width, H = c.height;
   if (CUT.dirty) { // result preview: (ink on paper | image) inside the mask
     const cg = CUT.comp.getContext("2d"); cg.globalCompositeOperation = "source-over"; cg.clearRect(0, 0, W, H);
-    if (CUT.bg && CUT.opaque) { cg.fillStyle = "#f4f3f0"; cg.fillRect(0, 0, W, H); }
     cg.drawImage(source(), 0, 0);
     if (CUT.hasMask) { cg.globalCompositeOperation = "destination-in"; cg.drawImage(CUT.mask, 0, 0); }
     CUT.dirty = false;
   }
   g.clearRect(0, 0, W, H);
-  if (CUT.hasMask || CUT.drawing) { g.drawImage(c, 0, 0); g.fillStyle = "rgba(10,10,10,.68)"; g.fillRect(0, 0, W, H); }
+  if (!CUT.quick && (CUT.hasMask || CUT.drawing)) { g.drawImage(c, 0, 0); g.fillStyle = "rgba(10,10,10,.68)"; g.fillRect(0, 0, W, H); }
   g.drawImage(CUT.comp, 0, 0);
   const lw = 1.5 / (CUT.fit * CUT.zoom);
   if (CUT.drawing && CUT.tool === "lasso" && CUT.path?.length > 1) {
@@ -1619,7 +1649,12 @@ cutStage.addEventListener("wheel", e => {
   if (zoomy) zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)), e.clientX, e.clientY);
   else if (CUT.zoom > 1) { CUT.px -= e.deltaX; CUT.py -= e.deltaY; applyCut(); }
 }, { passive: false });
-$("#cutBg").onclick = () => { CUT.bg = !CUT.bg; $("#cutBg").setAttribute("aria-checked", CUT.bg); CUT.dirty = true; lookThumbs(); };
+function setBg(on) {
+  CUT.bg = on; CUT.dirty = true; $("#cut").classList.toggle("no-bg", on && CUT.opaque);
+  document.querySelectorAll("#cutBg button").forEach(b => b.setAttribute("aria-checked", (b.dataset.bg === "remove") === on));
+}
+document.querySelectorAll("#cutBg button").forEach(b => b.onclick = () => { setBg(b.dataset.bg === "remove"); lookThumbs(); });
+$("#cutEdit").onclick = () => { CUT.quick = false; $("#cut").classList.remove("quick"); fitCut(); };
 $("#cutCancel").onclick = closeCut;
 $("#cutOk").onclick = () => {
   const src = source(), r = canvasOf(src.width, src.height), g = r.getContext("2d");
