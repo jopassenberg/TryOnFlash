@@ -99,6 +99,7 @@
   .btn.primary:hover { background: #ececea; }
   .btn.ghost { background: var(--on-dark); color: #fff; }
   .btn.ghost:hover { background: var(--on-dark-2); }
+  .btn.ghost[aria-pressed="true"] { background: #fff; color: var(--ink); }
   .btn:disabled { opacity: .35; cursor: default; }
 
   .panel { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
@@ -124,12 +125,11 @@
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 6px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(90deg, transparent, #000 6px, #000 calc(100% - 14px), transparent); }
   .thumbs::-webkit-scrollbar { display: none; }
   .thumb { flex: none; }
-  .thumb:not(.add) { box-shadow: inset 0 0 0 1px oklch(0% 0 0 / .08); }
   .thumb.pop { animation: pop .5s var(--spring); }
   @keyframes pop { 0% { transform: scale(.7); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
-  .thumb { width: var(--h); background: #fff; display: grid; place-items: center; overflow: hidden; transition: box-shadow .15s; }
-  .thumb img { max-width: 76%; max-height: 76%; }
-  .thumb[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--frame), 0 0 0 3.5px #fff; }
+  .thumb { width: var(--h); background: var(--on-dark); display: grid; place-items: center; overflow: hidden; }
+  .thumb img { max-width: 84%; max-height: 84%; }
+  .thumb[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px #fff; background: var(--on-dark-2); }
   .thumb.add { background: var(--on-dark); color: #fff; }
   .thumb.add:hover { background: var(--on-dark-2); }
   .chip { padding: 0 var(--s4); background: var(--on-dark); color: var(--text-dim); transition: background .15s, color .15s; }
@@ -144,19 +144,36 @@
 
 
   /* on-image overlays: inset 16, height 32, radius 10 */
-  .status, .views, .tagv { position: absolute; z-index: 4; border-radius: var(--r-sm); background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .status, .views, .info { position: absolute; z-index: 4; border-radius: var(--r-sm); background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
   .status { top: var(--s4); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s3); display: inline-flex; align-items: center; gap: var(--s2); font-size: 12px; white-space: nowrap; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
   .status[data-s="busy"] .dot { background: var(--red-2); animation: blink .9s infinite; }
   .status[data-s="ok"] .dot { background: var(--red-2); }
   .status[data-s="err"] .dot { background: #ffb020; }
   @keyframes blink { 50% { opacity: .25; } }
-  .views { right: var(--s4); top: 50%; transform: translateY(-50%); display: grid; gap: 2px; padding: 3px; }
-  .views button { height: 32px; padding: 0 var(--s3); border-radius: 7px; font-size: 12px; color: var(--text-dim); }
-  .views button[aria-pressed="true"] { background: #fff; color: var(--ink); }
-  .tagv { right: var(--s4); bottom: 96px; height: 24px; padding: 0 var(--s2); display: grid; place-items: center; font-size: 11px; border-radius: 8px; }
+  /* view switch: a quiet icon segment in the top-left corner, same height as the status pill */
+  .views { left: var(--s3); top: var(--s3); display: flex; gap: 2px; padding: 3px; }
+  .views button { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: var(--text-dim); }
+  .views button svg { width: 16px; height: 16px; }
+  .views button[aria-pressed="true"] { background: oklch(100% 0 0 / .16); color: #fff; }
+  /* info card (top right): size + scale while placing, the full summary after stechen */
+  .info { right: var(--s3); top: var(--s3); width: 248px; border-radius: 16px; overflow: hidden; font-size: 12px; box-shadow: inset 0 0 0 1px oklch(100% 0 0 / .08); }
+  .info-head { width: 100%; height: 32px; padding: 0 var(--s2) 0 var(--s3); display: flex; align-items: center; justify-content: space-between; gap: var(--s2); color: #fff; font-weight: 500; }
+  .info-head svg { width: 16px; height: 16px; color: var(--text-dim); transition: transform var(--med) var(--ease-out); }
+  .info[data-open="true"] .info-head svg { transform: rotate(180deg); }
+  .info-body { display: none; padding: 2px var(--s3) var(--s3); }
+  .info[data-open="true"] .info-body { display: grid; gap: 0; animation: swap .3s var(--ease-out); }
+  .info dl { display: grid; grid-template-columns: auto 1fr; margin: 0; }
+  .info dt, .info dd { margin: 0; padding: 7px 0; border-top: 1px solid oklch(100% 0 0 / .08); }
+  .info dt { color: var(--text-dim); padding-right: var(--s3); }
+  .info dd { text-align: right; color: #fff; }
+  .info dd small { display: block; color: var(--text-dim); font-size: 11px; }
+  .info .note { margin-top: var(--s2); color: var(--text-dim); font-size: 11px; line-height: 1.45; }
+  .info .scale-edit { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s2); }
+  .info .scale-edit input { width: 56px; height: 28px; border: 0; border-radius: 8px; background: oklch(0% 0 0 / .35); color: #fff; text-align: center; }
+  .info .link { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: oklch(100% 0 0 / .4); }
 
-  .needle { position: absolute; z-index: 4; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--red-2); box-shadow: 0 0 0 5px rgba(255,255,255,.22); pointer-events: none; }
+  .needle { position: absolute; z-index: 4; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px oklch(100% 0 0 / .18), 0 0 0 10px oklch(100% 0 0 / .07); pointer-events: none; }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,.3); cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 
@@ -181,7 +198,7 @@
   .cutstage .status { pointer-events: none; }
 
   @supports (corner-shape: squircle) {
-    .card, .cutbox, .cutstage, .btn, .chip, .field, .thumb, .status, .views, .tagv { corner-shape: squircle; }
+    .card, .cutbox, .cutstage, .btn, .chip, .field, .thumb, .status, .views, .info { corner-shape: squircle; }
     .siri, .siri i, .siri i::before { corner-shape: squircle; }
     .card, .cutbox { border-radius: calc(var(--r-frame) * 1.6); } .cutstage { border-radius: calc(var(--r-stage) * 1.6); }
     .btn, .chip, .field, .thumb { border-radius: calc(var(--r) * 1.6); } .status, .views { border-radius: calc(var(--r-sm) * 1.6); }
@@ -224,15 +241,13 @@
     .top { padding: 0 var(--s2); }
     .card { border-radius: var(--r-frame); }
     .shell { padding-bottom: max(var(--s2), env(safe-area-inset-bottom)); }
-    .thumbs { max-width: calc(100vw - 180px); }
     .status { top: var(--s3); }
     #panelCam .group { justify-content: space-between; padding: 0 var(--s3); }
-    .views { right: var(--s3); }
-    .tagv { right: var(--s3); bottom: 148px; }
-    .card > .panel { left: var(--s2); right: var(--s2); bottom: var(--s2); transform: none; max-width: none; flex-wrap: wrap; border-radius: 20px; }
-    .card > .panel .group { width: 100%; }
-    .card > .panel .group + .group { padding-left: 0; border-left: 0; }
-    .card > .panel .group.end > .btn:not(.icon) { flex: 1; }
+    .info { width: calc(100% - 120px); max-width: 260px; }
+    .card > .panel { left: var(--s2); right: var(--s2); bottom: var(--s2); transform: none; max-width: none; border-radius: 20px; }
+    .card > .panel .group:first-child { flex: 1; min-width: 0; }
+    #panelCam .group { flex: 1; }
+    .thumbs { max-width: 100%; }
     .cut { padding: var(--s2); }
     .cutstage { height: 58vh; }
     .cutbox .panel .group { width: 100%; }
@@ -273,11 +288,14 @@
       </div>
       <div class="status" id="status" hidden data-s="idle"><span class="dot"></span><span id="statusText"></span></div>
       <div class="views" id="views" hidden>
-        <button data-view="photo" aria-pressed="true">Foto</button>
-        <button data-view="depth" aria-pressed="false">Tiefe</button>
-        <button data-view="mesh" aria-pressed="false">3D</button>
+        <button data-view="photo" aria-pressed="true" title="Foto" aria-label="Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M4 16l5-5 4 4 2-2 5 5"/></svg></button>
+        <button data-view="depth" aria-pressed="false" title="Tiefe" aria-label="Tiefe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c3-2 5-2 8 0s5 2 8 0M4 12c3-2 5-2 8 0s5 2 8 0M4 7c3-2 5-2 8 0s5 2 8 0"/></svg></button>
+        <button data-view="mesh" aria-pressed="false" title="3D-Modell" aria-label="3D-Modell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></button>
       </div>
-      <div class="tagv" id="tagSize" hidden></div>
+      <div class="info" id="info" hidden>
+        <button class="info-head" id="infoHead" aria-expanded="false"><span id="infoTitle"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg></button>
+        <div class="info-body" id="infoBody"></div>
+      </div>
     </div>
 
     <div class="panel" id="panelCam" hidden>
@@ -291,7 +309,6 @@
     <div class="panel" id="panelPlace" hidden>
       <div class="group">
         <div class="thumbs" id="thumbs"><button class="thumb add" id="addMotif" title="Motiv hinzufügen" aria-label="Motiv hinzufügen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
-        <label class="field" title="Breite des Arms an der Stelle">Armbreite <input id="armCm" type="number" min="4" max="20" step="0.5" value="7.5"><em>cm</em></label>
       </div>
       <div class="group end">
         <button class="btn ghost icon" id="newPhoto" title="Neues Foto" aria-label="Neues Foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
@@ -301,10 +318,10 @@
 
     <div class="panel" id="panelDone" hidden>
       <div class="group">
-        <button class="chip" id="cmp" aria-pressed="false">Vergleich</button>
+        <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="btn ghost icon" id="cmp" aria-pressed="false" title="Vorher / Nachher" aria-label="Vorher / Nachher"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M12 3v18"/></svg></button>
       </div>
       <div class="group end">
-        <button class="btn ghost icon" id="edit" title="Zurück zum Platzieren" aria-label="Zurück zum Platzieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
         <button class="btn primary" id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Speichern</button>
       </div>
     </div>
@@ -373,6 +390,7 @@ const S = {
   inked: null, local: null, inkBox: null, inkAlpha: null, compare: 0.5, comparing: false,
 };
 
+let infoOpen = false, infoKey = ""; // info card state (declared early: setStep() touches it on load)
 /* ---------- UI helpers ---------- */
 // Swap animation for text that changes in place (step pill, status): a short blur-in, no jump
 function swapAnim(el) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
@@ -384,7 +402,7 @@ function setStep(n) {
   });
   $("#panelPlace").hidden = n !== 3; $("#panelDone").hidden = n !== 4;
   $("#views").hidden = n < 3 && !S.disp;
-  $("#tagSize").hidden = n !== 3 || !S.motif;
+  infoKey = ""; updateInfo();
 }
 function status(text, s = "busy") {
   const el = $("#status"), changed = text && text !== $("#statusText").textContent;
@@ -420,7 +438,7 @@ function loadPhoto(file) {
 function usePhoto(img) {
   closeCam();
   S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
-  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = null; S.inked = null; S.anchor = null; depthCanvas = null;
+  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.scale = S.summary = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
   view.width = S.photo.width; view.height = S.photo.height;
   $("#drop").hidden = true; $("#viewWrap").hidden = false;
   fitView(); S.view = "photo"; syncViews(); redraw();
@@ -428,7 +446,7 @@ function usePhoto(img) {
 }
 function backToStart(cam) {
   scanStop(); setStep(1); status("");
-  $("#viewWrap").hidden = true; $("#views").hidden = true; $("#tagSize").hidden = true;
+  $("#viewWrap").hidden = true; $("#views").hidden = true; $("#info").hidden = true;
   if (cam) openCam(); else $("#drop").hidden = false;
 }
 
@@ -540,8 +558,8 @@ function depthValues(t) {
 }
 async function getSegmenter() {
   if (segmenter) return segmenter;
-  const { FilesetResolver, ImageSegmenter } = await import(VISION);
-  const fs = await FilesetResolver.forVisionTasks(VISION_WASM);
+  const { ImageSegmenter } = await import(VISION);
+  const fs = await visionFS();
   segmenter = await ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL }, runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: false });
   return segmenter;
 }
@@ -562,6 +580,8 @@ async function analyse() {
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
     stage = "3D-Modell"; status("3D-Modell …");
     await frame(); refineDepth(); buildGeometry(); buildMesh();
+    stage = "Maßstab"; status("Maßstab …");
+    S.scale = computeScale(await detectBody(S.proc).catch(e => (console.warn("body", e), null)));
     await scanFinish();
     status("");
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
@@ -656,8 +676,20 @@ function blurField(a, w, h, r) { // separable box blur, two passes ~ gaussian
 
 // Height field: relative depth inside the skin, scaled so the arm's cross-section is about as deep
 // as it is wide (a forearm is roughly round). Arm axis and width come from the skin mask's PCA.
+// Enclosed gaps in the skin mask (old tattoos, a watch strap, a shadow or hair across the arm) are
+// still the same body surface: fill every non-skin area that does not touch the image border.
+function fillHoles(m, w, h) {
+  const n = w * h, out = new Uint8Array(n), st = [], o = Float32Array.from(m);
+  const seed = i => { if (!out[i] && m[i] <= .5) { out[i] = 1; st.push(i); } };
+  for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+  while (st.length) { const i = st.pop(), x = i % w; if (x > 0) seed(i - 1); if (x < w - 1) seed(i + 1); if (i >= w) seed(i - w); if (i < n - w) seed(i + w); }
+  for (let i = 0; i < n; i++) if (!out[i]) o[i] = Math.max(o[i], 1);
+  return o;
+}
 function buildGeometry() {
-  const w = S.pw, h = S.ph, m = S.skin, d = S.disp;
+  const w = S.pw, h = S.ph, d = S.disp;
+  const m = S.skin = fillHoles(S.skin, w, h);
   let n = 0, mx = 0, my = 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = m[y * w + x]; if (v > .5) { n++; mx += x; my += y; } }
   if (n < 50) throw new Error("Kein Arm erkannt – Arm größer und gut beleuchtet ins Bild");
@@ -675,13 +707,30 @@ function buildGeometry() {
   vals.sort((a, b) => a - b);
   const lo = vals[(vals.length * .02) | 0], hi = vals[(vals.length * .98) | 0] || lo + 1;
   const relief = 0.5 * S.armPx / k; // in model px
-  const H = new Float32Array(w * h);
-  for (let i = 0; i < H.length; i++) H[i] = clamp((d[i] - lo) / (hi - lo), 0, 1.2) * relief;
-  S.height = blurField(H, w, h, Math.max(2, Math.round(w / 300))); // smooth surface: used for mapping the motif
+  const np = w * h, H = new Float32Array(np), HM = new Float32Array(np);
+  for (let i = 0; i < np; i++) { H[i] = clamp((d[i] - lo) / (hi - lo), 0, 1.2) * relief; HM[i] = H[i] * m[i]; }
+  // depth averaged over skin only, so the background cannot drag the arm's edge down
+  const rb = Math.max(2, Math.round(w / 300)), bH = blurField(HM, w, h, rb), bM = blurField(m, w, h, rb);
+  // Shape prior: a limb's cross-section is roughly round, so the surface rises with the distance from
+  // its outline. Depth maps are least reliable right there (edge shadows, background), so near the
+  // outline the prior leads and towards the middle the depth model does.
+  const outside = new Uint8Array(np); for (let i = 0; i < np; i++) outside[i] = m[i] <= .5 ? 1 : 0;
+  const E = distanceField(outside, w, h), Hs = new Float32Array(np);
+  for (let i = 0; i < np; i++) {
+    if (m[i] <= .5) { Hs[i] = bM[i] > .05 ? bH[i] / bM[i] : H[i]; continue; }
+    const e = Math.min(E[i], relief), prior = Math.sqrt(Math.max(0, 2 * relief * e - e * e)), wd = clamp(E[i] / relief, 0, 1) * .6;
+    Hs[i] = prior * (1 - wd) + (bM[i] > .05 ? bH[i] / bM[i] : H[i]) * wd;
+  }
+  S.height = blurField(Hs, w, h, rb); // smooth surface: used for mapping the motif
+  // Pixels much darker than the skin around them are pigment or blocked light (old tattoos, hair,
+  // cast shadows), not shape: they are kept out of the fine relief and out of the light estimate.
+  const L = S.lum, Lb = blurField(L, w, h, Math.max(4, Math.round(w / 40))), dk = new Float32Array(np);
+  for (let i = 0; i < np; i++) dk[i] = clamp((Lb[i] * .82 - L[i]) / (Lb[i] * .15 + 1e-3), 0, 1);
+  S.dark = blurField(dk, w, h, 2);
   // Fine relief for display and lighting: skin micro texture (pores, folds, veins) as tiny bumps,
   // darker = slightly deeper. Kept out of S.height so it cannot wobble the motif.
-  const lb = blurField(S.lum, w, h, 3), F = new Float32Array(w * h), amp = relief * .3;
-  for (let i = 0; i < F.length; i++) F[i] = S.height[i] + (S.lum[i] - lb[i]) * amp * clamp(m[i] * 1.5 - .25, 0, 1);
+  const lb = blurField(S.lum, w, h, 3), F = new Float32Array(np), amp = relief * .3;
+  for (let i = 0; i < np; i++) F[i] = S.height[i] + clamp(S.lum[i] - lb[i], -.08, .08) * amp * clamp(m[i] * 1.5 - .25, 0, 1) * (1 - S.dark[i]);
   S.relief = F;
   S.nrm = normals(S.height, w, h); S.nrmF = normals(F, w, h);
   S.light = estimateLight();
@@ -709,16 +758,25 @@ function normals(Hf, w, h) {
 }
 // Where does the light in the photo come from? Fit brightness ≈ c0 + c·n over the skin (least squares).
 // The fitted c points towards the light; it drives the 3D shading and the sheen of fresh lines.
+// Robust: dark pigment/shadow pixels are skipped, then a second pass drops samples the first fit
+// explains badly (cast shadows from outside, highlights), so they cannot tilt the light direction.
 function estimateLight() {
-  const w = S.pw, h = S.ph, N = S.nrm, L = blurField(S.lum, w, h, 4), m = S.skin;
-  const A = [0, 1, 2, 3].map(() => new Float64Array(4)), b = new Float64Array(4);
-  for (let y = 1; y < h - 1; y += 2) for (let x = 1; x < w - 1; x += 2) {
-    const i = y * w + x; if (m[i] < .8) continue;
-    const f = [1, N[i * 3], N[i * 3 + 1], N[i * 3 + 2]];
-    for (let a = 0; a < 4; a++) { b[a] += f[a] * L[i]; for (let c = 0; c < 4; c++) A[a][c] += f[a] * f[c]; }
-  }
-  const tr = A[0][0] + A[1][1] + A[2][2] + A[3][3]; for (let a = 0; a < 4; a++) A[a][a] += tr * 1e-4;
-  const c = solve4(A, b); if (!c) return [-.35, -.55, .76];
+  const w = S.pw, h = S.ph, N = S.nrm, L = blurField(S.lum, w, h, 4), m = S.skin, dk = S.dark;
+  const fit = keep => {
+    const A = [0, 1, 2, 3].map(() => new Float64Array(4)), b = new Float64Array(4);
+    for (let y = 1; y < h - 1; y += 2) for (let x = 1; x < w - 1; x += 2) {
+      const i = y * w + x; if (m[i] < .8 || (dk && dk[i] > .3) || (keep && !keep(i))) continue;
+      const f = [1, N[i * 3], N[i * 3 + 1], N[i * 3 + 2]];
+      for (let a = 0; a < 4; a++) { b[a] += f[a] * L[i]; for (let c = 0; c < 4; c++) A[a][c] += f[a] * f[c]; }
+    }
+    const tr = A[0][0] + A[1][1] + A[2][2] + A[3][3]; for (let a = 0; a < 4; a++) A[a][a] += tr * 1e-4;
+    return solve4(A, b);
+  };
+  let c = fit(); if (!c) return [-.35, -.55, .76];
+  const res = i => L[i] - (c[0] + c[1] * N[i * 3] + c[2] * N[i * 3 + 1] + c[3] * N[i * 3 + 2]);
+  let s2 = 0, cnt = 0; for (let i = 0; i < w * h; i += 7) if (m[i] >= .8) { s2 += res(i) ** 2; cnt++; }
+  const sig = Math.sqrt(s2 / Math.max(cnt, 1)) || 1, c2 = fit(i => Math.abs(res(i)) < 2 * sig);
+  if (c2) c = c2;
   let l = [c[1], c[2], Math.max(Math.abs(c[3]), 1e-6)], n = Math.hypot(...l);
   if (!isFinite(n) || n < 1e-6) return [-.35, -.55, .76];
   l = l.map(v => v / n);
@@ -1156,14 +1214,20 @@ function selectMotif(m) {
   S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; setStep(3); schedule();
   status(touchUI() ? "Ziehen · zwei Finger drehen und zoomen" : "", "ok");
 }
+function stickerThumb(m) { // small sticker image for the motif tray (readable on the dark dock)
+  if (m.thumb) return m.thumb;
+  const st = m.sticker || (m.sticker = makeSticker(m.canvas)), k = 96 / Math.max(st.canvas.width, st.canvas.height);
+  const c = Object.assign(document.createElement("canvas"), { width: Math.round(st.canvas.width * k), height: Math.round(st.canvas.height * k) });
+  c.getContext("2d").drawImage(st.canvas, 0, 0, c.width, c.height);
+  return (m.thumb = c.toDataURL());
+}
 function renderThumbs() {
   const box = $("#thumbs"); box.querySelectorAll(".thumb:not(.add)").forEach(e => e.remove());
   S.motifs.forEach(m => {
     const b = document.createElement("button"); b.className = "thumb" + (m === S.motif ? " pop" : ""); b.setAttribute("aria-pressed", m === S.motif);
-    b.innerHTML = `<img alt="" src="${m.url}">`; b.onclick = () => selectMotif(m); box.appendChild(b);
+    b.innerHTML = `<img alt="" src="${stickerThumb(m)}">`; b.onclick = () => selectMotif(m); box.appendChild(b);
   });
 }
-$("#armCm").oninput = () => schedule();
 
 // Stencil look for the placement preview, like a die-cut flash sticker: the motif's silhouette (holes
 // filled) grown by a padding, a translucent white fill, a white stroke round the cut, the motif on top.
@@ -1211,13 +1275,156 @@ function makeSticker(c) {
   return { canvas: res, data: g.getImageData(0, 0, W, H), grow: [W / w, H / h] };
 }
 
+/* ---------- scale: how many photo pixels make a centimetre ---------- */
+// Best available reference, in this order:
+// 1. a hand in the photo: MediaPipe's hand model returns its 21 points in metric 3D, so palm and finger
+//    bones give pixels per cm right next to a forearm (± ~12 %),
+// 2. the body pose: metric 3D limb segments (forearm, upper arm, thigh, shin, torso); the segment
+//    closest to the skin area is used, which also names the body part (± ~15 %),
+// 3. otherwise an assumed arm width of 7.5 cm (± ~20 %).
+// A width the user enters always wins (exact for the spot that was measured).
+const HAND_MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task";
+const POSE_MODEL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task";
+let visionFs = null, handLm = null, poseLm = null;
+async function visionFS() { if (!visionFs) { const { FilesetResolver } = await import(VISION); visionFs = await FilesetResolver.forVisionTasks(VISION_WASM); } return visionFs; }
+async function detectBody(canvas) {
+  const B = { hands: [], pose: null }, V = await import(VISION), fs = await visionFS();
+  try {
+    handLm ||= await V.HandLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: HAND_MODEL }, runningMode: "IMAGE", numHands: 2 });
+    const r = handLm.detect(canvas); B.hands = (r.landmarks || []).map((l, i) => ({ img: l, world: r.worldLandmarks[i] }));
+  } catch (e) { console.warn("hand", e); }
+  try {
+    poseLm ||= await V.PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: POSE_MODEL }, runningMode: "IMAGE", numPoses: 1 });
+    const r = poseLm.detect(canvas); if (r.landmarks?.[0]) B.pose = { img: r.landmarks[0], world: r.worldLandmarks[0] };
+  } catch (e) { console.warn("pose", e); }
+  return B;
+}
+function segDist(p, a, b) { const vx = b.x - a.x, vy = b.y - a.y, t = clamp(((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy || 1), 0, 1); return Math.hypot(p.x - a.x - vx * t, p.y - a.y - vy * t); }
+const POSE_SEGS = [["Unterarm", 13, 15], ["Unterarm", 14, 16], ["Oberarm", 11, 13], ["Oberarm", 12, 14], ["Oberschenkel", 23, 25], ["Oberschenkel", 24, 26],
+  ["Unterschenkel", 25, 27], ["Unterschenkel", 26, 28], ["Oberkörper", 11, 23], ["Oberkörper", 12, 24], ["Schulter", 11, 12]];
+function computeScale(B) {
+  const W = S.photo.width, H = S.photo.height, c = S.anchor || S.armCenter;
+  const px = p => ({ x: p.x * W, y: p.y * H }), d2 = (a, b) => Math.hypot((a.x - b.x) * W, (a.y - b.y) * H), d3 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) * 100;
+  const fallback = { pxPerCm: S.armPx / 7.5, source: "Annahme: Armbreite 7,5 cm", tol: 20, part: null };
+  let part = null, best = null;
+  if (B?.pose) { // nearest limb segment names the body part and is a scale candidate
+    for (const [name, a, b] of POSE_SEGS) {
+      const A = B.pose.img[a], Bp = B.pose.img[b]; if ((A.visibility ?? 1) < .5 || (Bp.visibility ?? 1) < .5) continue;
+      const dist = segDist(c, px(A), px(Bp)), ratio = d2(A, Bp) / d3(B.pose.world[a], B.pose.world[b]);
+      if (!(ratio > 0 && isFinite(ratio))) continue;
+      if (!best || dist < best.dist) best = { pxPerCm: ratio, source: "Körperproportionen", tol: 15, dist, part: name };
+    }
+    if (best && best.dist < S.armPx * 1.5) part = best.part; else best = null;
+  }
+  for (const h of B?.hands || []) { // a hand near the spot beats the pose (smaller, better known bones)
+    const bones = [[0, 5], [0, 9], [0, 13], [0, 17], [5, 9], [9, 13], [13, 17], [5, 17]];
+    const r = bones.map(([a, b]) => d2(h.img[a], h.img[b]) / d3(h.world[a], h.world[b])).filter(v => v > 0 && isFinite(v)).sort((a, b) => a - b);
+    if (r.length < 5) continue;
+    const dist = Math.hypot(h.img[0].x * W - c.x, h.img[0].y * H - c.y);
+    if (dist < S.armPx * 3) { best = { pxPerCm: r[Math.floor(r.length * .75)], source: "Hand erkannt", tol: 12, dist, part: part || "Unterarm" }; break; }
+  }
+  if (!best) return { ...fallback, part };
+  const armCm = S.armPx / best.pxPerCm; // plausibility: the implied limb width must be human
+  return armCm > 3 && armCm < 30 ? best : { ...fallback, part };
+}
+function pxPerCm() { return S.scale?.pxPerCm || S.armPx / 7.5; }
+
+/* ---------- info card: size and scale while placing, summary after stechen ---------- */
+const fmt = (v, d = 1) => v.toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: 0 });
+function setInfo(open) { infoOpen = open; $("#info").dataset.open = open; $("#infoHead").setAttribute("aria-expanded", open); }
+$("#infoHead").onclick = () => setInfo(!infoOpen);
+function sizeCm() { const { w, h } = motifSizePx(1), k = pxPerCm(); return { w: w / k, h: h / k }; }
+function updateInfo() {
+  const el = $("#info");
+  if (S.step < 3 || !S.motif || !S.anchor) { el.hidden = true; return; }
+  el.hidden = false;
+  const { w, h } = sizeCm(), sc = S.scale || {}, rot = Math.round(((S.rot % 360) + 540) % 360 - 180);
+  $("#infoTitle").textContent = `${fmt(w)} × ${fmt(h)} cm`;
+  if ($("#infoBody").contains(document.activeElement)) return; // do not rebuild while the user types
+  const rows = [];
+  if (S.step === 4 && S.summary) {
+    const s = S.summary;
+    rows.push(["Fläche", `${fmt(s.area, 0)} cm²`]);
+    if (sc.part) rows.push(["Stelle", sc.part]);
+    rows.push(["Linien", `${s.lineNeedle}<small>${fmt(s.lineMm)} mm Strich</small>`]);
+    if (s.fillNeedle) rows.push(["Füllung", s.fillNeedle]);
+    if (s.shadeNeedle) rows.push(["Schattierung", s.shadeNeedle]);
+    rows.push(["Farben", s.colours.join(", ")]);
+    rows.push(["Dauer", `${s.time}<small>Richtwert</small>`]);
+  } else {
+    rows.push(["Drehung", `${rot}°`]);
+    if (sc.part) rows.push(["Stelle", sc.part]);
+  }
+  rows.push(["Maßstab", `${sc.source || "–"}<small>± ${sc.tol ?? 20} %</small>`]);
+  const limb = S.armPx / pxPerCm();
+  const key = JSON.stringify([rows, S.step, fmt(limb)]); if (key === infoKey) return; infoKey = key;
+  $("#infoBody").innerHTML = `<dl>${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
+    <label class="scale-edit">Breite an der Stelle <input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}"> cm</label>
+    <div class="note">${S.step === 4 ? "Nadeln und Dauer sind Richtwerte, die finale Wahl trifft dein Artist. " : ""}Mit Maßband nachmessen und eintragen, dann stimmt die Größe genau.</div>`;
+}
+$("#infoBody").addEventListener("change", e => {
+  if (e.target.id !== "scaleCm") return;
+  const cm = clamp(+e.target.value || 7.5, 3, 40);
+  S.scale = { pxPerCm: S.armPx / cm, source: "Selbst gemessen", tol: 3, part: S.scale?.part || null }; infoKey = "";
+  if (S.step === 4) { S.summary = summarise(); updateInfo(); } else schedule();
+});
+
+/* ---------- summary: needles, colours, time from the motif at its real size ---------- */
+// Line width: distance field inside the ink, ridge pixels give half the stroke width. Fill: share of
+// ink thicker than 3 mm. Shading: semi-transparent or mid-grey ink. Needles follow common tattoo
+// groupings (round liners by stroke width, magnums for fill and shading).
+function motifStats(m) {
+  if (m.stats) return m.stats;
+  const k = Math.min(1, 400 / Math.max(m.canvas.width, m.canvas.height)), w = Math.max(2, Math.round(m.canvas.width * k)), h = Math.max(2, Math.round(m.canvas.height * k));
+  const c = Object.assign(document.createElement("canvas"), { width: w, height: h }), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(m.canvas, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, n = w * h, outside = new Uint8Array(n), outDark = new Uint8Array(n).fill(1), hues = new Map();
+  let ink = 0, shade = 0, dark = 0;
+  for (let i = 0; i < n; i++) {
+    const a = d[i * 4 + 3] / 255; outside[i] = a < .5 ? 1 : 0; if (a < .15) continue; ink++;
+    const r = d[i * 4] / 255, gg = d[i * 4 + 1] / 255, b = d[i * 4 + 2] / 255, mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, ch = mx - mn;
+    if (a < .75 || (ch < .12 && l > .3 && l < .8)) shade++;
+    if (ch < .15) { if (l < .35) { dark++; if (a >= .5) outDark[i] = 0; } continue; }
+    let hue = mx === r ? ((gg - b) / ch) % 6 : mx === gg ? (b - r) / ch + 2 : (r - gg) / ch + 4; hue = (hue * 60 + 360) % 360;
+    const name = l < .3 && hue > 15 && hue < 50 ? "Braun" : hue < 15 || hue >= 340 ? "Rot" : hue < 45 ? "Orange" : hue < 70 ? "Gelb" : hue < 170 ? "Grün" : hue < 255 ? "Blau" : hue < 300 ? "Violett" : "Pink";
+    hues.set(name, (hues.get(name) || 0) + 1);
+  }
+  // stroke width is measured on the dark linework when there is some (outlines), else on all ink
+  const D = distanceField(outside, w, h), L = dark > ink * .05 ? distanceField(outDark, w, h) : D, ridge = [];
+  let inside = 0;
+  for (let i = 0; i < n; i++) if (D[i] >= 1) inside++;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x, v = L[i]; if (v < 1) continue;
+    let top = true; for (const j of [i - 1, i + 1, i - w, i + w, i - w - 1, i - w + 1, i + w - 1, i + w + 1]) if (L[j] > v) { top = false; break; }
+    if (top) ridge.push(v * 2);
+  }
+  ridge.sort((a, b) => a - b);
+  const colours = [...hues.entries()].filter(([, v]) => v > ink * .03).sort((a, b) => b[1] - a[1]).map(([k]) => k);
+  if (dark > ink * .03 || !colours.length) colours.unshift("Schwarz");
+  if (shade > ink * .08 && !colours.includes("Grau")) colours.push("Grau");
+  return (m.stats = { w, h, ink: ink / n, shade: shade / Math.max(ink, 1), ridge, inside, D, colours });
+}
+const RL = [[.45, "1RL"], [.75, "3RL"], [1, "5RL"], [1.3, "7RL"], [1.6, "9RL"], [1.9, "11RL"], [Infinity, "14RL"]];
+function summarise() {
+  const st = motifStats(S.motif), { w, h } = sizeCm(), mmPerPx = h * 10 / st.h;
+  const lines = st.ridge.filter(v => v * mmPerPx < 3), lineMm = (lines.length ? lines[Math.floor(lines.length / 2)] : st.ridge[0] || 2) * mmPerPx;
+  let thick = 0; for (let i = 0; i < st.D.length; i++) if (st.D[i] * 2 * mmPerPx > 3) thick++;
+  const area = st.ink * w * h, fillShare = thick / Math.max(st.inside, 1), fill = fillShare > .2;
+  const fillNeedle = fill ? (area > 25 ? "11–13 RM (Magnum)" : "7–9 M1 (Magnum)") : null;
+  const shadeNeedle = st.shade > .12 ? (area > 25 ? "9–13 RM (Soft-Magnum)" : "7 M1 (Magnum)") : null;
+  const lineNeedle = RL.find(([mm]) => lineMm <= mm)[1];
+  const min = 20 + area * (fill ? 1.6 : .7) + (shadeNeedle ? area * .8 : 0) + (st.colours.length > 1 ? 15 : 0);
+  const lo = Math.round(min * .75 / 15) * 15, hi = Math.round(min * 1.3 / 15) * 15;
+  const time = hi < 90 ? `${Math.max(15, lo)}–${hi} min` : `${fmt(lo / 60)}–${fmt(hi / 60)} h`;
+  return { area, lineMm, lineNeedle, fillNeedle, shadeNeedle, colours: st.colours, time };
+}
+
 /* ---------- surface-true mapping ---------- */
 // For every pixel near the anchor we need tattoo coordinates (u, v) measured as arc length over the
 // skin surface, not over the flat photo. In the tattoo's own frame (e1 = its x-axis, e2 = its y-axis,
 // both rotated in the image) we integrate sqrt(1 + dh²) along rows for u and along columns for v.
 // Where the arm curves away from the camera the arc length grows faster than the image distance,
 // so the motif compresses exactly like a real tattoo seen at an angle.
-function pxPerCm() { return S.armPx / clamp(+$("#armCm").value || 7.5, 4, 20); }
 function motifSizePx(k) { const m = S.motif.canvas, hpx = S.sizeCm * pxPerCm() * k; return { w: hpx * m.width / m.height, h: hpx }; }
 // src: image to map (default the motif); grow: its size relative to the motif (the sticker has padding)
 function warp(k, src = S.motif.data, grow = [1, 1]) { // k = output px per render px
@@ -1287,8 +1494,7 @@ function previewTattoo() {
   vctx.save(); vctx.imageSmoothingQuality = "high"; vctx.globalAlpha = .92;
   vctx.drawImage(c, L.x0 / k, L.y0 / k, L.w / k, L.h / k);
   vctx.restore();
-  const { w, h } = motifSizePx(1);
-  $("#tagSize").hidden = false; $("#tagSize").textContent = `${(w / pxPerCm()).toFixed(0)} × ${(h / pxPerCm()).toFixed(0)} cm · ${Math.round(((S.rot % 360) + 540) % 360 - 180)}°`;
+  updateInfo();
 }
 
 /* ---------- gizmo: drag to move, grip on the ring to rotate + scale ---------- */
@@ -1481,31 +1687,76 @@ async function stechenRun() {
   const res = composeInk();
   await needleReveal(res, S.inkBox);
   S.local = S.inked = res;
-  status(""); redraw();
+  S.summary = summarise(); infoKey = ""; setInfo(true);
+  status(""); redraw(); updateInfo();
 }
 // Age is fixed at "healed" (S.age); the renderer still supports fresh to aged (renderInk(t)).
 
 function hash(i) { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math.floor(s); }
-// The needle travels over the motif in quick strokes while the ink appears behind it
+// Stechen animation in the Stencit dot language: the ink is laid down as a grid of needle dots that
+// the needle visits like a tattoo machine follows the lines (nearest-neighbour path, so it traces
+// strokes instead of scanning rows). Each puncture flashes white and settles into ink; when all dots
+// are in, the gaps close and the dots melt into solid ink.
+function needlePath(box) {
+  const I = S.ink, sp = Math.max(7, Math.round(view.width / 120)), pts = [];
+  for (let y = sp / 2; y < I.bh; y += sp) for (let x = sp / 2; x < I.bw; x += sp) {
+    const j = (y | 0) * I.bw + (x | 0); if (I.alpha[j] > .2) pts.push(x + I.x0, y + I.y0);
+  }
+  const n = pts.length / 2, used = new Uint8Array(n), order = new Int32Array(n), cell = sp * 3, grid = new Map();
+  const key = (x, y) => ((x / cell) | 0) * 100003 + ((y / cell) | 0);
+  for (let i = 0; i < n; i++) { const k = key(pts[i * 2], pts[i * 2 + 1]); (grid.get(k) || grid.set(k, []).get(k)).push(i); }
+  let cur = 0, start = 0; // start at the top-most dot
+  for (let i = 1; i < n; i++) if (pts[i * 2 + 1] < pts[start * 2 + 1]) start = i;
+  cur = start;
+  for (let o = 0; o < n; o++) {
+    used[cur] = 1; order[o] = cur;
+    const cx = pts[cur * 2], cy = pts[cur * 2 + 1], gx = (cx / cell) | 0, gy = (cy / cell) | 0;
+    let best = -1, bd = Infinity;
+    for (let r = 1; r <= 2 && best < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
+      for (const i of grid.get((gx + dx) * 100003 + gy + dy) || []) if (!used[i]) { const d = (pts[i * 2] - cx) ** 2 + (pts[i * 2 + 1] - cy) ** 2; if (d < bd) { bd = d; best = i; } }
+    }
+    if (best < 0) for (let i = 0; i < n; i++) if (!used[i]) { const d = (pts[i * 2] - cx) ** 2 + (pts[i * 2 + 1] - cy) ** 2; if (d < bd) { bd = d; best = i; } } // jump to the next stroke
+    if (best < 0) break; cur = best;
+  }
+  return { pts, order, n, sp };
+}
 function needleReveal(res, box) {
   return new Promise(resolve => {
-    const nd = $("#needle"), b = view.getBoundingClientRect(), wrap = $("#viewWrap").getBoundingClientRect();
-    const sx = b.width / view.width, sy = b.height / view.height, rows = 9, T = 1600, t0 = performance.now();
-    nd.hidden = false;
+    const { pts, order, n, sp } = needlePath(box), nd = $("#needle");
+    const ox = overlay.width / view.width, oy = overlay.height / view.height, T = clamp(1200 + n * 1.4, 1600, 2600), t0 = performance.now(), recent = [];
+    let done = 0;
+    vctx.drawImage(S.photo, 0, 0); nd.hidden = !n;
     const step = t => {
-      const p = clamp((t - t0) / T, 0, 1), row = Math.min(rows - 1, Math.floor(p * rows)), rp = p * rows - row;
-      const yTop = box.y0 + box.h * row / rows, yBot = box.y0 + box.h * (row + 1) / rows;
-      const xNeedle = box.x0 + box.w * (row % 2 ? 1 - rp : rp);
-      vctx.drawImage(S.photo, 0, 0);
-      vctx.save(); vctx.beginPath(); vctx.rect(box.x0, box.y0, box.w, yTop - box.y0); vctx.rect(row % 2 ? xNeedle : box.x0, yTop, row % 2 ? box.x0 + box.w - xNeedle : xNeedle - box.x0, yBot - yTop); vctx.clip(); vctx.drawImage(res, 0, 0); vctx.restore();
-      nd.style.left = (b.left - wrap.left + xNeedle * sx) + "px"; nd.style.top = (b.top - wrap.top + (yTop + yBot) / 2 * sy + Math.sin(t / 18) * 2) + "px";
-      if (p < 1) requestAnimationFrame(step); else { nd.hidden = true; resolve(); }
+      const p = clamp((t - t0) / T, 0, 1), target = Math.floor(p * p * (3 - 2 * p) * n);
+      if (target > done) { // punch the new dots: each reveals the finished ink in a small circle
+        vctx.save(); vctx.beginPath();
+        for (let o = done; o < target; o++) { const i = order[o], x = pts[i * 2], y = pts[i * 2 + 1]; vctx.moveTo(x + sp * .5, y); vctx.arc(x, y, sp * .5, 0, 7); recent.push({ x, y, t }); }
+        vctx.clip(); vctx.drawImage(res, 0, 0); vctx.restore(); done = target;
+      }
+      octx.clearRect(0, 0, overlay.width, overlay.height);
+      while (recent.length && (t - recent[0].t > 180 || recent.length > 8)) recent.shift(); // only the last few punctures flash
+      octx.fillStyle = "#fff";
+      for (const d of recent) { const a = 1 - (t - d.t) / 180; octx.globalAlpha = a * .75; octx.beginPath(); octx.arc(d.x * ox, d.y * oy, sp * ox * (.15 + .3 * a), 0, 7); octx.fill(); }
+      octx.globalAlpha = 1;
+      if (done > 0) { // the needle sits on the last dot and vibrates like a machine
+        const i = order[Math.min(done, n) - 1], b = view.getBoundingClientRect(), wrap = $("#viewWrap").getBoundingClientRect();
+        nd.style.left = (b.left - wrap.left + pts[i * 2] * b.width / view.width + Math.sin(t / 9) * 1.2) + "px";
+        nd.style.top = (b.top - wrap.top + pts[i * 2 + 1] * b.height / view.height + Math.cos(t / 7) * 1.2) + "px";
+      }
+      if (p < 1) return requestAnimationFrame(step);
+      nd.hidden = true; octx.clearRect(0, 0, overlay.width, overlay.height);
+      const f0 = performance.now(), melt = tt => { // close the gaps between the dots
+        const q = clamp((tt - f0) / 520, 0, 1);
+        vctx.save(); vctx.globalAlpha = .18; vctx.drawImage(res, 0, 0); vctx.restore();
+        if (q < 1) requestAnimationFrame(melt); else { vctx.drawImage(res, 0, 0); resolve(); }
+      };
+      requestAnimationFrame(melt);
     };
     requestAnimationFrame(step);
   });
 }
 $("#ink").onclick = stechen;
-$("#edit").onclick = () => { S.inked = S.local = S.ink = null; S.comparing = false; $("#compare").hidden = true; setStep(3); status(""); redraw(); };
+$("#edit").onclick = () => { S.inked = S.local = S.ink = null; S.comparing = false; $("#compare").hidden = true; $("#cmp").setAttribute("aria-pressed", false); setInfo(false); setStep(3); status(""); redraw(); };
 $("#cmp").onclick = () => {
   S.comparing = !S.comparing; $("#cmp").setAttribute("aria-pressed", S.comparing); $("#compare").hidden = !S.comparing; placeCompare(); redraw();
 };
