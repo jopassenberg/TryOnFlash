@@ -3249,27 +3249,23 @@ function usePending() { // nach der Analyse aufgerufen
 })();
 
 /* ---------- Flash-Sheet: das Motiv in echter Größe auf Papier (Drucker, AirPrint, PDF) ---------- */
-// Jedes Motiv als Stencil mit Schnittkante (weißer Abstand + feine dunkle Linie), so wie in den Flashes.
+// Gedruckt wird nur das Motiv selbst, ohne weißen Rand und ohne Schnittkante.
 // Standard A4 hoch, nur die gewählte Größe; weitere Größen (längste Seite −2 … +2 cm) per Antippen dazu.
 // Unten auf jeder Seite ein 5-cm-Kontrollmaß: stimmt es nach dem Druck, ist alles maßstabsgetreu.
 const PAPERS = [["A5", 148, 210], ["A4", 210, 297], ["A3", 297, 420], ["Letter", 215.9, 279.4]];
 const PS = { paper: "A4", land: false, steps: new Set([0]), tags: true, mirror: false };
 const fmtCm = v => fmt(Math.round(v * 10) / 10);
-function printCut() { // Stencil-Bild pro Motiv und Größe: 3 mm weißer Rand, dunklere Kante als in der Galerie (im Druck sichtbar)
-  const m = S.motif, { w, h } = sizeCm(), padK = .3 / Math.max(w, h), key = padK.toFixed(4);
-  if (m.print?.key === key) return m.print;
-  const c = dieCut(m.canvas, 120, padK); return (m.print = { key, url: c.toDataURL("image/png"), W: c.width, H: c.height, w: m.canvas.width, ...c.cut });
+function printCut() { // nur das Motiv
+  const m = S.motif; return (m.print ||= { url: m.canvas.toDataURL("image/png") });
 }
 function sheetItems() {
-  const { w, h } = sizeCm(), long = Math.max(w, h), P = printCut();
-  return [...PS.steps].sort((a, b) => a - b).map(d => { const k = (long + d) / long, mw = w * k * 10, mh = h * k * 10, s = mw / P.w; // mm pro Bild-px
-    const vis = P.vis * s; // sichtbarer Rand bis zur Schnittkante (mm)
-    return { d, mw, mh, sw: P.W * s, sh: P.H * s, inv: (P.o - P.vis) * s, vw: mw + 2 * vis, vh: mh + 2 * vis }; }).filter(i => Math.max(i.mw, i.mh) >= 15);
+  const { w, h } = sizeCm(), long = Math.max(w, h);
+  return [...PS.steps].sort((a, b) => a - b).map(d => { const k = (long + d) / long, mw = w * k * 10, mh = h * k * 10; // mm
+    return { d, mw, mh, sw: mw, sh: mh, inv: 0, vw: mw, vh: mh }; }).filter(i => Math.max(i.mw, i.mh) >= 15);
 }
 function sheetPages(items) { // Regale: Zeile für Zeile, nebeneinander, so viele Seiten wie nötig
   const [, pw0, ph0] = PAPERS.find(p => p[0] === PS.paper), W = PS.land ? ph0 : pw0, H = PS.land ? pw0 : ph0;
-  // Gelegt wird nach der sichtbaren Schnittkante; der unsichtbare Rand des Bildes darf überstehen
-  const M = 10, G = 4, TAG = PS.tags ? 6 : 0, FOOT = 14, maxW = W - 2 * M, maxH = H - M - FOOT;
+  const M = 12, G = 10, TAG = PS.tags ? 6 : 0, FOOT = 14, maxW = W - 2 * M, maxH = H - M - FOOT;
   const fits = items.filter(i => i.vw <= maxW && i.vh + TAG <= maxH - M), tooBig = items.filter(i => !fits.includes(i));
   const pages = []; let page = null, x = M, y = M, rowH = 0;
   for (const it of [...fits].sort((a, b) => b.vh - a.vh)) {
@@ -3307,7 +3303,7 @@ function printSheet() {
     $("#psTags").setAttribute("aria-checked", PS.tags); $("#psMirror").setAttribute("aria-checked", PS.mirror);
     L = sheetPages(sheetItems()); const n = L.pages.length, prev = $("#psPrev"), top = prev.scrollTop;
     prev.innerHTML = L.pages.map(pg => `<div class="pw">${pageHTML(L, pg)}</div>`).join("") || `<span class="ps-note">Nichts zu drucken</span>`;
-    const avail = Math.min(prev.clientWidth - 28, 300), PX = 96 / 25.4, k = avail / (L.W * PX);
+    const PX = 96 / 25.4, k = Math.min((prev.clientWidth - 28) / (L.W * PX), (prev.clientHeight - 28) / (L.H * PX)); // ganze Seite sichtbar
     prev.querySelectorAll(".pw").forEach(w => { w.style.width = L.W * PX * k + "px"; w.style.height = L.H * PX * k + "px"; w.firstElementChild.style.transform = `scale(${k})`; });
     prev.scrollTop = top;
     $("#psNote").textContent = `${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? ` · ${L.tooBig.map(i => fmtCm(i.mw / 10) + " × " + fmtCm(i.mh / 10) + " cm").join(", ")} passt nicht auf ${PS.paper}${PS.land ? "" : " hoch, Querformat probieren"}` : ""} · im Druckdialog „100 %“ wählen`;
