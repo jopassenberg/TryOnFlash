@@ -93,13 +93,6 @@
   .drop.over { background: oklch(23% .003 75); }
   .drop img { max-width: 46%; max-height: 38%; margin-bottom: 48px; object-fit: contain; rotate: -5deg; animation: try-in .7s var(--spring) both; }
   @keyframes try-in { from { transform: translateY(14px) scale(.6) rotate(8deg); opacity: 0; } }
-  /* Stencil-Chip: schwarz wie die Insel, ploppt darunter heraus */
-  .trychip { position: absolute; z-index: 4; top: calc(48px + 6px); left: 50%; transform: translateX(-50%); height: 40px; padding: 0 4px 0 5px; border-radius: var(--r-full);
-    display: inline-flex; align-items: center; gap: 8px; background: var(--frame); color: #fff; font-size: 13px; white-space: nowrap; transform-origin: 50% -28px; animation: toast-plop .55s var(--spring) both; }
-  .trychip img { width: 30px; height: 30px; object-fit: contain; }
-  .stage:has(.island[data-mode="hidden"]) .trychip { top: 12px; } /* Insel eingefahren: der Chip steht an ihrer Stelle */
-  .stage:has(.island[data-mode="hidden"]) > .status { top: 12px; }
-  .stage:has(.island[data-mode="hidden"]):has(#tryHead:not([hidden])) > .status { top: calc(12px + 40px + 6px); }
   .try-x { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .1); color: #fff; }
   .try-x .ic { width: 13px; height: 13px; }
   /* Kamera: das Motiv halbtransparent in der Mitte, damit man die Stelle anpeilen kann */
@@ -146,21 +139,27 @@
   .swap { animation: swap .32s var(--ease-out); }
   @keyframes swap { from { filter: blur(4px); opacity: 0; translate: 0 3px; } }
   @media (prefers-reduced-motion: reduce) { .card > .panel, .card > .panel .group > *, .swap, .thumb.pop { animation: none !important; } }
-  /* Kamera: unten Galerie-Pille | breiter weißer Auslöser (genau mittig) | Flashes-Pille;
-     links im Bild kleine runde Knöpfe einzeln untereinander (Blitz, Kamera wechseln) */
-  #panelCam { width: min(calc(100% - 2 * var(--inset)), 380px); padding: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
-  #panelCam .group { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s2); }
+  /* Kamera (Layout C): drei feste Größen – 44 klein, 56 mittel, 72 Auslöser. Unten auf einer Linie:
+     Stencil-Karte (56) | runder Auslöser (72) genau mittig | Galerie (56), gleicher Abstand zum Rand.
+     Rechts über der Galerie, auf ihrer Mittelachse: kleine Knöpfe (44) untereinander. */
+  #panelCam { --cam-pad: 16px; left: 0; right: 0; bottom: 18px; width: auto; max-width: none; transform: none; padding: 0 var(--cam-pad); background: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; }
+  #panelCam .group { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0; }
   #panelCam .group > :first-child { justify-self: start; } #panelCam .group > :last-child { justify-self: end; }
-  #panelCam .shutter { width: 100px; height: 60px; padding: 0; border-radius: 30px; background: #fff; box-shadow: none; transition: transform .3s var(--spring); }
-  #panelCam .shutter::after { display: none; }
+  #panelCam .shutter { width: 72px; height: 72px; padding: 5px; border-radius: 50%; background: none; box-shadow: inset 0 0 0 3px #fff; transition: transform .3s var(--spring); }
+  #panelCam .shutter::after { display: block; background: #fff; }
   #panelCam .shutter:active { transform: scale(.94); }
-  .cpill { height: 52px; padding: 0 18px 0 16px; border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 8px; background: var(--gd); color: #fff; font-size: 14px; white-space: nowrap; transition: background-color .2s, transform .3s var(--spring); }
-  .cpill .ic { width: 16px; height: 16px; } .cpill:active { transform: scale(.95); }
-  @media (hover: hover) { .cpill:hover { background: var(--gd-hover); } }
-  .cam-side { position: absolute; z-index: 5; left: 14px; bottom: calc(var(--inset) + 60px + 18px); display: none; flex-direction: column; gap: 8px; }
+  .cam-sq, .cam-card { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); }
+  .cam-sq .ic, .cam-card .ic { width: 19px; height: 19px; } .cam-sq:active, .cam-card:active { transform: scale(.93); }
+  @media (hover: hover) { .cam-sq:hover, .cam-card:hover { background: var(--gd-hover); } }
+  .cam-card img { display: none; width: 40px; height: 40px; object-fit: contain; } .cam-card.has img { display: block; } .cam-card.has .ic { display: none; }
+  .cam-cardwrap { position: relative; display: inline-grid; }
+  .cam-cardwrap .try-x { position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; background: var(--frame); }
+  .cam-cardwrap .try-x .ic { width: 10px; height: 10px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .cam-side { position: absolute; z-index: 5; right: calc(16px + 6px); bottom: calc(18px + 72px + 14px); display: none; flex-direction: column; gap: 10px; }
   .card:has(#panelCam:not([hidden])) .cam-side { display: flex; }
-  .cs { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); animation: item-in .45s var(--spring) both; }
-  .cs + .cs { animation-delay: 40ms; } .cs .ic { width: 17px; height: 17px; } .cs:active { transform: scale(.92); }
+  .cs { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); animation: item-in .45s var(--spring) both; }
+  .cs + .cs { animation-delay: 40ms; } .cs .ic { width: 18px; height: 18px; } .cs:active { transform: scale(.92); }
   .cs[aria-pressed="true"] { background: oklch(84% .2 115); color: var(--ink); }
 
   /* Motive: runde Sticker-Kreise */
@@ -186,9 +185,8 @@
   /* Hinweise kommen aus der Insel: schwarz, weiße Schrift, ploppen bei jedem neuen Text heraus */
   .stage > .status { top: calc(48px + 6px); height: 36px; padding: 0 16px 0 14px; background: var(--frame); color: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; transform-origin: 50% -26px; }
   .stage > .status.pop { animation: toast-plop .55s var(--spring) both; }
-  .stage:has(#tryHead:not([hidden])) > .status { top: calc(48px + 6px + 40px + 6px); }
   @keyframes toast-plop { 0% { opacity: 0; transform: translate(-50%, -24px) scale(.36, .18); } 40% { opacity: 1; } 100% { opacity: 1; transform: translate(-50%, 0); } }
-  @media (prefers-reduced-motion: reduce) { .stage > .status.pop, .trychip { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .stage > .status.pop { animation: none; } }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
   .status[data-s="busy"] .dot { background: var(--accent); animation: blink .9s infinite; }
   .status[data-s="err"] .dot { background: oklch(75% .16 70); }
@@ -579,7 +577,7 @@
     .info { left: var(--s2); right: var(--s2); top: 56px; width: auto; }
     .card > .panel { left: var(--inset); right: var(--inset); bottom: var(--inset); transform: none; max-width: none; }
     .card > .panel .group:first-child { flex: 1; min-width: 0; }
-    #panelCam { left: 50%; right: auto; transform: translateX(-50%); }
+    #panelCam { left: 0; right: 0; transform: none; }
     .thumbs { max-width: 100%; }
     .cut { padding: max(var(--s2), env(safe-area-inset-top)) var(--s2) max(var(--s2), env(safe-area-inset-bottom)); place-items: start center; }
     .cutbox { margin: auto 0; }
@@ -653,8 +651,6 @@
     <div class="siri" id="siri" hidden><i class="haze"></i><i class="wide"></i><i class="band"></i><i class="ring"></i></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop"><img alt="" id="tryImg" hidden></div>
-      <div class="trychip" id="tryHead" hidden><img alt="" id="tryThumb"><span id="tryName">Flash anprobieren</span>
-        <button class="try-x" id="tryX" aria-label="Flash entfernen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
       <video id="cam" playsinline muted autoplay hidden></video>
       <img class="cam-ghost" id="camGhost" alt="" hidden>
       <div class="shot" id="shot"></div>
@@ -685,9 +681,10 @@
     </div>
     <div class="panel" id="panelCam" hidden>
       <div class="group">
-        <button class="cpill" id="camGallery"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>Galerie</button>
+        <span class="cam-cardwrap"><button class="cam-card" id="tryHead" aria-label="Stencil aus den Flashes wählen"><img alt="" id="tryThumb"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg><span class="sr" id="tryName">Flash anprobieren</span></button>
+          <button class="try-x" id="tryX" aria-label="Stencil entfernen" hidden><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></span>
         <button class="shutter" id="shoot" title="Foto aufnehmen" aria-label="Foto aufnehmen"></button>
-        <button class="cpill" id="camFlashes"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Flashes</button>
+        <button class="cam-sq" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
       </div>
     </div>
 
@@ -874,7 +871,7 @@ setStep(1);
 
 /* ---------- 1 · Photo ---------- */
 $("#camGallery").onclick = () => $("#photoInput").click();
-$("#camFlashes").onclick = () => { closeCam(); setTab("flashes"); }; // Stencil aus den eigenen Flashes wählen
+$("#tryHead").onclick = () => { closeCam(); setTab("flashes"); }; // Stencil-Karte: aus den eigenen Flashes wählen
 $("#newPhoto").onclick = () => backToStart();
 $("#photoInput").onchange = e => { e.target.files[0] && loadPhoto(e.target.files[0]); e.target.value = ""; };
 const stage = $("#stage");
@@ -900,7 +897,7 @@ function usePhoto(img) {
   S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
   S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
   view.width = S.photo.width; view.height = S.photo.height;
-  $("#drop").hidden = true; $("#tryHead").hidden = true; $("#viewWrap").hidden = false;
+  $("#drop").hidden = true; $("#viewWrap").hidden = false;
   fitView(); S.view = "photo"; syncViews(); redraw();
   analyse();
 }
@@ -918,7 +915,7 @@ async function camAllowed() {
   return ok;
 }
 function startUI() {
-  $("#drop").hidden = false; $("#panelCam").hidden = false; $("#tryImg").hidden = $("#tryHead").hidden = !pendingFlash;
+  $("#drop").hidden = false; $("#panelCam").hidden = false; $("#tryImg").hidden = !pendingFlash; setCard();
 }
 async function showStart(hint = true) {
   startUI();
@@ -3026,14 +3023,16 @@ async function tryFresh(blob, name) {
 function showTry(c, name) {
   const t = trim(c) || c, small = scaled(t, 480);
   $("#tryImg").src = dieCut(small).toDataURL("image/png"); $("#camGhost").src = small.toDataURL("image/png");
-  $("#tryThumb").src = $("#tryImg").src; $("#tryImg").hidden = false; $("#tryHead").hidden = false;
+  $("#tryThumb").src = $("#tryImg").src; $("#tryImg").hidden = false; setCard();
   $("#tryName").textContent = name ? `${name} anprobieren` : "Flash anprobieren"; if (camStream) $("#camGhost").hidden = false;
 }
 function clearTry() {
   pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
-  $("#tryImg").hidden = true; $("#tryHead").hidden = true; $("#camGhost").hidden = true;
+  $("#tryImg").hidden = true; $("#camGhost").hidden = true; setCard();
 }
 $("#tryX").onclick = () => { noDefault = true; clearTry(); };
+function setCard() { const on = !!pendingFlash; $("#tryHead").classList.toggle("has", on); $("#tryX").hidden = !on;
+  $("#tryHead").setAttribute("aria-label", on ? $("#tryName").textContent + " · tippen zum Wechseln" : "Stencil aus den Flashes wählen"); }
 // Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel) im Linoldruck-Look. Statt gezeichneter
 // Risse und Kleckse entsteht alles aus Rauschen, wie beim echten Druck:
 // - Kante: der Kreis wird mit feinem Rauschen verschoben → organisch geschnitten, nicht polygonal
