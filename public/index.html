@@ -3034,35 +3034,55 @@ function clearTry() {
   $("#tryImg").hidden = true; $("#tryHead").hidden = true; $("#camGhost").hidden = true;
 }
 $("#tryX").onclick = () => { noDefault = true; clearTry(); };
-// Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel) im Linoldruck-Look: saubere runde
-// Punkte mit klarer Kante, die Fläche aber gedruckt statt digital – feines Korn, kleine helle Fehlstellen, wo die
-// Farbe nicht ganz angenommen hat, leicht ungleich deckend. Fester Zufall: sieht jedes Mal gleich aus.
+// Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel) im Linoldruck-Look: tiefschwarze,
+// deckende Punkte mit leicht geschnitzter, knapp unrunder Kante, kleinen Ausbrüchen am Rand, weißen Schnitz- und
+// Kratzspuren in der Fläche und ein paar Farbspritzern drumherum. Kein feines Korn. Fester Zufall: immer gleich.
 function logoStencil() {
   const N = 600, c = Object.assign(document.createElement("canvas"), { width: N, height: N }), g = c.getContext("2d");
   let seed = 917; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const k = N / 240 * .86, o = N * .07, R = 26.48 * k;
+  const k = N / 240 * .84, o = N * .08, R = 26.48 * k;
   const C = [[120, 26.48], [186.13, 53.87], [213.52, 120], [186.13, 186.13], [120, 213.52], [53.87, 186.13], [26.48, 120], [53.87, 53.87], [120, 120]];
-  g.fillStyle = "#121212";
-  for (const [x, y] of C) { // fast perfekt rund, nur ein Hauch Unruhe in der Kante
-    const cx = o + x * k, cy = o + y * k, p = rnd() * 7; g.beginPath();
-    for (let i = 0; i <= 96; i++) { const t = i / 96 * Math.PI * 2, rr = R * (1 + .008 * Math.sin(3 * t + p) + .005 * Math.sin(8 * t + p * 2));
-      i ? g.lineTo(cx + Math.cos(t) * rr, cy + Math.sin(t) * rr) : g.moveTo(cx + Math.cos(t) * rr, cy + Math.sin(t) * rr); }
+  const dots = C.map(([x, y]) => ({ x: o + x * k, y: o + y * k }));
+  // 1) Punkte: rund, aber wie geschnitten – viele kurze gerade Stücke, leichte Unruhe, hier und da ein flacher Biss
+  g.fillStyle = "#0e0e0e";
+  for (const d of dots) {
+    const n = 26 + (rnd() * 8 | 0), off = rnd() * 6.3, bite = rnd() < .6 ? rnd() * 6.3 : -9; g.beginPath();
+    for (let i = 0; i <= n; i++) { const t = off + i / n * Math.PI * 2, db = Math.abs(((t - bite + 9.42) % 6.283) - 3.14);
+      const rr = R * (1 + (rnd() - .5) * .045 - (db < .22 ? .09 * (1 - db / .22) : 0));
+      i ? g.lineTo(d.x + Math.cos(t) * rr, d.y + Math.sin(t) * rr) : g.moveTo(d.x + Math.cos(t) * rr, d.y + Math.sin(t) * rr); }
     g.fill();
   }
-  // Druck-Korn: glatte Rauschfelder in zwei Größen (Wolken + Körnung), dazu feine Einzelpunkte
-  const grid = (cell) => { const n = Math.ceil(N / cell) + 2, v = new Float32Array(n * n); for (let i = 0; i < v.length; i++) v[i] = rnd();
-    return (x, y) => { const gx = x / cell, gy = y / cell, xi = gx | 0, yi = gy | 0, fx = gx - xi, fy = gy - yi, u = fx * fx * (3 - 2 * fx), w = fy * fy * (3 - 2 * fy);
-      const a = v[yi * n + xi], b = v[yi * n + xi + 1], c2 = v[(yi + 1) * n + xi], d2 = v[(yi + 1) * n + xi + 1]; return (a * (1 - u) + b * u) * (1 - w) + (c2 * (1 - u) + d2 * u) * w; }; };
-  const big = grid(38), mid = grid(9), fine = grid(2.6);
-  const id = g.getImageData(0, 0, N, N), d = id.data;
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const i = (y * N + x) * 4; if (!d[i + 3]) continue;
-    const cover = .78 * big(x, y) + .22 * mid(x, y), grain = fine(x, y);
-    let a = 1;
-    if (cover > .77) a = Math.max(.2, 1 - (cover - .77) * 5);      // größere helle Stellen, wo die Farbe dünn ist
-    if (grain > .9) a *= .45;                                        // feines Papierkorn
-    if (rnd() < .005) a *= .25;                                       // einzelne Pünktchen
-    d[i + 3] *= a; const v = 14 + (1 - a) * 30; d[i] = d[i + 1] = d[i + 2] = v; }
-  g.putImageData(id, 0, 0);
+  // 2) Schnitzspuren: weiße, leicht gebogene Striche, die vom Rand in den Punkt laufen; kleine Ausbrüche am Rand
+  g.globalCompositeOperation = "destination-out"; g.lineCap = "round"; g.lineJoin = "round"; g.strokeStyle = g.fillStyle = "#000";
+  for (const d of dots) {
+    const cuts = 2 + (rnd() * 2.6 | 0);
+    for (let j = 0; j < cuts; j++) {
+      const t = rnd() * 6.283, len = R * (.3 + rnd() * .7), bend = (rnd() - .5) * 1.1, w = 2.6 + rnd() * 3.4;
+      let x = d.x + Math.cos(t) * R * 1.02, y = d.y + Math.sin(t) * R * 1.02, a = t + Math.PI + (rnd() - .5) * .9;
+      g.beginPath(); g.moveTo(x, y);
+      for (let s2 = 0; s2 < 8; s2++) { a += bend / 8; x += Math.cos(a) * len / 8; y += Math.sin(a) * len / 8; g.lineWidth = w * (1 - s2 / 10); g.lineTo(x, y); }
+      g.stroke();
+    }
+    for (let j = 0; j < 12; j++) { // kleine Ausbrüche
+      const t = rnd() * 6.283, r0 = R * (.97 + rnd() * .05), sz = 1.6 + rnd() * 4.2, px = d.x + Math.cos(t) * r0, py = d.y + Math.sin(t) * r0;
+      g.beginPath(); for (let q = 0; q < 5; q++) { const qa = q / 5 * 6.283 + rnd(), qr = sz * (.6 + rnd() * .6); q ? g.lineTo(px + Math.cos(qa) * qr, py + Math.sin(qa) * qr) : g.moveTo(px + Math.cos(qa) * qr, py + Math.sin(qa) * qr); } g.fill();
+    }
+    if (rnd() < .45) { // Druckspur: ein paar kurze, unterbrochene helle Linien in Walzenrichtung
+      const yy = d.y + (rnd() - .5) * R; g.lineWidth = 1.6;
+      for (let q = 0; q < 4; q++) { const x0 = d.x - R * .7 + rnd() * R * .6, l = R * (.2 + rnd() * .35); g.beginPath(); g.moveTo(x0, yy + q * 4.5); g.lineTo(x0 + l, yy + q * 4.5 + (rnd() - .5) * 3); g.stroke(); }
+    }
+  }
+  g.globalCompositeOperation = "source-over"; g.fillStyle = "#0e0e0e";
+  for (const d of dots) for (let j = 0; j < 7; j++) { // Farbe leicht über die Kante gedrückt
+    const t = rnd() * 6.283, px = d.x + Math.cos(t) * R * 1.0, py = d.y + Math.sin(t) * R * 1.0, sz = 1.5 + rnd() * 2.6;
+    g.beginPath(); for (let q = 0; q < 5; q++) { const qa = q / 5 * 6.283 + rnd(), qr = sz * (.6 + rnd() * .6); q ? g.lineTo(px + Math.cos(qa) * qr, py + Math.sin(qa) * qr) : g.moveTo(px + Math.cos(qa) * qr, py + Math.sin(qa) * qr); } g.fill();
+  }
+  // 3) Farbspritzer drumherum: kleine unregelmäßige Flecken
+  g.globalCompositeOperation = "source-over"; g.fillStyle = "#0e0e0e";
+  for (let j = 0; j < 9; j++) {
+    const t = rnd() * 6.283, dist = N * (.4 + rnd() * .06), px = N / 2 + Math.cos(t) * dist, py = N / 2 + Math.sin(t) * dist, sz = 2.5 + rnd() * 5;
+    g.beginPath(); for (let q = 0; q < 6; q++) { const qa = q / 6 * 6.283 + rnd() * .5, qr = sz * (.6 + rnd() * .5); q ? g.lineTo(px + Math.cos(qa) * qr, py + Math.sin(qa) * qr) : g.moveTo(px + Math.cos(qa) * qr, py + Math.sin(qa) * qr); } g.fill();
+  }
   return c;
 }
 let noDefault = false; // × am Start-Stencil: in dieser Sitzung nicht wiederbringen
