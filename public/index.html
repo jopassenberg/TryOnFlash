@@ -2173,26 +2173,48 @@ function summarise() {
   if (st.shade > .12) { const n = Math.max(7, pickMagnum(Math.max(fillW, lineMm * 6), 23)); needles.push({ type: "RM", n, name: `${n}RM`, role: "für Schatten", detail: "" }); }
   return { area, lineMm, needles, colours: st.colours };
 }
-// Nadel-Icon im Stil des Logos: Punkte wie Nadelspitzen von vorne. Round Liner dicht im Kreis,
-// Round Shader lockerer, Magnum in zwei versetzten Reihen, Curved Magnum auf einem Bogen.
-function needleIcon(nd) {
-  const ring = (m, R, rot = -Math.PI / 2) => Array.from({ length: m }, (_, k) => [R * Math.cos(rot + k * 2 * Math.PI / m), R * Math.sin(rot + k * 2 * Math.PI / m)]);
-  let P = [], r;
+// Nadel-Icon: Nadelspitzen von vorne, wie die echten Gruppen gelötet sind. Einheit = Nadelradius 1.
+// Round Liner: dichteste Kreispackung (3 Dreieck, 5 Fünfeck, 7 = 6 um 1, 9 = 8 um 1, 11/14/18 optimal gepackt,
+// gleiche Werte wie PACK für die Breite). Round Shader: locker, ab 7 als offener Ring. Magnum: zwei Reihen auf
+// Lücke, Nadeln berühren sich (Reihenabstand √3). Curved Magnum: dieselben Reihen auf einem flachen Bogen.
+// Gezeichnet wird jede Spitze etwas kleiner als ihr Platz: überall dieselbe saubere Lücke (20 % der Nadel).
+const RL_PACK = {
+  11: [[-1.9507, 2.178], [2.5779, -1.3794], [-.9108, -2.7783], [2.8615, .6004], [-.0943, 2.9223], [-2.8943, .4145], [-2.4836, -1.5428], [1.0881, -2.7138], [-.3779, .9425], [.6775, -.7564], [1.8061, 2.2992]],
+  14: [[.6509, -3.2642], [-1.1113, -1.0607], [1.606, 2.9153], [-.9555, .9332], [-3.2303, .8021], [.8877, -.9979], [2.4041, -2.3018], [3.2894, -.5084], [-2.1875, 2.5087], [2.9869, 1.4686], [-3.1069, -1.1941], [-1.3374, -3.0479], [-.3548, 3.3095], [1.0435, .9961]],
+  18: [[-2.9901, 2.4469], [0, 0], [2.9901, -2.4469], [3.813, -.624], [-1.3661, 3.6141], [-3.813, .624], [.624, 3.813], [1.3661, -3.6141], [-.624, -3.813], [1.1673, -1.624], [-.1988, 1.9901], [3.6141, 1.3661], [-.8228, -1.8229], [-2.4469, -2.9901], [1.624, 1.1673], [-1.8229, .8228], [-2.6457, -1.0001], [2.4469, 2.9901]] };
+function needleDots(nd) {
+  const ring = (m, R) => Array.from({ length: m }, (_, k) => [R * Math.cos(-Math.PI / 2 + k * 2 * Math.PI / m), R * Math.sin(-Math.PI / 2 + k * 2 * Math.PI / m)]);
+  const n = nd.n;
   if (nd.type === "RL" || nd.type === "RS") {
-    const n = nd.n, L = {
-      1: () => [[0, 0]], 3: () => ring(3, 1), 5: () => ring(5, 1), 7: () => [...ring(6, 1), [0, 0]], 9: () => [...ring(8, 1), [0, 0]],
-      11: () => [...ring(9, 1), [-.3, 0], [.3, 0]], 14: () => [...ring(10, 1), ...ring(4, .38, Math.PI / 4)], 18: () => [...ring(12, 1), ...ring(6, .5)] }[n] || (() => ring(n, 1));
-    P = L(); const outer = n === 1 ? 0 : 1, m = n === 1 ? 1 : n <= 5 ? n : n <= 9 ? n - 1 : n <= 11 ? 9 : n <= 14 ? 10 : 12;
-    r = n === 1 ? 1 : Math.sin(Math.PI / m) * (nd.type === "RS" ? .62 : .84);
-    const s = 15 / (outer + r); P = P.map(([x, y]) => [20 + x * s, 20 + y * s]); r *= s;
-  } else {
-    const n = nd.n, top = Math.ceil(n / 2), bot = n - top, pitch = Math.min(35 / (top - .5 + 1e-9), 8);
-    r = pitch * .46; const x0 = 20 - (top - 1) * pitch / 2 - pitch / 4, curve = nd.type === "RM" ? 5 / ((top * pitch / 2) ** 2) : 0;
-    for (let k = 0; k < top; k++) { const x = x0 + k * pitch; P.push([x, 17 + curve * (x - 20) ** 2]); }
-    for (let k = 0; k < bot; k++) { const x = x0 + pitch / 2 + k * pitch; P.push([x, 17 + pitch * .8 + curve * (x - 20) ** 2]); }
-    const ys = P.map(p => p[1]), dy = 20 - (Math.min(...ys) + Math.max(...ys)) / 2; P = P.map(([x, y]) => [x, y + dy]);
+    const loose = nd.type === "RS" ? 1.18 : 1; // Shader: Nadeln stehen weiter auseinander
+    if (nd.type === "RS" && n >= 7) return ring(n, loose / Math.sin(Math.PI / n));
+    let P = n === 1 ? [[0, 0]] : n === 3 ? ring(3, 2 / Math.sqrt(3)) : n === 5 ? ring(5, 1 / Math.sin(Math.PI / 5))
+      : n === 7 ? [[0, 0], ...ring(6, 2)] : n === 9 ? [[0, 0], ...ring(8, 1 / Math.sin(Math.PI / 8))]
+      : RL_PACK[n] || [[0, 0], ...ring(n - 1, 1 / Math.sin(Math.PI / (n - 1)))];
+    if (RL_PACK[n]) { // so drehen, dass eine äußere Nadel oben steht (ruhiges Bild)
+      const Rm = Math.max(...P.map(p => Math.hypot(...p))), ang = p => Math.atan2(p[0], -p[1]); // 0 = oben
+      const top = P.filter(p => Math.hypot(...p) > Rm - .05).sort((p, q) => Math.abs(ang(p)) - Math.abs(ang(q)))[0];
+      const t = ang(top), c = Math.cos(t), s = Math.sin(t); P = P.map(([x, y]) => [x * c - y * s, x * s + y * c]);
+    }
+    return P.map(([x, y]) => [x * loose, y * loose]);
   }
-  return `<svg viewBox="0 0 40 40" aria-hidden="true">${P.map(([x, y]) => `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r.toFixed(2)}" fill="#fff"/>`).join("")}</svg>`;
+  const top = Math.ceil(n / 2), bot = n - top, P = [];
+  if (nd.type === "RM") { // zwei konzentrische Bögen: Nachbarn berühren sich (Sehne 2), die Reihen auch
+    const L = top - 1 || 1, R = Math.max(L * L / 2.4 + .6, 6), a = 2 * Math.asin(1 / R), h = a / 2;
+    const rb = R * Math.cos(h) + Math.sqrt(4 - (R * Math.sin(h)) ** 2); // Abstand Reihe zu Reihe genau 2
+    for (let k = 0; k < top; k++) { const f = (k - (top - 1) / 2) * a; P.push([R * Math.sin(f), R * Math.cos(f) - R]); }
+    for (let k = 0; k < bot; k++) { const f = (k - (top - 1) / 2) * a + h; P.push([rb * Math.sin(f), rb * Math.cos(f) - R]); }
+    return P.map(([x, y]) => [x, -y]); // Bogen: Mitte oben, Enden fallen ab
+  }
+  for (let k = 0; k < top; k++) P.push([2 * k - (top - 1), 0]);
+  for (let k = 0; k < bot; k++) P.push([2 * k - (top - 1) + 1, Math.sqrt(3)]);
+  return P;
+}
+function needleIcon(nd) {
+  const P = needleDots(nd), dot = .8; // Lücke 2 − 2·0,8 = 0,4 → 20 % der Nadel
+  const xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs) - 1, x1 = Math.max(...xs) + 1, y0 = Math.min(...ys) - 1, y1 = Math.max(...ys) + 1;
+  const k = 36 / Math.max(x1 - x0, y1 - y0, 6), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; // 1 Nadel nicht riesig: mindestens 6 Einheiten Feld
+  return `<svg viewBox="0 0 40 40" aria-hidden="true">${P.map(([x, y]) => `<circle cx="${(20 + (x - cx) * k).toFixed(2)}" cy="${(20 + (y - cy) * k).toFixed(2)}" r="${(dot * k).toFixed(2)}" fill="#fff"/>`).join("")}</svg>`;
 }
 
 /* ---------- surface-true mapping ---------- */
@@ -2981,7 +3003,7 @@ function printSheet() {
 }
 addEventListener("afterprint", () => { $("#printRoot").innerHTML = ""; });
 
-window.__studio = { S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
+window.__studio = { needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>
