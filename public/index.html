@@ -933,7 +933,7 @@ function startUI() {
 async function showStart(hint = true) {
   startUI();
   if (await camAllowed()) return openCam();
-  if (hint && !pendingFlash) status("Auslöser tippen · Kamera startet", "ok");
+  if (hint) status("Auslöser tippen: Kamera an", "ok"); // solange die Kamera noch nicht freigegeben ist
 }
 
 /* ---------- camera: live picture right in the card, cropped to the card when taken ---------- */
