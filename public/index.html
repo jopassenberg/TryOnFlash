@@ -220,7 +220,7 @@
   .sum-scale { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .sum-scale input { width: 56px; height: 32px; border: 0; border-radius: 999px; background: oklch(100% 0 0 / .08); color: #fff; text-align: center; font-size: 14px; }
   .isl-size { padding: 0 24px; font-size: 15px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-  .isl-status { gap: 10px; padding: 0 22px 0 18px; font-size: 13px; }
+  .isl-status { gap: 10px; padding: 0 22px 0 18px; font-size: 13px; font-variant-numeric: tabular-nums; }
   .isl-status[data-s="err"] { color: oklch(85% .12 70); }
   .isl-status .loader { position: relative; left: auto; top: auto; width: 18px; height: 18px; opacity: 1; z-index: auto; }
   .isl-status .loader i, .isl-status .loader b { left: 9px; top: 9px; width: 3px; height: 3px; margin: -1.5px; }
@@ -415,6 +415,13 @@
   .sheet .sw .track { background: oklch(100% 0 0 / .16); }
   .linkbox { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 16px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
   .linkbox code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; color: oklch(100% 0 0 / .8); }
+  /* Profil im Teilen-Dialog: Profilbild + Name erscheinen als Tag an den geteilten Stencils */
+  .prof { display: flex; align-items: center; gap: 12px; padding: 8px 16px 8px 8px; border-radius: 22px; background: oklch(100% 0 0 / .07); text-align: left; width: 100%; }
+  .prof .av { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: oklch(100% 0 0 / .12); font-size: 15px; }
+  .prof .av img { width: 100%; height: 100%; object-fit: cover; }
+  .prof .t { display: grid; flex: 1; min-width: 0; } .prof small { font-size: 12px; opacity: .5; }
+  .prof input { width: 100%; min-width: 0; height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: oklch(100% 0 0 / .08); color: #fff; font: inherit; }
+  .prof input::placeholder { color: oklch(100% 0 0 / .4); }
   .sec-note { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: oklch(100% 0 0 / .5); }
   .sec-note .ic { width: 14px; height: 14px; margin-top: 2px; }
   .fl-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -514,6 +521,12 @@
   .loader i, .loader b { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: #fff; will-change: opacity; }
   .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(14px); opacity: .22; animation: loader-dot 1.2s linear infinite; animation-delay: calc(var(--k) * .15s - 1.2s); }
   .loader b { width: 6px; height: 6px; margin: -3px; animation: siri-breathe 2.4s ease-in-out infinite; opacity: .6; }
+  .loader { filter: drop-shadow(0 0 4px oklch(100% 0 0 / .55)) drop-shadow(0 0 10px oklch(80% .12 25 / .35)); }
+  .loader::before { content: ""; position: absolute; left: -34px; top: -34px; width: 68px; height: 68px; border-radius: 50%;
+    background: radial-gradient(circle, oklch(85% .08 25 / .22), transparent 68%); animation: loader-halo 2.4s ease-in-out infinite; }
+  @keyframes loader-halo { 50% { transform: scale(1.18); opacity: .55; } }
+  .isl-status .loader { filter: drop-shadow(0 0 2.5px oklch(100% 0 0 / .6)); }
+  .isl-status .loader::before { left: -3px; top: -3px; width: 24px; height: 24px; }
   @keyframes loader-dot { 0% { opacity: 1; } 45%, 100% { opacity: .22; } }
   .scan-dim { position: absolute; inset: 0; z-index: 2; background: oklch(0% 0 0 / .2); opacity: 0; pointer-events: none; transition: opacity .5s var(--ease-out); }
   .scan-dim.on { opacity: 1; }
@@ -806,10 +819,12 @@ function setStep(n) {
 function status(text, s = "busy") {
   // während der Analyse spricht die Insel oben, sonst die Hinweis-Pille über der Leiste
   // Analyse und Hinweise ohne Größe in der Insel; mit Größe in der Insel als Pille direkt darunter
-  const inIsland = S.step === 2 || (!!text && !$("#islSize").textContent), el = $("#status"), changed = text && text !== $("#statusText").textContent;
+  const inIsland = S.step === 2 || (!!text && !$("#islSize").textContent), el = $("#status");
+  const same = (a, b) => (a || "").replace(/[\d\s%]/g, "") === (b || "").replace(/[\d\s%]/g, ""); // nur Zahlen anders = Fortschritt
+  const changed = text && !same(text, $("#statusText").textContent);
   el.hidden = !text || inIsland; $("#statusText").textContent = inIsland ? "" : text || ""; el.dataset.s = s;
   if (changed && !inIsland) swapAnim(el);
-  if (inIsland) { const t = $("#islText"); if (text && t.textContent !== text) { t.textContent = text; swapAnim(t); } $("#islStatus").dataset.s = s; }
+  if (inIsland) { const t = $("#islText"); if (text && t.textContent !== text) { const anim = !same(text, t.textContent); t.textContent = text; if (anim) swapAnim(t); } $("#islStatus").dataset.s = s; }
   islandText = inIsland ? text || "" : "";
   syncIsland();
 }
@@ -1040,7 +1055,6 @@ async function analyse() {
     stage = "Maßstab"; status("Maßstab …"); mark("Hand/Pose");
     S.scale = computeScale(await detectBody(S.proc).catch(e => (console.warn("body", e), null)));
     mark("Scan-Ende"); await scanFinish();
-    status("");
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
     mark("Motiv platzieren");
@@ -1907,7 +1921,7 @@ function addMotif(src) {
   S.motifs.push(m); selectMotif(m);
 }
 function selectMotif(m) {
-  S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; setStep(3); schedule();
+  S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; setStep(3); updateInfo(); schedule();
   status(touchUI() ? "Ziehen · zwei Finger drehen und zoomen" : "", "ok");
 }
 function stickerThumb(m) { // small sticker image for the motif tray (readable on the dark dock)
@@ -2842,6 +2856,33 @@ function sheet(html) {
   $("#flSheet").querySelectorAll("[data-close]").forEach(b => b.onclick = () => sheet(""));
 }
 $("#flShare").onclick = () => shareSheet();
+// Profil des Artists (nur auf diesem Gerät): Name + kleines Profilbild, geht verschlüsselt mit jedem Link mit
+const PROFILE_KEY = "stencit-profile";
+const getProfile = () => { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch { return {}; } };
+const setProfile = p => { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch {} };
+function avatarFrom(file) { // quadratisch zuschneiden, 128 px, JPEG: ein paar KB
+  return new Promise((res, rej) => { const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { URL.revokeObjectURL(url); const s = Math.min(img.naturalWidth, img.naturalHeight), c = Object.assign(document.createElement("canvas"), { width: 128, height: 128 });
+      c.getContext("2d").drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, 128, 128); res(c.toDataURL("image/jpeg", .85)); };
+    img.onerror = rej; img.src = url; });
+}
+function profRow() {
+  const P = getProfile(), av = P.avatar ? `<img alt="" src="${P.avatar}">` : esc((P.name || "?").trim().charAt(0).toUpperCase() || "?");
+  return P.name ? `<button class="prof" id="shProf"><span class="av">${av}</span><span class="t">${esc(P.name)}<small>Als Tag an deinen Stencils · ändern</small></span></button>`
+    : `<button class="prof" id="shProf"><span class="av">+</span><span class="t">Name und Profilbild<small>Erscheinen als kleiner Tag an deinen Stencils</small></span></button>`;
+}
+function bindProf() {
+  $("#shProf").onclick = () => {
+    const P = getProfile(), wrap = $("#shProf");
+    wrap.outerHTML = `<div class="prof" id="shProf"><button class="av" id="prAv" aria-label="Profilbild wählen">${P.avatar ? `<img alt="" src="${P.avatar}">` : "+"}</button>
+      <input id="prName" maxlength="32" placeholder="Dein Name oder Studio" value="${esc(P.name || "")}" autocomplete="nickname"><input type="file" id="prFile" accept="image/*" hidden></div>`;
+    const save = () => { setProfile({ ...getProfile(), name: $("#prName").value.trim() }); };
+    $("#prName").oninput = save; $("#prName").focus();
+    $("#prAv").onclick = () => $("#prFile").click();
+    $("#prFile").onchange = async e => { const f = e.target.files[0]; if (!f) return; const avatar = await avatarFrom(f).catch(() => null); if (!avatar) return;
+      setProfile({ ...getProfile(), avatar }); $("#prAv").innerHTML = `<img alt="" src="${avatar}">`; };
+  };
+}
 function shareSheet() {
   let ttl = 86400, dl = false;
   const ids = [...FL.sel], n = ids.length;
@@ -2851,6 +2892,7 @@ function shareSheet() {
       <div class="ttl-track" id="ttlTrack" role="slider" tabindex="0" aria-label="Gültig für" aria-valuemin="0" aria-valuemax="${TTL_OPTS.length - 1}">
         <i class="fill"></i>${TTL_OPTS.map((_, i) => `<i class="dot" style="--p:${i / (TTL_OPTS.length - 1)}"></i>`).join("")}
         <span class="knob"><svg class="ic" aria-hidden="true"><use href="#i-mark"/></svg></span></div></div>
+    ${profRow()}
     <button class="sw" id="shDl" role="switch" aria-checked="false"><span class="t">Speichern erlauben<small>Kunde darf die Flashes herunterladen</small></span><span class="track"></span></button>
     <textarea id="shNote" maxlength="280" placeholder="Nachricht an deinen Kunden (optional)"></textarea>
     <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Die Flashes werden auf diesem Gerät verschlüsselt. Der Schlüssel steckt nur im Link, unser Server sieht die Bilder nie. Nach Ablauf wird alles gelöscht.</span></div>
@@ -2866,6 +2908,7 @@ function shareSheet() {
     tr.addEventListener("pointermove", mv); tr.addEventListener("pointerup", up); });
   tr.addEventListener("keydown", e => { const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key]; if (d) { e.preventDefault(); setTtl(+tr.getAttribute("aria-valuenow") + d); } });
   $("#shDl").onclick = () => { dl = !dl; $("#shDl").setAttribute("aria-checked", dl); };
+  bindProf();
   $("#shGo").onclick = async () => {
     const go = $("#shGo"); go.disabled = true; go.textContent = "Verschlüsselt …";
     try { const link = await createLink(ids, ttl, dl, $("#shNote").value.trim()); linkReady(link); }
@@ -2888,7 +2931,8 @@ async function shareBytes(f) { // { buf, sticker }: sticker = true, wenn nur noc
 async function createLink(ids, ttl, allowDownload, note) {
   const flashes = [];
   for (const id of ids) { const f = FL.items.find(x => x.id === id); if (f) { const s = await shareBytes(f); flashes.push({ name: f.name, type: "image/png", w: f.w, h: f.h, sticker: s.sticker, data: b64(s.buf) }); } }
-  const plain = new TextEncoder().encode(JSON.stringify({ v: 1, flashes, allowDownload, note: note || "" }));
+  const P = getProfile(), artist = P.name ? { name: P.name, avatar: P.avatar || null } : null;
+  const plain = new TextEncoder().encode(JSON.stringify({ v: 1, flashes, allowDownload, note: note || "", artist }));
   const raw = crypto.getRandomValues(new Uint8Array(32)), iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt"]);
   const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plain)), body = new Uint8Array(12 + ct.length);

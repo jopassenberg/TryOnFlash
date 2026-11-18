@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Startframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: oklch(19% .003 75); --n-100: oklch(97% .003 75); --dim: oklch(54% .005 75); --frame: oklch(17% .003 75); --card: oklch(15% .003 75);
+    --glass: oklch(100% 0 0 / .08); --glass-2: oklch(100% 0 0 / .14); --w55: oklch(100% 0 0 / .55); --spring: cubic-bezier(.34,1.4,.64,1); }
+  * { box-sizing: border-box; } body { margin: 0; background: var(--n-100); color: var(--ink); font: 400 15px/1.45 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 48px 24px 96px; display: grid; gap: 72px; }
+  h1 { margin: 0; font-weight: 400; font-size: 44px; letter-spacing: -.045em; line-height: 1; } h1 span { color: var(--dim); }
+  h2 { margin: 4px 0 6px; font-weight: 400; font-size: 26px; letter-spacing: -.035em; } .lbl { font-size: 12px; color: var(--dim); } .sub { margin: 0 0 22px; color: var(--dim); max-width: 720px; }
+  ul.pro { margin: 14px 0 0; padding-left: 18px; color: var(--dim); font-size: 13px; display: grid; gap: 4px; }
+  .row { display: grid; grid-template-columns: 250px 250px 1fr; gap: 24px; align-items: end; }
+  @media (max-width: 980px) { .row { grid-template-columns: 1fr 1fr; } .row .desk { grid-column: 1 / -1; } }
+  .cap { font-size: 12px; color: var(--dim); margin-top: 10px; text-align: center; }
+  svg.ic { width: 18px; height: 18px; fill: currentColor; flex: none; }
+
+  /* Handy: heller Rand, oben Logo + Umschalter, darunter der schwarze Rahmen */
+  .phone { width: 250px; height: 520px; border-radius: 34px; background: #fbfaf8; padding: 10px 8px 8px; display: grid; grid-template-rows: 30px 1fr; gap: 6px; }
+  .bar { display: flex; align-items: center; justify-content: space-between; padding: 0 6px; font-size: 12px; }
+  .logo { display: flex; align-items: center; gap: 5px; } .logo i { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, var(--ink) 2px, transparent 2.5px) 0 0 / 4px 4px; }
+  .tabs { width: 54px; height: 24px; border-radius: 12px; background: oklch(19% .003 75 / .07); }
+  .frame { position: relative; overflow: hidden; border-radius: 28px; border: 5px solid var(--frame); background: var(--card); color: #fff; }
+  /* Laptop: viel Weiß, Rahmen 3:4 mittig */
+  .desk { height: 520px; border-radius: 18px; background: #fbfaf8; box-shadow: inset 0 0 0 1px oklch(19% .003 75 / .06); display: grid; grid-template-rows: 44px 1fr; padding: 0 22px 22px; }
+  .desk .bar { padding: 0; font-size: 13px; }
+  .desk .stagewrap { display: grid; place-items: center; min-height: 0; }
+  .desk .frame { height: 100%; max-height: 440px; aspect-ratio: 3 / 4; border-radius: 30px; }
+  .desk .side { position: absolute; }
+
+  /* gemeinsame Bausteine */
+  .gl { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+  .pill { height: 30px; padding: 0 12px; border-radius: 15px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+  .x { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--glass-2); font-size: 11px; }
+  .stk { display: block; filter: none; }
+  .t13 { font-size: 13px; } .t12 { font-size: 12px; color: var(--w55); }
+
+  /* ---------- A · Sucher ---------- */
+  .A .brk { position: absolute; left: 14%; right: 14%; top: 18%; bottom: 30%; }
+  .A .brk i { position: absolute; width: 22px; height: 22px; border: 2px solid oklch(100% 0 0 / .7); }
+  .A .brk i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; border-radius: 10px 0 0 0; }
+  .A .brk i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; border-radius: 0 10px 0 0; }
+  .A .brk i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 10px; }
+  .A .brk i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; border-radius: 0 0 10px 0; }
+  .A .hint { position: absolute; left: 0; right: 0; top: 10%; text-align: center; }
+  .A .ghost { position: absolute; left: 50%; top: 44%; translate: -50% -50%; width: 44%; opacity: .55; }
+  .A .dock { position: absolute; left: 12px; right: 12px; bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .A .side-b { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; }
+  .A .thumb { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #6b4a3a, #c79b7e); box-shadow: inset 0 0 0 2px oklch(100% 0 0 / .8); }
+  .A .shutter { width: 62px; height: 62px; border-radius: 50%; border: 3px solid #fff; display: grid; place-items: center; }
+  .A .shutter b { width: 48px; height: 48px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: var(--ink); }
+  .A .under { position: absolute; left: 0; right: 0; bottom: 84px; text-align: center; }
+  .A .chipTop { position: absolute; top: 12px; left: 50%; translate: -50% 0; padding: 0 6px 0 4px; }
+  .A .chipTop img, .B img.mini, .C img.mini { width: 22px; height: 22px; object-fit: contain; }
+
+  /* ---------- B · Karte ---------- */
+  .B .art { position: absolute; left: 50%; top: 36%; translate: -50% -50%; width: 46%; opacity: .9; }
+  .B .sheet { position: absolute; left: 8px; right: 8px; bottom: 8px; border-radius: 22px; padding: 6px; display: grid; gap: 2px; }
+  .B .head { display: flex; align-items: center; gap: 10px; padding: 10px 10px 8px; }
+  .B .head .tt { flex: 1; display: grid; }
+  .B .li { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 12px; border-radius: 16px; }
+  .B .li .ico { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--glass-2); }
+  .B .li .tt { flex: 1; display: grid; line-height: 1.25; }
+  .B .li.main { background: #fff; color: var(--ink); } .B .li.main .ico { background: oklch(19% .003 75 / .07); } .B .li.main .t12 { color: var(--dim); }
+  .B .chev { opacity: .45; }
+  .B .stickerBig { position: absolute; left: 50%; top: 34%; translate: -50% -50%; width: 48%; rotate: -5deg; }
+
+  /* ---------- C · Kacheln ---------- */
+  .C .center { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 14px; padding: 0 14px; }
+  .C .center > * { min-width: 0; max-width: 100%; }
+  .C .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; }
+  .C .tile { min-width: 0; }
+  .B .li .tt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .C .tile { aspect-ratio: 1 / 1.05; border-radius: 18px; display: grid; align-content: space-between; padding: 12px; text-align: left; }
+  .C .tile .ico { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--glass-2); }
+  .C .tile.main { background: #fff; color: var(--ink); } .C .tile.main .ico { background: oklch(19% .003 75 / .07); } .C .tile.main .t12 { color: var(--dim); }
+  .C .tip { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .C .tip span { height: 24px; padding: 0 10px; border-radius: 12px; display: inline-flex; align-items: center; font-size: 11px; color: var(--w55); background: var(--glass); }
+  .C .flashrow { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 6px; border-radius: 16px; width: 100%; }
+  .C .flashrow img { width: 44px; height: 44px; object-fit: contain; rotate: -5deg; }
+  .C .flashrow .tt { flex: 1; display: grid; line-height: 1.25; }
+  .C .q { font-size: 15px; letter-spacing: -.02em; }
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="cam" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol>
+  <symbol id="img" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol>
+  <symbol id="chev" viewBox="0 0 32 32"><path d="M22 16L12 26 10.6 24.6 19.2 16 10.6 7.4 12 6z"/></symbol>
+  <symbol id="renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol>
+  <symbol id="flash" viewBox="0 0 32 32"><path d="M11.61,29.92a1,1,0,0,1-.6-1.07L12.83,17H8a1,1,0,0,1-1-1.23l3-13A1,1,0,0,1,11,2H21a1,1,0,0,1,.78.37,1,1,0,0,1,.2.85L20.25,11H25a1,1,0,0,1,.9.56,1,1,0,0,1-.11,1l-13,17A1,1,0,0,1,12,30,1.09,1.09,0,0,1,11.61,29.92ZM17.75,13l2-9H11.8L9.26,15h5.91L13.58,25.28,23,13Z"/></symbol>
+  <symbol id="arm" viewBox="0 0 120 160"><path d="M38 160 C34 120 30 80 36 40 C40 14 54 4 64 4 C76 4 86 16 86 40 C90 80 88 120 84 160" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 5" stroke-linecap="round"/></symbol>
+</defs></svg>
+<div class="wrap">
+  <div><span class="lbl">Startframe · drei Entwürfe</span><h1>Foto rein,<br><span>ohne große Worte.</span></h1>
+    <p class="sub" style="margin-top:16px">Je Entwurf: Handy normal (Studio), Handy mit gewähltem Stencil, und der Laptop. Am Laptop steht der Rahmen immer mittig im Format 3 : 4 (wie ein Handyfoto hochkant), mit viel Weiß drumherum. Eine Schriftgröße, Hierarchie nur über Weiß und Grau.</p></div>
+
+  <!-- ===================== A ===================== -->
+  <section><span class="lbl">A</span><h2>Sucher</h2>
+    <p class="sub">Der Rahmen ist schon die Kamera: Eckwinkel zeigen, wohin die Haut gehört, unten Auslöser, links Galerie. Ein Tipp statt Überschrift. Wie Instagram, Snapchat, Google Lens. Mit Stencil liegt es halbtransparent im Sucher, oben ein kleiner Chip mit ×.</p>
+    <div class="row">
+      <div><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+        <div class="frame A"><div class="hint t12">Haut ins Bild · gutes Licht</div><div class="brk"><i></i><i></i><i></i><i></i></div>
+          <div class="dock"><span class="thumb"></span><span class="shutter"><b><svg class="ic"><use href="#cam"/></svg></b></span><span class="side-b gl"><svg class="ic"><use href="#flash"/></svg></span></div></div></div>
+        <div class="cap">Studio</div></div>
+      <div><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+        <div class="frame A"><span class="pill gl chipTop"><img class="stk" data-st alt="">Rose<span class="x">×</span></span><div class="brk"><i></i><i></i><i></i><i></i></div><img class="ghost" data-raw alt="">
+          <div class="under t12">Stelle anpeilen und auslösen</div>
+          <div class="dock"><span class="thumb"></span><span class="shutter"><b><svg class="ic"><use href="#cam"/></svg></b></span><span class="side-b gl"><svg class="ic"><use href="#flash"/></svg></span></div></div></div>
+        <div class="cap">Mit Stencil</div></div>
+      <div class="desk"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div><div class="stagewrap">
+        <div class="frame A"><div class="hint t12">Haut ins Bild · gutes Licht</div><div class="brk"><i></i><i></i><i></i><i></i></div>
+          <div class="dock"><span class="thumb"></span><span class="shutter"><b><svg class="ic"><use href="#cam"/></svg></b></span><span class="side-b gl"><svg class="ic"><use href="#flash"/></svg></span></div></div></div></div>
+    </div>
+    <ul class="pro"><li>Am direktesten: ein Tipp, und die Kamera läuft (Kamera startet erst beim Antippen des Auslösers)</li><li>Stencil sitzt gleich dort, wo es später hinkommt</li><li>Hochladen ist etwas versteckter (Galerie-Kachel links)</li></ul></section>
+
+  <!-- ===================== B ===================== -->
+  <section><span class="lbl">B</span><h2>Aktionskarte</h2>
+    <p class="sub">Oben ruhig eine gestrichelte Arm-Kontur als Bild (mit Stencil: das Stencil selbst als Sticker), unten eine Glaskarte mit zwei Zeilen wie ein iOS-Aktionsblatt. Hauptaktion weiß, zweite Zeile Glas. Wie Upload-Dialoge in Foto-Apps.</p>
+    <div class="row">
+      <div><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+        <div class="frame B"><svg class="art" viewBox="0 0 120 160" style="color:oklch(100% 0 0 / .5)"><use href="#arm"/></svg>
+          <div class="sheet gl"><div class="head"><span class="tt t13">Foto der Stelle<span class="t12">Haut gut sichtbar, gleichmäßiges Licht</span></span></div>
+            <div class="li main"><span class="ico"><svg class="ic"><use href="#cam"/></svg></span><span class="tt t13">Foto aufnehmen</span><svg class="ic chev"><use href="#chev"/></svg></div>
+            <div class="li"><span class="ico"><svg class="ic"><use href="#img"/></svg></span><span class="tt t13">Aus Fotos wählen</span><svg class="ic chev"><use href="#chev"/></svg></div></div></div></div>
+        <div class="cap">Studio</div></div>
+      <div><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+        <div class="frame B"><img class="stickerBig" data-st alt="">
+          <div class="sheet gl"><div class="head"><span class="tt t13">Rose anprobieren<span class="t12">Foto der Stelle, wo es hin soll</span></span><span class="x">×</span></div>
+            <div class="li main"><span class="ico"><svg class="ic"><use href="#cam"/></svg></span><span class="tt t13">Foto aufnehmen</span><svg class="ic chev"><use href="#chev"/></svg></div>
+            <div class="li"><span class="ico"><svg class="ic"><use href="#img"/></svg></span><span class="tt t13">Aus Fotos wählen</span><svg class="ic chev"><use href="#chev"/></svg></div></div></div></div>
+        <div class="cap">Mit Stencil</div></div>
+      <div class="desk"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div><div class="stagewrap">
+        <div class="frame B"><svg class="art" viewBox="0 0 120 160" style="color:oklch(100% 0 0 / .5)"><use href="#arm"/></svg>
+          <div class="sheet gl"><div class="head"><span class="tt t13">Foto der Stelle<span class="t12">Oder Bild hier hineinziehen</span></span></div>
+            <div class="li main"><span class="ico"><svg class="ic"><use href="#cam"/></svg></span><span class="tt t13">Foto aufnehmen</span><svg class="ic chev"><use href="#chev"/></svg></div>
+            <div class="li"><span class="ico"><svg class="ic"><use href="#img"/></svg></span><span class="tt t13">Bild auswählen</span><svg class="ic chev"><use href="#chev"/></svg></div></div></div></div></div>
+    </div>
+    <ul class="pro"><li>Ruhig und klar, beide Wege gleich gut auffindbar</li><li>Stencil groß und zentral: man sieht sofort, was man anprobiert</li><li>Am Laptop natürlich: „hineinziehen“ als Hinweis</li></ul></section>
+
+  <!-- ===================== C ===================== -->
+  <section><span class="lbl">C</span><h2>Zwei Kacheln</h2>
+    <p class="sub">Mittig eine kurze Frage in normaler Größe, darunter zwei gleich große Kacheln (Kamera weiß, Galerie Glas), darunter kleine Tipp-Chips. Mit Stencil steht oben eine Zeile mit Sticker, Name und ×. Wie die Scan- und Upload-Auswahl in Notizen, Dateien oder Canva.</p>
+    <div class="row">
+      <div><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+        <div class="frame C"><div class="center"><div class="q">Wo soll das Tattoo hin?</div>
+          <div class="tiles"><div class="tile main"><span class="ico"><svg class="ic"><use href="#cam"/></svg></span><span class="t13">Kamera<br><span class="t12">Foto aufnehmen</span></span></div>
+            <div class="tile gl"><span class="ico"><svg class="ic"><use href="#img"/></svg></span><span class="t13">Galerie<br><span class="t12">Foto wählen</span></span></div></div>
+          <div class="tip"><span>Gutes Licht</span><span>Haut frei</span><span>Gerade halten</span></div></div></div></div>
+        <div class="cap">Studio</div></div>
+      <div><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+        <div class="frame C"><div class="center"><div class="flashrow gl"><img data-st alt=""><span class="tt t13">Rose<span class="t12">bereit zum Anprobieren</span></span><span class="x">×</span></div>
+          <div class="tiles"><div class="tile main"><span class="ico"><svg class="ic"><use href="#cam"/></svg></span><span class="t13">Kamera<br><span class="t12">Foto aufnehmen</span></span></div>
+            <div class="tile gl"><span class="ico"><svg class="ic"><use href="#img"/></svg></span><span class="t13">Galerie<br><span class="t12">Foto wählen</span></span></div></div>
+          <div class="tip"><span>Gutes Licht</span><span>Haut frei</span></div></div></div></div>
+        <div class="cap">Mit Stencil</div></div>
+      <div class="desk"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div><div class="stagewrap">
+        <div class="frame C"><div class="center"><div class="q">Wo soll das Tattoo hin?</div>
+          <div class="tiles"><div class="tile main"><span class="ico"><svg class="ic"><use href="#cam"/></svg></span><span class="t13">Kamera<br><span class="t12">Webcam nutzen</span></span></div>
+            <div class="tile gl"><span class="ico"><svg class="ic"><use href="#img"/></svg></span><span class="t13">Datei<br><span class="t12">oder hineinziehen</span></span></div></div>
+          <div class="tip"><span>Gutes Licht</span><span>Haut frei</span></div></div></div></div></div>
+    </div>
+    <ul class="pro"><li>Kompakt, alles auf einen Blick, gut mit dem Daumen</li><li>Die Frage ersetzt die große Zweifarb-Überschrift</li><li>Etwas „formularhafter“ als A und B</li></ul></section>
+</div>
+<script>
+  // Beispiel-Stencil: Rose aus Formen, einmal roh (Sucher) und einmal als Sticker mit weißem Rand
+  const c = document.createElement("canvas"); c.width = c.height = 300; const g = c.getContext("2d");
+  g.lineWidth = 12; g.lineCap = "round"; g.strokeStyle = "#151515"; g.fillStyle = "#c4231f";
+  g.beginPath(); g.arc(150, 120, 70, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.arc(150, 120, 38, .5, 5.6); g.stroke(); g.beginPath(); g.arc(150, 120, 16, 0, 7); g.stroke();
+  g.beginPath(); g.moveTo(150, 190); g.quadraticCurveTo(160, 240, 150, 285); g.stroke();
+  g.fillStyle = "#2f8f4e"; g.beginPath(); g.ellipse(118, 238, 30, 13, -.5, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.ellipse(184, 222, 30, 13, .5, 0, 7); g.fill(); g.stroke();
+  const raw = c.toDataURL();
+  const s = document.createElement("canvas"); s.width = s.height = 340; const sg = s.getContext("2d");
+  sg.filter = "drop-shadow(0 0 0 #fff)"; for (let a = 0; a < 24; a++) sg.drawImage(c, 20 + Math.cos(a / 24 * 6.283) * 16, 20 + Math.sin(a / 24 * 6.283) * 16);
+  sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#fff"; sg.fillRect(0, 0, 340, 340); sg.globalCompositeOperation = "source-over"; sg.drawImage(c, 20, 20);
+  document.querySelectorAll("[data-raw]").forEach(i => i.src = raw); document.querySelectorAll("[data-st]").forEach(i => i.src = s.toDataURL());
+</script>
+</body></html>
