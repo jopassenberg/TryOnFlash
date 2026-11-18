@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Kamera-Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: oklch(19% .003 75); --dim: oklch(54% .005 75); --frame: oklch(17% .003 75); --view: oklch(19.5% .003 75); --btn: oklch(25% .003 75); --btn2: oklch(21.5% .003 75); --lime: oklch(84% .2 115); }
+  * { box-sizing: border-box; } body { margin: 0; background: #fff; color: var(--ink); font: 400 15px/1.45 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 48px 24px 96px; display: grid; gap: 40px; }
+  h1 { margin: 0; font-weight: 400; font-size: 44px; letter-spacing: -.045em; line-height: 1; } h1 span { color: var(--dim); }
+  .lbl { font-size: 12px; color: var(--dim); } .sub { margin: 16px 0 0; color: var(--dim); max-width: 720px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; } @media (max-width: 900px) { .grid { grid-template-columns: 1fr; justify-items: center; } }
+  .opt h2 { margin: 14px 0 4px; font-weight: 400; font-size: 22px; letter-spacing: -.03em; } .opt p { margin: 0; color: var(--dim); font-size: 13px; }
+  .opt ul { margin: 10px 0 0; padding-left: 18px; color: var(--dim); font-size: 13px; display: grid; gap: 3px; }
+  svg.ic { width: 17px; height: 17px; fill: currentColor; flex: none; }
+  /* Handy */
+  .phone { width: 300px; height: 620px; border-radius: 40px; background: #f6f5f3; padding: 10px 8px 8px; display: grid; grid-template-rows: 34px 1fr; gap: 6px; }
+  .bar { display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 13px; }
+  .logo { display: flex; align-items: center; gap: 6px; } .logo i { width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, var(--ink) 2.2px, transparent 2.7px) 0 0 / 4px 4px; }
+  .tabs { width: 74px; height: 32px; border-radius: 16px; background: oklch(95.5% .003 75); }
+  .frame { position: relative; overflow: hidden; border-radius: 34px; border: 5px solid var(--frame); background: var(--view); color: #fff; }
+  .island { position: absolute; top: 0; left: 50%; translate: -50% 0; width: 150px; height: 36px; border-radius: 0 0 18px 18px; background: var(--frame); }
+  .chip { position: absolute; top: 44px; left: 50%; translate: -50% 0; height: 34px; padding: 0 4px 0 5px; border-radius: 17px; background: var(--frame); display: inline-flex; align-items: center; gap: 7px; font-size: 12px; white-space: nowrap; }
+  .chip img { width: 24px; height: 24px; } .chip .x { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .1); font-size: 11px; }
+  .stencil { position: absolute; left: 50%; top: 44%; translate: -50% -50%; width: 120px; }
+  .b { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: #fff; }
+  .b.on { background: var(--lime); color: var(--ink); }
+  .pill { height: 46px; padding: 0 13px 0 12px; border-radius: 24px; display: inline-flex; align-items: center; gap: 7px; background: var(--btn); font-size: 13px; }
+
+  /* A · Referenz: kleine Knöpfe links untereinander, unten Pille | breiter Auslöser | Pille */
+  .A .side { position: absolute; left: 12px; bottom: 82px; display: grid; gap: 8px; }
+  .A .dock { position: absolute; left: 6px; right: 6px; bottom: 10px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+  .A .dock > :last-child { justify-self: end; }
+  .A .shut { width: 78px; height: 54px; border-radius: 27px; background: #fff; }
+
+  /* B · Steuerleiste: das Bild endet über einer festen schwarzen Leiste (wie in der Kamera-App) */
+  .B { display: grid; grid-template-rows: 1fr auto; }
+  .B .vf { position: relative; background: var(--view); border-radius: 0 0 26px 26px; }
+  .B .ctrl { background: var(--frame); padding: 12px 14px 16px; display: grid; gap: 14px; }
+  .B .row1 { display: flex; justify-content: center; gap: 8px; }
+  .B .row1 .b { width: 34px; height: 34px; background: var(--btn2); } .B .row1 .b.on { background: var(--lime); }
+  .B .row2 { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+  .B .thumb { width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #6b4a3a, #c79b7e); }
+  .B .shut { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; display: grid; place-items: center; } .B .shut b { width: 56px; height: 56px; border-radius: 50%; background: #fff; }
+  .B .row2 > :last-child { justify-self: end; }
+  .B .stk { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 5px; border-radius: 20px; background: oklch(0% 0 0 / .45); font-size: 12px; }
+  .B .stk img { width: 30px; height: 30px; }
+
+  /* C · Daumen rechts: Auslöser rund unten mittig, kleine Knöpfe rechts untereinander, Stencil-Karte links */
+  .C .side { position: absolute; right: 12px; bottom: 90px; display: grid; gap: 8px; }
+  .C .shut { position: absolute; left: 50%; bottom: 16px; translate: -50% 0; width: 72px; height: 72px; border-radius: 50%; border: 3px solid #fff; display: grid; place-items: center; }
+  .C .shut b { width: 58px; height: 58px; border-radius: 50%; background: #fff; }
+  .C .card { position: absolute; left: 12px; bottom: 20px; width: 64px; height: 64px; border-radius: 20px; background: var(--btn); display: grid; place-items: center; }
+  .C .card img { width: 44px; } .C .card .x { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--frame); display: grid; place-items: center; font-size: 10px; }
+  .C .gal { position: absolute; right: 12px; bottom: 24px; }
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="flash" viewBox="0 0 32 32"><path d="M11.13 6.89L11.8 4h8l-2 9H23l-2.49 3.25 1.43 1.43 3.87-5.07a1 1 0 00.11-1A1 1 0 0025 11H20.25L22 3.22a1 1 0 00-.2-.85A1 1 0 0021 2H11a1 1 0 00-1 .77L9.46 5.22zM30 28.59l-9.31-9.31h0l-1.42-1.43h0L10.6 9.19h0L8.93 7.52h0L3.41 2 2 3.41 8.4 9.82 7 15.77A1 1 0 008 17h4.83L11 28.85a1 1 0 00.6 1.07A1.09 1.09 0 0012 30a1 1 0 00.79-.39l6.68-8.73L28.59 30zM9.26 15l.81-3.52L13.59 15zm4.32 10.28L15 16.37 18 19.45z"/></symbol>
+  <symbol id="renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol>
+  <symbol id="img" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol>
+  <symbol id="grid" viewBox="0 0 32 32"><path d="M12 4H6A2 2 0 004 6v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0012 4zm0 8H6V6h6zM26 4H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0026 4zm0 8H20V6h6zM12 18H6a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0012 18zm0 8H6V20h6zM26 18H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0026 18zm0 8H20V20h6z"/></symbol>
+  <symbol id="timer" viewBox="0 0 32 32"><path d="M15 11H17V20H15zM13 2H19V4H13z"/><path d="M28,9,26.58,7.59,24.33,9.84a10.94,10.94,0,1,0,1.18,1.65ZM16,26a9,9,0,1,1,9-9A9,9,0,0,1,16,26Z"/></symbol>
+</defs></svg>
+<div class="wrap">
+  <div><span class="lbl">Kamera · drei Entwürfe</span><h1>Auslöser mittig,<br><span>alles in Daumennähe.</span></h1>
+    <p class="sub">Alle drei mit Start-Stencil im Bild, Knöpfe deckend und etwas dunkler als vorher (25 % statt 29 %), Bildfläche 19,5 %. Chip oben bzw. Stencil-Karte zum Entfernen.</p></div>
+  <div class="grid">
+    <div class="opt"><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+      <div class="frame A"><div class="island"></div><span class="chip"><img data-st alt="">Stencit anprobieren<span class="x">×</span></span><img class="stencil" data-st alt="">
+        <div class="side"><span class="b"><svg class="ic"><use href="#flash"/></svg></span><span class="b"><svg class="ic"><use href="#renew"/></svg></span><span class="b"><svg class="ic"><use href="#timer"/></svg></span></div>
+        <div class="dock"><span class="pill"><svg class="ic"><use href="#img"/></svg>Galerie</span><span class="shut"></span><span class="pill"><svg class="ic"><use href="#grid"/></svg>Flashes</span></div></div></div>
+      <h2>A · Referenz verfeinert</h2><p>Wie jetzt, nur dunkler und mit Selbstauslöser als drittem Knopf links. Breiter weißer Auslöser, Pillen mit Text links und rechts.</p>
+      <ul><li>Nah an deiner Referenz</li><li>Text auf den Pillen: sofort verständlich</li></ul></div>
+
+    <div class="opt"><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+      <div class="frame B"><div class="vf"><div class="island"></div><span class="stk"><img data-st alt="">Stencit ×</span><img class="stencil" data-st alt=""></div>
+        <div class="ctrl"><div class="row1"><span class="b on"><svg class="ic"><use href="#flash"/></svg></span><span class="b"><svg class="ic"><use href="#timer"/></svg></span><span class="b"><svg class="ic"><use href="#grid"/></svg></span></div>
+          <div class="row2"><span class="thumb"></span><span class="shut"><b></b></span><span class="b"><svg class="ic"><use href="#renew"/></svg></span></div></div></div></div>
+      <h2>B · Feste Steuerleiste</h2><p>Das Bild endet über einer festen schwarzen Leiste wie in der Kamera-App: oben kleine Schalter (Blitz, Timer, Flashes), darunter Galerie-Vorschau, runder Auslöser, Wenden.</p>
+      <ul><li>Vertrautestes Kamera-Gefühl</li><li>Nichts liegt über dem Bild</li><li>Bild etwas kleiner</li></ul></div>
+
+    <div class="opt"><div class="phone"><div class="bar"><span class="logo"><i></i>Stencit</span><span class="tabs"></span></div>
+      <div class="frame C"><div class="island"></div><img class="stencil" data-st alt="">
+        <div class="side"><span class="b"><svg class="ic"><use href="#flash"/></svg></span><span class="b"><svg class="ic"><use href="#renew"/></svg></span><span class="b"><svg class="ic"><use href="#timer"/></svg></span></div>
+        <span class="card"><img data-st alt=""><span class="x">×</span></span><span class="shut"><b></b></span><span class="b gal"><svg class="ic"><use href="#img"/></svg></span></div></div>
+      <h2>C · Schwebend, Stencil-Karte</h2><p>Runder Auslöser unten mittig, kleine Knöpfe rechts untereinander (Daumen), links die Stencil-Karte: antippen öffnet die Flashes, × entfernt es.</p>
+      <ul><li>Sehr luftig, Bild bleibt groß</li><li>Stencil immer sichtbar und tauschbar</li><li>Ohne Text: Icons müssen sitzen</li></ul></div>
+  </div>
+</div>
+<script>
+  const N = 200, c = document.createElement("canvas"); c.width = c.height = N; const g = c.getContext("2d"); const k = N / 240 * .86, o = N * .07;
+  [[120, 26.48], [186.13, 53.87], [213.52, 120], [186.13, 186.13], [120, 213.52], [53.87, 186.13], [26.48, 120], [53.87, 53.87], [120, 120]].forEach(([x, y]) => { g.beginPath(); g.arc(o + x * k, o + y * k, 26.48 * k, 0, 7); g.fillStyle = "#111"; g.fill(); });
+  const s = document.createElement("canvas"); s.width = s.height = N + 48; const sg = s.getContext("2d");
+  for (let a = 0; a < 24; a++) sg.drawImage(c, 24 + Math.cos(a / 24 * 6.283) * 20, 24 + Math.sin(a / 24 * 6.283) * 20);
+  sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#fff"; sg.fillRect(0, 0, N + 48, N + 48); sg.globalCompositeOperation = "source-over"; sg.drawImage(c, 24, 24);
+  document.querySelectorAll("[data-st]").forEach(i => i.src = s.toDataURL());
+</script>
+</body></html>
