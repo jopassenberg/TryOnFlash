@@ -538,12 +538,8 @@
   .loader i, .loader b { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: #fff; will-change: opacity; }
   .loader i { transform: rotate(calc(var(--k) * 45deg - 90deg)) translateX(14px); opacity: .22; animation: loader-dot 1.2s linear infinite; animation-delay: calc(var(--k) * .15s - 1.2s); }
   .loader b { width: 6px; height: 6px; margin: -3px; animation: siri-breathe 2.4s ease-in-out infinite; opacity: .6; }
-  .loader { filter: drop-shadow(0 0 4px oklch(100% 0 0 / .55)) drop-shadow(0 0 10px oklch(80% .12 25 / .35)); }
-  .loader::before { content: ""; position: absolute; left: -34px; top: -34px; width: 68px; height: 68px; border-radius: 50%;
-    background: radial-gradient(circle, oklch(85% .08 25 / .22), transparent 68%); animation: loader-halo 2.4s ease-in-out infinite; }
-  @keyframes loader-halo { 50% { transform: scale(1.18); opacity: .55; } }
-  .isl-status .loader { filter: drop-shadow(0 0 2.5px oklch(100% 0 0 / .6)); }
-  .isl-status .loader::before { left: -3px; top: -3px; width: 24px; height: 24px; }
+  /* Glow nur am laufenden hellen Punkt: der Schein hängt an jedem Punkt und wird mit seiner Deckkraft schwächer */
+  .loader i { box-shadow: 0 0 4px 1px oklch(100% 0 0 / .7); }
   @keyframes loader-dot { 0% { opacity: 1; } 45%, 100% { opacity: .22; } }
   .scan-dim { position: absolute; inset: 0; z-index: 2; background: oklch(0% 0 0 / .2); opacity: 0; pointer-events: none; transition: opacity .5s var(--ease-out); }
   .scan-dim.on { opacity: 1; }
