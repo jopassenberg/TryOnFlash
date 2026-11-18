@@ -2955,6 +2955,7 @@ function viewFlash(id) {
     <button class="rb" data-a="del" aria-label="Löschen"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button>
     <button class="rb" data-a="share" aria-label="Per Link teilen"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></button>
     <button class="rb" data-a="edit" aria-label="Bearbeiten"><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg></button>
+    <button class="rb" data-a="print" aria-label="Flash-Sheet drucken"><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg></button>
     </div><button class="pill" data-a="try"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Anprobieren</button></div></div>`;
   const close = () => { $("#flView").innerHTML = ""; }, opened = performance.now(), ready = () => performance.now() - opened > 450;
   $("#flView").querySelector(".big").onclick = () => { if (ready()) close(); };
@@ -2964,6 +2965,7 @@ function viewFlash(id) {
     if (a === "try") tryFresh(f.blob, f.name);
     if (a === "share") { FL.sel = new Set([id]); shareSheet(); }
     if (a === "edit") editFlash(f);
+    if (a === "print") printSheet(flashSrc(f));
     if (a === "del") { await idb("flashes", "readwrite", s => s.delete(id)); FL.items = FL.items.filter(x => x.id !== id); renderFlashes(); }
   });
 }
@@ -3255,11 +3257,16 @@ function usePending() { // nach der Analyse aufgerufen
 const PAPERS = [["A5", 148, 210], ["A4", 210, 297], ["A3", 297, 420], ["Letter", 215.9, 279.4]];
 const PS = { paper: "A4", land: false, steps: new Set([0]), tags: true, mirror: false };
 const fmtCm = v => fmt(Math.round(v * 10) / 10);
-function printCut() { // nur das Motiv
-  const m = S.motif; return (m.print ||= { url: m.canvas.toDataURL("image/png") });
+// Quelle des Sheets: das Motiv im Studio (Größe vom Arm) oder ein Flash aus der Sammlung (Größe frei wählbar)
+let SRC = null;
+function studioSrc() { const m = S.motif; m.print ||= m.canvas.toDataURL("image/png"); return { url: m.print, ...sizeCm(), free: false }; }
+function flashSrc(f) { // längste Seite zum Start 10 cm, Seitenverhältnis vom Bild
+  const ar = (f.w || 1) / (f.h || 1), long = 10;
+  return { url: URL.createObjectURL(f.blob), w: ar >= 1 ? long : long * ar, h: ar >= 1 ? long / ar : long, free: true, ar, revoke: true };
 }
+function printCut() { return { url: SRC.url }; }
 function sheetItems() {
-  const { w, h } = sizeCm(), long = Math.max(w, h);
+  const { w, h } = SRC, long = Math.max(w, h);
   return [...PS.steps].sort((a, b) => a - b).map(d => { const k = (long + d) / long, mw = w * k * 10, mh = h * k * 10; // mm
     return { d, mw, mh, sw: mw, sh: mh, inv: 0, vw: mw, vh: mh }; }).filter(i => Math.max(i.mw, i.mh) >= 15);
 }
@@ -3283,12 +3290,15 @@ function pageHTML(L, pg) {
     <div class="foot"><span>Stencit · Flash-Sheet · ${PS.paper}${PS.mirror ? " · gespiegelt" : ""}</span><span class="ruler"><i></i>5 cm · mit 100 % drucken</span></div></div>`;
 }
 // Der Dialog wird einmal gebaut; Antippen ändert nur Zustände und die Vorschau (feste Höhe): nichts springt.
-function printSheet() {
+function printSheet(src = studioSrc()) {
+  if (SRC?.revoke) URL.revokeObjectURL(SRC.url); SRC = src;
   const box = $("#printSheet"), sw = (id, t, sub) => `<button class="sw" id="${id}" role="switch"><span class="t">${t}<small>${sub}</small></span><span class="track"></span></button>`;
   box.innerHTML = `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Flash-Sheet">
     <h3>Flash-Sheet</h3>
     <div class="stack"><span class="dim">Papier</span><div class="row">${PAPERS.map(p => `<button class="opt" data-paper="${p[0]}">${p[0]}</button>`).join("")}</div>
       <div class="row"><button class="opt" data-land="0">Hochformat</button><button class="opt" data-land="1">Querformat</button></div></div>
+    ${SRC.free ? `<div class="stack"><span class="dim">Größe · längste Seite</span><div class="row"><button class="opt" id="psMinus" aria-label="Kleiner">−</button>
+      <span class="opt" id="psSize" style="display:grid;place-items:center;min-width:96px"></span><button class="opt" id="psPlus" aria-label="Größer">+</button></div></div>` : ""}
     <div class="stack"><span class="dim">Größen</span><div class="row">${[-2, -1, 0, 1, 2].map(d => `<button class="opt" data-step="${d}">${d ? (d > 0 ? "+" : "−") + Math.abs(d) + " cm" : "Gewählt"}</button>`).join("")}</div></div>
     ${sw("psTags", "Größe beschriften", "Tag mit Breite × Höhe unter jedem Stencil")}
     ${sw("psMirror", "Gespiegelt", "Für Thermo-Stencil und Umdruckpapier")}
@@ -3314,6 +3324,12 @@ function printSheet() {
   box.querySelectorAll("[data-land]").forEach(b => b.onclick = () => { PS.land = b.dataset.land === "1"; update(); });
   box.querySelectorAll("[data-step]").forEach(b => b.onclick = () => { const d = +b.dataset.step; PS.steps.has(d) ? PS.steps.size > 1 && PS.steps.delete(d) : PS.steps.add(d); update(); });
   $("#psTags").onclick = () => { PS.tags = !PS.tags; update(); };
+  if (SRC.free) { // Größe für Flashes aus der Sammlung: längste Seite in halben Zentimetern
+    const setLong = l => { l = clamp(Math.round(l * 2) / 2, 2, 40); SRC.w = SRC.ar >= 1 ? l : l * SRC.ar; SRC.h = SRC.ar >= 1 ? l / SRC.ar : l; $("#psSize").textContent = `${fmtCm(l)} cm`; };
+    setLong(Math.max(SRC.w, SRC.h));
+    $("#psMinus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) - .5); update(); };
+    $("#psPlus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) + .5); update(); };
+  }
   $("#psMirror").onclick = () => { PS.mirror = !PS.mirror; update(); };
   $("#psGo").onclick = () => {
     $("#pageSize").textContent = `@page { size: ${L.W}mm ${L.H}mm; margin: 0; }`;
