@@ -139,26 +139,26 @@
   .swap { animation: swap .32s var(--ease-out); }
   @keyframes swap { from { filter: blur(4px); opacity: 0; translate: 0 3px; } }
   @media (prefers-reduced-motion: reduce) { .card > .panel, .card > .panel .group > *, .swap, .thumb.pop { animation: none !important; } }
-  /* Kamera (Layout C): drei feste Größen – 44 klein, 56 mittel, 72 Auslöser. Unten auf einer Linie:
-     Stencil-Karte (56) | runder Auslöser (72) genau mittig | Galerie (56), gleicher Abstand zum Rand.
-     Rechts über der Galerie, auf ihrer Mittelachse: kleine Knöpfe (44) untereinander. */
+  /* Kamera (Layout C): nur zwei Größen – alle Knöpfe 48, der Auslöser 72. Unten auf einer Linie:
+     Stencil-Karte | runder Auslöser genau mittig | Galerie, gleicher Abstand zum Rand.
+     Rechts über der Galerie, in derselben Spalte: Blitz und Kamera wechseln untereinander. */
   #panelCam { --cam-pad: 16px; left: 0; right: 0; bottom: 18px; width: auto; max-width: none; transform: none; padding: 0 var(--cam-pad); background: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; }
   #panelCam .group { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0; }
   #panelCam .group > :first-child { justify-self: start; } #panelCam .group > :last-child { justify-self: end; }
   #panelCam .shutter { width: 72px; height: 72px; padding: 5px; border-radius: 50%; background: none; box-shadow: inset 0 0 0 3px #fff; transition: transform .3s var(--spring); }
   #panelCam .shutter::after { display: block; background: #fff; }
   #panelCam .shutter:active { transform: scale(.94); }
-  .cam-sq, .cam-card { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); }
-  .cam-sq .ic, .cam-card .ic { width: 19px; height: 19px; } .cam-sq:active, .cam-card:active { transform: scale(.93); }
+  .cam-sq, .cam-card { position: relative; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); }
+  .cam-sq .ic, .cam-card .ic { width: 18px; height: 18px; } .cam-sq:active, .cam-card:active { transform: scale(.93); }
   @media (hover: hover) { .cam-sq:hover, .cam-card:hover { background: var(--gd-hover); } }
-  .cam-card img { display: none; width: 40px; height: 40px; object-fit: contain; } .cam-card.has img { display: block; } .cam-card.has .ic { display: none; }
+  .cam-card img { display: none; width: 34px; height: 34px; object-fit: contain; } .cam-card.has img { display: block; } .cam-card.has .ic { display: none; }
   .cam-cardwrap { position: relative; display: inline-grid; }
   .cam-cardwrap .try-x { position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; background: var(--frame); }
   .cam-cardwrap .try-x .ic { width: 10px; height: 10px; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .cam-side { position: absolute; z-index: 5; right: calc(16px + 6px); bottom: calc(18px + 72px + 14px); display: none; flex-direction: column; gap: 10px; }
+  .cam-side { position: absolute; z-index: 5; right: 16px; bottom: calc(18px + 36px + 24px + 10px); display: none; flex-direction: column; gap: 10px; }
   .card:has(#panelCam:not([hidden])) .cam-side { display: flex; }
-  .cs { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); animation: item-in .45s var(--spring) both; }
+  .cs { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); animation: item-in .45s var(--spring) both; }
   .cs + .cs { animation-delay: 40ms; } .cs .ic { width: 18px; height: 18px; } .cs:active { transform: scale(.92); }
   .cs[aria-pressed="true"] { background: oklch(84% .2 115); color: var(--ink); }
 
