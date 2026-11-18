@@ -29,7 +29,7 @@
     /* konzentrisch: Karte außen 42 → innen 36 (Rahmen 6) → Leiste 28 bei 8 Abstand → Buttons 22 bei 6 Innenabstand */
     --r-outer: 42px; --r-inner-card: calc(var(--r-outer) - var(--frame-w)); --inset: 8px;
     /* Glas-Knopf: fast durchsichtig, weißer Schein von innen (kein Rand, kein Schatten nach außen) */
-    --gb: oklch(19% .003 75 / .06); --gb-hover: oklch(19% .003 75 / .09);
+    --gb: oklch(100% 0 0 / .16); --gb-hover: oklch(100% 0 0 / .26);
     --gb-glow: inset 0 1px 2px oklch(100% 0 0 / 1), inset 0 0 10px oklch(100% 0 0 / .9);
     --gd: oklch(100% 0 0 / .09); --gd-hover: oklch(100% 0 0 / .14);
     --gd-glow: inset 0 1px 1px oklch(100% 0 0 / .22), inset 0 0 12px oklch(100% 0 0 / .1);
@@ -45,14 +45,14 @@
   svg { flex: none; }
   .ic { width: 20px; height: 20px; fill: currentColor; }
 
-  /* Hintergrund: warmes helles Grau mit einem ganz weichen, verschwommenen Verlauf (oben links heller, unten rechts
-     etwas grauer), damit die Glas-Knöpfe mit ihrem weißen Schein sichtbar werden */
-  body { background: oklch(93.5% .005 80); }
+  /* Hintergrund nach Vorbild: sandiges Beige mit weichem, verschwommenem Farbverlauf. Oben links heller und
+     neutraler (#DDDCC8), links leicht gelblich (#DEDBB8), rechts leicht rosé (#DDCFBD), Mitte #DFD8BD. */
+  body { background: #ddd6c1; }
   .aura { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
   .aura i { position: absolute; border-radius: 50%; filter: blur(110px); animation: drift 26s ease-in-out infinite alternate; }
-  .aura i:nth-child(1) { width: 70vmax; height: 70vmax; left: -22vmax; top: -30vmax; background: oklch(97.5% .008 85); }
-  .aura i:nth-child(2) { width: 55vmax; height: 55vmax; right: -20vmax; bottom: -22vmax; background: oklch(89.5% .006 70); animation-duration: 32s; }
-  .aura i:nth-child(3) { width: 45vmax; height: 45vmax; left: 30vmax; top: 18vmax; background: oklch(95% .007 80); animation-duration: 29s; }
+  .aura i:nth-child(1) { width: 70vmax; height: 70vmax; left: -24vmax; top: -32vmax; background: #e6e4d3; }
+  .aura i:nth-child(2) { width: 50vmax; height: 50vmax; left: -18vmax; bottom: -20vmax; background: #dcd8b4; animation-duration: 31s; }
+  .aura i:nth-child(3) { width: 55vmax; height: 55vmax; right: -22vmax; top: 10vmax; background: #dfcbba; animation-duration: 29s; }
   .aura i:nth-child(4) { display: none; }
   @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 
