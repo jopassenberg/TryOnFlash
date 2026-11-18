@@ -45,12 +45,14 @@
   svg { flex: none; }
   .ic { width: 20px; height: 20px; fill: currentColor; }
 
-  /* weiche Aura im Hintergrund: fast weiß, ein Hauch Wärme */
+  /* Hintergrund: warmes helles Grau mit einem ganz weichen, verschwommenen Verlauf (oben links heller, unten rechts
+     etwas grauer), damit die Glas-Knöpfe mit ihrem weißen Schein sichtbar werden */
+  body { background: oklch(93.5% .005 80); }
   .aura { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-  .aura i { position: absolute; border-radius: 50%; filter: blur(90px); animation: drift 24s ease-in-out infinite alternate; }
-  .aura i:nth-child(1) { width: 55vmax; height: 55vmax; left: -10vmax; top: -15vmax; background: oklch(99% .008 60); }
-  .aura i:nth-child(2) { width: 45vmax; height: 45vmax; right: -12vmax; top: 10vmax; background: oklch(95% .012 20); animation-duration: 30s; }
-  .aura i:nth-child(3) { width: 50vmax; height: 50vmax; left: 25vmax; bottom: -25vmax; background: oklch(96% .01 240); animation-duration: 28s; }
+  .aura i { position: absolute; border-radius: 50%; filter: blur(110px); animation: drift 26s ease-in-out infinite alternate; }
+  .aura i:nth-child(1) { width: 70vmax; height: 70vmax; left: -22vmax; top: -30vmax; background: oklch(97.5% .008 85); }
+  .aura i:nth-child(2) { width: 55vmax; height: 55vmax; right: -20vmax; bottom: -22vmax; background: oklch(89.5% .006 70); animation-duration: 32s; }
+  .aura i:nth-child(3) { width: 45vmax; height: 45vmax; left: 30vmax; top: 18vmax; background: oklch(95% .007 80); animation-duration: 29s; }
   .aura i:nth-child(4) { display: none; }
   @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 
