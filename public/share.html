@@ -146,22 +146,25 @@ function dieCut(c) {
 // EINER Form verschmolzen (Vereinigung + Abrundung per Distanzfeld), darum eine gemeinsame Schnittkante, die fließend
 // in den Tag übergeht – kein Steg, kein Strich dazwischen.
 async function withTag(src, artist, avatar) {
-  const img = new Image(); img.src = src; await img.decode();
-  const W = img.width, H = img.height, M = Math.max(W, H), sw = Math.max(1.5, M * .006);
   const cv = (w, h) => Object.assign(document.createElement("canvas"), { width: w, height: h });
+  const raw = new Image(); raw.src = src; await raw.decode();
+  // in hoher Auflösung arbeiten (längste Seite mind. 1600 px): Schrift, Profilbild und Kante werden scharf
+  const up = Math.max(1, 1600 / Math.max(raw.width, raw.height)), img = cv(Math.round(raw.width * up), Math.round(raw.height * up));
+  { const ig = img.getContext("2d"); ig.imageSmoothingQuality = "high"; ig.drawImage(raw, 0, 0, img.width, img.height); }
+  const W = img.width, H = img.height, M = Math.max(W, H), sw = Math.max(1.5, M * .006);
   const probe = cv(W, H), pg = probe.getContext("2d", { willReadFrequently: true }); pg.drawImage(img, 0, 0);
   const a0 = pg.getImageData(0, 0, W, H).data, step = Math.max(1, Math.round(M / 300));
   let ax = W * .7, ay = H * .7, best = -1;
   for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) if (a0[(y * W + x) * 4 + 3] > 200) { const v = x * .6 + y; if (v > best) { best = v; ax = x; ay = y; } }
   // Pille: Höhe T, Profilbild links, Name rechts; Ränder links/rechts optisch gleich
-  const T = Math.max(28, M * .08), av = T * .66, fs = T * .34, font = `400 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
+  const T = Math.max(37, M * .106), av = T * .66, fs = T * .34, font = `400 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
   await document.fonts?.load(font).catch(() => {});
   pg.font = font; const name = artist.name.length > 22 ? artist.name.slice(0, 21) + "…" : artist.name, tw = pg.measureText(name).width;
   const inset = (T - av) / 2, gap = T * .2, pw = inset + av + gap + tw + inset * 1.9, ph = T;
   const cx = ax + T * .3, cy = ay + T * .12, px = cx - inset - av / 2, py = cy - ph / 2; // Profilbild sitzt fast auf der Kante
   const pad = sw + T * .4 + 2, R = Math.ceil(Math.max(W, px + pw + pad)), B = Math.ceil(Math.max(H, py + ph + pad));
   // Masken in kleiner Auflösung rechnen
-  const k = Math.min(1, 700 / Math.max(R, B)), mw = Math.max(4, Math.round(R * k)), mh = Math.max(4, Math.round(B * k)), n = mw * mh;
+  const k = Math.min(1, 1200 / Math.max(R, B)), mw = Math.max(4, Math.round(R * k)), mh = Math.max(4, Math.round(B * k)), n = mw * mh;
   const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
   mg.drawImage(img, 0, 0, W * k, H * k); const sa = mg.getImageData(0, 0, mw, mh).data;
   mg.beginPath(); mg.roundRect(px * k, py * k, pw * k, ph * k, ph * k / 2); mg.fill(); const ua = mg.getImageData(0, 0, mw, mh).data;

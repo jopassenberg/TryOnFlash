@@ -2122,7 +2122,7 @@ function smoothCut(inside, w, h, pad, sw, R) {
 function dieCut(c, edge = 196, padK = .075) { // padK: weißer Rand relativ zur längsten Seite
   const w = c.width, h = c.height, M = Math.max(w, h), pad = M * padK, sw = Math.max(1.5, M * .006), sm = M * Math.min(.07, padK), o = Math.ceil(pad + sw + sm) + 2;
   const W = w + 2 * o, H = h + 2 * o, cv = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
-  const k = Math.min(1, 900 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
+  const k = Math.min(1, 1400 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
   const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
   mg.drawImage(c, o * k, o * k, w * k, h * k);
   const md = mg.getImageData(0, 0, mw, mh).data, n = mw * mh, outside = new Uint8Array(n), st = [];
@@ -2806,12 +2806,12 @@ document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTa
 
 async function loadFlashes() {
   let raw = await idb("flashes", "readonly", s => s.getAll());
-  let seedV = "2"; try { seedV = localStorage.getItem("stencit-seeded") || ""; } catch {}
-  if (seedV !== "2") { // Start-Stencil (Stencit-Zeichen im Linoldruck) liegt von Anfang an in den Flashes, mit Stencit-Tag
-    try { localStorage.setItem("stencit-seeded", "2"); } catch {}
+  let seedV = "3"; try { seedV = localStorage.getItem("stencit-seeded") || ""; } catch {}
+  if (seedV !== "3") { // Start-Stencil (Stencit-Zeichen im Linoldruck) liegt von Anfang an in den Flashes, mit Stencit-Tag
+    try { localStorage.setItem("stencit-seeded", "3"); } catch {}
     const has = raw.find(f => f.id === "stencit-logo");
     if (has || !seedV) { // neu anlegen, oder ein schon angelegtes (v1, ohne Tag) auffrischen; gelöscht bleibt gelöscht
-      const c = logoStencil(), t = trim(c) || c, rec = await flashRecord(t, null, { id: "stencit-logo", name: "Stencit", created: 0, pos: null }); // neue Form (mit Tag): neu legen
+      const c = await cachedLogo(), t = trim(c) || c, rec = await flashRecord(t, null, { id: "stencit-logo", name: "Stencit", created: 0, pos: null }); // neue Form (mit Tag): neu legen
       rec.sticker = await stencitSticker(t).catch(() => rec.sticker);
       await putFlash(rec); raw = await idb("flashes", "readonly", s => s.getAll());
     }
@@ -3135,7 +3135,7 @@ function setCard() { const on = !!pendingFlash; $("#tryHead").classList.toggle("
 // - Spritzer: nur wo das Rauschen um die Punkte herum sehr hoch ist → kleine, natürlich geformte Flecken
 // Fester Zufall: sieht jedes Mal gleich aus.
 function logoStencil() {
-  const N = 600, c = Object.assign(document.createElement("canvas"), { width: N, height: N }), g = c.getContext("2d");
+  const N = 900, U = 600 / N, c = Object.assign(document.createElement("canvas"), { width: N, height: N }), g = c.getContext("2d");
   const hash = (x, y, s) => { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
   const vn = (x, y, s) => { const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), w = fy * fy * (3 - 2 * fy);
     return (hash(xi, yi, s) * (1 - u) + hash(xi + 1, yi, s) * u) * (1 - w) + (hash(xi, yi + 1, s) * (1 - u) + hash(xi + 1, yi + 1, s) * u) * w; };
@@ -3145,18 +3145,19 @@ function logoStencil() {
   const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const img = g.createImageData(N, N), d = img.data;
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const xs = x * U, ys = y * U;
     let best = 1e9, bi = 0; for (let i = 0; i < 9; i++) { const dd = Math.hypot(x - C[i][0], y - C[i][1]); if (dd < best) { best = dd; bi = i; } }
-    const edge = R * (1 + .05 * (fbm(x / 22, y / 22, 3 + bi) - .5) + .025 * (fbm(x / 6, y / 6, 9) - .5)), sdf = edge - best;
+    const edge = R * (1 + .05 * (fbm(xs / 22, ys / 22, 3 + bi) - .5) + .025 * (fbm(xs / 6, ys / 6, 9) - .5)), sdf = (edge - best);
     let a = 0;
     if (sdf > -1) {
       a = Math.min(1, Math.max(0, sdf + .5));
-      const patch = fbm(x / 90, y / 90, 41), streak = fbm(x / 34, y / 6.5, 57, 3), salt = fbm(x / 1.7, y / 1.7, 71, 2);
+      const patch = fbm(xs / 90, ys / 90, 41), streak = fbm(xs / 34, ys / 6.5, 57, 3), salt = fbm(xs / 1.7, ys / 1.7, 71, 2);
       const nearEdge = 1 - sm(0, R * .28, sdf);
       const thr = .84 - .16 * sm(.55, .8, patch) - .05 * nearEdge; // in manchen Zonen und am Rand mehr Papier
       a *= 1 - sm(thr - .015, thr + .015, streak);
       if (patch > .62 && salt > .86) a *= .2;
     } else if (best < R * 1.45) { // Spritzer: sehr seltene, natürlich geformte Flecken knapp außerhalb
-      const sp = fbm(x / 6, y / 6, 91, 2) * sm(.6, .7, fbm(x / 50, y / 50, 99));
+      const sp = fbm(xs / 6, ys / 6, 91, 2) * sm(.6, .7, fbm(xs / 50, ys / 50, 99));
       a = sm(.76, .78, sp);
     }
     const i4 = (y * N + x) * 4; d[i4] = d[i4 + 1] = d[i4 + 2] = 14; d[i4 + 3] = a * 255;
@@ -3168,22 +3169,25 @@ function logoStencil() {
 // EINER Form verschmolzen (Vereinigung + Abrundung per Distanzfeld), darum eine gemeinsame Schnittkante, die fließend
 // in den Tag übergeht – kein Steg, kein Strich dazwischen.
 async function withTag(src, artist, avatar) {
-  const img = new Image(); img.src = src; await img.decode();
-  const W = img.width, H = img.height, M = Math.max(W, H), sw = Math.max(1.5, M * .006);
   const cv = (w, h) => Object.assign(document.createElement("canvas"), { width: w, height: h });
+  const raw = new Image(); raw.src = src; await raw.decode();
+  // in hoher Auflösung arbeiten (längste Seite mind. 1600 px): Schrift, Profilbild und Kante werden scharf
+  const up = Math.max(1, 1600 / Math.max(raw.width, raw.height)), img = cv(Math.round(raw.width * up), Math.round(raw.height * up));
+  { const ig = img.getContext("2d"); ig.imageSmoothingQuality = "high"; ig.drawImage(raw, 0, 0, img.width, img.height); }
+  const W = img.width, H = img.height, M = Math.max(W, H), sw = Math.max(1.5, M * .006);
   const probe = cv(W, H), pg = probe.getContext("2d", { willReadFrequently: true }); pg.drawImage(img, 0, 0);
   const a0 = pg.getImageData(0, 0, W, H).data, step = Math.max(1, Math.round(M / 300));
   let ax = W * .7, ay = H * .7, best = -1;
   for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) if (a0[(y * W + x) * 4 + 3] > 200) { const v = x * .6 + y; if (v > best) { best = v; ax = x; ay = y; } }
   // Pille: Höhe T, Profilbild links, Name rechts; Ränder links/rechts optisch gleich
-  const T = Math.max(28, M * .08), av = T * .66, fs = T * .34, font = `400 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
+  const T = Math.max(37, M * .106), av = T * .66, fs = T * .34, font = `400 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
   await document.fonts?.load(font).catch(() => {});
   pg.font = font; const name = artist.name.length > 22 ? artist.name.slice(0, 21) + "…" : artist.name, tw = pg.measureText(name).width;
   const inset = (T - av) / 2, gap = T * .2, pw = inset + av + gap + tw + inset * 1.9, ph = T;
   const cx = ax + T * .3, cy = ay + T * .12, px = cx - inset - av / 2, py = cy - ph / 2; // Profilbild sitzt fast auf der Kante
   const pad = sw + T * .4 + 2, R = Math.ceil(Math.max(W, px + pw + pad)), B = Math.ceil(Math.max(H, py + ph + pad));
   // Masken in kleiner Auflösung rechnen
-  const k = Math.min(1, 700 / Math.max(R, B)), mw = Math.max(4, Math.round(R * k)), mh = Math.max(4, Math.round(B * k)), n = mw * mh;
+  const k = Math.min(1, 1200 / Math.max(R, B)), mw = Math.max(4, Math.round(R * k)), mh = Math.max(4, Math.round(B * k)), n = mw * mh;
   const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
   mg.drawImage(img, 0, 0, W * k, H * k); const sa = mg.getImageData(0, 0, mw, mh).data;
   mg.beginPath(); mg.roundRect(px * k, py * k, pw * k, ph * k, ph * k / 2); mg.fill(); const ua = mg.getImageData(0, 0, mw, mh).data;
@@ -3221,7 +3225,7 @@ async function withTag(src, artist, avatar) {
 }
 // Profilbild für Stencit selbst: Marken-Verlauf (Bordeaux → Rot, senkrecht) mit dem weißen 9-Punkte-Zeichen
 function stencitAvatar() {
-  const S0 = 128, c = Object.assign(document.createElement("canvas"), { width: S0, height: S0 }), g = c.getContext("2d");
+  const S0 = 256, c = Object.assign(document.createElement("canvas"), { width: S0, height: S0 }), g = c.getContext("2d");
   const gr = g.createLinearGradient(0, 0, 0, S0); gr.addColorStop(0, "#730F26"); gr.addColorStop(1, "#DB1A1D"); g.fillStyle = gr; g.fillRect(0, 0, S0, S0);
   const k = S0 / 240 * .5, o = S0 * .25; g.fillStyle = "#fff";
   [[120, 26.48], [186.13, 53.87], [213.52, 120], [186.13, 186.13], [120, 213.52], [53.87, 186.13], [26.48, 120], [53.87, 53.87], [120, 120]]
@@ -3232,6 +3236,14 @@ function stencitAvatar() {
 async function stencitSticker(t) {
   const url = await withTag(dieCut(t).toDataURL("image/png"), { name: "Stencit" }, stencitAvatar());
   return (await fetch(url)).blob();
+}
+// Start-Stencil nur einmal rechnen (dauert ~0,6 s) und als PNG im Gerät ablegen; danach nur laden
+const LOGO_KEY = "logo-v3";
+async function cachedLogo() {
+  try { const h = await idb("handoff", "readonly", s => s.get(LOGO_KEY)); if (h?.buf) return await blobToCanvas(new Blob([h.buf], { type: "image/png" })); } catch {}
+  const c = logoStencil();
+  try { const buf = await (await toBlob(c, "image/png")).arrayBuffer(); await idb("handoff", "readwrite", s => s.put({ buf, type: "image/png" }, LOGO_KEY)); } catch {}
+  return c;
 }
 let noDefault = false; // × am Start-Stencil: in dieser Sitzung nicht wiederbringen
 function usePending() { // nach der Analyse aufgerufen
@@ -3245,7 +3257,7 @@ function usePending() { // nach der Analyse aufgerufen
     const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
     if (blob) await tryFlash(blob, h.name);
   } catch (e) { console.warn("handoff", e); }
-  if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = logoStencil(); showTry(pendingFlash, "Stencit"); } // Start-Stencil
+  if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = await cachedLogo(); showTry(pendingFlash, "Stencit"); } // Start-Stencil
   if (S.step === 1 && !S.photo) await showStart(!CRASHED); // Start: Kamera-Oberfläche, ggf. Kamera direkt
   if (CRASHED) status(`Absturz bei: ${CRASHED}`, "err");
 })();
@@ -3340,7 +3352,7 @@ function printSheet(src = studioSrc()) {
 }
 addEventListener("afterprint", () => { $("#printRoot").innerHTML = ""; });
 
-window.__studio = { needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
+window.__studio = { logoStencil, needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>
