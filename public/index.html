@@ -45,14 +45,14 @@
   svg { flex: none; }
   .ic { width: 20px; height: 20px; fill: currentColor; }
 
-  /* Hintergrund nach Vorbild: sandiges Beige mit weichem, verschwommenem Farbverlauf. Oben links heller und
-     neutraler (#DDDCC8), links leicht gelblich (#DEDBB8), rechts leicht rosé (#DDCFBD), Mitte #DFD8BD. */
-  body { background: #ddd6c1; }
+  /* Hintergrund nach Vorbild, aber mit dezentem Stich ins Markenrot: helles warmes Grau, weich verschwommen,
+     oben links fast neutral, nach rechts unten ein Hauch Rosé/Rot */
+  body { background: oklch(93.5% .011 22); }
   .aura { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
   .aura i { position: absolute; border-radius: 50%; filter: blur(110px); animation: drift 26s ease-in-out infinite alternate; }
-  .aura i:nth-child(1) { width: 70vmax; height: 70vmax; left: -24vmax; top: -32vmax; background: #e6e4d3; }
-  .aura i:nth-child(2) { width: 50vmax; height: 50vmax; left: -18vmax; bottom: -20vmax; background: #dcd8b4; animation-duration: 31s; }
-  .aura i:nth-child(3) { width: 55vmax; height: 55vmax; right: -22vmax; top: 10vmax; background: #dfcbba; animation-duration: 29s; }
+  .aura i:nth-child(1) { width: 70vmax; height: 70vmax; left: -24vmax; top: -32vmax; background: oklch(97% .006 40); }
+  .aura i:nth-child(2) { width: 50vmax; height: 50vmax; left: -18vmax; bottom: -20vmax; background: oklch(93% .014 25); animation-duration: 31s; }
+  .aura i:nth-child(3) { width: 55vmax; height: 55vmax; right: -22vmax; top: 10vmax; background: oklch(91% .026 22); animation-duration: 29s; }
   .aura i:nth-child(4) { display: none; }
   @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 
