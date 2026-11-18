@@ -91,6 +91,20 @@
   .btn.glass-btn.main:hover { background: oklch(100% 0 0 / .16); }
   .drop.over { background: oklch(100% 0 0 / .04); }
   .drop .row { display: flex; gap: var(--s2); align-items: center; }
+  /* Anprobieren: das gewählte Flash als Sticker über der Überschrift, plopt herein; × nimmt es wieder weg */
+  .try { position: relative; height: min(36vw, 140px); display: grid; place-items: center; animation: try-in .7s var(--spring) both; }
+  .try img { display: block; height: 100%; max-width: min(60vw, 230px); object-fit: contain; rotate: -5deg; }
+  .try-x { position: absolute; top: -6px; right: -10px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .12); color: #fff;
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+  .try-x .ic { width: 14px; height: 14px; }
+  @keyframes try-in { from { transform: translateY(14px) scale(.6) rotate(8deg); opacity: 0; } }
+  .drop.trying .hello { animation: sum-item .5s var(--ease-out) .12s both; }
+  /* Kamera: das Motiv halbtransparent in der Mitte, damit man die Stelle anpeilen kann */
+  .cam-ghost { position: absolute; left: 50%; top: 46%; width: 44%; max-height: 44%; object-fit: contain; translate: -50% -50%; opacity: .5; pointer-events: none; z-index: 2;
+    animation: fade .4s var(--ease-out); }
+  /* weicher Wechsel aus den Flashes ins Studio (die Seite lädt dabei frisch) */
+  .shell { transition: opacity .28s var(--ease-out), scale .28s var(--ease-out); }
+  body.leaving .shell { opacity: 0; scale: .985; }
 
   /* ---------- Buttons: rund, flächig, ohne Rand und Schatten ---------- */
   .btn { height: var(--h); padding: 0 var(--s5); border-radius: var(--r-full); display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
@@ -554,7 +568,7 @@
   /* Flash-Sheet: Knopf in der Zusammenfassung, Dialog mit Papiervorschau, Druckseiten in echten Millimetern */
   .sum-print { width: 100%; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; gap: 8px; background: oklch(100% 0 0 / .1); color: #fff; font-size: 14px; }
   .sum-print .ic { width: 18px; height: 18px; }
-  .ps-prev { display: grid; justify-items: center; gap: 10px; max-height: 46vh; overflow: auto; padding: 14px; border-radius: 20px; background: oklch(100% 0 0 / .05); scrollbar-width: none; }
+  .ps-prev { display: grid; justify-items: center; align-content: start; gap: 10px; height: min(42vh, 340px); overflow: auto; padding: 14px; border-radius: 20px; background: oklch(100% 0 0 / .05); scrollbar-width: none; }
   .ps-prev::-webkit-scrollbar { display: none; }
   .ps-prev .pw { position: relative; flex: none; border-radius: 4px; overflow: hidden; }
   .ps-prev .pw > .pp { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
@@ -608,6 +622,7 @@
     <div class="siri" id="siri" hidden><i class="haze"></i><i class="wide"></i><i class="band"></i><i class="ring"></i></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop">
+        <div class="try" id="tryCard" hidden><img alt="Dein Flash" id="tryImg"><button class="try-x" id="tryX" aria-label="Flash entfernen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
         <h1 class="hello">Dein Tattoo,<br><span>bevor es eins ist.</span></h1>
         <div class="row">
           <button class="btn glass-btn main lg" id="camBtn"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Kamera</button>
@@ -615,6 +630,7 @@
         </div>
       </div>
       <video id="cam" playsinline muted autoplay hidden></video>
+      <img class="cam-ghost" id="camGhost" alt="" hidden>
       <div class="shot" id="shot"></div>
       <div id="viewWrap" hidden>
         <canvas id="view"></canvas>
@@ -877,7 +893,7 @@ async function openCam() {
     status(e?.name === "NotAllowedError" ? "Kein Kamerazugriff – im Browser erlauben" : "Kamera nicht verfügbar", "err"); return;
   }
   const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false;
-  v.play().catch(() => {}); status(""); applyFlash();
+  v.play().catch(() => {}); status(""); applyFlash(); $("#camGhost").hidden = !pendingFlash;
 }
 // Blitz: hinten als Dauerlicht (Taschenlampe), wenn der Browser es kann (Android/Chrome);
 // vorne als Bildschirm-Blitz (weißer Bildschirm im Moment der Aufnahme). Safari auf dem iPhone erlaubt
@@ -896,7 +912,7 @@ $("#camFlash").onclick = () => {
 function closeCam() {
   try { if (canTorch()) torchTrack().applyConstraints({ advanced: [{ torch: false }] }); } catch {}
   camStream?.getTracks().forEach(t => t.stop()); camStream = null;
-  const v = $("#cam"); v.srcObject = null; v.hidden = true; $("#panelCam").hidden = true;
+  const v = $("#cam"); v.srcObject = null; v.hidden = true; $("#panelCam").hidden = true; $("#camGhost").hidden = true;
 }
 $("#camFlip").onclick = () => { camFacing = camFacing === "user" ? "environment" : "user"; openCam(); };
 $("#shoot").onclick = async () => {
@@ -1974,8 +1990,8 @@ function smoothCut(inside, w, h, pad, sw, R) {
   return { fill, ring };
 }
 // Die-Cut für die Galerie: Motiv, weißer Rand (6 %) und eine feine graue Schnittkante, transparent drumherum
-function dieCut(c) {
-  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * .075, sw = Math.max(1.5, M * .006), o = Math.ceil(pad + sw + M * .07) + 2;
+function dieCut(c, edge = 196, padK = .075) { // padK: weißer Rand relativ zur längsten Seite
+  const w = c.width, h = c.height, M = Math.max(w, h), pad = M * padK, sw = Math.max(1.5, M * .006), sm = M * Math.min(.07, padK), o = Math.ceil(pad + sw + sm) + 2;
   const W = w + 2 * o, H = h + 2 * o, cv = (a, b) => Object.assign(document.createElement("canvas"), { width: a, height: b });
   const k = Math.min(1, 900 / Math.max(W, H)), mw = Math.max(4, Math.round(W * k)), mh = Math.max(4, Math.round(H * k));
   const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
@@ -1986,14 +2002,15 @@ function dieCut(c) {
   for (let y = 0; y < mh; y++) { seed(y * mw); seed(y * mw + mw - 1); }
   while (st.length) { const i = st.pop(), x = i % mw; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (i >= mw) seed(i - mw); if (i < n - mw) seed(i + mw); }
   const inside = new Uint8Array(n); for (let i = 0; i < n; i++) inside[i] = outside[i] ? 0 : 1;
-  const { fill, ring } = smoothCut(inside, mw, mh, pad * k + sw * k, sw * k, M * .07 * k), img = mg.createImageData(mw, mh), px = img.data;
+  const { fill, ring } = smoothCut(inside, mw, mh, pad * k + sw * k, sw * k, sm * k), img = mg.createImageData(mw, mh), px = img.data;
   for (let i = 0; i < n; i++) {
-    const a = fill[i] + ring[i], v = a > 0 ? (fill[i] * 255 + ring[i] * 196) / a : 255; // innen weiß, Kante hellgrau
+    const a = fill[i] + ring[i], v = a > 0 ? (fill[i] * 255 + ring[i] * edge) / a : 255; // innen weiß, Kante grau
     px[i * 4] = px[i * 4 + 1] = v; px[i * 4 + 2] = v - 2; px[i * 4 + 3] = a * 255;
   }
   mg.putImageData(img, 0, 0);
   const res = cv(W, H), g = res.getContext("2d");
   g.imageSmoothingQuality = "high"; g.drawImage(mc, 0, 0, W, H); g.drawImage(c, o, o);
+  res.cut = { o, vis: pad + sw }; // Rand um das Motiv (px): gesamt und sichtbar (bis zur Schnittkante)
   return res;
 }
 
@@ -2912,19 +2929,34 @@ async function tryFlash(blob) {
   setTab("studio");
   let c; try { c = await blobToCanvas(blob); } catch (e) { console.warn("flash", e); return status("Motiv nicht lesbar", "err"); }
   if (S.step >= 3 && S.skin) { addMotif(trim(c) || c); return; }
-  pendingFlash = c; const h = $("#drop .hello span"); if (h) h.textContent = "jetzt ein Foto deiner Haut.";
+  pendingFlash = c; showTry(c);
   try { const buf = await (await toBlob(c, "image/png")).arrayBuffer(); await idb("handoff", "readwrite", s => s.put({ buf, type: "image/png" }, "flash")); } catch {}
 }
 // Aus den eigenen Flashes: Motiv in die Übergabe legen und die Seite neu laden. So startet das Studio mit
 // leerem Speicher (die Galerie-Bilder sind weg) – auf dem iPhone braucht die Analyse jeden Megabyte.
 async function tryFresh(blob) {
+  if (!MOBILE) return tryFlash(blob); // am Rechner reicht der Speicher: ohne Neuladen
   try { const buf = await blob.arrayBuffer(); await idb("handoff", "readwrite", s => s.put({ buf, type: blob.type || "image/png" }, "flash")); }
   catch (e) { console.warn("handoff", e); return tryFlash(blob); }
+  document.body.classList.add("leaving"); await new Promise(r => setTimeout(r, 280));
   location.replace(location.pathname);
 }
+// Startbildschirm im Anprobier-Modus: Sticker des Flashes, Überschrift „Dein Flash, wo soll es hin?“
+const HELLO = $("#drop .hello").innerHTML;
+function showTry(c) {
+  const t = trim(c) || c, small = scaled(t, 480);
+  $("#tryImg").src = dieCut(small).toDataURL("image/png"); $("#camGhost").src = small.toDataURL("image/png");
+  $("#tryCard").hidden = false; $("#drop").classList.add("trying");
+  $("#drop .hello").innerHTML = "Dein Flash,<br><span>wo soll es hin?</span>";
+}
+function clearTry() {
+  pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
+  $("#tryCard").hidden = true; $("#camGhost").hidden = true; $("#drop").classList.remove("trying"); $("#drop .hello").innerHTML = HELLO;
+}
+$("#tryX").onclick = clearTry;
 function usePending() { // nach der Analyse aufgerufen
   if (!pendingFlash) return false;
-  const c = pendingFlash; pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
+  const c = pendingFlash; clearTry();
   addMotif(trim(c) || c); return true;
 }
 (async () => { // vom Kunden-Link übergeben oder nach einem Neuladen noch offen
@@ -2937,69 +2969,82 @@ function usePending() { // nach der Analyse aufgerufen
 })();
 
 /* ---------- Flash-Sheet: das Motiv in echter Größe auf Papier (Drucker, AirPrint, PDF) ---------- */
-// Standard A4 hoch, nur die gewählte Größe. Optional weitere Größen (längste Seite −2 … +2 cm), jede mit
-// Größen-Tag. Unten auf jeder Seite ein 5-cm-Kontrollmaß: stimmt es nach dem Druck, ist alles maßstabsgetreu.
+// Jedes Motiv als Stencil mit Schnittkante (weißer Abstand + feine dunkle Linie), so wie in den Flashes.
+// Standard A4 hoch, nur die gewählte Größe; weitere Größen (längste Seite −2 … +2 cm) per Antippen dazu.
+// Unten auf jeder Seite ein 5-cm-Kontrollmaß: stimmt es nach dem Druck, ist alles maßstabsgetreu.
 const PAPERS = [["A5", 148, 210], ["A4", 210, 297], ["A3", 297, 420], ["Letter", 215.9, 279.4]];
-const PS = { paper: "A4", land: false, multi: false, steps: new Set([-2, -1, 0, 1, 2]), tags: true, mirror: false };
+const PS = { paper: "A4", land: false, steps: new Set([0]), tags: true, mirror: false };
 const fmtCm = v => fmt(Math.round(v * 10) / 10);
+function printCut() { // Stencil-Bild pro Motiv und Größe: 3 mm weißer Rand, dunklere Kante als in der Galerie (im Druck sichtbar)
+  const m = S.motif, { w, h } = sizeCm(), padK = .3 / Math.max(w, h), key = padK.toFixed(4);
+  if (m.print?.key === key) return m.print;
+  const c = dieCut(m.canvas, 120, padK); return (m.print = { key, url: c.toDataURL("image/png"), W: c.width, H: c.height, w: m.canvas.width, ...c.cut });
+}
 function sheetItems() {
-  const { w, h } = sizeCm(), long = Math.max(w, h), steps = PS.multi ? [...PS.steps].sort((a, b) => a - b) : [0];
-  return steps.map(d => { const k = (long + d) / long; return { d, w: w * k * 10, h: h * k * 10 }; }).filter(i => Math.max(i.w, i.h) >= 15); // mm
+  const { w, h } = sizeCm(), long = Math.max(w, h), P = printCut();
+  return [...PS.steps].sort((a, b) => a - b).map(d => { const k = (long + d) / long, mw = w * k * 10, mh = h * k * 10, s = mw / P.w; // mm pro Bild-px
+    const vis = P.vis * s; // sichtbarer Rand bis zur Schnittkante (mm)
+    return { d, mw, mh, sw: P.W * s, sh: P.H * s, inv: (P.o - P.vis) * s, vw: mw + 2 * vis, vh: mh + 2 * vis }; }).filter(i => Math.max(i.mw, i.mh) >= 15);
 }
 function sheetPages(items) { // Regale: Zeile für Zeile, nebeneinander, so viele Seiten wie nötig
   const [, pw0, ph0] = PAPERS.find(p => p[0] === PS.paper), W = PS.land ? ph0 : pw0, H = PS.land ? pw0 : ph0;
-  const M = 12, G = 8, TAG = PS.tags ? 7 : 0, FOOT = 14, maxW = W - 2 * M, maxH = H - M - FOOT;
-  const fits = items.filter(i => i.w <= maxW && i.h + TAG <= maxH - M), tooBig = items.filter(i => !fits.includes(i));
+  // Gelegt wird nach der sichtbaren Schnittkante; der unsichtbare Rand des Bildes darf überstehen
+  const M = 10, G = 4, TAG = PS.tags ? 6 : 0, FOOT = 14, maxW = W - 2 * M, maxH = H - M - FOOT;
+  const fits = items.filter(i => i.vw <= maxW && i.vh + TAG <= maxH - M), tooBig = items.filter(i => !fits.includes(i));
   const pages = []; let page = null, x = M, y = M, rowH = 0;
-  for (const it of [...fits].sort((a, b) => b.h - a.h)) {
-    const bw = Math.max(it.w, PS.tags ? 24 : 0), bh = it.h + TAG;
-    if (page && x + bw > W - M) { x = M; y += rowH + G; rowH = 0; }
+  for (const it of [...fits].sort((a, b) => b.vh - a.vh)) {
+    const bh = it.vh + TAG;
+    if (page && x + it.vw > W - M) { x = M; y += rowH + G; rowH = 0; }
     if (!page || y + bh > maxH) { page = []; pages.push(page); x = M; y = M; rowH = 0; }
-    page.push({ ...it, x, y, bw }); x += bw + G; rowH = Math.max(rowH, bh);
+    page.push({ ...it, x, y }); x += it.vw + G; rowH = Math.max(rowH, bh);
   }
   return { W, H, pages, tooBig };
 }
 function pageHTML(L, pg) {
-  const url = S.motif.url;
-  return `<div class="pp" style="width:${L.W}mm;height:${L.H}mm">${pg.map(i => `<div class="it" style="left:${i.x}mm;top:${i.y}mm;width:${i.bw}mm">
-      <img alt="" src="${url}" style="width:${i.w}mm;height:${i.h}mm${PS.mirror ? ";transform:scaleX(-1)" : ""}">${PS.tags ? `<span class="tag">${fmtCm(i.w / 10)} × ${fmtCm(i.h / 10)} cm</span>` : ""}</div>`).join("")}
+  const url = printCut().url;
+  return `<div class="pp" style="width:${L.W}mm;height:${L.H}mm">${pg.map(i => `<div class="it" style="left:${i.x}mm;top:${i.y}mm;width:${i.vw}mm;height:${i.vh + (PS.tags ? 6 : 0)}mm">
+      <img alt="" src="${url}" style="position:absolute;left:${-i.inv}mm;top:${-i.inv}mm;width:${i.sw}mm;height:${i.sh}mm${PS.mirror ? ";transform:scaleX(-1)" : ""}">${PS.tags ? `<span class="tag" style="position:absolute;left:50%;translate:-50% 0;top:${(i.vh + 1.2).toFixed(2)}mm;margin:0">${fmtCm(i.mw / 10)} × ${fmtCm(i.mh / 10)} cm</span>` : ""}</div>`).join("")}
     <div class="foot"><span>Stencit · Flash-Sheet · ${PS.paper}${PS.mirror ? " · gespiegelt" : ""}</span><span class="ruler"><i></i>5 cm · mit 100 % drucken</span></div></div>`;
 }
+// Der Dialog wird einmal gebaut; Antippen ändert nur Zustände und die Vorschau (feste Höhe): nichts springt.
 function printSheet() {
-  const box = $("#printSheet");
-  const chips = (arr, cur, key) => arr.map(([v, t]) => `<button class="opt" data-${key}="${v}" aria-pressed="${String(v) === String(cur)}">${t}</button>`).join("");
-  const render = () => {
-    const items = sheetItems(), L = sheetPages(items), n = L.pages.length;
-    box.innerHTML = `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Flash-Sheet">
-      <h3>Flash-Sheet</h3>
-      <div class="stack"><span class="dim">Papier</span><div class="row">${chips(PAPERS.map(p => [p[0], p[0]]), PS.paper, "paper")}</div>
-        <div class="row">${chips([[0, "Hochformat"], [1, "Querformat"]], +PS.land, "land")}</div></div>
-      <button class="sw" id="psMulti" role="switch" aria-checked="${PS.multi}"><span class="t">Mehrere Größen<small>Zum Vergleichen, jeweils ± 1 cm</small></span><span class="track"></span></button>
-      ${PS.multi ? `<div class="row">${[-2, -1, 0, 1, 2].map(d => `<button class="opt" data-step="${d}" aria-pressed="${PS.steps.has(d)}">${d ? (d > 0 ? "+" : "−") + Math.abs(d) + " cm" : "Gewählt"}</button>`).join("")}</div>` : ""}
-      <button class="sw" id="psTags" role="switch" aria-checked="${PS.tags}"><span class="t">Größe beschriften<small>Tag mit Breite × Höhe unter jedem Motiv</small></span><span class="track"></span></button>
-      <button class="sw" id="psMirror" role="switch" aria-checked="${PS.mirror}"><span class="t">Gespiegelt<small>Für Thermo-Stencil und Umdruckpapier</small></span><span class="track"></span></button>
-      <div class="ps-prev" id="psPrev">${L.pages.map(pg => `<div class="pw">${pageHTML(L, pg)}</div>`).join("") || `<span class="ps-note">Nichts zu drucken</span>`}</div>
-      <div class="ps-note">${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? ` · ${L.tooBig.map(i => fmtCm(i.w / 10) + " × " + fmtCm(i.h / 10) + " cm").join(", ")} passt nicht auf ${PS.paper}` : ""} · im Druckdialog „100 %“ bzw. „Tatsächliche Größe“ wählen</div>
-      <div class="stack"><button class="btn primary wide" id="psGo" ${n ? "" : "disabled"}><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg>Drucken oder senden</button>
-        <button class="btn ghost wide" data-close>Schließen</button></div></div>`;
-    // Vorschau: echte Seite in mm, auf die Breite des Dialogs verkleinert
-    const prev = $("#psPrev"), avail = Math.min(prev.clientWidth - 28, 300), PX = 96 / 25.4;
-    prev.querySelectorAll(".pw").forEach(w => { const k = avail / (L.W * PX); w.style.width = L.W * PX * k + "px"; w.style.height = L.H * PX * k + "px"; w.firstElementChild.style.transform = `scale(${k})`; });
-    box.querySelectorAll("[data-close]").forEach(b => b.onclick = () => { box.innerHTML = ""; });
-    box.querySelectorAll("[data-paper]").forEach(b => b.onclick = () => { PS.paper = b.dataset.paper; render(); });
-    box.querySelectorAll("[data-land]").forEach(b => b.onclick = () => { PS.land = b.dataset.land === "1"; render(); });
-    box.querySelectorAll("[data-step]").forEach(b => b.onclick = () => { const d = +b.dataset.step; PS.steps.has(d) ? PS.steps.delete(d) : PS.steps.add(d); if (!PS.steps.size) PS.steps.add(0); render(); });
-    $("#psMulti").onclick = () => { PS.multi = !PS.multi; render(); };
-    $("#psTags").onclick = () => { PS.tags = !PS.tags; render(); };
-    $("#psMirror").onclick = () => { PS.mirror = !PS.mirror; render(); };
-    $("#psGo").onclick = () => {
-      $("#pageSize").textContent = `@page { size: ${L.W}mm ${L.H}mm; margin: 0; }`;
-      $("#printRoot").innerHTML = L.pages.map(pg => pageHTML(L, pg)).join("");
-      const imgs = [...$("#printRoot").querySelectorAll("img")];
-      Promise.all(imgs.map(i => i.decode?.().catch(() => {}))).then(() => window.print());
-    };
+  const box = $("#printSheet"), sw = (id, t, sub) => `<button class="sw" id="${id}" role="switch"><span class="t">${t}<small>${sub}</small></span><span class="track"></span></button>`;
+  box.innerHTML = `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Flash-Sheet">
+    <h3>Flash-Sheet</h3>
+    <div class="stack"><span class="dim">Papier</span><div class="row">${PAPERS.map(p => `<button class="opt" data-paper="${p[0]}">${p[0]}</button>`).join("")}</div>
+      <div class="row"><button class="opt" data-land="0">Hochformat</button><button class="opt" data-land="1">Querformat</button></div></div>
+    <div class="stack"><span class="dim">Größen</span><div class="row">${[-2, -1, 0, 1, 2].map(d => `<button class="opt" data-step="${d}">${d ? (d > 0 ? "+" : "−") + Math.abs(d) + " cm" : "Gewählt"}</button>`).join("")}</div></div>
+    ${sw("psTags", "Größe beschriften", "Tag mit Breite × Höhe unter jedem Stencil")}
+    ${sw("psMirror", "Gespiegelt", "Für Thermo-Stencil und Umdruckpapier")}
+    <div class="ps-prev" id="psPrev"></div><div class="ps-note" id="psNote"></div>
+    <div class="stack"><button class="btn primary wide" id="psGo"><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg>Drucken oder senden</button>
+      <button class="btn ghost wide" data-close>Schließen</button></div></div>`;
+  let L = null;
+  const update = () => {
+    box.querySelectorAll("[data-paper]").forEach(b => b.setAttribute("aria-pressed", b.dataset.paper === PS.paper));
+    box.querySelectorAll("[data-land]").forEach(b => b.setAttribute("aria-pressed", (b.dataset.land === "1") === PS.land));
+    box.querySelectorAll("[data-step]").forEach(b => b.setAttribute("aria-pressed", PS.steps.has(+b.dataset.step)));
+    $("#psTags").setAttribute("aria-checked", PS.tags); $("#psMirror").setAttribute("aria-checked", PS.mirror);
+    L = sheetPages(sheetItems()); const n = L.pages.length, prev = $("#psPrev"), top = prev.scrollTop;
+    prev.innerHTML = L.pages.map(pg => `<div class="pw">${pageHTML(L, pg)}</div>`).join("") || `<span class="ps-note">Nichts zu drucken</span>`;
+    const avail = Math.min(prev.clientWidth - 28, 300), PX = 96 / 25.4, k = avail / (L.W * PX);
+    prev.querySelectorAll(".pw").forEach(w => { w.style.width = L.W * PX * k + "px"; w.style.height = L.H * PX * k + "px"; w.firstElementChild.style.transform = `scale(${k})`; });
+    prev.scrollTop = top;
+    $("#psNote").textContent = `${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? ` · ${L.tooBig.map(i => fmtCm(i.mw / 10) + " × " + fmtCm(i.mh / 10) + " cm").join(", ")} passt nicht auf ${PS.paper}${PS.land ? "" : " hoch, Querformat probieren"}` : ""} · im Druckdialog „100 %“ wählen`;
+    $("#psGo").disabled = !n;
   };
-  render();
+  box.querySelectorAll("[data-close]").forEach(b => b.onclick = () => { box.innerHTML = ""; });
+  box.querySelectorAll("[data-paper]").forEach(b => b.onclick = () => { PS.paper = b.dataset.paper; update(); });
+  box.querySelectorAll("[data-land]").forEach(b => b.onclick = () => { PS.land = b.dataset.land === "1"; update(); });
+  box.querySelectorAll("[data-step]").forEach(b => b.onclick = () => { const d = +b.dataset.step; PS.steps.has(d) ? PS.steps.size > 1 && PS.steps.delete(d) : PS.steps.add(d); update(); });
+  $("#psTags").onclick = () => { PS.tags = !PS.tags; update(); };
+  $("#psMirror").onclick = () => { PS.mirror = !PS.mirror; update(); };
+  $("#psGo").onclick = () => {
+    $("#pageSize").textContent = `@page { size: ${L.W}mm ${L.H}mm; margin: 0; }`;
+    $("#printRoot").innerHTML = L.pages.map(pg => pageHTML(L, pg)).join("");
+    Promise.all([...$("#printRoot").querySelectorAll("img")].map(i => i.decode?.().catch(() => {}))).then(() => window.print());
+  };
+  update();
 }
 addEventListener("afterprint", () => { $("#printRoot").innerHTML = ""; });
 
