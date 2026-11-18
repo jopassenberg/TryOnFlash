@@ -28,6 +28,11 @@
     --frame: oklch(17% .003 75); --frame-w: 6px;
     /* konzentrisch: Karte außen 42 → innen 36 (Rahmen 6) → Leiste 28 bei 8 Abstand → Buttons 22 bei 6 Innenabstand */
     --r-outer: 42px; --r-inner-card: calc(var(--r-outer) - var(--frame-w)); --inset: 8px;
+    /* Glas-Knopf: fast durchsichtig, weißer Schein von innen (kein Rand, kein Schatten nach außen) */
+    --gb: oklch(19% .003 75 / .06); --gb-hover: oklch(19% .003 75 / .09);
+    --gb-glow: inset 0 1px 2px oklch(100% 0 0 / 1), inset 0 0 10px oklch(100% 0 0 / .9);
+    --gd: oklch(100% 0 0 / .09); --gd-hover: oklch(100% 0 0 / .14);
+    --gd-glow: inset 0 1px 1px oklch(100% 0 0 / .22), inset 0 0 12px oklch(100% 0 0 / .1);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
@@ -60,7 +65,7 @@
   }
   .brand { display: inline-flex; color: var(--ink); }
   .brand .logo { height: 18px; width: auto; display: block; }
-  .steps { height: var(--h-sm); padding: 0 var(--s4); display: inline-flex; align-items: center; border-radius: var(--r-full); font-size: 13px; background: var(--fill); }
+  .steps { height: 40px; padding: 0 var(--s4); display: inline-flex; align-items: center; border-radius: var(--r-full); font-size: 13px; background: var(--gb); box-shadow: var(--gb-glow); }
   .step { display: none; align-items: center; gap: var(--s2); }
   .step.on { display: inline-flex; }
   .step::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
@@ -86,36 +91,21 @@
   #camFlash[aria-pressed="true"] { background: oklch(84% .2 115); color: var(--ink); }
 
   /* ---------- Startseite (leere Karte) ---------- */
-  /* ---------- Startframe: oben ein Sucher (Eckwinkel + kleiner Tipp), unten eine Aktionskarte (Foto / Galerie) ---------- */
-  .drop { position: absolute; inset: 0; z-index: 1; display: grid; grid-template-rows: 1fr auto; gap: var(--s2); padding: var(--inset); color: #fff; }
-  .drop.over .brk i { border-color: #fff; } .drop.over .brk { scale: 1.03; }
-  .vf { position: relative; min-height: 0; display: grid; place-items: center; }
-  .vf-hint { position: absolute; left: 0; right: 0; top: 58px; margin: 0; text-align: center; font-size: 13px; color: oklch(100% 0 0 / .55); }
-  .brk { position: relative; width: min(62%, 290px); aspect-ratio: 3 / 4; max-height: calc(100% - 130px); display: grid; place-items: center; transition: scale .4s var(--spring); }
-  .brk i { position: absolute; width: 26px; height: 26px; border: 2px solid oklch(100% 0 0 / .6); transition: border-color .25s; }
-  .brk i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; border-radius: 12px 0 0 0; }
-  .brk i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; border-radius: 0 12px 0 0; }
-  .brk i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 12px; }
-  .brk i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; border-radius: 0 0 12px 0; }
-  .brk img { max-width: 74%; max-height: 64%; object-fit: contain; rotate: -5deg; animation: try-in .7s var(--spring) both; }
+  /* ---------- Startframe: die Kamera-Oberfläche steht schon (Auslöser, Blitz, Galerie, Wenden), dahinter ein
+     etwas helleres Schwarz als der Rahmen. Nach der ersten Freigabe startet die Kamera direkt. ---------- */
+  .drop { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; background: oklch(21% .003 75); color: #fff; transition: background-color .3s; }
+  .drop.over { background: oklch(25% .003 75); }
+  .drop img { max-width: 46%; max-height: 38%; margin-bottom: 48px; object-fit: contain; rotate: -5deg; animation: try-in .7s var(--spring) both; }
   @keyframes try-in { from { transform: translateY(14px) scale(.6) rotate(8deg); opacity: 0; } }
-  .acard { display: grid; gap: 2px; padding: 6px; border-radius: calc(var(--r-inner-card) - var(--inset)); background: oklch(100% 0 0 / .07);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); animation: dock-in .5s var(--spring) both; }
-  .acard .li { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px 0 10px; border-radius: calc(var(--r-inner-card) - var(--inset) - 6px); font-size: 15px; color: #fff; text-align: left;
-    transition: background-color .2s, transform .38s var(--spring); }
-  .acard .li:active { transform: scale(.98); transition-duration: 80ms; }
-  .acard .li .ico { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .12); }
-  .acard .li .ico .ic { width: 18px; height: 18px; }
-  .acard .li .tt { flex: 1; min-width: 0; display: grid; line-height: 1.25; }
-  .acard .li small, .ahead small { font-size: 13px; color: oklch(100% 0 0 / .5); }
-  .acard .li .chev { width: 16px; height: 16px; opacity: .4; }
-  .acard .li.main { background: #fff; color: var(--ink); } .acard .li.main .ico { background: oklch(19% .003 75 / .07); } .acard .li.main small { color: var(--text-3); }
-  @media (hover: hover) { .acard .li:not(.main):hover { background: oklch(100% 0 0 / .06); } }
-  .ahead { display: flex; align-items: center; gap: 12px; padding: 10px 6px 10px 12px; animation: sum-item .45s var(--ease-out) both; }
-  .ahead .tt { flex: 1; min-width: 0; display: grid; line-height: 1.3; font-size: 15px; }
-  .try-x { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .12); color: #fff; }
-  .try-x .ic { width: 14px; height: 14px; }
-  .pick-desk { display: none; } @media (pointer: fine) { .pick-desk { display: inline; } .pick-touch { display: none; } }
+  /* Stencil-Chip: schwarz wie die Insel, ploppt darunter heraus */
+  .trychip { position: absolute; z-index: 4; top: calc(48px + 6px); left: 50%; transform: translateX(-50%); height: 40px; padding: 0 4px 0 5px; border-radius: var(--r-full);
+    display: inline-flex; align-items: center; gap: 8px; background: var(--frame); color: #fff; font-size: 13px; white-space: nowrap; transform-origin: 50% -28px; animation: toast-plop .55s var(--spring) both; }
+  .trychip img { width: 30px; height: 30px; object-fit: contain; }
+  .stage:has(.island[data-mode="hidden"]) .trychip { top: 12px; } /* Insel eingefahren: der Chip steht an ihrer Stelle */
+  .stage:has(.island[data-mode="hidden"]) > .status { top: 12px; }
+  .stage:has(.island[data-mode="hidden"]):has(#tryHead:not([hidden])) > .status { top: calc(12px + 40px + 6px); }
+  .try-x { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .1); color: #fff; }
+  .try-x .ic { width: 13px; height: 13px; }
   /* Kamera: das Motiv halbtransparent in der Mitte, damit man die Stelle anpeilen kann */
   .cam-ghost { position: absolute; left: 50%; top: 46%; width: 44%; max-height: 44%; object-fit: contain; translate: -50% -50%; opacity: .5; pointer-events: none; z-index: 2;
     animation: fade .4s var(--ease-out); }
@@ -182,6 +172,12 @@
   /* ---------- Overlays auf dem Foto: weißes Glas ---------- */
   .status, .info { position: absolute; z-index: 4; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); color: var(--ink); }
   .status { top: calc(48px + var(--s2)); left: 50%; transform: translateX(-50%); height: var(--h-sm); padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; white-space: nowrap; text-box: trim-both cap alphabetic; }
+  /* Hinweise kommen aus der Insel: schwarz, weiße Schrift, ploppen bei jedem neuen Text heraus */
+  .stage > .status { top: calc(48px + 6px); height: 36px; padding: 0 16px 0 14px; background: var(--frame); color: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; transform-origin: 50% -26px; }
+  .stage > .status.pop { animation: toast-plop .55s var(--spring) both; }
+  .stage:has(#tryHead:not([hidden])) > .status { top: calc(48px + 6px + 40px + 6px); }
+  @keyframes toast-plop { 0% { opacity: 0; transform: translate(-50%, -24px) scale(.36, .18); } 40% { opacity: 1; } 100% { opacity: 1; transform: translate(-50%, 0); } }
+  @media (prefers-reduced-motion: reduce) { .stage > .status.pop, .trychip { animation: none; } }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
   .status[data-s="busy"] .dot { background: var(--accent); animation: blink .9s infinite; }
   .status[data-s="err"] .dot { background: oklch(75% .16 70); }
@@ -246,7 +242,7 @@
   .isl-status:not([data-s="busy"]) .loader { display: none; }
   .isl-status:not([data-s="busy"]) { padding-left: 22px; }
   .views { display: flex; gap: 2px; }
-  .views button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: oklch(100% 0 0 / .8); background: var(--on-glass-fill, oklch(100% 0 0 / .12)); }
+  .views button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: oklch(100% 0 0 / .8); background: var(--gd); box-shadow: var(--gd-glow); }
   .views button .ic { width: 18px; height: 18px; }
   .views button:hover { color: #fff; background: oklch(100% 0 0 / .2); }
   .views button[aria-pressed="true"] { background: #fff; color: var(--ink); }
@@ -270,8 +266,9 @@
 
   /* auf dem Foto: rauchiges Glas, Inhalt weiß; Hauptaktion = weiße Pille */
   .card > .panel, .stage > .status, .info { color: var(--on-glass); }
-  .card > .panel .btn.ghost { color: var(--on-glass); background: var(--on-glass-fill); }
-  .card > .panel .btn.ghost:hover { background: var(--on-glass-fill); }
+  .card > .panel .btn.ghost { color: var(--on-glass); background: var(--gd); box-shadow: var(--gd-glow); }
+  .card > .panel .btn.ghost:hover { background: var(--gd-hover); }
+  .card > .panel .btn.icon .ic { width: 18px; height: 18px; }
   .card > .panel .btn.ghost[aria-pressed="true"] { background: var(--on-glass); color: var(--ink); }
   .card > .panel .btn.primary { background: var(--on-glass); color: var(--ink); }
   .card > .panel .btn.primary:hover { background: var(--n-200); }
@@ -279,7 +276,7 @@
   .card > .panel .thumb[aria-pressed="true"] { background: var(--on-glass); }
   .card > .panel .thumb.add { background: var(--on-glass-fill); color: var(--on-glass); }
   .card > .panel .thumb.add:hover { background: var(--on-glass-fill); }
-  #panelCam .shutter { background: var(--on-glass-fill); }
+  #panelCam .shutter { background: var(--gd); box-shadow: var(--gd-glow); }
   #panelCam .shutter::after { background: var(--on-glass); }
   .stage > .status .dot { background: var(--on-glass); }
   .stage > .status[data-s="busy"] .dot { background: var(--accent); }
@@ -317,14 +314,13 @@
   /* ---------- Menü unten: Studio | Flashes (Desktop rechts, Handy mittig wie eine App-Leiste) ---------- */
   /* Menü: kleine helle Kapsel oben rechts, nur Icons; das aktive weiß mit Punkt darunter */
   .top-r { display: flex; align-items: center; gap: var(--s2); }
-  .tabbar { display: flex; gap: 2px; padding: 3px; border-radius: 22px; background: var(--fill); }
-  .tabbar button { position: relative; width: 44px; height: 36px; border-radius: 18px; display: grid; place-items: center; color: var(--text-3); transition: color .2s, background-color .2s; }
-  .tabbar button .ic { width: 18px; height: 18px; }
+  .tabbar { display: flex; gap: 2px; padding: 4px; border-radius: var(--r-full); background: var(--gb); box-shadow: var(--gb-glow); }
+  .tabbar button { position: relative; width: 52px; height: 40px; border-radius: 20px; display: grid; place-items: center; color: var(--text-3); transition: color .2s, background-color .2s; }
+  .tabbar button .ic { width: 17px; height: 17px; }
   .tabbar button:hover { color: var(--ink); }
-  .tabbar button[aria-pressed="true"] { background: var(--n-0); color: var(--ink); }
+  .tabbar button[aria-pressed="true"] { background: oklch(100% 0 0 / .85); color: var(--ink); box-shadow: inset 0 0 8px oklch(100% 0 0 / .9); }
   .tabbar button[aria-pressed="true"]::after { content: ""; position: absolute; bottom: 3px; width: 3px; height: 3px; border-radius: 50%; background: var(--ink); }
-  body:has(.shell[data-tab="flashes"]) .tabbar { background: oklch(19% .003 75 / .05); }
-  body:has(.shell[data-tab="flashes"]) .tabbar button[aria-pressed="true"] { background: oklch(19% .003 75 / .1); }
+  body:has(.shell[data-tab="flashes"]) .tabbar button[aria-pressed="true"] { background: oklch(19% .003 75 / .07); box-shadow: none; }
   .shell[data-tab="flashes"] .steps { visibility: hidden; }
 
   /* ---------- Flashes: eigene Seite, eine helle Galerie. Nur die ausgeschnittenen Motive, groß, auf Weiß ---------- */
@@ -333,12 +329,12 @@
   .fl-tools { display: none; gap: 6px; }
   .shell[data-tab="flashes"] .fl-tools { display: flex; }
   .shell[data-tab="flashes"] .steps { display: none; }
-  .rb { position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--fill); color: var(--ink); transition: transform .3s var(--spring), background-color .2s; }
-  .rb:hover { background: var(--fill-2); }
+  .rb { position: relative; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--gb); box-shadow: var(--gb-glow); color: var(--ink); transition: transform .3s var(--spring), background-color .2s; }
+  .rb:hover { background: var(--gb-hover); }
   .rb:active { transform: scale(.92); }
-  .rb.main { background: var(--n-900); color: #fff; }
+  .rb.main { background: var(--n-900); color: #fff; box-shadow: inset 0 1px 1px oklch(100% 0 0 / .18); }
   .rb[aria-pressed="true"] { background: oklch(19% .003 75 / .16); color: var(--ink); } /* aktiv, aber ruhiger als der schwarze Haupt-Knopf */
-  .rb .ic { width: 18px; height: 18px; }
+  .rb .ic { width: 17px; height: 17px; }
   .rb .badge { position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; line-height: 18px; text-align: center; background: var(--n-900); color: #fff; }
   /* Flashes sind ein Canvas: ziehen zum Verschieben, zwei Finger oder Strg+Scrollen zum Zoomen, Motive mit der Maus/dem Finger verschieben */
   .flashes { position: relative; min-height: 0; overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
@@ -553,9 +549,10 @@
     .brand .logo { height: 17px; }
     .card { --frame-w: 5px; --r-outer: 40px; }
     .top-r, .fl-tools { gap: 4px; }
-    .fl-tools .rb { width: 36px; height: 36px; }
-    .fl-tools .rb .ic { width: 16px; height: 16px; }
-    .tabbar button { width: 40px; }
+    .fl-tools .rb { width: 42px; height: 42px; }
+    .fl-tools .rb .ic { width: 15px; height: 15px; }
+    .tabbar button { width: 44px; height: 36px; border-radius: 18px; }
+    .steps { height: 36px; }
     /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
     .card:has(#info:not([hidden])) .stage > .status { top: calc(56px + 44px + var(--s2)); }
     #panelPlace { flex-direction: column; align-items: stretch; }
@@ -645,16 +642,9 @@
     <div class="scan-dim" id="scanDim"></div>
     <div class="siri" id="siri" hidden><i class="haze"></i><i class="wide"></i><i class="band"></i><i class="ring"></i></div>
     <div class="stage" id="stage">
-      <div class="drop" id="drop">
-        <div class="vf"><p class="vf-hint" id="vfHint">Haut ins Bild · gutes Licht</p>
-          <div class="brk"><i></i><i></i><i></i><i></i><img alt="" id="tryImg" hidden></div></div>
-        <div class="acard">
-          <div class="ahead" id="tryHead" hidden><span class="tt"><span id="tryName">Flash anprobieren</span><small>Foto der Stelle, wo es hin soll</small></span>
-            <button class="try-x" id="tryX" aria-label="Flash entfernen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
-          <button class="li main" id="camBtn"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span><span class="tt">Foto aufnehmen</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron--right"/></svg></button>
-          <button class="li" id="pick"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></span><span class="tt"><span class="pick-touch">Aus Fotos wählen</span><span class="pick-desk">Bild auswählen<small> · oder hineinziehen</small></span></span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron--right"/></svg></button>
-        </div>
-      </div>
+      <div class="drop" id="drop"><img alt="" id="tryImg" hidden></div>
+      <div class="trychip" id="tryHead" hidden><img alt="" id="tryThumb"><span id="tryName">Flash anprobieren</span>
+        <button class="try-x" id="tryX" aria-label="Flash entfernen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
       <video id="cam" playsinline muted autoplay hidden></video>
       <img class="cam-ghost" id="camGhost" alt="" hidden>
       <div class="shot" id="shot"></div>
@@ -836,7 +826,7 @@ function status(text, s = "busy") {
   const same = (a, b) => (a || "").replace(/[\d\s%]/g, "") === (b || "").replace(/[\d\s%]/g, ""); // nur Zahlen anders = Fortschritt
   const changed = text && !same(text, $("#statusText").textContent);
   el.hidden = !text || inIsland; $("#statusText").textContent = inIsland ? "" : text || ""; el.dataset.s = s;
-  if (changed && !inIsland) swapAnim(el);
+  if (changed && !inIsland) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
   if (inIsland) { const t = $("#islText"); if (text && t.textContent !== text) { const anim = !same(text, t.textContent); t.textContent = text; if (anim) swapAnim(t); } $("#islStatus").dataset.s = s; }
   islandText = inIsland ? text || "" : "";
   syncIsland();
@@ -870,10 +860,8 @@ document.addEventListener("touchmove", e => { if (e.scale !== undefined && e.sca
 setStep(1);
 
 /* ---------- 1 · Photo ---------- */
-$("#pick").onclick = () => $("#photoInput").click();
 $("#camGallery").onclick = () => $("#photoInput").click();
-$("#camBtn").onclick = () => openCam();
-$("#newPhoto").onclick = () => backToStart(true);
+$("#newPhoto").onclick = () => backToStart();
 $("#photoInput").onchange = e => { e.target.files[0] && loadPhoto(e.target.files[0]); e.target.value = ""; };
 const stage = $("#stage");
 ["dragenter", "dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); $("#drop").classList.add("over"); }));
@@ -898,28 +886,47 @@ function usePhoto(img) {
   S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
   S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
   view.width = S.photo.width; view.height = S.photo.height;
-  $("#drop").hidden = true; $("#viewWrap").hidden = false;
+  $("#drop").hidden = true; $("#tryHead").hidden = true; $("#viewWrap").hidden = false;
   fitView(); S.view = "photo"; syncViews(); redraw();
   analyse();
 }
-function backToStart(cam) {
+function backToStart() {
   scanStop(); setStep(1); status("");
   $("#viewWrap").hidden = true; $("#views").hidden = true; $("#info").hidden = true;
-  if (cam) openCam(); else $("#drop").hidden = false;
+  showStart();
+}
+// Start: Kamera-Oberfläche sofort sichtbar. Wurde die Kamera schon einmal freigegeben, läuft sie gleich los;
+// sonst startet sie mit dem ersten Tipp auf den Auslöser.
+const CAM_OK = "stencit-cam";
+async function camAllowed() {
+  let ok = false; try { ok = localStorage.getItem(CAM_OK) === "1"; } catch {}
+  try { const p = await navigator.permissions?.query({ name: "camera" }); if (p?.state === "granted") ok = true; if (p?.state === "denied") ok = false; } catch {}
+  return ok;
+}
+function startUI() {
+  $("#drop").hidden = false; $("#panelCam").hidden = false; $("#tryImg").hidden = $("#tryHead").hidden = !pendingFlash;
+}
+async function showStart(hint = true) {
+  startUI();
+  if (await camAllowed()) return openCam();
+  if (hint && !pendingFlash) status("Auslöser tippen · Kamera startet", "ok");
 }
 
 /* ---------- camera: live picture right in the card, cropped to the card when taken ---------- */
 let camStream = null, camFacing = "environment";
 async function openCam() {
-  $("#drop").hidden = true; $("#panelCam").hidden = false;
+  $("#panelCam").hidden = false;
   try {
     camStream?.getTracks().forEach(t => t.stop());
     camStream = await navigator.mediaDevices.getUserMedia({ audio: false,
       video: { facingMode: camFacing, width: { ideal: 1920 }, height: { ideal: 1440 } } });
   } catch (e) {
-    closeCam(); $("#drop").hidden = false;
-    status(e?.name === "NotAllowedError" ? "Kein Kamerazugriff – im Browser erlauben" : "Kamera nicht verfügbar", "err"); return;
+    camStream = null; $("#cam").hidden = true; startUI();
+    if (e?.name === "NotAllowedError") { try { localStorage.removeItem(CAM_OK); } catch {} }
+    status(e?.name === "NotAllowedError" ? "Kein Kamerazugriff · im Browser erlauben" : "Kamera nicht verfügbar · Galerie nutzen", "err"); return;
   }
+  try { localStorage.setItem(CAM_OK, "1"); } catch {}
+  $("#drop").hidden = true;
   const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false;
   v.play().catch(() => {}); status(""); applyFlash(); $("#camGhost").hidden = !pendingFlash;
 }
@@ -934,6 +941,7 @@ async function applyFlash() {
   if (canTorch()) { try { await torchTrack().applyConstraints({ advanced: [{ torch: flashOn && camFacing !== "user" }] }); } catch {} }
 }
 $("#camFlash").onclick = () => {
+  if (!camStream) { flashOn = !flashOn; applyFlash(); return; } // vor dem Start nur merken
   if (!flashOn && camFacing !== "user" && !canTorch()) { status("Blitz geht hier nicht: Safari gibt die Lampe nicht frei. Mehr Licht oder Frontkamera nutzen.", "err"); return; }
   flashOn = !flashOn; applyFlash(); status(flashOn ? (camFacing === "user" ? "Bildschirm-Blitz an" : "Blitz an") : "", "ok");
 };
@@ -942,8 +950,9 @@ function closeCam() {
   camStream?.getTracks().forEach(t => t.stop()); camStream = null;
   const v = $("#cam"); v.srcObject = null; v.hidden = true; $("#panelCam").hidden = true; $("#camGhost").hidden = true;
 }
-$("#camFlip").onclick = () => { camFacing = camFacing === "user" ? "environment" : "user"; openCam(); };
+$("#camFlip").onclick = () => { camFacing = camFacing === "user" ? "environment" : "user"; if (camStream) openCam(); };
 $("#shoot").onclick = async () => {
+  if (!camStream) return openCam(); // erster Tipp: Kamera starten
   const v = $("#cam"), vw = v.videoWidth, vh = v.videoHeight; if (!vw) return;
   if (flashOn && camFacing === "user") { // Bildschirm hell aufleuchten lassen, kurz warten, dann auslösen
     const fl = Object.assign(document.createElement("div"), { className: "screen-flash" }); document.body.append(fl);
@@ -2632,7 +2641,7 @@ document.addEventListener("keydown", e => {
     else if (e.key === "0") fitCut();
     return;
   }
-  if (e.key === "Escape" && !$("#panelCam").hidden) { closeCam(); if (!S.photo || $("#viewWrap").hidden) $("#drop").hidden = false; return; }
+  if (e.key === "Escape" && camStream) { closeCam(); if (!S.photo || $("#viewWrap").hidden) startUI(); return; }
   if (S.step === 3 && S.motif && S.anchor) {
     const step = e.shiftKey ? 20 : 4, mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (mv) { e.preventDefault(); S.anchor = { x: clamp(S.anchor.x + mv[0] * step, 0, view.width), y: clamp(S.anchor.y + mv[1] * step, 0, view.height) }; schedule(); }
@@ -3002,12 +3011,12 @@ async function tryFresh(blob, name) {
 function showTry(c, name) {
   const t = trim(c) || c, small = scaled(t, 480);
   $("#tryImg").src = dieCut(small).toDataURL("image/png"); $("#camGhost").src = small.toDataURL("image/png");
-  $("#tryImg").hidden = false; $("#tryHead").hidden = false; $("#vfHint").hidden = true;
-  $("#tryName").textContent = name ? `${name} anprobieren` : "Flash anprobieren";
+  $("#tryThumb").src = $("#tryImg").src; $("#tryImg").hidden = false; $("#tryHead").hidden = false;
+  $("#tryName").textContent = name ? `${name} anprobieren` : "Flash anprobieren"; if (camStream) $("#camGhost").hidden = false;
 }
 function clearTry() {
   pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
-  $("#tryImg").hidden = true; $("#tryHead").hidden = true; $("#vfHint").hidden = false; $("#camGhost").hidden = true;
+  $("#tryImg").hidden = true; $("#tryHead").hidden = true; $("#camGhost").hidden = true;
 }
 $("#tryX").onclick = clearTry;
 function usePending() { // nach der Analyse aufgerufen
@@ -3021,6 +3030,7 @@ function usePending() { // nach der Analyse aufgerufen
     const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
     if (blob) await tryFlash(blob, h.name);
   } catch (e) { console.warn("handoff", e); }
+  if (S.step === 1 && !S.photo) await showStart(!CRASHED); // Start: Kamera-Oberfläche, ggf. Kamera direkt
   if (CRASHED) status(`Absturz bei: ${CRASHED}`, "err");
 })();
 
