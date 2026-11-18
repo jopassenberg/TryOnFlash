@@ -53,11 +53,11 @@
   /* ---------- Layout: Kopfzeile, darunter eine große Karte ---------- */
   .shell { height: 100vh; height: 100dvh; padding: 0 var(--s5) var(--s4); display: grid; grid-template-rows: 72px 1fr; }
   .top { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); }
-  /* Laptop/Tablet quer: der Rahmen steht mittig im Hochformat 3 : 4 (wie ein Handyfoto), viel Weiß drumherum */
+  /* Laptop/Tablet: der Rahmen steht mittig im Querformat 4 : 3 (wie eine Webcam), mit Weiß drumherum */
   @media (min-width: 681px) {
     .shell { padding-bottom: var(--s6); }
     .shell { grid-template-rows: 72px minmax(0, 1fr); }
-    main.card { justify-self: center; align-self: center; height: min(calc(100dvh - 72px - var(--s6) - var(--s4)), 860px); width: auto; aspect-ratio: 3 / 4; max-width: 100%; }
+    main.card { justify-self: center; align-self: center; width: min(calc((100dvh - 72px - var(--s6) - var(--s4)) * 4 / 3), 100%, 1120px); height: auto; aspect-ratio: 4 / 3; }
   }
   .brand { display: inline-flex; color: var(--ink); }
   .brand .logo { height: 18px; width: auto; display: block; }
@@ -721,7 +721,7 @@
 
   <!-- Flashes: eigene Seite, Galerie der ausgeschnittenen Motive. Teilen erzeugt einen verschlüsselten Link mit Ablauf -->
   <section class="flashes" id="flashesView" hidden aria-label="Flashes">
-    <div class="fl-empty" id="flEmpty" hidden><button class="rb main" id="flUpload2" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button><span>Flash-Bögen hochladen</span></div>
+    <div class="fl-empty" id="flEmpty" hidden><button class="rb main" id="flUpload2" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button><span>Flashes hochladen</span></div>
     <div class="fl-board" id="flBoard"><div class="fl-grid" id="flGrid"></div></div>
     <div class="fl-dock" id="flDock" hidden>
       <button class="rb" id="flSelCancel" aria-label="Auswahl beenden"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
@@ -915,7 +915,7 @@ async function camAllowed() {
   return ok;
 }
 function startUI() {
-  $("#drop").hidden = false; $("#panelCam").hidden = false; $("#tryImg").hidden = !pendingFlash; setCard();
+  $("#drop").hidden = false; $("#panelCam").hidden = false; setCard(); // Stencil nur in der Karte unten links
 }
 async function showStart(hint = true) {
   startUI();
@@ -939,7 +939,7 @@ async function openCam() {
   try { localStorage.setItem(CAM_OK, "1"); } catch {}
   $("#drop").hidden = true;
   const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false;
-  v.play().catch(() => {}); status(""); applyFlash(); $("#camGhost").hidden = !pendingFlash;
+  v.play().catch(() => {}); status(""); applyFlash();
 }
 // Blitz: hinten als Dauerlicht (Taschenlampe), wenn der Browser es kann (Android/Chrome);
 // vorne als Bildschirm-Blitz (weißer Bildschirm im Moment der Aufnahme). Safari auf dem iPhone erlaubt
@@ -2723,7 +2723,13 @@ function setTab(tab) {
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
 
 async function loadFlashes() {
-  const raw = await idb("flashes", "readonly", s => s.getAll());
+  let raw = await idb("flashes", "readonly", s => s.getAll());
+  let seeded = true; try { seeded = localStorage.getItem("stencit-seeded") === "1"; } catch {}
+  if (!seeded) { // Start-Stencil (Stencit-Zeichen im Linoldruck) liegt von Anfang an in den Flashes
+    try { localStorage.setItem("stencit-seeded", "1"); } catch {}
+    if (!raw.some(f => f.id === "stencit-logo")) { const c = logoStencil(), t = trim(c) || c; await putFlash(await flashRecord(t, null, { id: "stencit-logo", name: "Stencit", created: 0 }));
+      raw = await idb("flashes", "readonly", s => s.getAll()); }
+  }
   FL.items = raw.map(unpackFlash).sort((a, b) => b.created - a.created);
   const legacy = FL.items.filter((f, i) => BLOB_KEYS.some(k => raw[i][k] instanceof Blob)); // alte Einträge einmal umspeichern
   for (const f of legacy) putFlash(f).catch(() => {});
@@ -3023,8 +3029,8 @@ async function tryFresh(blob, name) {
 function showTry(c, name) {
   const t = trim(c) || c, small = scaled(t, 480);
   $("#tryImg").src = dieCut(small).toDataURL("image/png"); $("#camGhost").src = small.toDataURL("image/png");
-  $("#tryThumb").src = $("#tryImg").src; $("#tryImg").hidden = false; setCard();
-  $("#tryName").textContent = name ? `${name} anprobieren` : "Flash anprobieren"; if (camStream) $("#camGhost").hidden = false;
+  $("#tryThumb").src = $("#tryImg").src; setCard();
+  $("#tryName").textContent = name ? `${name} anprobieren` : "Flash anprobieren"; 
 }
 function clearTry() {
   pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
