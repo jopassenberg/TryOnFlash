@@ -2724,11 +2724,15 @@ document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTa
 
 async function loadFlashes() {
   let raw = await idb("flashes", "readonly", s => s.getAll());
-  let seeded = true; try { seeded = localStorage.getItem("stencit-seeded") === "1"; } catch {}
-  if (!seeded) { // Start-Stencil (Stencit-Zeichen im Linoldruck) liegt von Anfang an in den Flashes
-    try { localStorage.setItem("stencit-seeded", "1"); } catch {}
-    if (!raw.some(f => f.id === "stencit-logo")) { const c = logoStencil(), t = trim(c) || c; await putFlash(await flashRecord(t, null, { id: "stencit-logo", name: "Stencit", created: 0 }));
-      raw = await idb("flashes", "readonly", s => s.getAll()); }
+  let seedV = "2"; try { seedV = localStorage.getItem("stencit-seeded") || ""; } catch {}
+  if (seedV !== "2") { // Start-Stencil (Stencit-Zeichen im Linoldruck) liegt von Anfang an in den Flashes, mit Stencit-Tag
+    try { localStorage.setItem("stencit-seeded", "2"); } catch {}
+    const has = raw.find(f => f.id === "stencit-logo");
+    if (has || !seedV) { // neu anlegen, oder ein schon angelegtes (v1, ohne Tag) auffrischen; gelöscht bleibt gelöscht
+      const c = logoStencil(), t = trim(c) || c, rec = await flashRecord(t, null, { id: "stencit-logo", name: "Stencit", created: 0, pos: null }); // neue Form (mit Tag): neu legen
+      rec.sticker = await stencitSticker(t).catch(() => rec.sticker);
+      await putFlash(rec); raw = await idb("flashes", "readonly", s => s.getAll());
+    }
   }
   FL.items = raw.map(unpackFlash).sort((a, b) => b.created - a.created);
   const legacy = FL.items.filter((f, i) => BLOB_KEYS.some(k => raw[i][k] instanceof Blob)); // alte Einträge einmal umspeichern
@@ -3075,6 +3079,75 @@ function logoStencil() {
   }
   g.putImageData(img, 0, 0);
   return c;
+}
+// Artist-Tag: eine kleine weiße Pille mit Profilbild und Name, unten rechts am Stencil. Stencil und Pille werden zu
+// EINER Form verschmolzen (Vereinigung + Abrundung per Distanzfeld), darum eine gemeinsame Schnittkante, die fließend
+// in den Tag übergeht – kein Steg, kein Strich dazwischen.
+async function withTag(src, artist, avatar) {
+  const img = new Image(); img.src = src; await img.decode();
+  const W = img.width, H = img.height, M = Math.max(W, H), sw = Math.max(1.5, M * .006);
+  const cv = (w, h) => Object.assign(document.createElement("canvas"), { width: w, height: h });
+  const probe = cv(W, H), pg = probe.getContext("2d", { willReadFrequently: true }); pg.drawImage(img, 0, 0);
+  const a0 = pg.getImageData(0, 0, W, H).data, step = Math.max(1, Math.round(M / 300));
+  let ax = W * .7, ay = H * .7, best = -1;
+  for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) if (a0[(y * W + x) * 4 + 3] > 200) { const v = x * .6 + y; if (v > best) { best = v; ax = x; ay = y; } }
+  // Pille: Höhe T, Profilbild links, Name rechts; Ränder links/rechts optisch gleich
+  const T = Math.max(28, M * .08), av = T * .66, fs = T * .34, font = `400 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
+  await document.fonts?.load(font).catch(() => {});
+  pg.font = font; const name = artist.name.length > 22 ? artist.name.slice(0, 21) + "…" : artist.name, tw = pg.measureText(name).width;
+  const inset = (T - av) / 2, gap = T * .2, pw = inset + av + gap + tw + inset * 1.9, ph = T;
+  const cx = ax + T * .3, cy = ay + T * .12, px = cx - inset - av / 2, py = cy - ph / 2; // Profilbild sitzt fast auf der Kante
+  const pad = sw + T * .4 + 2, R = Math.ceil(Math.max(W, px + pw + pad)), B = Math.ceil(Math.max(H, py + ph + pad));
+  // Masken in kleiner Auflösung rechnen
+  const k = Math.min(1, 700 / Math.max(R, B)), mw = Math.max(4, Math.round(R * k)), mh = Math.max(4, Math.round(B * k)), n = mw * mh;
+  const mc = cv(mw, mh), mg = mc.getContext("2d", { willReadFrequently: true });
+  mg.drawImage(img, 0, 0, W * k, H * k); const sa = mg.getImageData(0, 0, mw, mh).data;
+  mg.beginPath(); mg.roundRect(px * k, py * k, pw * k, ph * k, ph * k / 2); mg.fill(); const ua = mg.getImageData(0, 0, mw, mh).data;
+  const U = new Uint8Array(n), A = new Uint8Array(n), notA = new Uint8Array(n);
+  for (let i = 0; i < n; i++) { U[i] = ua[i * 4 + 3] > 100; A[i] = sa[i * 4 + 3] > 128; notA[i] = !A[i]; }
+  const rc = T * .45 * k, dIn = distanceField(U, mw, mh), notDil = new Uint8Array(n); // Schließen: erst wachsen, dann schrumpfen → weiche Kehle
+  for (let i = 0; i < n; i++) notDil[i] = dIn[i] > rc;
+  const dBack = distanceField(notDil, mw, mh), closed = new Float32Array(n), C = new Uint8Array(n);
+  // Abrunden nur rund um den Tag; der Rest des Stencils behält seine Form
+  const sx0 = (px + ph / 2) * k, sx1 = (px + pw - ph / 2) * k, sy = (py + ph / 2) * k, near = T * 1.3 * k, far = T * 2 * k;
+  for (let i = 0; i < n; i++) {
+    const x = i % mw, y = (i / mw) | 0, qx = clamp(x, sx0, sx1), d = Math.hypot(x - qx, y - sy), wgt = clamp((far - d) / (far - near), 0, 1);
+    closed[i] = Math.max(U[i] ? 1 : 0, clamp(dBack[i] - rc + .5, 0, 1) * wgt); C[i] = closed[i] > .5;
+  }
+  const dC = distanceField(C, mw, mh), SW = sw * k, shape = mg.createImageData(mw, mh), px4 = shape.data;
+  for (let i = 0; i < n; i++) {
+    const f = closed[i], ring = Math.max(0, clamp(SW - dC[i] + .5, 0, 1) - f), a = Math.min(1, f + ring);
+    const v = a > 0 ? (f * 255 + ring * 196) / (f + ring) : 255; px4[i * 4] = px4[i * 4 + 1] = v; px4[i * 4 + 2] = v - 2; px4[i * 4 + 3] = a * 255;
+  }
+  const dA = distanceField(notA, mw, mh), inner = mg.createImageData(mw, mh), ip = inner.data; // Stencil ohne seine alte Kante
+  for (let i = 0; i < n; i++) ip[i * 4 + 3] = clamp(dA[i] - (SW + 1.5) + .5, 0, 1) * 255;
+  const out = cv(R, B), g = out.getContext("2d"); g.imageSmoothingQuality = "high";
+  mg.clearRect(0, 0, mw, mh); mg.putImageData(shape, 0, 0); g.drawImage(mc, 0, 0, R, B);
+  const st = cv(R, B), sg = st.getContext("2d"); sg.drawImage(img, 0, 0);
+  mg.clearRect(0, 0, mw, mh); mg.putImageData(inner, 0, 0); sg.globalCompositeOperation = "destination-in"; sg.imageSmoothingQuality = "high"; sg.drawImage(mc, 0, 0, R, B);
+  g.drawImage(st, 0, 0);
+  // Profilbild + Name
+  const ax2 = px + inset + av / 2, ay2 = py + ph / 2;
+  g.save(); g.beginPath(); g.arc(ax2, ay2, av / 2, 0, 7); g.clip();
+  if (avatar) { const s = Math.min(avatar.width, avatar.height); g.drawImage(avatar, (avatar.width - s) / 2, (avatar.height - s) / 2, s, s, ax2 - av / 2, ay2 - av / 2, av, av); }
+  else { g.fillStyle = "#ececea"; g.fill(); g.fillStyle = "#555"; g.font = font; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(name.charAt(0).toUpperCase(), ax2, ay2 + fs * .04); }
+  g.restore();
+  g.fillStyle = "#1c1c1b"; g.font = font; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(name, ax2 + av / 2 + gap, ay2 + fs * .04);
+  return out.toDataURL("image/png");
+}
+// Profilbild für Stencit selbst: Marken-Verlauf (Bordeaux → Rot, senkrecht) mit dem weißen 9-Punkte-Zeichen
+function stencitAvatar() {
+  const S0 = 128, c = Object.assign(document.createElement("canvas"), { width: S0, height: S0 }), g = c.getContext("2d");
+  const gr = g.createLinearGradient(0, 0, 0, S0); gr.addColorStop(0, "#730F26"); gr.addColorStop(1, "#DB1A1D"); g.fillStyle = gr; g.fillRect(0, 0, S0, S0);
+  const k = S0 / 240 * .5, o = S0 * .25; g.fillStyle = "#fff";
+  [[120, 26.48], [186.13, 53.87], [213.52, 120], [186.13, 186.13], [120, 213.52], [53.87, 186.13], [26.48, 120], [53.87, 53.87], [120, 120]]
+    .forEach(([x, y]) => { g.beginPath(); g.arc(o + x * k, o + y * k, 26.48 * k, 0, 7); g.fill(); });
+  return c;
+}
+// Sticker des Start-Stencils: Die-Cut + Tag „Stencit“ mit Marken-Profilbild
+async function stencitSticker(t) {
+  const url = await withTag(dieCut(t).toDataURL("image/png"), { name: "Stencit" }, stencitAvatar());
+  return (await fetch(url)).blob();
 }
 let noDefault = false; // × am Start-Stencil: in dieser Sitzung nicht wiederbringen
 function usePending() { // nach der Analyse aufgerufen
