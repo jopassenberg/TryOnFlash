@@ -3034,29 +3034,34 @@ function clearTry() {
   $("#tryImg").hidden = true; $("#tryHead").hidden = true; $("#camGhost").hidden = true;
 }
 $("#tryX").onclick = () => { noDefault = true; clearTry(); };
-// Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel), aber von Hand gestochen statt clean:
-// jeder Punkt eine leicht unrunde, wackelige Form, körnige Tinte mit kleinen Fehlstellen, ausgefranster Rand.
-// Fester Zufall: sieht jedes Mal gleich aus.
+// Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel) im Linoldruck-Look: saubere runde
+// Punkte mit klarer Kante, die Fläche aber gedruckt statt digital – feines Korn, kleine helle Fehlstellen, wo die
+// Farbe nicht ganz angenommen hat, leicht ungleich deckend. Fester Zufall: sieht jedes Mal gleich aus.
 function logoStencil() {
   const N = 600, c = Object.assign(document.createElement("canvas"), { width: N, height: N }), g = c.getContext("2d");
   let seed = 917; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const k = N / 240 * .86, o = N * .07, R = 26.48 * k;
   const C = [[120, 26.48], [186.13, 53.87], [213.52, 120], [186.13, 186.13], [120, 213.52], [53.87, 186.13], [26.48, 120], [53.87, 53.87], [120, 120]];
-  g.fillStyle = "#161616";
-  const blobs = C.map(([x, y]) => ({ x: o + x * k + (rnd() - .5) * R * .12, y: o + y * k + (rnd() - .5) * R * .12, r: R * (.93 + rnd() * .1), p: [rnd() * 7, rnd() * 7, rnd() * 7] }));
-  for (const b of blobs) { // unrunde Form: drei überlagerte Wellen auf dem Radius
-    g.beginPath();
-    for (let i = 0; i <= 72; i++) { const t = i / 72 * Math.PI * 2, rr = b.r * (1 + .05 * Math.sin(2 * t + b.p[0]) + .035 * Math.sin(3 * t + b.p[1]) + .02 * Math.sin(7 * t + b.p[2]));
-      i ? g.lineTo(b.x + Math.cos(t) * rr, b.y + Math.sin(t) * rr) : g.moveTo(b.x + Math.cos(t) * rr, b.y + Math.sin(t) * rr); }
+  g.fillStyle = "#121212";
+  for (const [x, y] of C) { // fast perfekt rund, nur ein Hauch Unruhe in der Kante
+    const cx = o + x * k, cy = o + y * k, p = rnd() * 7; g.beginPath();
+    for (let i = 0; i <= 96; i++) { const t = i / 96 * Math.PI * 2, rr = R * (1 + .008 * Math.sin(3 * t + p) + .005 * Math.sin(8 * t + p * 2));
+      i ? g.lineTo(cx + Math.cos(t) * rr, cy + Math.sin(t) * rr) : g.moveTo(cx + Math.cos(t) * rr, cy + Math.sin(t) * rr); }
     g.fill();
-    for (let i = 0; i < 90; i++) { const t = rnd() * Math.PI * 2, rr = b.r * (.97 + rnd() * .09), s = .6 + rnd() * 1.8; // ausgefranster Rand
-      g.globalAlpha = .35 + rnd() * .5; g.beginPath(); g.arc(b.x + Math.cos(t) * rr, b.y + Math.sin(t) * rr, s, 0, 7); g.fill(); }
-    g.globalAlpha = 1;
   }
-  const id = g.getImageData(0, 0, N, N), d = id.data; // Korn: Tinte ungleich dicht, kleine Fehlstellen
+  // Druck-Korn: glatte Rauschfelder in zwei Größen (Wolken + Körnung), dazu feine Einzelpunkte
+  const grid = (cell) => { const n = Math.ceil(N / cell) + 2, v = new Float32Array(n * n); for (let i = 0; i < v.length; i++) v[i] = rnd();
+    return (x, y) => { const gx = x / cell, gy = y / cell, xi = gx | 0, yi = gy | 0, fx = gx - xi, fy = gy - yi, u = fx * fx * (3 - 2 * fx), w = fy * fy * (3 - 2 * fy);
+      const a = v[yi * n + xi], b = v[yi * n + xi + 1], c2 = v[(yi + 1) * n + xi], d2 = v[(yi + 1) * n + xi + 1]; return (a * (1 - u) + b * u) * (1 - w) + (c2 * (1 - u) + d2 * u) * w; }; };
+  const big = grid(38), mid = grid(9), fine = grid(2.6);
+  const id = g.getImageData(0, 0, N, N), d = id.data;
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const i = (y * N + x) * 4; if (!d[i + 3]) continue;
-    const n = rnd(), dens = .93 + .07 * Math.sin(x * .045 + Math.sin(y * .03) * 2) * Math.sin(y * .05 + 1.3);
-    d[i + 3] *= n < .035 ? .3 : n < .08 ? .75 : dens; const v = 16 + (1 - dens) * 60; d[i] = d[i + 1] = d[i + 2] = v; }
+    const cover = .78 * big(x, y) + .22 * mid(x, y), grain = fine(x, y);
+    let a = 1;
+    if (cover > .77) a = Math.max(.2, 1 - (cover - .77) * 5);      // größere helle Stellen, wo die Farbe dünn ist
+    if (grain > .9) a *= .45;                                        // feines Papierkorn
+    if (rnd() < .005) a *= .25;                                       // einzelne Pünktchen
+    d[i + 3] *= a; const v = 14 + (1 - a) * 30; d[i] = d[i + 1] = d[i + 2] = v; }
   g.putImageData(id, 0, 0);
   return c;
 }
