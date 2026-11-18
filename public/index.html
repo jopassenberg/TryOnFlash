@@ -892,9 +892,22 @@ function loadPhoto(file) {
   img.onerror = () => { URL.revokeObjectURL(url); status("Bild nicht lesbar", "err"); };
   img.src = url;
 }
+// Für die Modelle (nicht fürs angezeigte Foto): flaue oder dunkle Bilder (typisch Webcam) auf vollen Tonumfang
+// strecken und leicht aufhellen. Gute Fotos bleiben fast unverändert.
+function levels(c) {
+  const g = c.getContext("2d", { willReadFrequently: true }), id = g.getImageData(0, 0, c.width, c.height), d = id.data, hist = new Uint32Array(256);
+  for (let i = 0; i < d.length; i += 4) hist[(d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8]++;
+  const n = d.length / 4, pick = q => { let a = 0; for (let v = 0; v < 256; v++) { a += hist[v]; if (a >= n * q) return v; } return 255; };
+  const lo = pick(.01), hi = pick(.99), mid = pick(.5);
+  if (hi - lo > 215 && mid > 90) return c; // schon gut
+  const span = Math.max(40, hi - lo), gam = mid < 90 ? Math.log(.45) / Math.log(clamp((mid - lo) / span, .05, .95)) : 1, lut = new Uint8ClampedArray(256);
+  for (let v = 0; v < 256; v++) lut[v] = 255 * Math.pow(clamp((v - lo) / span, 0, 1), gam);
+  for (let i = 0; i < d.length; i += 4) { d[i] = lut[d[i]]; d[i + 1] = lut[d[i + 1]]; d[i + 2] = lut[d[i + 2]]; }
+  g.putImageData(id, 0, 0); return c;
+}
 function usePhoto(img) {
   closeCam();
-  S.photo = scaled(img, RENDER_MAX); S.proc = scaled(img, PROC_MAX); S.geo = scaled(img, GEO_MAX);
+  S.photo = scaled(img, RENDER_MAX); S.proc = levels(scaled(img, PROC_MAX)); S.geo = levels(scaled(img, GEO_MAX));
   S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
   view.width = S.photo.width; view.height = S.photo.height;
   $("#drop").hidden = true; $("#viewWrap").hidden = false;
@@ -924,13 +937,14 @@ async function showStart(hint = true) {
 }
 
 /* ---------- camera: live picture right in the card, cropped to the card when taken ---------- */
-let camStream = null, camFacing = "environment";
+let camStream = null, camFacing = MOBILE ? "environment" : "user"; // am Rechner ist die Webcam vorne
 async function openCam() {
   $("#panelCam").hidden = false;
   try {
     camStream?.getTracks().forEach(t => t.stop());
     camStream = await navigator.mediaDevices.getUserMedia({ audio: false,
-      video: { facingMode: camFacing, width: { ideal: 1920 }, height: { ideal: 1440 } } });
+      video: MOBILE ? { facingMode: camFacing, width: { ideal: 1920 }, height: { ideal: 1440 } }
+        : { facingMode: camFacing, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } } });
   } catch (e) {
     camStream = null; $("#cam").hidden = true; startUI();
     if (e?.name === "NotAllowedError") { try { localStorage.removeItem(CAM_OK); } catch {} }
@@ -971,8 +985,18 @@ $("#shoot").onclick = async () => {
   }
   const r = stage.clientWidth / stage.clientHeight; let cw = vw, ch = vw / r; if (ch > vh) { ch = vh; cw = vh * r; }
   const c = document.createElement("canvas"); c.width = Math.round(cw); c.height = Math.round(ch);
-  const g = c.getContext("2d"); if (camFacing === "user") { g.translate(c.width, 0); g.scale(-1, 1); }
-  g.drawImage(v, (vw - cw) / 2, (vh - ch) / 2, cw, ch, 0, 0, c.width, c.height);
+  const g = c.getContext("2d", { willReadFrequently: true }), grab = () => g.drawImage(v, (vw - cw) / 2, (vh - ch) / 2, cw, ch, 0, 0, c.width, c.height);
+  // Das Foto ist nie gespiegelt (die Vorschau der Frontkamera schon): so sitzt das Motiv später seitenrichtig.
+  // Webcams rauschen stark: am Rechner (Kamera steht still) werden mehrere Bilder gemittelt
+  const frames = MOBILE ? 1 : 5;
+  if (frames > 1) {
+    const n = c.width * c.height * 4, acc = new Float32Array(n);
+    for (let f = 0; f < frames; f++) {
+      if (f) await new Promise(res => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(() => res()) : setTimeout(res, 40));
+      grab(); const d = g.getImageData(0, 0, c.width, c.height).data; for (let i = 0; i < n; i++) acc[i] += d[i];
+    }
+    const out = g.createImageData(c.width, c.height); for (let i = 0; i < n; i++) out.data[i] = acc[i] / frames; g.putImageData(out, 0, 0);
+  } else grab();
   const s = $("#shot"); s.classList.remove("go"); void s.offsetWidth; s.classList.add("go");
   usePhoto(c);
 };
@@ -1038,6 +1062,34 @@ async function runDepth(canvas) {
     return depthPipe(input);
   }
 }
+// Tiefe im Web Worker (public/depth-worker.js): Laden, Kompilieren und Rechnen laufen neben der Seite, die
+// Oberfläche ruckelt nicht mehr. Klappt der Worker nicht, rechnet die Seite wie früher selbst.
+let depthWorker = null, useWorker = typeof Worker !== "undefined";
+const depthCfg = () => ({ mobile: MOBILE, sides: DEPTH_SIDE, remote: /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? null : location.origin + "/hf/" });
+function workerCall(msg, transfer = []) {
+  return new Promise((res, rej) => {
+    depthWorker ||= new Worker("/depth-worker.js", { type: "module" });
+    const w = depthWorker, done = () => { w.removeEventListener("message", on); w.removeEventListener("error", er); };
+    const on = e => { const m = e.data; if (m.type === "progress") return onProgress(m.p); done(); m.type === "error" ? rej(new Error(m.message)) : res(m); };
+    const er = e => { done(); rej(new Error(e.message || "worker")); };
+    w.addEventListener("message", on); w.addEventListener("error", er);
+    w.postMessage({ ...msg, cfg: depthCfg() }, transfer);
+  });
+}
+function depthFree() { depthWorker?.terminate(); depthWorker = null; if (depthPipe) { depthPipe.dispose?.()?.catch?.(() => {}); depthPipe = null; } }
+async function depthLoad() {
+  if (useWorker) { try { depthDevice = (await workerCall({ type: "load" })).device; return; } catch (e) { console.warn("depth worker unavailable", e); useWorker = false; depthFree(); } }
+  await getDepth();
+}
+async function depthRun(c) {
+  if (useWorker) {
+    try { const id = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+      const m = await workerCall({ type: "run", buf: id.data.buffer, w: c.width, h: c.height }, [id.data.buffer]);
+      depthDevice = m.device; return { predicted_depth: { data: m.data, dims: m.dims } };
+    } catch (e) { console.warn("depth worker failed", e); useWorker = false; depthFree(); }
+  }
+  return runDepth(c);
+}
 // Model output can arrive as float32, float16 or raw half-float bits (Uint16) depending on the backend
 function depthValues(t) {
   const d = t.data;
@@ -1061,32 +1113,59 @@ async function getSegmenter() {
   return segmenter;
 }
 
+// MediaPipe im Worker (public/vision-worker.js); klappt das nicht, wie früher im Hauptthread
+let visionWorker = null, useVision = typeof Worker !== "undefined";
+function visionCall(msg, transfer = []) {
+  return new Promise((res, rej) => {
+    visionWorker ||= new Worker("/vision-worker.js");
+    const w = visionWorker, done = () => { w.removeEventListener("message", on); w.removeEventListener("error", er); };
+    const on = e => { done(); e.data.type === "error" ? rej(new Error(e.data.message)) : res(e.data); };
+    const er = e => { done(); rej(new Error(e.message || "worker")); };
+    w.addEventListener("message", on); w.addEventListener("error", er); w.postMessage(msg, transfer);
+  });
+}
+const pixels = c => { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; return { buf: d.buffer, w: c.width, h: c.height }; };
+async function segment() { // → { masks: { skin, cloth }, cw, ch } oder null
+  if (useVision) {
+    try { const p = pixels(S.proc); return await visionCall({ type: "seg", ...p, model: SEG_MODEL, classes: { skin: SKIN_CLASS, cloth: CLOTHES_CLASS }, free: MOBILE }, [p.buf]); }
+    catch (e) { console.warn("vision worker", e); useVision = false; visionWorker?.terminate(); visionWorker = null; }
+  }
+  const sg = await getSegmenter().catch(e => (console.warn("segmenter", e), null)); if (!sg) return null;
+  const r = segMasks(sg); if (MOBILE) { segmenter.close(); segmenter = null; } return r;
+}
+async function bodyLandmarks() {
+  if (useVision) {
+    try { const p = pixels(S.proc); const r = await visionCall({ type: "body", ...p, hand: HAND_MODEL, pose: POSE_MODEL, free: MOBILE }, [p.buf]);
+      if (MOBILE) { visionWorker?.terminate(); visionWorker = null; } return r.body; }
+    catch (e) { console.warn("vision worker", e); useVision = false; visionWorker?.terminate(); visionWorker = null; }
+  }
+  return detectBody(S.proc);
+}
 async function analyse() {
   setStep(2); scanStart(); const mark = st => ss.set("stencit-busy", st); mark("Modelle laden");
   let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
     status("Lädt Modelle …");
     // Handy: nacheinander laden, nie zwei Modelle gleichzeitig im Speicher
-    const seg = MOBILE ? null : (await Promise.all([getDepth(), getSegmenter().catch(e => (console.warn("segmenter", e), null))]))[1];
-    if (MOBILE) await getDepth();
+    const segP = MOBILE ? null : segment().catch(e => (console.warn("segment", e), null)); // Rechner: läuft parallel
+    await depthLoad();
     status("Tiefe …"); stage = "Tiefe berechnen"; mark("Tiefe");
-    const out = await runDepth(S.geo);
+    const out = await depthRun(S.geo);
     stage = "Haut erkennen";
     S.pw = S.geo.width; S.ph = S.geo.height;
     S.disp = resizeTensor(out.predicted_depth, S.pw, S.ph); S.dispN = normalised(S.disp); // the point cloud shows from here
     // Phones: free each model as soon as it is done, so the next one fits into memory (iOS reloads the
     // page when it runs out). Desktop keeps them for the next photo.
-    if (MOBILE) { await depthPipe?.dispose?.().catch(() => {}); depthPipe = null; }
+    if (MOBILE) depthFree(); // Worker beenden: der ganze Modell-Speicher ist wieder frei
     status("Haut …"); mark("Haut-Modell");
-    await frame(); const sg = seg || (MOBILE ? await getSegmenter().catch(e => (console.warn("segmenter", e), null)) : null); S.skin = sg ? skinMask(sg) : null;
-    if (MOBILE && segmenter) { segmenter.close(); segmenter = null; }
+    await frame(); const sm = await (segP || segment().catch(e => (console.warn("segment", e), null))); S.skin = sm ? skinMask(sm) : null;
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
     mark("Haut aufräumen"); S.skin = tidySkin(S.skin);
     stage = "3D-Modell"; status("3D-Modell …"); mark("3D-Modell");
     // one heavy step per frame, so the scan animation and the page stay responsive
     await frame(); refineDepth(); await frame(); buildGeometry(); await frame(); buildMesh(); await frame();
     stage = "Maßstab"; status("Maßstab …"); mark("Hand/Pose");
-    S.scale = computeScale(await detectBody(S.proc).catch(e => (console.warn("body", e), null)));
+    S.scale = computeScale(await bodyLandmarks().catch(e => (console.warn("body", e), null)));
     mark("Scan-Ende"); await scanFinish();
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
@@ -1117,11 +1196,14 @@ function resizeTensor(t, w, h) {
 // was farblich nicht zur Haut passt (Ärmel, Stoff), fliegt raus. Das sichere Innere bleibt, auch wenn es
 // anders aussieht (alte Tattoos, Schatten), weil das Modell dort sicher Haut sieht.
 const CLOTHES_CLASS = 4;
-function skinMask(seg) {
+function segMasks(seg) { // Hauptthread-Variante (Fallback), gleiche Form wie das Ergebnis des Workers
   const res = seg.segment(S.proc), cm = res.confidenceMasks, cw = cm[0].width, ch = cm[0].height;
-  const skin = cm[SKIN_CLASS].getAsFloat32Array(), cloth = cm[CLOTHES_CLASS].getAsFloat32Array();
-  const b = new Float32Array(cw * ch); for (let i = 0; i < b.length; i++) b[i] = clamp(skin[i] - .8 * cloth[i], 0, 1);
+  const masks = { skin: cm[SKIN_CLASS].getAsFloat32Array().slice(), cloth: cm[CLOTHES_CLASS].getAsFloat32Array().slice() };
   cm.forEach(x => x.close()); res.close?.();
+  return { masks, cw, ch };
+}
+function skinMask({ masks: { skin, cloth }, cw, ch }) {
+  const b = new Float32Array(cw * ch); for (let i = 0; i < b.length; i++) b[i] = clamp(skin[i] - .8 * cloth[i], 0, 1);
   const bs = blurField(b, cw, ch, 1), m = new Float32Array(S.pw * S.ph);
   for (let y = 0; y < S.ph; y++) for (let x = 0; x < S.pw; x++) { // bilinear
     const fx = clamp((x + .5) * cw / S.pw - .5, 0, cw - 1.001), fy = clamp((y + .5) * ch / S.ph - .5, 0, ch - 1.001), x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * cw + x0;
