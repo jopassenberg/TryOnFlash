@@ -29,10 +29,10 @@
     /* konzentrisch: Karte außen 42 → innen 36 (Rahmen 6) → Leiste 28 bei 8 Abstand → Buttons 22 bei 6 Innenabstand */
     --r-outer: 42px; --r-inner-card: calc(var(--r-outer) - var(--frame-w)); --inset: 8px;
     /* Glas-Knopf: fast durchsichtig, weißer Schein von innen (kein Rand, kein Schatten nach außen) */
-    --gb: oklch(100% 0 0 / .16); --gb-hover: oklch(100% 0 0 / .26);
-    --gb-glow: inset 0 1px 2px oklch(100% 0 0 / 1), inset 0 0 10px oklch(100% 0 0 / .9);
-    --gd: oklch(100% 0 0 / .09); --gd-hover: oklch(100% 0 0 / .14);
-    --gd-glow: inset 0 1px 1px oklch(100% 0 0 / .22), inset 0 0 12px oklch(100% 0 0 / .1);
+    --gb: oklch(95.5% .003 75); --gb-hover: oklch(93% .003 75);
+    --gb-glow: none;
+    --gd: oklch(29% .003 75); --gd-hover: oklch(33% .003 75);
+    --gd-glow: none;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
@@ -45,15 +45,9 @@
   svg { flex: none; }
   .ic { width: 20px; height: 20px; fill: currentColor; }
 
-  /* Hintergrund nach Vorbild, aber mit dezentem Stich ins Markenrot: helles warmes Grau, weich verschwommen,
-     oben links fast neutral, nach rechts unten ein Hauch Rosé/Rot */
-  body { background: oklch(93.5% .011 22); }
-  .aura { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-  .aura i { position: absolute; border-radius: 50%; filter: blur(110px); animation: drift 26s ease-in-out infinite alternate; }
-  .aura i:nth-child(1) { width: 70vmax; height: 70vmax; left: -24vmax; top: -32vmax; background: oklch(97% .006 40); }
-  .aura i:nth-child(2) { width: 50vmax; height: 50vmax; left: -18vmax; bottom: -20vmax; background: oklch(93% .014 25); animation-duration: 31s; }
-  .aura i:nth-child(3) { width: 55vmax; height: 55vmax; right: -22vmax; top: 10vmax; background: oklch(91% .026 22); animation-duration: 29s; }
-  .aura i:nth-child(4) { display: none; }
+  /* Hintergrund: einfach weiß */
+  body { background: #fff; }
+  .aura { display: none; }
   @keyframes drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 
   /* ---------- Layout: Kopfzeile, darunter eine große Karte ---------- */
@@ -90,7 +84,7 @@
   .shutter::after { content: ""; display: block; width: 100%; height: 100%; border-radius: 50%; background: var(--n-900); transition: transform .25s var(--spring); }
   .shutter:active::after { transform: scale(.86); }
   .screen-flash { position: fixed; inset: 0; z-index: 100; background: #fff; pointer-events: none; animation: fade .12s ease-out; }
-  #camFlash[aria-pressed="true"] { background: oklch(84% .2 115); color: var(--ink); }
+
 
   /* ---------- Startseite (leere Karte) ---------- */
   /* ---------- Startframe: die Kamera-Oberfläche steht schon (Auslöser, Blitz, Galerie, Wenden), dahinter ein
@@ -152,7 +146,22 @@
   .swap { animation: swap .32s var(--ease-out); }
   @keyframes swap { from { filter: blur(4px); opacity: 0; translate: 0 3px; } }
   @media (prefers-reduced-motion: reduce) { .card > .panel, .card > .panel .group > *, .swap, .thumb.pop { animation: none !important; } }
-  #panelCam .group { gap: var(--s5); padding: 0 var(--s2); }
+  /* Kamera: unten Galerie-Pille | breiter weißer Auslöser (genau mittig) | Flashes-Pille;
+     links im Bild kleine runde Knöpfe einzeln untereinander (Blitz, Kamera wechseln) */
+  #panelCam { width: min(calc(100% - 2 * var(--inset)), 380px); padding: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  #panelCam .group { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s2); }
+  #panelCam .group > :first-child { justify-self: start; } #panelCam .group > :last-child { justify-self: end; }
+  #panelCam .shutter { width: 100px; height: 60px; padding: 0; border-radius: 30px; background: #fff; box-shadow: none; transition: transform .3s var(--spring); }
+  #panelCam .shutter::after { display: none; }
+  #panelCam .shutter:active { transform: scale(.94); }
+  .cpill { height: 52px; padding: 0 18px 0 16px; border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 8px; background: var(--gd); color: #fff; font-size: 14px; white-space: nowrap; transition: background-color .2s, transform .3s var(--spring); }
+  .cpill .ic { width: 16px; height: 16px; } .cpill:active { transform: scale(.95); }
+  @media (hover: hover) { .cpill:hover { background: var(--gd-hover); } }
+  .cam-side { position: absolute; z-index: 5; left: 14px; bottom: calc(var(--inset) + 60px + 18px); display: none; flex-direction: column; gap: 8px; }
+  .card:has(#panelCam:not([hidden])) .cam-side { display: flex; }
+  .cs { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--gd); color: #fff; transition: background-color .2s, transform .3s var(--spring); animation: item-in .45s var(--spring) both; }
+  .cs + .cs { animation-delay: 40ms; } .cs .ic { width: 17px; height: 17px; } .cs:active { transform: scale(.92); }
+  .cs[aria-pressed="true"] { background: oklch(84% .2 115); color: var(--ink); }
 
   /* Motive: runde Sticker-Kreise */
   .thumbs { display: flex; gap: var(--s1); overflow-x: auto; scrollbar-width: none; max-width: 40vw; padding: 4px; margin: -4px;
@@ -278,8 +287,7 @@
   .card > .panel .thumb[aria-pressed="true"] { background: var(--on-glass); }
   .card > .panel .thumb.add { background: var(--on-glass-fill); color: var(--on-glass); }
   .card > .panel .thumb.add:hover { background: var(--on-glass-fill); }
-  #panelCam .shutter { background: var(--gd); box-shadow: var(--gd-glow); }
-  #panelCam .shutter::after { background: var(--on-glass); }
+
   .stage > .status .dot { background: var(--on-glass); }
   .stage > .status[data-s="busy"] .dot { background: var(--accent); }
   .info-head .ic, .info dd small, .info .note { color: var(--on-glass-2); }
@@ -320,7 +328,7 @@
   .tabbar button { position: relative; width: 52px; height: 40px; border-radius: 20px; display: grid; place-items: center; color: var(--text-3); transition: color .2s, background-color .2s; }
   .tabbar button .ic { width: 17px; height: 17px; }
   .tabbar button:hover { color: var(--ink); }
-  .tabbar button[aria-pressed="true"] { background: oklch(100% 0 0 / .85); color: var(--ink); box-shadow: inset 0 0 8px oklch(100% 0 0 / .9); }
+  .tabbar button[aria-pressed="true"] { background: #fff; color: var(--ink); }
   .tabbar button[aria-pressed="true"]::after { content: ""; position: absolute; bottom: 3px; width: 3px; height: 3px; border-radius: 50%; background: var(--ink); }
   body:has(.shell[data-tab="flashes"]) .tabbar button[aria-pressed="true"] { background: oklch(19% .003 75 / .07); box-shadow: none; }
   .shell[data-tab="flashes"] .steps { visibility: hidden; }
@@ -334,7 +342,7 @@
   .rb { position: relative; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--gb); box-shadow: var(--gb-glow); color: var(--ink); transition: transform .3s var(--spring), background-color .2s; }
   .rb:hover { background: var(--gb-hover); }
   .rb:active { transform: scale(.92); }
-  .rb.main { background: var(--n-900); color: #fff; box-shadow: inset 0 1px 1px oklch(100% 0 0 / .18); }
+  .rb.main { background: var(--n-900); color: #fff; }
   .rb[aria-pressed="true"] { background: oklch(19% .003 75 / .16); color: var(--ink); } /* aktiv, aber ruhiger als der schwarze Haupt-Knopf */
   .rb .ic { width: 17px; height: 17px; }
   .rb .badge { position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; line-height: 18px; text-align: center; background: var(--n-900); color: #fff; }
@@ -571,7 +579,7 @@
     .info { left: var(--s2); right: var(--s2); top: 56px; width: auto; }
     .card > .panel { left: var(--inset); right: var(--inset); bottom: var(--inset); transform: none; max-width: none; }
     .card > .panel .group:first-child { flex: 1; min-width: 0; }
-    #panelCam .group { flex: 1; justify-content: space-between; padding: 0 var(--s2); }
+    #panelCam { left: 50%; right: auto; transform: translateX(-50%); }
     .thumbs { max-width: 100%; }
     .cut { padding: max(var(--s2), env(safe-area-inset-top)) var(--s2) max(var(--s2), env(safe-area-inset-bottom)); place-items: start center; }
     .cutbox { margin: auto 0; }
@@ -671,12 +679,15 @@
       </div>
     </div>
 
+    <div class="cam-side" id="camSide">
+      <button class="cs" id="camFlash" title="Blitz" aria-label="Blitz" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-flash--off"/></svg></button>
+      <button class="cs" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></button>
+    </div>
     <div class="panel" id="panelCam" hidden>
       <div class="group">
-        <button class="btn ghost icon" id="camFlash" title="Blitz" aria-label="Blitz" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-flash--off"/></svg></button>
-        <button class="btn ghost icon" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
+        <button class="cpill" id="camGallery"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>Galerie</button>
         <button class="shutter" id="shoot" title="Foto aufnehmen" aria-label="Foto aufnehmen"></button>
-        <button class="btn ghost icon" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></button>
+        <button class="cpill" id="camFlashes"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Flashes</button>
       </div>
     </div>
 
@@ -863,6 +874,7 @@ setStep(1);
 
 /* ---------- 1 · Photo ---------- */
 $("#camGallery").onclick = () => $("#photoInput").click();
+$("#camFlashes").onclick = () => { closeCam(); setTab("flashes"); }; // Stencil aus den eigenen Flashes wählen
 $("#newPhoto").onclick = () => backToStart();
 $("#photoInput").onchange = e => { e.target.files[0] && loadPhoto(e.target.files[0]); e.target.value = ""; };
 const stage = $("#stage");
@@ -2709,6 +2721,7 @@ function setTab(tab) {
   if (tab !== "flashes") { // Galerie-Bilder freigeben: auf dem iPhone braucht die Analyse den Speicher
     $("#flView").innerHTML = ""; sheet(""); $("#flGrid").innerHTML = ""; FL.urls.forEach(u => URL.revokeObjectURL(u)); FL.urls.clear(); layoutKey = ""; }
   if (tab === "flashes") loadFlashes();
+  if (tab === "studio" && S.step === 1 && !S.photo && $("#panelCam").hidden) showStart(false); // zurück zum Start: Kamera-Oberfläche wieder da
 }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
 
@@ -3020,7 +3033,34 @@ function clearTry() {
   pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
   $("#tryImg").hidden = true; $("#tryHead").hidden = true; $("#camGhost").hidden = true;
 }
-$("#tryX").onclick = clearTry;
+$("#tryX").onclick = () => { noDefault = true; clearTry(); };
+// Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel), aber von Hand gestochen statt clean:
+// jeder Punkt eine leicht unrunde, wackelige Form, körnige Tinte mit kleinen Fehlstellen, ausgefranster Rand.
+// Fester Zufall: sieht jedes Mal gleich aus.
+function logoStencil() {
+  const N = 600, c = Object.assign(document.createElement("canvas"), { width: N, height: N }), g = c.getContext("2d");
+  let seed = 917; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const k = N / 240 * .86, o = N * .07, R = 26.48 * k;
+  const C = [[120, 26.48], [186.13, 53.87], [213.52, 120], [186.13, 186.13], [120, 213.52], [53.87, 186.13], [26.48, 120], [53.87, 53.87], [120, 120]];
+  g.fillStyle = "#161616";
+  const blobs = C.map(([x, y]) => ({ x: o + x * k + (rnd() - .5) * R * .12, y: o + y * k + (rnd() - .5) * R * .12, r: R * (.93 + rnd() * .1), p: [rnd() * 7, rnd() * 7, rnd() * 7] }));
+  for (const b of blobs) { // unrunde Form: drei überlagerte Wellen auf dem Radius
+    g.beginPath();
+    for (let i = 0; i <= 72; i++) { const t = i / 72 * Math.PI * 2, rr = b.r * (1 + .05 * Math.sin(2 * t + b.p[0]) + .035 * Math.sin(3 * t + b.p[1]) + .02 * Math.sin(7 * t + b.p[2]));
+      i ? g.lineTo(b.x + Math.cos(t) * rr, b.y + Math.sin(t) * rr) : g.moveTo(b.x + Math.cos(t) * rr, b.y + Math.sin(t) * rr); }
+    g.fill();
+    for (let i = 0; i < 90; i++) { const t = rnd() * Math.PI * 2, rr = b.r * (.97 + rnd() * .09), s = .6 + rnd() * 1.8; // ausgefranster Rand
+      g.globalAlpha = .35 + rnd() * .5; g.beginPath(); g.arc(b.x + Math.cos(t) * rr, b.y + Math.sin(t) * rr, s, 0, 7); g.fill(); }
+    g.globalAlpha = 1;
+  }
+  const id = g.getImageData(0, 0, N, N), d = id.data; // Korn: Tinte ungleich dicht, kleine Fehlstellen
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const i = (y * N + x) * 4; if (!d[i + 3]) continue;
+    const n = rnd(), dens = .93 + .07 * Math.sin(x * .045 + Math.sin(y * .03) * 2) * Math.sin(y * .05 + 1.3);
+    d[i + 3] *= n < .035 ? .3 : n < .08 ? .75 : dens; const v = 16 + (1 - dens) * 60; d[i] = d[i + 1] = d[i + 2] = v; }
+  g.putImageData(id, 0, 0);
+  return c;
+}
+let noDefault = false; // × am Start-Stencil: in dieser Sitzung nicht wiederbringen
 function usePending() { // nach der Analyse aufgerufen
   if (!pendingFlash) return false;
   const c = pendingFlash; clearTry();
@@ -3032,6 +3072,7 @@ function usePending() { // nach der Analyse aufgerufen
     const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
     if (blob) await tryFlash(blob, h.name);
   } catch (e) { console.warn("handoff", e); }
+  if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = logoStencil(); showTry(pendingFlash, "Stencit"); } // Start-Stencil
   if (S.step === 1 && !S.photo) await showStart(!CRASHED); // Start: Kamera-Oberfläche, ggf. Kamera direkt
   if (CRASHED) status(`Absturz bei: ${CRASHED}`, "err");
 })();
