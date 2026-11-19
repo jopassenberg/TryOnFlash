@@ -651,6 +651,10 @@
   .acct-perks { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; }
   .acct-perks li { display: flex; gap: 10px; align-items: center; } .acct-perks .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
   @media (max-width: 680px) { .rb.acct { width: 42px; height: 42px; } }
+  .sheet input.acct-code { text-align: center; letter-spacing: .4em; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .g-btn { display: flex; justify-content: center; min-height: 44px; }
+  .acct-or { display: flex; align-items: center; gap: 12px; font-size: 13px; color: oklch(100% 0 0 / .45); }
+  .acct-or::before, .acct-or::after { content: ""; flex: 1; height: 1px; background: oklch(100% 0 0 / .12); }
   .steps { white-space: nowrap; hyphens: none; }
   @media (max-width: 440px) { .steps { display: none; } } /* schmale Handys: die Insel zeigt den Schritt ohnehin */
 </style>
@@ -3495,6 +3499,23 @@ const SB_URL = "https://ykxrxwprmeeohctyncnf.supabase.co", SB_KEY = "sb_publisha
 const SUPABASE = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 const ACC = { user: null, profile: null, freeLeft: null, tokens: 0, synced: false, sentTo: "" };
 const FREE_MOTIFS = 3, FREE_STENCILS = 3;
+// Google: Web-Client-ID aus der Google Cloud Console (öffentlich). Leer = Knopf ausgeblendet.
+// Google meldet direkt auf stencit.com an („Weiter zu stencit.com“) und gibt ein ID-Token, das Supabase prüft.
+const GOOGLE_CLIENT_ID = "";
+const loadScript = src => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res();
+  document.head.append(Object.assign(document.createElement("script"), { src, async: true, onload: res, onerror: rej })); });
+async function googleButton(el) {
+  if (!GOOGLE_CLIENT_ID || !el) return;
+  try { await loadScript("https://accounts.google.com/gsi/client"); } catch { return; }
+  const raw = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  const hashed = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)))].map(b => b.toString(16).padStart(2, "0")).join("");
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, nonce: hashed, ux_mode: "popup", callback: async ({ credential }) => {
+    const c = await sb(); const { error } = c ? await c.auth.signInWithIdToken({ provider: "google", token: credential, nonce: raw }) : { error: new Error("offline") };
+    if (error) { console.warn("google", error); status("Google-Anmeldung hat nicht geklappt", "err"); } else $("#acctSheet").innerHTML = "";
+  } });
+  el.hidden = false; $("#acctOr") && ($("#acctOr").hidden = false);
+  google.accounts.id.renderButton(el, { type: "standard", theme: "filled_black", size: "large", shape: "pill", text: "continue_with", logo_alignment: "center", width: Math.min(400, el.clientWidth || 320), locale: "de" });
+}
 let sbP = null;
 const sb = () => (sbP ||= import(SUPABASE).then(m => m.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })).catch(e => (console.warn("supabase", e), null)));
 async function acctInit() {
@@ -3555,12 +3576,14 @@ async function acctSheet(reason = "") {
     const title = reason === "limit" ? "Kostenlos weitermachen" : "Anmelden", lead = reason === "limit"
       ? "Dein erstes Tattoo war gratis. Mit einem kostenlosen Konto geht es weiter:" : "Mit einem kostenlosen Konto bekommst du:";
     html = ACC.sentTo ? `<h3>Schau in dein Postfach</h3>
-        <p class="dim" style="margin:0">Wir haben einen Anmeldelink an <b style="font-weight:400;color:#fff">${esc(ACC.sentTo)}</b> geschickt. Tipp ihn auf diesem Gerät an, dann bist du angemeldet.</p>
-        <div class="stack"><button class="btn ghost wide" id="acctAgain">Andere Adresse</button><button class="btn ghost wide" data-close>Schließen</button></div>`
+        <p class="dim" style="margin:0">Wir haben dir an <b style="font-weight:400;color:#fff">${esc(ACC.sentTo)}</b> einen Code geschickt. Gib ihn hier ein – oder tipp in der Mail auf „Anmelden“.</p>
+        <input class="acct-mail acct-code" id="acctCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······">
+        <div class="stack"><button class="btn primary wide" id="acctVerify">Anmelden</button><button class="btn ghost wide" id="acctAgain">Andere Adresse</button></div>`
       : `<h3>${title}</h3><p class="dim" style="margin:0">${lead}</p>
         <ul class="acct-perks"><li>${check}${FREE_MOTIFS} neue Motive pro Monat anprobieren</li><li>${check}Bis zu ${FREE_STENCILS} Stencils gesichert, auf allen Geräten</li><li>${check}Flashes per Link teilen</li></ul>
+        <div class="g-btn" id="gBtn" hidden></div><div class="acct-or" id="acctOr" hidden>oder mit E-Mail</div>
         <input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="Deine E-Mail-Adresse">
-        <div class="stack"><button class="btn primary wide" id="acctSend">Anmeldelink senden</button><button class="btn ghost wide" data-close>Später</button></div>
+        <div class="stack"><button class="btn primary wide" id="acctSend">Code senden</button><button class="btn ghost wide" data-close>Später</button></div>
         <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.</span></div>`;
   } else {
     await refreshQuota().catch(() => {});
@@ -3577,6 +3600,20 @@ async function acctSheet(reason = "") {
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#acctAgain")?.addEventListener("click", () => { ACC.sentTo = ""; acctSheet(reason); });
   $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; close(); status("Abgemeldet", "ok"); });
+  googleButton($("#gBtn"));
+  const code = $("#acctCode");
+  if (code) { // 6-stelliger Code aus der Mail: bei 6 Ziffern automatisch prüfen
+    code.focus();
+    const verify = async () => {
+      const token = code.value.replace(/\D/g, ""); if (token.length !== 6) { code.focus(); return; }
+      const btn = $("#acctVerify"); btn.disabled = true; btn.textContent = "Prüfe …";
+      const c = await sb(); const { error } = c ? await c.auth.verifyOtp({ email: ACC.sentTo, token, type: "email" }) : { error: new Error("offline") };
+      if (error) { btn.disabled = false; btn.textContent = "Anmelden"; code.value = ""; code.focus(); status(/expired/i.test(error.message) ? "Code abgelaufen · neu senden" : "Code stimmt nicht", "err"); return; }
+      ACC.sentTo = ""; close();
+    };
+    code.oninput = () => { code.value = code.value.replace(/\D/g, "").slice(0, 6); if (code.value.length === 6) verify(); };
+    $("#acctVerify").onclick = verify;
+  }
   const send = $("#acctSend");
   if (send) {
     const mail = $("#acctMail"); mail.focus();
