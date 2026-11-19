@@ -1245,7 +1245,7 @@ function onProgress(p) {
   if (p.status !== "progress" || !p.total) return;
   loadProg[p.file] = [p.loaded, p.total];
   let a = 0, b = 0; for (const [l, t] of Object.values(loadProg)) { a += l; b += t; }
-  if (S.step === 2 && b > 1e6 && a < b) status(`Scan wird geladen · ${Math.round(a / b * 100)} %`);
+  if (S.step === 2 && b > 1e6 && a < b) status(`Lädt das Tiefen-Modell · ${Math.round(a / b * 100)} %`);
 }
 function sizeDepth(dp) {
   const ip = dp.processor?.image_processor, s = DEPTH_SIDE[depthDevice] || 518;
@@ -1352,15 +1352,22 @@ async function bodyLandmarks() {
   }
   return detectBody(S.proc);
 }
+// Status in der Insel Schritt für Schritt: jeder Text bleibt kurz stehen, damit man ihn lesen kann,
+// und vor dem nächsten schweren Rechenschritt bekommt die Seite einen Frame zum Zeichnen.
+let sayAt = 0;
+async function say(text, min = 320) {
+  const wait = sayAt + min - performance.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  status(text); sayAt = performance.now(); await frame();
+}
 async function analyse() {
   setStep(2); scanStart(); const mark = st => ss.set("stencit-busy", st); mark("Modelle laden");
   let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
-    status("Scan wird vorbereitet …");
+    sayAt = 0; await say("Scan wird vorbereitet …");
     // Handy: nacheinander laden, nie zwei Modelle gleichzeitig im Speicher
     const segP = MOBILE ? null : segment().catch(e => (console.warn("segment", e), null)); // Rechner: läuft parallel
-    await depthLoad();
-    status("Misst die Tiefe …"); stage = "Tiefe berechnen"; mark("Tiefe");
+    await say("Lädt das Tiefen-Modell …"); await depthLoad();
+    await say("Misst die Tiefe …"); stage = "Tiefe berechnen"; mark("Tiefe");
     const out = await depthRun(S.geo);
     stage = "Haut erkennen";
     S.pw = S.geo.width; S.ph = S.geo.height;
@@ -1368,16 +1375,19 @@ async function analyse() {
     // Phones: free each model as soon as it is done, so the next one fits into memory (iOS reloads the
     // page when it runs out). Desktop keeps them for the next photo.
     if (MOBILE) depthFree(); // Worker beenden: der ganze Modell-Speicher ist wieder frei
-    status("Erkennt deine Haut …"); mark("Haut-Modell");
-    await frame(); const sm = await (segP || segment().catch(e => (console.warn("segment", e), null))); S.skin = sm ? skinMask(sm) : null;
+    await say("Sucht die Hautfläche …"); mark("Haut-Modell");
+    const sm = await (segP || segment().catch(e => (console.warn("segment", e), null))); S.skin = sm ? skinMask(sm) : null;
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
-    mark("Haut aufräumen"); S.skin = tidySkin(S.skin);
-    stage = "3D-Modell"; status("Formt deinen Arm in 3D …"); mark("3D-Modell");
+    await say("Trennt Haut von Kleidung …"); mark("Haut aufräumen"); S.skin = tidySkin(S.skin);
+    stage = "3D-Modell"; mark("3D-Modell");
     // one heavy step per frame, so the scan animation and the page stay responsive
-    await frame(); refineDepth(); await frame(); buildGeometry(); await frame(); buildMesh(); await frame();
-    stage = "Maßstab"; status("Misst die Größe …"); mark("Hand/Pose");
-    S.scale = computeScale(await bodyLandmarks().catch(e => (console.warn("body", e), null)));
-    mark("Scan-Ende"); status("Fast fertig …"); await scanFinish();
+    await say("Glättet die Oberfläche …"); refineDepth();
+    await say("Erstellt das 3D-Modell …"); buildGeometry();
+    await say("Spannt das Gitter auf …"); buildMesh();
+    stage = "Maßstab"; await say("Sucht Hand und Körper …"); mark("Hand/Pose");
+    const body = await bodyLandmarks().catch(e => (console.warn("body", e), null));
+    await say("Misst die Größe …"); S.scale = computeScale(body);
+    mark("Scan-Ende"); await say("Fast fertig …"); await scanFinish();
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
     mark("Motiv platzieren");
@@ -2856,10 +2866,10 @@ async function stechen() {
   try { await stechenRun(); } finally { S.inking = false; $("#ink").disabled = !S.motif; }
 }
 async function stechenRun() {
-  setStep(4); status("Wird gestochen …"); drawGizmo(); await frame();
-  prepareInk();
-  const res = composeInk();
-  await needleReveal(res, S.inkBox);
+  setStep(4); drawGizmo(); sayAt = 0;
+  await say("Mischt die Tinte …"); prepareInk();
+  await say("Legt die Linien an …"); const res = composeInk();
+  await say("Wird gestochen …"); await needleReveal(res, S.inkBox);
   S.local = S.inked = res;
   S.summary = summarise(); infoKey = ""; setInfo(false); updateInfo();
   status(""); redraw(); updateInfo();

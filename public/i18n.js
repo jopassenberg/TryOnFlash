@@ -98,6 +98,7 @@ const EN = {
   "Tattoos anprobieren, bevor sie bleiben.": "Try on tattoos before they’re forever.", "Fotos deiner Haut bleiben immer auf deinem Gerät.": "Photos of your skin always stay on your device.", "Fußzeile": "Footer", "Kontakt": "Contact",
   "Allgemein": "General", "Mehr": "More",
   "Credits": "Credits",
+  "Lädt das Tiefen-Modell …": "Loading the depth model …", "Sucht die Hautfläche …": "Finding your skin …", "Trennt Haut von Kleidung …": "Separating skin from clothing …", "Glättet die Oberfläche …": "Smoothing the surface …", "Erstellt das 3D-Modell …": "Building the 3D model …", "Spannt das Gitter auf …": "Spanning the mesh …", "Sucht Hand und Körper …": "Finding hand and body …", "Mischt die Tinte …": "Mixing the ink …", "Legt die Linien an …": "Laying out the lines …",
 };
 
 // Texte mit Zahlen/Namen
