@@ -638,12 +638,27 @@
     .cam-side { right: auto; left: 14px; top: 50%; bottom: auto; transform: translateY(-50%); }
     .island { --isl-w: 200px; }
   }
+  /* ---------- Konto ---------- */
+  .rb.acct { overflow: hidden; } .rb.acct img { width: 100%; height: 100%; object-fit: cover; }
+  .rb.acct[data-in="true"] { background: var(--n-900); color: #fff; }
+  .acct-dot { position: absolute; right: 2px; top: 2px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+  .acct-quota { display: grid; gap: 8px; padding: 14px 16px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
+  .acct-quota .bar { height: 8px; border-radius: 4px; background: oklch(100% 0 0 / .12); overflow: hidden; }
+  .acct-quota .bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--bordeaux), var(--accent)); }
+  .acct-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .sheet input.acct-mail { width: 100%; height: 48px; padding: 0 18px; border: 0; border-radius: 24px; background: oklch(100% 0 0 / .08); color: #fff; font: inherit; font-size: 16px; }
+  .sheet input.acct-mail::placeholder { color: oklch(100% 0 0 / .4); }
+  .acct-perks { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; }
+  .acct-perks li { display: flex; gap: 10px; align-items: center; } .acct-perks .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
+  @media (max-width: 680px) { .rb.acct { width: 42px; height: 42px; } }
+  .steps { white-space: nowrap; hyphens: none; }
+  @media (max-width: 440px) { .steps { display: none; } } /* schmale Handys: die Insel zeigt den Schritt ohnehin */
 </style>
 <style id="pageSize">@page { size: 210mm 297mm; margin: 0; }</style>
 </head>
 <body>
-<div id="printSheet"></div><div id="printRoot" aria-hidden="true"></div>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol><symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol><symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol><symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol><symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol><symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol><symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol><symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol><symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol><symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-center-to-fit" viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></symbol><symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol><symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol><symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol><symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol><symbol id="i-arrows--horizontal" viewBox="0 0 32 32"><path d="M11.41 26.59L7.83 23 28 23 28 21 7.83 21 11.41 17.41 10 16 4 22 10 28 11.41 26.59zM28 10L22 4 20.59 5.41 24.17 9 4 9 4 11 24.17 11 20.59 14.59 22 16 28 10z"/></symbol><symbol id="i-chevron--up" viewBox="0 0 32 32"><path d="M16 10L26 20 24.6 21.4 16 12.8 7.4 21.4 6 20z"/></symbol><symbol id="i-grid" viewBox="0 0 32 32"><path d="M12 4H6A2 2 0 004 6v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0012 4zm0 8H6V6h6zM26 4H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0026 4zm0 8H20V6h6zM12 18H6a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0012 18zm0 8H6V20h6zM26 18H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0026 18zm0 8H20V20h6z"/></symbol><symbol id="i-link" viewBox="0 0 32 32"><path d="M29.25,6.76a6,6,0,0,0-8.5,0l1.42,1.42a4,4,0,1,1,5.67,5.67l-8,8a4,4,0,1,1-5.67-5.66l1.41-1.42-1.41-1.42-1.42,1.42a6,6,0,0,0,0,8.5A6,6,0,0,0,17,25a6,6,0,0,0,4.27-1.76l8-8A6,6,0,0,0,29.25,6.76Z"/><path d="M4.19,24.82a4,4,0,0,1,0-5.67l8-8a4,4,0,0,1,5.67,0A3.94,3.94,0,0,1,19,14a4,4,0,0,1-1.17,2.85L15.71,19l1.42,1.42,2.12-2.12a6,6,0,0,0-8.51-8.51l-8,8a6,6,0,0,0,0,8.51A6,6,0,0,0,7,28a6.07,6.07,0,0,0,4.28-1.76L9.86,24.82A4,4,0,0,1,4.19,24.82Z"/></symbol><symbol id="i-trash-can" viewBox="0 0 32 32"><path d="M12 12H14V24H12zM18 12H20V24H18z"/><path d="M4 6V8H6V28a2 2 0 002 2H24a2 2 0 002-2V8h2V6zM8 28V8H24V28zM12 2H20V4H12z"/></symbol><symbol id="i-locked" viewBox="0 0 32 32"><path d="M24,14H22V8A6,6,0,0,0,10,8v6H8a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H24a2,2,0,0,0,2-2V16A2,2,0,0,0,24,14ZM12,8a4,4,0,0,1,8,0v6H12ZM24,28H8V16H24Z"/></symbol><symbol id="i-copy" viewBox="0 0 32 32"><path d="M28,10V28H10V10H28m0-2H10a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V10a2,2,0,0,0-2-2Z"/><path d="M4,18H2V4A2,2,0,0,1,4,2H18V4H4Z"/></symbol><symbol id="i-close" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol><symbol id="i-checkmark" viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></symbol><symbol id="i-time" viewBox="0 0 32 32"><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/><path d="M20.59 22L15 16.41 15 7 17 7 17 15.58 22 20.59 20.59 22z"/></symbol><symbol id="i-share" viewBox="0 0 32 32"><path d="M23,20a5,5,0,0,0-3.89,1.89L11.8,17.32a4.46,4.46,0,0,0,0-2.64l7.31-4.57A5,5,0,1,0,18,7a4.79,4.79,0,0,0,.2,1.32l-7.31,4.57a5,5,0,1,0,0,6.22l7.31,4.57A4.79,4.79,0,0,0,18,25a5,5,0,1,0,5-5ZM23,4a3,3,0,1,1-3,3A3,3,0,0,1,23,4ZM7,19a3,3,0,1,1,3-3A3,3,0,0,1,7,19Zm16,9a3,3,0,1,1,3-3A3,3,0,0,1,23,28Z"/></symbol><symbol id="i-mark" viewBox="0 0 240 240"><circle cx="120.00" cy="26.48" r="26.48" fill="currentColor"/><circle cx="186.13" cy="53.87" r="26.48" fill="currentColor"/><circle cx="213.52" cy="120.00" r="26.48" fill="currentColor"/><circle cx="186.13" cy="186.13" r="26.48" fill="currentColor"/><circle cx="120.00" cy="213.52" r="26.48" fill="currentColor"/><circle cx="53.87" cy="186.13" r="26.48" fill="currentColor"/><circle cx="26.48" cy="120.00" r="26.48" fill="currentColor"/><circle cx="53.87" cy="53.87" r="26.48" fill="currentColor"/><circle cx="120.00" cy="120.00" r="26.48" fill="currentColor"/></symbol><symbol id="i-flash" viewBox="0 0 32 32"><path d="M11.61,29.92a1,1,0,0,1-.6-1.07L12.83,17H8a1,1,0,0,1-1-1.23l3-13A1,1,0,0,1,11,2H21a1,1,0,0,1,.78.37,1,1,0,0,1,.2.85L20.25,11H25a1,1,0,0,1,.9.56,1,1,0,0,1-.11,1l-13,17A1,1,0,0,1,12,30,1.09,1.09,0,0,1,11.61,29.92ZM17.75,13l2-9H11.8L9.26,15h5.91L13.58,25.28,23,13Z"/></symbol><symbol id="i-flash--off" viewBox="0 0 32 32"><path d="M11.13 6.89L11.8 4h8l-2 9H23l-2.49 3.25 1.43 1.43 3.87-5.07a1 1 0 00.11-1A1 1 0 0025 11H20.25L22 3.22a1 1 0 00-.2-.85A1 1 0 0021 2H11a1 1 0 00-1 .77L9.46 5.22zM30 28.59l-9.31-9.31h0l-1.42-1.43h0L10.6 9.19h0L8.93 7.52h0L3.41 2 2 3.41 8.4 9.82 7 15.77A1 1 0 008 17h4.83L11 28.85a1 1 0 00.6 1.07A1.09 1.09 0 0012 30a1 1 0 00.79-.39l6.68-8.73L28.59 30zM9.26 15l.81-3.52L13.59 15zm4.32 10.28L15 16.37 18 19.45z"/></symbol><symbol id="i-printer" viewBox="0 0 32 32"><path d="M28,9H25V3H7V9H4a2,2,0,0,0-2,2V21a2,2,0,0,0,2,2H7v6H25V23h3a2,2,0,0,0,2-2V11A2,2,0,0,0,28,9ZM9,5H23V9H9ZM23,27H9V17H23Zm5-6H25V15H7v6H4V11H28Z"/></symbol><symbol id="i-chevron--right" viewBox="0 0 32 32"><path d="M22 16L12 26 10.6 24.6 19.2 16 10.6 7.4 12 6z"/></symbol></defs></svg>
+<div id="printSheet"></div><div id="acctSheet"></div><div id="printRoot" aria-hidden="true"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-camera" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></symbol><symbol id="i-upload" viewBox="0 0 32 32"><path d="M6 18L7.41 19.41 15 11.83 15 30 17 30 17 11.83 24.59 19.41 26 18 16 8 6 18zM6 8V4H26V8h2V4a2 2 0 00-2-2H6A2 2 0 004 4V8z"/></symbol><symbol id="i-image" viewBox="0 0 32 32"><path d="M19,14a3,3,0,1,0-3-3A3,3,0,0,0,19,14Zm0-4a1,1,0,1,1-1,1A1,1,0,0,1,19,10Z"/><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,22H6V20l5-5,5.59,5.59a2,2,0,0,0,2.82,0L21,19l5,5Zm0-4.83-3.59-3.59a2,2,0,0,0-2.82,0L18,19.17l-5.59-5.59a2,2,0,0,0-2.82,0L6,17.17V6H26Z"/></symbol><symbol id="i-layers" viewBox="0 0 32 32"><path d="M16,24a.9967.9967,0,0,1-.4741-.12l-13-7L3.4741,15.12,16,21.8643,28.5259,15.12l.9482,1.7607-13,7A.9967.9967,0,0,1,16,24Z"/><path d="M16 30a.9967.9967 0 01-.4741-.12l-13-7L3.4741 21.12 16 27.8643 28.5259 21.12l.9482 1.7607-13 7A.9967.9967 0 0116 30zM16 18a.9967.9967 0 01-.4741-.12l-13-7a1 1 0 010-1.7607l13-7a.9982.9982 0 01.9482 0l13 7a1 1 0 010 1.7607l-13 7A.9967.9967 0 0116 18zM5.1094 10L16 15.8643 26.8906 10 16 4.1358z"/></symbol><symbol id="i-cube" viewBox="0 0 32 32"><path d="M28.5039,8.1362l-12-7a1,1,0,0,0-1.0078,0l-12,7A1,1,0,0,0,3,9V23a1,1,0,0,0,.4961.8638l12,7a1,1,0,0,0,1.0078,0l12-7A1,1,0,0,0,29,23V9A1,1,0,0,0,28.5039,8.1362ZM16,3.1577,26.0156,9,16,14.8423,5.9844,9ZM5,10.7412l10,5.833V28.2588L5,22.4258ZM17,28.2588V16.5742l10-5.833V22.4258Z"/></symbol><symbol id="i-chevron--down" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol><symbol id="i-renew" viewBox="0 0 32 32"><path d="M12 10H6.78A11 11 0 0127 16h2A13 13 0 006 7.68V4H4v8h8zM20 22h5.22A11 11 0 015 16H3a13 13 0 0023 8.32V28h2V20H20z"/></symbol><symbol id="i-add" viewBox="0 0 32 32"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></symbol><symbol id="i-arrow--left" viewBox="0 0 32 32"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></symbol><symbol id="i-compare" viewBox="0 0 32 32"><path d="M28,6H18V4a2,2,0,0,0-2-2H4A2,2,0,0,0,2,4V24a2,2,0,0,0,2,2H14v2a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM4,15h6.17L7.59,17.59,9,19l5-5L9,9,7.59,10.41,10.17,13H4V4H16V24H4ZM16,28V26a2,2,0,0,0,2-2V8H28v9H21.83l2.58-2.59L23,13l-5,5,5,5,1.41-1.41L21.83,19H28v9Z"/></symbol><symbol id="i-download" viewBox="0 0 32 32"><path d="M26 24v4H6V24H4v4H4a2 2 0 002 2H26a2 2 0 002-2h0V24zM26 14L24.59 12.59 17 20.17 17 2 15 2 15 20.17 7.41 12.59 6 14 16 24 26 14z"/></symbol><symbol id="i-undo" viewBox="0 0 32 32"><path d="M20,10H7.8149l3.5874-3.5859L10,5,4,11,10,17l1.4023-1.4146L7.8179,12H20a6,6,0,0,1,0,12H12v2h8a8,8,0,0,0,0-16Z"/></symbol><symbol id="i-center-to-fit" viewBox="0 0 32 32"><path d="M8 2L2 2 2 8 4 8 4 4 8 4 8 2zM24 2L30 2 30 8 28 8 28 4 24 4 24 2zM8 30L2 30 2 24 4 24 4 28 8 28 8 30zM24 30L30 30 30 24 28 24 28 28 24 28 24 30zM24 24H8a2.0023 2.0023 0 01-2-2V10A2.0023 2.0023 0 018 8H24a2.0023 2.0023 0 012 2V22A2.0023 2.0023 0 0124 24zM8 10V22H24V10z"/></symbol><symbol id="i-lasso" viewBox="0 0 32 32"><path d="M20,2H12A9.9842,9.9842,0,0,0,7.0349,20.6553C7.0249,20.7705,7,20.8818,7,21a3.9929,3.9929,0,0,0,2.9106,3.83A4.0049,4.0049,0,0,1,6,28H4v2H6a6.0044,6.0044,0,0,0,5.928-5.12,3.9966,3.9966,0,0,0,2.93-2.88H20A10,10,0,0,0,20,2ZM11,23a2,2,0,1,1,2-2A2.0025,2.0025,0,0,1,11,23Zm9-3H14.8579a3.9841,3.9841,0,0,0-7.15-1.2637A7.99,7.99,0,0,1,12,4h8a8,8,0,0,1,0,16Z"/></symbol><symbol id="i-erase" viewBox="0 0 32 32"><path d="M7 27H30V29H7zM27.38 10.51L19.45 2.59a2 2 0 00-2.83 0l-14 14a2 2 0 000 2.83L7.13 24h9.59L27.38 13.34A2 2 0 0027.38 10.51zM15.89 22H8L4 18l6.31-6.31 7.93 7.92zm3.76-3.76l-7.92-7.93L18 4 26 11.93z"/></symbol><symbol id="i-paint-brush" viewBox="0 0 32 32"><path d="M28.83,23.17,23,17.33V13a1,1,0,0,0-.29-.71l-10-10a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0,0,1.42l10,10A1,1,0,0,0,13,23h4.34l5.83,5.84a4,4,0,0,0,5.66-5.66ZM6,10.41l2.29,2.3,1.42-1.42L7.41,9,9,7.41l4.29,4.3,1.42-1.42L10.41,6,12,4.41,18.59,11,11,18.59,4.41,12Zm21.41,17a2,2,0,0,1-2.82,0l-6.13-6.12a1.8,1.8,0,0,0-.71-.29H13.41l-1-1L20,12.41l1,1v4.34a1,1,0,0,0,.29.7l6.12,6.14a2,2,0,0,1,0,2.82Z"/></symbol><symbol id="i-pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/><path d="M8.136 7.5H18.863999999999997V9.5H8.136z" transform="rotate(-45 13.5 8.5)"/></symbol><symbol id="i-arrows--horizontal" viewBox="0 0 32 32"><path d="M11.41 26.59L7.83 23 28 23 28 21 7.83 21 11.41 17.41 10 16 4 22 10 28 11.41 26.59zM28 10L22 4 20.59 5.41 24.17 9 4 9 4 11 24.17 11 20.59 14.59 22 16 28 10z"/></symbol><symbol id="i-chevron--up" viewBox="0 0 32 32"><path d="M16 10L26 20 24.6 21.4 16 12.8 7.4 21.4 6 20z"/></symbol><symbol id="i-grid" viewBox="0 0 32 32"><path d="M12 4H6A2 2 0 004 6v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0012 4zm0 8H6V6h6zM26 4H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V6A2 2 0 0026 4zm0 8H20V6h6zM12 18H6a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0012 18zm0 8H6V20h6zM26 18H20a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V20A2 2 0 0026 18zm0 8H20V20h6z"/></symbol><symbol id="i-link" viewBox="0 0 32 32"><path d="M29.25,6.76a6,6,0,0,0-8.5,0l1.42,1.42a4,4,0,1,1,5.67,5.67l-8,8a4,4,0,1,1-5.67-5.66l1.41-1.42-1.41-1.42-1.42,1.42a6,6,0,0,0,0,8.5A6,6,0,0,0,17,25a6,6,0,0,0,4.27-1.76l8-8A6,6,0,0,0,29.25,6.76Z"/><path d="M4.19,24.82a4,4,0,0,1,0-5.67l8-8a4,4,0,0,1,5.67,0A3.94,3.94,0,0,1,19,14a4,4,0,0,1-1.17,2.85L15.71,19l1.42,1.42,2.12-2.12a6,6,0,0,0-8.51-8.51l-8,8a6,6,0,0,0,0,8.51A6,6,0,0,0,7,28a6.07,6.07,0,0,0,4.28-1.76L9.86,24.82A4,4,0,0,1,4.19,24.82Z"/></symbol><symbol id="i-trash-can" viewBox="0 0 32 32"><path d="M12 12H14V24H12zM18 12H20V24H18z"/><path d="M4 6V8H6V28a2 2 0 002 2H24a2 2 0 002-2V8h2V6zM8 28V8H24V28zM12 2H20V4H12z"/></symbol><symbol id="i-locked" viewBox="0 0 32 32"><path d="M24,14H22V8A6,6,0,0,0,10,8v6H8a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H24a2,2,0,0,0,2-2V16A2,2,0,0,0,24,14ZM12,8a4,4,0,0,1,8,0v6H12ZM24,28H8V16H24Z"/></symbol><symbol id="i-copy" viewBox="0 0 32 32"><path d="M28,10V28H10V10H28m0-2H10a2,2,0,0,0-2,2V28a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V10a2,2,0,0,0-2-2Z"/><path d="M4,18H2V4A2,2,0,0,1,4,2H18V4H4Z"/></symbol><symbol id="i-close" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol><symbol id="i-checkmark" viewBox="0 0 32 32"><path d="M13 24L4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></symbol><symbol id="i-time" viewBox="0 0 32 32"><path d="M16,30A14,14,0,1,1,30,16,14,14,0,0,1,16,30ZM16,4A12,12,0,1,0,28,16,12,12,0,0,0,16,4Z"/><path d="M20.59 22L15 16.41 15 7 17 7 17 15.58 22 20.59 20.59 22z"/></symbol><symbol id="i-share" viewBox="0 0 32 32"><path d="M23,20a5,5,0,0,0-3.89,1.89L11.8,17.32a4.46,4.46,0,0,0,0-2.64l7.31-4.57A5,5,0,1,0,18,7a4.79,4.79,0,0,0,.2,1.32l-7.31,4.57a5,5,0,1,0,0,6.22l7.31,4.57A4.79,4.79,0,0,0,18,25a5,5,0,1,0,5-5ZM23,4a3,3,0,1,1-3,3A3,3,0,0,1,23,4ZM7,19a3,3,0,1,1,3-3A3,3,0,0,1,7,19Zm16,9a3,3,0,1,1,3-3A3,3,0,0,1,23,28Z"/></symbol><symbol id="i-mark" viewBox="0 0 240 240"><circle cx="120.00" cy="26.48" r="26.48" fill="currentColor"/><circle cx="186.13" cy="53.87" r="26.48" fill="currentColor"/><circle cx="213.52" cy="120.00" r="26.48" fill="currentColor"/><circle cx="186.13" cy="186.13" r="26.48" fill="currentColor"/><circle cx="120.00" cy="213.52" r="26.48" fill="currentColor"/><circle cx="53.87" cy="186.13" r="26.48" fill="currentColor"/><circle cx="26.48" cy="120.00" r="26.48" fill="currentColor"/><circle cx="53.87" cy="53.87" r="26.48" fill="currentColor"/><circle cx="120.00" cy="120.00" r="26.48" fill="currentColor"/></symbol><symbol id="i-flash" viewBox="0 0 32 32"><path d="M11.61,29.92a1,1,0,0,1-.6-1.07L12.83,17H8a1,1,0,0,1-1-1.23l3-13A1,1,0,0,1,11,2H21a1,1,0,0,1,.78.37,1,1,0,0,1,.2.85L20.25,11H25a1,1,0,0,1,.9.56,1,1,0,0,1-.11,1l-13,17A1,1,0,0,1,12,30,1.09,1.09,0,0,1,11.61,29.92ZM17.75,13l2-9H11.8L9.26,15h5.91L13.58,25.28,23,13Z"/></symbol><symbol id="i-flash--off" viewBox="0 0 32 32"><path d="M11.13 6.89L11.8 4h8l-2 9H23l-2.49 3.25 1.43 1.43 3.87-5.07a1 1 0 00.11-1A1 1 0 0025 11H20.25L22 3.22a1 1 0 00-.2-.85A1 1 0 0021 2H11a1 1 0 00-1 .77L9.46 5.22zM30 28.59l-9.31-9.31h0l-1.42-1.43h0L10.6 9.19h0L8.93 7.52h0L3.41 2 2 3.41 8.4 9.82 7 15.77A1 1 0 008 17h4.83L11 28.85a1 1 0 00.6 1.07A1.09 1.09 0 0012 30a1 1 0 00.79-.39l6.68-8.73L28.59 30zM9.26 15l.81-3.52L13.59 15zm4.32 10.28L15 16.37 18 19.45z"/></symbol><symbol id="i-printer" viewBox="0 0 32 32"><path d="M28,9H25V3H7V9H4a2,2,0,0,0-2,2V21a2,2,0,0,0,2,2H7v6H25V23h3a2,2,0,0,0,2-2V11A2,2,0,0,0,28,9ZM9,5H23V9H9ZM23,27H9V17H23Zm5-6H25V15H7v6H4V11H28Z"/></symbol><symbol id="i-chevron--right" viewBox="0 0 32 32"><path d="M22 16L12 26 10.6 24.6 19.2 16 10.6 7.4 12 6z"/></symbol><symbol id="i-user" viewBox="0 0 32 32"><path d="M16 4a5 5 0 11-5 5 5 5 0 015-5m0-2a7 7 0 107 7A7 7 0 0016 2zM26 30H24V25a5 5 0 00-5-5H13a5 5 0 00-5 5v5H6V25a7 7 0 017-7h6a7 7 0 017 7z"/></symbol></defs></svg>
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <div class="shell" data-tab="studio">
   <header class="top">
@@ -661,6 +676,7 @@
       <button class="fl-selbtn" id="flSelect" hidden aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg><span>Auswählen</span></button>
       <button class="rb main" id="flUpload" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button>
     </div>
+    <button class="rb acct" id="acctBtn" aria-label="Konto"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg><span class="acct-dot" hidden></span></button>
     <nav class="tabbar" aria-label="Bereiche">
       <button data-tab="studio" aria-pressed="true" aria-label="Studio" title="Studio"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></button>
       <button data-tab="flashes" aria-pressed="false" aria-label="Flashes" title="Flashes"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg></button>
@@ -2656,6 +2672,7 @@ function composeInk() {
 }
 async function stechen() {
   if (!S.motif || !S.anchor || S.inking) return;
+  if (!(await allowMotif())) return; // Motiv-Kontingent
   S.inking = true; $("#ink").disabled = true; // immediate feedback, no double start
   try { await stechenRun(); } finally { S.inking = false; $("#ink").disabled = !S.motif; }
 }
@@ -2855,6 +2872,7 @@ async function loadFlashes() {
   const old = FL.links.filter(l => l.exp && l.exp < Date.now());
   if (old.length) { await idb("links", "readwrite", s => old.forEach(l => s.delete(l.id))); FL.links = FL.links.filter(l => !old.includes(l)); }
   renderFlashes();
+  if (ACC.user && !ACC.synced) cloudSync().then(ch => { if (ch) loadFlashes(); }).catch(e => console.warn("sync", e));
 }
 // Galerie-Bild: das Motiv als Die-Cut-Sticker (weißer Rand, feine graue Schnittkante). Wird einmal erzeugt und gespeichert.
 function flashURL(f) {
@@ -2977,13 +2995,13 @@ async function flashRecord(c, meta, base) {
 }
 async function saveFlash(c, name, meta) {
   const rec = await flashRecord(c, meta, { id: crypto.randomUUID(), name, created: Date.now() });
-  await putFlash(rec); FL.items.unshift(rec); renderFlashes();
+  await putFlash(rec); FL.items.unshift(rec); renderFlashes(); cloudSave(rec);
 }
 async function editFlash(f) {
   const c = await blobToCanvas(f.src || f.blob), mask = f.mask ? await blobToCanvas(f.mask) : null;
   openCut(c, { okLabel: "Speichern", restore: { mask, style: f.style || "orig", bg: f.src ? f.bg : false }, onDone: async (out, meta) => {
     const rec = await flashRecord(out, meta, { id: f.id, name: f.name, created: f.created, pos: f.pos ? { ...f.pos, h: f.pos.w * out.height / out.width } : null });
-    await putFlash(rec); FL.items = FL.items.map(x => x.id === f.id ? rec : x); FL.urls.delete(f.id); layoutKey = ""; renderFlashes();
+    await putFlash(rec); FL.items = FL.items.map(x => x.id === f.id ? rec : x); FL.urls.delete(f.id); layoutKey = ""; renderFlashes(); cloudSave(rec);
   } });
 }
 // Löschen: das Stencil wird wie Papier zerknüllt und in den Papierkorb geworfen.
@@ -3084,7 +3102,7 @@ function viewFlash(id) {
       await idb("flashes", "readwrite", s => s.delete(id));
       const tile = $(`#flGrid .fl-tile[data-id="${id}"]`); if (tile) tile.style.visibility = "hidden"; // Original sofort weg, das Papier fliegt
       if (from && src && !matchMedia("(prefers-reduced-motion: reduce)").matches) await crumplePaper(src, from, bin && { x: bin.left + bin.width / 2, y: bin.top + bin.height / 2 });
-      FL.items = FL.items.filter(x => x.id !== id); renderFlashes();
+      FL.items = FL.items.filter(x => x.id !== id); renderFlashes(); cloudDelete(id).catch(e => console.warn("cloud delete", e));
     }
   });
 }
@@ -3368,7 +3386,7 @@ let noDefault = false; // × am Start-Stencil: in dieser Sitzung nicht wiederbri
 function usePending() { // nach der Analyse aufgerufen
   if (!pendingFlash) return false;
   const c = pendingFlash; clearTry();
-  addMotif(trim(c) || c); return true;
+  addMotif(trim(c) || c); if (c.__demo) S.motif.demo = true; return true;
 }
 (async () => { // vom Kunden-Link übergeben oder nach einem Neuladen noch offen
   try {
@@ -3376,7 +3394,7 @@ function usePending() { // nach der Analyse aufgerufen
     const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
     if (blob) await tryFlash(blob, h.name);
   } catch (e) { console.warn("handoff", e); }
-  if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = await cachedLogo(); showTry(pendingFlash, "Stencit"); } // Start-Stencil
+  if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = await cachedLogo(); pendingFlash.__demo = true; showTry(pendingFlash, "Stencit"); } // Start-Stencil
   if (S.step === 1 && !S.photo) await showStart(!CRASHED); // Start: Kamera-Oberfläche, ggf. Kamera direkt
   if (CRASHED) status(`Absturz bei: ${CRASHED}`, "err");
 })();
@@ -3470,6 +3488,152 @@ function printSheet(src = studioSrc()) {
   update();
 }
 addEventListener("afterprint", () => { $("#printRoot").innerHTML = ""; });
+
+/* ---------- Konto (Supabase): Anmeldung per E-Mail-Link, Motiv-Kontingent, gesicherte Stencils ---------- */
+// Der Publishable Key ist öffentlich (gehört in die App); was jeder sehen/ändern darf, regeln die Datenbank-Policies.
+const SB_URL = "https://ykxrxwprmeeohctyncnf.supabase.co", SB_KEY = "sb_publishable_6TzaVopBtEE0i-526Vr6mg_u3UR4hCW";
+const SUPABASE = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
+const ACC = { user: null, profile: null, freeLeft: null, tokens: 0, synced: false, sentTo: "" };
+const FREE_MOTIFS = 3, FREE_STENCILS = 3;
+let sbP = null;
+const sb = () => (sbP ||= import(SUPABASE).then(m => m.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })).catch(e => (console.warn("supabase", e), null)));
+async function acctInit() {
+  const c = await sb(); if (!c) return;
+  const { data } = await c.auth.getSession(); await setUser(data.session?.user || null);
+  c.auth.onAuthStateChange((ev, session) => { setUser(session?.user || null).then(() => {
+    if (ev === "SIGNED_IN") { ACC.synced = false; if (!$("#flashesView").hidden) loadFlashes(); status("Angemeldet", "ok"); if ($("#acctSheet").innerHTML) acctSheet(); }
+  }); });
+}
+async function setUser(u) {
+  const was = ACC.user?.id; ACC.user = u;
+  if (u && u.id !== was) await refreshQuota();
+  if (!u) { ACC.profile = null; ACC.freeLeft = null; ACC.tokens = 0; }
+  const b = $("#acctBtn"); b.dataset.in = !!u; b.setAttribute("aria-label", u ? "Dein Konto" : "Anmelden");
+}
+async function refreshQuota() { // Profil + wie viele Gratis-Motive diesen Monat noch frei sind
+  const c = await sb(); if (!c || !ACC.user) return;
+  const month = new Date(); month.setDate(1); const p = month.toISOString().slice(0, 10);
+  const [{ data: prof }, { count }] = await Promise.all([
+    c.from("profiles").select("*").eq("id", ACC.user.id).maybeSingle(),
+    c.from("motif_uses").select("*", { count: "exact", head: true }).eq("period", p).eq("source", "free")]);
+  ACC.profile = prof || null; ACC.tokens = prof?.tokens || 0; ACC.freeLeft = Math.max(0, FREE_MOTIFS - (count || 0));
+}
+const unlimited = () => ACC.profile?.plan === "unlimited" && (!ACC.profile.plan_until || new Date(ACC.profile.plan_until) > new Date());
+
+// Motiv-Fingerabdruck: verkleinert, in 16 Grau-/Alphastufen – dasselbe Bild erneut hochgeladen ergibt denselben Wert
+function motifHash(c) {
+  const t = Object.assign(document.createElement("canvas"), { width: 24, height: 24 }), g = t.getContext("2d", { willReadFrequently: true });
+  g.drawImage(c, 0, 0, 24, 24); const d = g.getImageData(0, 0, 24, 24).data; let h = 2166136261;
+  for (let i = 0; i < d.length; i += 4) { const v = d[i + 3] < 40 ? 15 : ((d[i] * 3 + d[i + 1] * 6 + d[i + 2]) / 10) >> 4; h = Math.imul(h ^ v, 16777619); }
+  return (h >>> 0).toString(16) + "-" + (c.width / c.height).toFixed(2);
+}
+// Vor dem ersten Stechen eines Motivs: ohne Konto 1 Motiv gratis (auf dem Gerät gezählt), mit Konto bucht der Server.
+const ANON_KEY = "stencit-anon-motifs";
+const anonUsed = () => { try { return JSON.parse(localStorage.getItem(ANON_KEY)) || []; } catch { return []; } };
+async function allowMotif() {
+  const m = S.motif; if (!m || m.demo || m.allowed) return true; // das Start-Stencil (Logo) ist zum Ausprobieren frei
+  const hash = (m.hash ||= motifHash(m.canvas));
+  if (!ACC.user) {
+    const used = anonUsed();
+    if (used.includes(hash) || used.length < 1) { if (!used.includes(hash)) try { localStorage.setItem(ANON_KEY, JSON.stringify([...used, hash])); } catch {}; m.allowed = true; return true; }
+    acctSheet("limit"); return false;
+  }
+  const c = await sb(); if (!c) { status("Konto gerade nicht erreichbar", "err"); return false; }
+  const { data, error } = await c.rpc("use_motif", { hash });
+  if (error) { console.warn("use_motif", error); status("Konto gerade nicht erreichbar · später nochmal", "err"); return false; }
+  if (data?.ok) { m.allowed = true; if (data.free_left != null) ACC.freeLeft = data.free_left; if (data.tokens != null) ACC.tokens = data.tokens; return true; }
+  if (data?.reason === "login") { acctSheet("limit"); return false; }
+  acctSheet("quota"); return false;
+}
+
+// Konto-Blatt: Anmelden (E-Mail-Link) oder Übersicht
+const check = '<svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg>';
+async function acctSheet(reason = "") {
+  const box = $("#acctSheet"), close = () => { box.innerHTML = ""; };
+  let html;
+  if (!ACC.user) {
+    const title = reason === "limit" ? "Kostenlos weitermachen" : "Anmelden", lead = reason === "limit"
+      ? "Dein erstes Tattoo war gratis. Mit einem kostenlosen Konto geht es weiter:" : "Mit einem kostenlosen Konto bekommst du:";
+    html = ACC.sentTo ? `<h3>Schau in dein Postfach</h3>
+        <p class="dim" style="margin:0">Wir haben einen Anmeldelink an <b style="font-weight:400;color:#fff">${esc(ACC.sentTo)}</b> geschickt. Tipp ihn auf diesem Gerät an, dann bist du angemeldet.</p>
+        <div class="stack"><button class="btn ghost wide" id="acctAgain">Andere Adresse</button><button class="btn ghost wide" data-close>Schließen</button></div>`
+      : `<h3>${title}</h3><p class="dim" style="margin:0">${lead}</p>
+        <ul class="acct-perks"><li>${check}${FREE_MOTIFS} neue Motive pro Monat anprobieren</li><li>${check}Bis zu ${FREE_STENCILS} Stencils gesichert, auf allen Geräten</li><li>${check}Flashes per Link teilen</li></ul>
+        <input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="Deine E-Mail-Adresse">
+        <div class="stack"><button class="btn primary wide" id="acctSend">Anmeldelink senden</button><button class="btn ghost wide" data-close>Später</button></div>
+        <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.</span></div>`;
+  } else {
+    await refreshQuota().catch(() => {});
+    const unl = unlimited(), left = ACC.freeLeft ?? FREE_MOTIFS, saved = FL.items.filter(f => f.cloud).length;
+    html = `<h3>Dein Konto</h3><p class="dim" style="margin:0">${esc(ACC.user.email || "")}</p>
+      <div class="acct-quota">${unl ? `<div class="acct-row"><span>Unlimited</span><span class="dim">aktiv</span></div>`
+        : `<div class="acct-row"><span>Freie Motive diesen Monat</span><span>${left} von ${FREE_MOTIFS}</span></div><div class="bar"><i style="width:${left / FREE_MOTIFS * 100}%"></i></div>`}
+        <div class="acct-row"><span class="dim">Tokens</span><span>${ACC.tokens}</span></div>
+        <div class="acct-row"><span class="dim">Gesicherte Stencils</span><span>${saved}${unl || ACC.tokens ? "" : ` von ${FREE_STENCILS}`}</span></div></div>
+      ${reason === "quota" ? `<p style="margin:0">Deine freien Motive für diesen Monat sind aufgebraucht. Bereits angeprobierte Motive kannst du weiter frei verwenden.</p>` : ""}
+      <div class="stack"><button class="btn primary wide" disabled>Tokens & Unlimited – bald</button><button class="btn ghost wide" id="acctOut">Abmelden</button><button class="btn ghost wide" data-close>Schließen</button></div>`;
+  }
+  box.innerHTML = `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Konto">${html}</div>`;
+  box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
+  $("#acctAgain")?.addEventListener("click", () => { ACC.sentTo = ""; acctSheet(reason); });
+  $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; close(); status("Abgemeldet", "ok"); });
+  const send = $("#acctSend");
+  if (send) {
+    const mail = $("#acctMail"); mail.focus();
+    mail.onkeydown = e => { if (e.key === "Enter") send.click(); };
+    send.onclick = async () => {
+      const email = mail.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { mail.focus(); return; }
+      send.disabled = true; send.textContent = "Wird gesendet …";
+      const c = await sb(); const { error } = c ? await c.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } }) : { error: new Error("offline") };
+      if (error) { send.disabled = false; send.textContent = "Nochmal versuchen"; console.warn("otp", error); status(/rate/i.test(error.message) ? "Zu viele Versuche · kurz warten" : "Link konnte nicht gesendet werden", "err"); return; }
+      ACC.sentTo = email; acctSheet(reason);
+    };
+  }
+}
+$("#acctBtn").onclick = () => acctSheet();
+
+// Gesicherte Stencils: Bilder privat im Speicher unter <user-id>/<stencil-id>/…, Daten in der Tabelle „stencils“.
+// Die App bleibt „lokal zuerst“: alles liegt im Gerät, die Cloud ist die Sicherung und gleicht zwischen Geräten ab.
+const isUuid = id => /^[0-9a-f-]{36}$/i.test(id);
+async function cloudPush(f) {
+  const c = await sb(); if (!c || !ACC.user || !isUuid(f.id)) return false;
+  const base = `${ACC.user.id}/${f.id}/`, up = async (k, name) => { if (!f[k]) return null; const path = base + name;
+    const { error } = await c.storage.from("stencils").upload(path, f[k], { upsert: true, contentType: f[k].type || "image/png" }); if (error) throw error; return path; };
+  const row = { id: f.id, name: f.name || "Flash", w: f.w || null, h: f.h || null, style: f.style || null, bg: f.bg ?? null, pos: f.pos || null, motif_hash: f.hash || null, updated_at: new Date().toISOString() };
+  const { data: exists } = await c.from("stencils").select("id").eq("id", f.id).maybeSingle();
+  if (!exists) { const { error } = await c.from("stencils").insert({ ...row, image_path: base + "image.png" }); if (error) throw error; } // Limit prüft die Datenbank
+  row.image_path = await up("blob", "image.png"); row.sticker_path = await up("sticker", "sticker.png"); row.src_path = await up("src", "src.jpg"); row.mask_path = await up("mask", "mask.png");
+  const { error } = await c.from("stencils").update(row).eq("id", f.id); if (error) throw error;
+  f.cloud = true; await putFlash(f); return true;
+}
+async function cloudDelete(id) {
+  const c = await sb(); if (!c || !ACC.user || !isUuid(id)) return;
+  const base = `${ACC.user.id}/${id}/`;
+  await c.storage.from("stencils").remove(["image.png", "sticker.png", "src.jpg", "mask.png"].map(n => base + n)).catch(() => {});
+  await c.from("stencils").delete().eq("id", id);
+}
+async function cloudSync() { // einmal pro Sitzung: fehlende Stencils holen, lokale (noch nicht gesicherte) hochladen
+  const c = await sb(); if (!c || !ACC.user || ACC.synced) return false; ACC.synced = true;
+  const { data: rows, error } = await c.from("stencils").select("*"); if (error) { console.warn("sync", error); ACC.synced = false; return false; }
+  const have = new Map(FL.items.map(f => [f.id, f])); let changed = false;
+  for (const r of rows) {
+    const local = have.get(r.id); if (local) { if (!local.cloud) { local.cloud = true; await putFlash(local); } continue; }
+    const get = async p => { if (!p) return null; const { data } = await c.storage.from("stencils").download(p); return data || null; };
+    const rec = { id: r.id, name: r.name, created: Date.parse(r.created_at) || Date.now(), w: r.w, h: r.h, style: r.style, bg: r.bg, pos: r.pos, hash: r.motif_hash, cloud: true,
+      blob: await get(r.image_path), sticker: await get(r.sticker_path), src: await get(r.src_path), mask: await get(r.mask_path) };
+    if (rec.blob) { await putFlash(rec); changed = true; }
+  }
+  const ids = new Set(rows.map(r => r.id));
+  for (const f of FL.items) if (isUuid(f.id) && !ids.has(f.id)) {
+    try { await cloudPush(f); changed = true; } catch (e) { if (/free_limit/.test(e.message || "")) { status(`Free-Konto: ${FREE_STENCILS} Stencils gesichert, weitere bleiben auf diesem Gerät`, "ok"); break; } console.warn("push", e); }
+  }
+  return changed;
+}
+function cloudSave(f) { // nach Speichern/Bearbeiten im Hintergrund sichern
+  if (!ACC.user) return;
+  cloudPush(f).then(() => renderFlashes()).catch(e => status(/free_limit/.test(e.message || "") ? `Free-Konto: ${FREE_STENCILS} Stencils gesichert · dieses bleibt auf dem Gerät` : "Sichern gerade nicht möglich", /free_limit/.test(e.message || "") ? "ok" : "err"));
+}
+acctInit();
 
 window.__studio = { logoStencil, needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
