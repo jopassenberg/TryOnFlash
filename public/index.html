@@ -393,7 +393,7 @@
   .fl-dock #flSelInfo { min-width: 88px; text-align: center; color: var(--text-2); }
   .fl-dock .btn.primary { height: 40px; padding: 0 18px; background: var(--n-900); color: #fff; }
   .fl-dock .btn.primary:disabled { opacity: .35; }
-  @media (max-width: 680px) { .fl-dock { gap: 6px; max-width: calc(100vw - 16px); } .fl-dock #flSelInfo { min-width: 0; padding: 0 4px; } .fl-dock .btn.primary { padding: 0 14px; } }
+  @media (max-width: 680px) { .fl-dock { gap: 6px; max-width: calc(100vw - 16px); } .fl-dock #flSelInfo { display: none; } .fl-dock .btn.primary { padding: 0 14px; } } /* Handy: Anzahl steht im Teilen-Knopf */
   /* Großansicht eines Flashes: weiß, das Motiv groß, darunter runde Knöpfe */
   .fl-view { position: fixed; inset: 0; z-index: 20; display: grid; grid-template-rows: 1fr auto; gap: 20px; padding: 32px 24px max(24px, env(safe-area-inset-bottom)); background: #fff; animation: fade .25s var(--ease-out); }
   .fl-view .big { position: relative; min-height: 0; margin-bottom: -28px; } /* Knöpfe dürfen leicht über dem Stencil liegen */
@@ -519,7 +519,16 @@
     padding: max(var(--s4), env(safe-area-inset-top)) var(--s4) max(var(--s4), env(safe-area-inset-bottom)); background: oklch(97% .003 75 / .6);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: fadein .25s ease; }
   @keyframes fadein { from { opacity: 0; } }
-  .cutbox { width: min(940px, 100%); display: grid; gap: var(--s2); padding: var(--s2); color: var(--ink); background: var(--n-0); border-radius: var(--r-card); }
+  .cutbox { width: min(940px, 100%); display: grid; gap: var(--s3); padding: 0 var(--s2) var(--s3); color: var(--ink); background: var(--n-0); border-radius: var(--r-card); }
+  .cut-head { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: var(--s2) 0; background: var(--n-0); border-radius: var(--r-card) var(--r-card) 0 0; }
+  .cut-head .btn { height: 40px; padding: 0 16px; } .cut-head #cutCancel { justify-self: start; } .cut-head #cutOk { justify-self: end; }
+  .cut-title { font-weight: 400; font-size: 16px; letter-spacing: -.02em; }
+  .cut-secs { display: grid; gap: var(--s3); }
+  .cut-sec { display: grid; gap: var(--s2); padding: var(--s3); border-radius: 22px; background: var(--n-50); }
+  .cut-sec .sec-title { padding: 0 2px; font-size: 13px; color: var(--ink); } .cut-sec .sec-title .dim { color: var(--text-3); margin-left: 6px; }
+  .cut-row { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+  .cut-sec .sw.cut-bg { background: var(--n-0); }
+  .cut-sec .seg { background: var(--n-0); } .cut-sec .seg button[aria-pressed="true"] { background: var(--n-900); color: #fff; }
   .cutstage { position: relative; overflow: hidden; border-radius: calc(var(--r-card) - var(--s2)); height: min(68vh, 680px); height: min(64dvh, 680px); touch-action: none;
     background: var(--n-100) radial-gradient(circle at center, oklch(19% .003 75 / .09) 1px, transparent 1.4px) 0 0 / 16px 16px; }
   #cutCanvas { position: absolute; left: 50%; top: 50%; display: block; touch-action: none; transform-origin: center; }
@@ -530,27 +539,24 @@
   .cuttools { position: absolute; z-index: 4; top: var(--s3); right: var(--s3); display: flex; gap: var(--s1); padding: 4px; border-radius: var(--r-full); background: var(--glass-light); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .cuttools .btn { width: 36px; height: 36px; background: var(--fill); }
   .cuttools .btn:hover { background: var(--fill); }
-  .cutbox > .panel { padding: var(--s1); row-gap: var(--s2); }
-  .looks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); padding: 0 var(--s1); }
+  .looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: var(--s2); }
   /* Schachbrett zeigt, dass der Hintergrund wirklich weg (durchsichtig) ist */
   .cut.no-bg .cutstage { background-color: #fff;
     background-image: conic-gradient(oklch(92% .003 75) 25%, transparent 0 50%, oklch(92% .003 75) 0 75%, transparent 0); background-size: 16px 16px; }
-  .sec-title { padding: var(--s1) var(--s2) 0; font-size: 13px; color: var(--text-2); }
-  .sec-title .dim { color: var(--text-3); margin-left: 6px; }
+
   .quickbar { display: none; justify-items: center; gap: 2px; padding: var(--s3) var(--s2) var(--s1); text-align: center; font-size: 15px; }
   .quickbar .dim { font-size: 13px; color: var(--text-3); }
   .sel-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; background: oklch(80% .24 135); box-shadow: 0 0 0 2px oklch(19% .003 75 / .15); }
-  .cutbox > .sw.cut-bg { margin: 0 var(--s1); }
+
   /* Schnellansicht: nur Ergebnis + Anpassen/Übernehmen; Werkzeuge erst nach „Anpassen“ */
   .cut.quick .quickbar { display: grid; }
-  .cut.quick .looks, .cut.quick .sec-title, .cut.quick .panel:has(#cutTools) .group:first-child, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
+  .cut.quick .sec-sel, .cut.quick .sec-look, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
   .cut:not(.quick) #cutEdit { display: none; }
-  .looks button { display: grid; justify-items: center; gap: 6px; padding: 6px 6px 8px; border-radius: 20px; font-size: 13px; color: var(--text-2); background: var(--fill); transition: background-color .2s, color .2s, transform .3s var(--spring); }
+  .looks button { display: grid; justify-items: center; gap: 6px; padding: 6px 6px 8px; border-radius: 20px; font-size: 13px; color: var(--text-2); background: var(--n-0); transition: background-color .2s, color .2s, transform .3s var(--spring); }
   .looks button:active { transform: scale(.96); }
   .looks canvas { width: 100%; max-width: 72px; aspect-ratio: 1; border-radius: 14px; background: #f4f3f0; }
   .looks button[aria-checked="true"] { background: var(--n-900); color: #fff; }
   .looks span { font-size: 12px; line-height: 1.2; text-align: center; hyphens: none; text-wrap: balance; }
-  .cutbox > .panel .group.end { margin-left: auto; }
   .seg { display: inline-flex; gap: 2px; padding: 4px; height: var(--h); border-radius: var(--r-full); background: var(--fill); }
   .seg button { padding: 0 var(--s4); border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-2); }
   .seg button .ic { width: 16px; height: 16px; }
@@ -656,18 +662,15 @@
     .card > .panel .group:first-child { flex: 1; min-width: 0; }
     #panelCam { left: 0; right: 0; transform: none; }
     .thumbs { max-width: 100%; }
-    .cut { padding: max(var(--s2), env(safe-area-inset-top)) var(--s2) max(var(--s2), env(safe-area-inset-bottom)); place-items: start center; }
-    .cutbox { margin: auto 0; }
-    .cutstage { height: 52vh; height: 52dvh; min-height: 260px; }
-    .cutbox .panel .group { width: 100%; }
-    .cutbox .panel .group.end > .btn { flex: 1; }
+    /* Handy: Editor füllt den Bildschirm, Kopfzeile bleibt oben stehen, unten Platz für die Safari-Leiste */
+    .cut { padding: 0; place-items: start stretch; background: var(--n-0); }
+    .cutbox { width: 100%; min-height: 100dvh; border-radius: 0; padding: 0 var(--s2) calc(var(--s6) + env(safe-area-inset-bottom)); align-content: start; }
+    .cut-head { border-radius: 0; padding-top: max(var(--s2), env(safe-area-inset-top)); }
+    .cutstage { height: 50vh; height: 50dvh; min-height: 260px; }
     .size { flex: 1 1 100%; width: auto; }
-    .cutbox, .cutbox > .panel { min-width: 0; }
-    .cutbox .panel .group:first-child { flex-wrap: wrap; }
+    .cutbox { min-width: 0; }
     .cutbox .seg { width: 100%; }
     .cutbox .seg button { flex: 1; justify-content: center; padding: 0 var(--s2); white-space: nowrap; font-size: 13px; }
-    .cutbox .panel .group.end { flex-wrap: wrap; }
-    .cutbox .panel .group.end > .sw { flex: 1 1 100%; }
     .cutstage .status { max-width: calc(100% - 120px); }
     .cutstage .status #cutHint { overflow: hidden; text-overflow: ellipsis; }
   }
@@ -943,7 +946,7 @@
     <div class="fl-dock" id="flDock" hidden>
       <button class="rb" id="flSelCancel" aria-label="Auswahl beenden"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
       <span id="flSelInfo"></span><button class="fl-all" id="flAll">Alle</button>
-      <button class="btn primary" id="flShare" disabled><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Link teilen</button></div>
+      <button class="btn primary" id="flShare" disabled><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Link teilen<span id="flShareN"></span></button></div>
     <input type="file" id="flashInput" accept="image/*" hidden>
   </section>
   <div id="flSheet"></div>
@@ -951,7 +954,13 @@
 
 
   <div class="cut" id="cut" hidden>
-    <div class="cutbox">
+    <div class="cutbox" role="dialog" aria-labelledby="cutTitle">
+      <!-- Kopfzeile: Abbrechen und Übernehmen immer sichtbar, nie unter der Browser-Leiste -->
+      <div class="cut-head">
+        <button class="btn ghost" id="cutCancel">Abbrechen</button>
+        <b class="cut-title" id="cutTitle">Motiv</b>
+        <button class="btn primary" id="cutOk">Übernehmen</button>
+      </div>
       <div class="cutstage" id="cutStage">
         <canvas id="cutCanvas"></canvas>
         <canvas class="loupe" id="loupe" hidden aria-hidden="true"></canvas>
@@ -961,33 +970,29 @@
           <button class="btn icon" id="cutFit" title="Einpassen" aria-label="Einpassen"><svg class="ic" aria-hidden="true"><use href="#i-center-to-fit"/></svg></button>
         </div>
       </div>
-      <!-- Schnellansicht nach dem Hochladen: das automatisch ausgeschnittene Motiv, darunter Anpassen / Übernehmen -->
-      <div class="quickbar" id="cutQuick"><span><i class="sel-swatch"></i>Grün umrandet = erkanntes Motiv</span><span class="dim">Alles außerhalb fällt weg. Passt es nicht? Anpassen.</span></div>
-      <!-- Hintergrund: zwei Bilder statt Schalter, damit man sieht, was passiert -->
-      <button class="sw cut-bg" id="cutBg" role="switch" aria-checked="true"><span class="t">Hintergrund entfernen<small>Papier oder Haut um das Motiv wird durchsichtig</small></span><span class="track"></span></button>
-      <!-- Stil: jede Option zeigt sofort, wie das Motiv damit aussieht -->
-      <div class="sec-title">Stil <span class="dim" id="lookDesc"></span></div>
-      <div class="looks" id="cutLook" role="radiogroup" aria-label="Stil">
-        <button data-style="orig" role="radio" aria-checked="true"><canvas width="96" height="96"></canvas><span>Original</span></button>
-        <button data-style="gray" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Graustufen</span></button>
-        <button data-style="clean" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Ohne Schatten</span></button>
-        <button data-style="lines" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Nur Linien</span></button>
+      <!-- Schnellansicht nach dem Hochladen: Ergebnis, Hintergrund-Schalter, „Anpassen“ für alles Weitere -->
+      <div class="quickbar" id="cutQuick"></div>
+      <div class="cut-secs">
+        <section class="cut-sec sec-sel"><div class="sec-title">Auswahl <span class="dim">Was gehört zum Motiv?</span></div>
+          <div class="cut-row">
+            <div class="seg" id="cutTools">
+              <button data-tool="lasso" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg>Lasso</button>
+              <button data-tool="erase" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg>Radierer</button>
+              <button data-tool="paint" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-paint-brush"/></svg>Pinsel</button>
+            </div>
+            <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
+          </div></section>
+        <section class="cut-sec sec-bg"><div class="sec-title">Hintergrund</div>
+          <button class="sw cut-bg" id="cutBg" role="switch" aria-checked="true"><span class="t">Hintergrund entfernen<small>Papier oder Haut um das Motiv wird durchsichtig</small></span><span class="track"></span></button></section>
+        <section class="cut-sec sec-look" id="secLook"><div class="sec-title">Stil <span class="dim" id="lookDesc"></span></div>
+          <div class="looks" id="cutLook" role="radiogroup" aria-label="Stil">
+            <button data-style="orig" role="radio" aria-checked="true"><canvas width="96" height="96"></canvas><span>Original</span></button>
+            <button data-style="gray" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Graustufen</span></button>
+            <button data-style="clean" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Ohne Schatten</span></button>
+            <button data-style="lines" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Nur Linien</span></button>
+          </div></section>
       </div>
-      <div class="panel">
-        <div class="group">
-          <div class="seg" id="cutTools">
-            <button data-tool="lasso" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg>Lasso</button>
-            <button data-tool="erase" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg>Radierer</button>
-            <button data-tool="paint" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-paint-brush"/></svg>Pinsel</button>
-          </div>
-          <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
-        </div>
-        <div class="group end">
-          <button class="btn ghost" id="cutCancel">Abbrechen</button>
-          <button class="btn soft" id="cutEdit">Anpassen</button>
-          <button class="btn primary" id="cutOk">Übernehmen</button>
-        </div>
-      </div>
+      <button class="btn soft wide" id="cutEdit">Anpassen</button>
     </div>
   </div>
   <input type="file" id="photoInput" accept="image/*" hidden>
@@ -1956,7 +1961,7 @@ function loadMotif(file) {
 function openCut(c, opts = {}) {
   Object.assign(CUT, { img: c, ink: null, mask: canvasOf(c.width, c.height), comp: canvasOf(c.width, c.height), hasMask: false, dirty: true,
     opaque: isOpaque(c), hist: [], path: null, drawing: false, zoom: 1, px: 0, py: 0, ptrs: new Map(), pinch: null,
-    look: "color", shade: true, lookKey: "", lookCanvas: null, onDone: opts.onDone || null });
+    look: "color", shade: true, lookKey: "", lookCanvas: null, paper: null, onDone: opts.onDone || null });
   setStyle("orig");
   $("#cutOk").textContent = opts.okLabel || "Übernehmen";
   if (opts.restore) { // gespeichertes Flash bearbeiten: Auswahl, Stil und Hintergrund wie beim letzten Mal
@@ -1965,11 +1970,12 @@ function openCut(c, opts = {}) {
     if (R.style) setStyle(R.style);
     $("#cutHint").textContent = "Auswahl anpassen: Lasso, Radierer, Pinsel";
   } else if (CUT.opaque && CUT.bg && autoMask()) $("#cutHint").textContent = "Motiv erkannt · mit Lasso oder Radierer anpassen";
-  $("#cutQuick").innerHTML = CUT.hasMask ? `<span><i class="sel-swatch"></i>Grün umrandet = erkanntes Motiv</span><span class="dim">Alles außerhalb fällt weg. Passt es nicht? Anpassen.</span>`
-    : `<span>Ganzes Bild</span><span class="dim">Nur einen Teil? Unter „Anpassen“ mit dem Lasso auswählen.</span>`;
+  $("#cutQuick").innerHTML = CUT.hasMask ? `<span><i class="sel-swatch"></i>Grün umrandet = erkanntes Motiv</span><span class="dim">Alles außerhalb fällt weg.</span>`
+    : `<span>Ganzes Bild</span><span class="dim">Nur einen Teil? Mit „Anpassen“ per Lasso auswählen.</span>`;
+  $("#cutTitle").textContent = opts.restore ? "Motiv bearbeiten" : "Motiv";
   cutC.width = c.width; cutC.height = c.height;
-  $("#cutBg").hidden = !CUT.opaque; setBg(CUT.bg);
-  CUT.quick = !opts.restore; $("#cut").classList.toggle("quick", CUT.quick);
+  $("#cutBg").closest(".cut-sec").hidden = !CUT.opaque; setBg(CUT.bg);
+  CUT.quick = !opts.restore; $("#cut").classList.toggle("quick", CUT.quick); showStyles();
   lookThumbs();
   const hint = $("#cutHint").textContent; $("#cut").hidden = false; setTool("lasso"); if (CUT.hasMask) $("#cutHint").textContent = hint; fitCut();
   cancelAnimationFrame(CUT.raf);
@@ -2006,13 +2012,43 @@ function zoomAt(f, cx, cy) { // keep the stage point (cx, cy) fixed while zoomin
 $("#cutFit").onclick = fitCut;
 new ResizeObserver(() => { if (!$("#cut").hidden && CUT.img) fitCut(); }).observe(cutStage);
 
-function source() { // what the motif is made of: the ink without background, or the image as it is
-  let base = CUT.img;
-  if (CUT.bg && CUT.opaque) { if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas; base = CUT.ink; }
-  if (CUT.look === "color" && CUT.shade) return base;
-  const key = (base === CUT.ink ? "ink" : "img") + CUT.look + CUT.shade;
-  if (CUT.lookKey !== key) { CUT.lookCanvas = applyLook(base, CUT.look, CUT.shade); CUT.lookKey = key; }
+// Woraus das Motiv besteht. Der Stil verändert nur die Tinte; ob der Hintergrund bleibt, entscheidet allein der
+// Schalter. Bleibt er, liegt die veränderte Tinte wieder auf dem Papier (seiner Farbe), statt dass der Stil ihn wegnimmt.
+const inkOf = () => CUT.opaque ? (CUT.ink ||= extract(CUT.img, null, true).canvas) : CUT.img;
+function paperColor(img) { // Farbe des Hintergrunds: Median der Randpixel
+  const k = Math.min(1, 120 / Math.max(img.width, img.height)), w = Math.max(4, Math.round(img.width * k)), h = Math.max(4, Math.round(img.height * k));
+  const c = canvasOf(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, px = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!x || !y || x === w - 1 || y === h - 1) { const i = (y * w + x) * 4; px.push([d[i], d[i + 1], d[i + 2], d[i] + d[i + 1] + d[i + 2]]); }
+  px.sort((a, b) => a[3] - b[3]); const m = px[px.length >> 1]; return `rgb(${m[0]},${m[1]},${m[2]})`;
+}
+function source() {
+  const removeBg = CUT.bg && CUT.opaque, orig = CUT.look === "color" && CUT.shade;
+  if (orig) return removeBg ? inkOf() : CUT.img;
+  const key = (removeBg ? "ink" : "paper") + CUT.look + CUT.shade;
+  if (CUT.lookKey !== key) {
+    let out = applyLook(inkOf(), CUT.look, CUT.shade);
+    if (!removeBg && CUT.opaque) { const c = canvasOf(out.width, out.height), g = c.getContext("2d"); g.fillStyle = CUT.paper ||= paperColor(CUT.img); g.fillRect(0, 0, c.width, c.height); g.drawImage(out, 0, 0); out = c; }
+    CUT.lookCanvas = out; CUT.lookKey = key;
+  }
   return CUT.lookCanvas;
+}
+// Welche Stile beim Motiv überhaupt etwas ändern: Graustufen nur bei Farbe, „Ohne Schatten“ nur bei Schattierung,
+// „Nur Linien“ nur, wenn es Farbe oder Schattierung gibt. Schwarz auf Weiß: keine Stil-Auswahl, weil alle gleich aussähen.
+function usefulStyles() {
+  const src = inkOf(), k = Math.min(1, 200 / Math.max(src.width, src.height)), w = Math.max(2, Math.round(src.width * k)), h = Math.max(2, Math.round(src.height * k));
+  const c = canvasOf(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data; let ink = 0, col = 0, shd = 0;
+  for (let i = 0; i < d.length; i += 4) { const a = d[i + 3] / 255; if (a < .05) continue; ink++;
+    const l = (.299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]) / 255, ch = (Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2])) / 255;
+    if (ch > .2 && a > .5) col++; if (a < .6 || (l > .32 && ch < .18 && a < .9)) shd++; }
+  const color = ink && col / ink > .02, shade = ink && shd / ink > .04;
+  return { orig: true, gray: color, clean: shade, lines: color || shade };
+}
+function showStyles() {
+  const ok = usefulStyles(); if (CUT.style && !ok[CUT.style]) ok[CUT.style] = true; // gespeicherter Stil bleibt sichtbar
+  document.querySelectorAll("#cutLook button").forEach(b => b.hidden = !ok[b.dataset.style]);
+  $("#secLook").hidden = Object.values(ok).filter(Boolean).length < 2;
 }
 // Farbe: wie es ist · Schwarz-Weiß: Graustufen · Nur Schwarz: nur die dunkle Linienarbeit, als sattes Schwarz.
 // Schattierung aus: weiche, halbtransparente oder mittelgraue Tinte (Schatten, Punkte) fällt weg.
@@ -2039,7 +2075,7 @@ function setStyle(s) {
 }
 document.querySelectorAll("#cutLook button").forEach(b => b.onclick = () => setStyle(b.dataset.style));
 function lookThumbs() { // kleine Vorschau je Stil, aus dem Motiv (mit Auswahl, falls schon eine da ist)
-  let base = CUT.img; if (CUT.bg && CUT.opaque) { if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas; base = CUT.ink; }
+  const base = inkOf();
   const k = 160 / Math.max(base.width, base.height), w = Math.max(1, Math.round(base.width * k)), h = Math.max(1, Math.round(base.height * k)), sm = canvasOf(w, h), sg = sm.getContext("2d");
   sg.drawImage(base, 0, 0, w, h);
   if (CUT.hasMask) { sg.globalCompositeOperation = "destination-in"; sg.drawImage(CUT.mask, 0, 0, w, h); }
@@ -2179,7 +2215,7 @@ cutStage.addEventListener("wheel", e => {
 }, { passive: false });
 function setBg(on) { CUT.bg = on; CUT.dirty = true; $("#cut").classList.toggle("no-bg", on && CUT.opaque); $("#cutBg").setAttribute("aria-checked", on); }
 $("#cutBg").onclick = () => { setBg(!CUT.bg); lookThumbs(); };
-$("#cutEdit").onclick = () => { CUT.quick = false; $("#cut").classList.remove("quick"); fitCut(); };
+$("#cutEdit").onclick = () => { CUT.quick = false; $("#cut").classList.remove("quick"); $("#cutTitle").textContent = "Motiv bearbeiten"; lookThumbs(); fitCut(); };
 $("#cutCancel").onclick = closeCut;
 $("#cutOk").onclick = () => {
   const src = source(), r = canvasOf(src.width, src.height), g = r.getContext("2d");
@@ -3128,9 +3164,9 @@ function renderFlashes() {
   $("#flashesView").classList.toggle("selecting", FL.selecting); $("#flSelect").setAttribute("aria-pressed", FL.selecting);
   layoutFlashes();
   $("#flDock").hidden = !FL.selecting;
-  $("#flSelInfo").textContent = `${FL.sel.size} ausgewählt`; $("#flShare").disabled = !FL.sel.size;
+  $("#flSelInfo").textContent = FL.sel.size ? `${FL.sel.size} ausgewählt` : "Flashes antippen"; $("#flShare").disabled = !FL.sel.size; $("#flShareN").textContent = FL.sel.size ? ` · ${FL.sel.size}` : "";
   $("#flSelect").querySelector("span").textContent = FL.selecting ? "Fertig" : "Auswählen";
-  $("#flAll").textContent = n && FL.sel.size === n ? "Keine" : "Alle";
+  $("#flAll").textContent = n && FL.sel.size === n ? "Auswahl aufheben" : "Alle auswählen";
   $("#flLinksBtn").hidden = !FL.links.length; $("#flLinksN").textContent = FL.links.length;
   for (const f of FL.items) if (!f.sticker) ensureSticker(f).then(renderFlashes).catch(e => console.warn("sticker", e));
 }
