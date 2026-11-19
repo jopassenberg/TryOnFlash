@@ -595,10 +595,12 @@
   .ft .lsw { background: oklch(100% 0 0 / .1); }
   .ft-brand p { margin: 0; font-size: 15px; color: oklch(100% 0 0 / .5); }
   .ft-links { display: flex; flex-wrap: wrap; gap: 10px 28px; font-size: 15px; }
-  .ft-links a, .ft-links button { color: #fff; text-decoration: none; opacity: .85; transition: opacity var(--fast); font: inherit; letter-spacing: inherit; }
-  .ft-links a:hover, .ft-links button:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+  .ft-links { gap: 4px 6px; margin: 0 -12px; }
+  .ft-links a, .ft-links button { padding: 7px 12px; border-radius: var(--r-full); color: oklch(100% 0 0 / .7); text-decoration: none; font: inherit; letter-spacing: inherit; transition: color .2s, background-color .2s; }
+  .ft-links a:hover, .ft-links button:hover { color: #fff; background: oklch(100% 0 0 / .09); }
+  .ft-links a:focus-visible, .ft-links button:focus-visible { outline: none; color: #fff; background: oklch(100% 0 0 / .09); }
   .ft-bottom { display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid oklch(100% 0 0 / .1); font-size: 13px; color: oklch(100% 0 0 / .45); }
-  @media (max-width: 680px) { .ft-in { padding: 36px 20px max(24px, env(safe-area-inset-bottom)); gap: 28px; } .ft-links { gap: 12px 22px; } }
+  @media (max-width: 680px) { .ft-in { padding: 36px 20px max(24px, env(safe-area-inset-bottom)); gap: 28px; } }
 
   /* ---------- Handy: die Karte füllt den Bildschirm ---------- */
   @media (max-width: 680px) {

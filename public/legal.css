@@ -39,9 +39,11 @@ body { padding-bottom: 0; }
 .ft-logo { height: 22px; width: auto; display: block; }
 .ft-brand p { margin: 0; font-size: 15px; color: oklch(100% 0 0 / .5); }
 .ft-links { display: flex; flex-wrap: wrap; gap: 10px 28px; font-size: 15px; }
-.ft-links a { color: #fff; text-decoration: none; opacity: .85; } .ft-links a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+.ft-links { gap: 4px 6px; margin: 0 -12px; }
+.ft-links a { padding: 7px 12px; border-radius: 999px; color: oklch(100% 0 0 / .7); text-decoration: none; transition: color .2s, background-color .2s; }
+.ft-links a:hover, .ft-links a:focus-visible { outline: none; color: #fff; background: oklch(100% 0 0 / .09); }
 .ft-bottom { display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid oklch(100% 0 0 / .1); font-size: 13px; color: oklch(100% 0 0 / .45); }
 .ft .lsw { background: oklch(100% 0 0 / .1); }
 .ft .lsw-thumb { background: #fff; }
 .ft .lsw button { color: oklch(100% 0 0 / .6); } .ft .lsw button[aria-checked="true"] { color: var(--ink); }
-@media (max-width: 680px) { .ft-in { padding: 36px 20px max(24px, env(safe-area-inset-bottom)); gap: 28px; } .ft-links { gap: 12px 22px; } }
+@media (max-width: 680px) { .ft-in { padding: 36px 20px max(24px, env(safe-area-inset-bottom)); gap: 28px; } }
