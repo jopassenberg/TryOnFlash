@@ -371,6 +371,12 @@
     height: 52px; padding: 6px; border-radius: 26px; background: oklch(95% .003 75 / .92); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     color: var(--ink); font-size: 14px; white-space: nowrap; animation: dock-in .45s var(--spring) both; }
   .fl-dock .rb { width: 40px; height: 40px; background: oklch(19% .003 75 / .07); }
+  .fl-dock .fl-all { height: 40px; padding: 0 14px; border-radius: 20px; background: oklch(19% .003 75 / .07); font-size: 14px; }
+  .fl-selbtn { height: 48px; padding: 0 18px 0 14px; border-radius: var(--r-full); display: inline-flex; align-items: center; gap: 8px; background: var(--gb); color: var(--ink); font-size: 14px; transition: background-color .2s, transform .3s var(--spring); }
+  .fl-selbtn .ic { width: 16px; height: 16px; } .fl-selbtn:active { transform: scale(.95); }
+  .fl-selbtn[aria-pressed="true"] { background: var(--n-900); color: #fff; }
+  .fl-selbtn { white-space: nowrap; hyphens: none; }
+  @media (max-width: 680px) { .fl-selbtn { height: 42px; padding: 0 14px; } .fl-selbtn .ic { display: none; } }
   .fl-dock #flSelInfo { min-width: 88px; text-align: center; color: var(--text-2); }
   .fl-dock .btn.primary { height: 40px; padding: 0 18px; background: var(--n-900); color: #fff; }
   .fl-dock .btn.primary:disabled { opacity: .35; }
@@ -652,7 +658,7 @@
     <div class="fl-tools">
       <button class="rb" id="flLinksBtn" hidden aria-label="Geteilte Links"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg><span class="badge" id="flLinksN"></span></button>
       <button class="rb" id="flTidy" hidden aria-label="Neu anordnen" title="Neu anordnen"><svg class="ic" aria-hidden="true"><use href="#i-center-to-fit"/></svg></button>
-      <button class="rb" id="flSelect" hidden aria-pressed="false" aria-label="Auswählen zum Teilen"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg></button>
+      <button class="fl-selbtn" id="flSelect" hidden aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg><span>Auswählen</span></button>
       <button class="rb main" id="flUpload" aria-label="Flashes hochladen"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></button>
     </div>
     <nav class="tabbar" aria-label="Bereiche">
@@ -740,7 +746,7 @@
     <div class="fl-board" id="flBoard"><div class="fl-grid" id="flGrid"></div></div>
     <div class="fl-dock" id="flDock" hidden>
       <button class="rb" id="flSelCancel" aria-label="Auswahl beenden"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
-      <span id="flSelInfo"></span>
+      <span id="flSelInfo"></span><button class="fl-all" id="flAll">Alle</button>
       <button class="btn primary" id="flShare" disabled><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>Link teilen</button></div>
     <input type="file" id="flashInput" accept="image/*" hidden>
   </section>
@@ -2870,6 +2876,8 @@ function renderFlashes() {
   layoutFlashes();
   $("#flDock").hidden = !FL.selecting;
   $("#flSelInfo").textContent = `${FL.sel.size} ausgewählt`; $("#flShare").disabled = !FL.sel.size;
+  $("#flSelect").querySelector("span").textContent = FL.selecting ? "Fertig" : "Auswählen";
+  $("#flAll").textContent = n && FL.sel.size === n ? "Keine" : "Alle";
   $("#flLinksBtn").hidden = !FL.links.length; $("#flLinksN").textContent = FL.links.length;
   for (const f of FL.items) if (!f.sticker) ensureSticker(f).then(renderFlashes).catch(e => console.warn("sticker", e));
 }
@@ -2914,6 +2922,8 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
       g = { pinch: true, d: Math.hypot(b.x - a.x, b.y - a.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, z: VIEW.z, x: VIEW.x, y: VIEW.y }; return; }
     const tile = e.target.closest(".fl-tile");
     g = { tile, sx: e.clientX, sy: e.clientY, vx: VIEW.x, vy: VIEW.y, moved: false, t0: performance.now(), slop: e.pointerType === "mouse" ? 5 : 12, l: tile ? parseFloat(tile.style.left) : 0, t: tile ? parseFloat(tile.style.top) : 0 };
+    if (tile && !FL.selecting) { const G0 = g; G0.lp = setTimeout(() => { // lange drücken: Auswahl starten, dieses Stencil ist gleich dabei
+      if (g !== G0 || G0.moved) return; G0.longDone = true; FL.selecting = true; FL.sel = new Set([tile.dataset.id]); navigator.vibrate?.(12); renderFlashes(); }, 480); }
   });
   V.addEventListener("pointermove", e => {
     if (!P.has(e.pointerId) || !g) return; P.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -2921,7 +2931,7 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
       VIEW.z = g.z; VIEW.x = g.x; VIEW.y = g.y; zoomAt(g.z * d / g.d, g.mx, g.my); VIEW.x += (a.x + b.x) / 2 - g.mx; VIEW.y += (a.y + b.y) / 2 - g.my; applyView(); return; }
     const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
     if (!g.moved && Math.hypot(dx, dy) < g.slop) return;
-    g.moved = true;
+    g.moved = true; clearTimeout(g.lp);
     if (g.tile && !FL.selecting) { g.tile.classList.add("dragging"); g.tile.style.left = g.l + dx / VIEW.z + "px"; g.tile.style.top = g.t + dy / VIEW.z + "px"; }
     else { V.classList.add("panning"); VIEW.x = g.vx + dx; VIEW.y = g.vy + dy; applyView(); }
   });
@@ -2931,6 +2941,7 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
     if (g.pinch) { if (!P.size) g = null; return; }
     if (P.size) return;
     const G = g; g = null;
+    clearTimeout(G.lp); if (G.longDone) return;
     if (G.tile && !G.moved) { if (e.type === "pointercancel") return; const id = G.tile.dataset.id; FL.selecting ? toggleSel(id) : setTimeout(() => viewFlash(id), 0); return; }
     if (G.tile && G.moved && !FL.selecting) {
       G.tile.classList.remove("dragging");
@@ -2946,6 +2957,7 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
 }
 function toggleSel(id) { FL.sel.has(id) ? FL.sel.delete(id) : FL.sel.add(id); renderFlashes(); }
 $("#flSelect").onclick = () => { FL.selecting = !FL.selecting; if (!FL.selecting) FL.sel.clear(); renderFlashes(); };
+$("#flAll").onclick = () => { FL.sel = FL.sel.size === FL.items.length ? new Set() : new Set(FL.items.map(f => f.id)); renderFlashes(); };
 $("#flSelCancel").onclick = () => { FL.selecting = false; FL.sel.clear(); renderFlashes(); };
 $("#flUpload").onclick = $("#flUpload2").onclick = () => $("#flashInput").click();
 // Ein Bild pro Flash: erst wird das Motiv smart ausgestochen, dann öffnet der Editor zum Anpassen
