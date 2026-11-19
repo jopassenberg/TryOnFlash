@@ -51,7 +51,7 @@
 
   /* ---------- Layout: Kopfzeile, darunter eine große Karte ---------- */
   .shell { height: 100vh; height: 100dvh; padding: 0 var(--s5) var(--s4); display: grid; grid-template-rows: 72px 1fr; }
-  .top { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--s1); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 var(--s1); }
   /* Laptop/Tablet: der Rahmen steht mittig im Querformat 4 : 3 (wie eine Webcam), mit Weiß drumherum */
   @media (min-width: 681px) and (min-height: 521px) { /* nicht im Handy-Querformat (zu wenig Höhe) */
     /* unten so viel Platz wie die Kopfzeile oben: der Rahmen sitzt genau in der Mitte des Fensters */
@@ -92,8 +92,8 @@
   .drop.over { background: oklch(23% .003 75); }
   .drop img { max-width: 46%; max-height: 38%; margin-bottom: 48px; object-fit: contain; rotate: -5deg; animation: try-in .7s var(--spring) both; }
   @keyframes try-in { from { transform: translateY(14px) scale(.6) rotate(8deg); opacity: 0; } }
-  .try-x { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .1); color: #fff; }
-  .try-x .ic { width: 13px; height: 13px; }
+  .st-prev { display: flex; align-items: center; gap: 14px; } .st-prev img { width: 64px; height: 64px; object-fit: contain; border-radius: 16px; background: oklch(100% 0 0 / .06); padding: 6px; }
+  .st-prev span { font-size: 16px; } .set-group > .set-row > .ic { width: 16px; height: 16px; margin: 0; color: oklch(100% 0 0 / .55); }
   /* Kamera: das Motiv halbtransparent in der Mitte, damit man die Stelle anpeilen kann */
   .cam-ghost { position: absolute; left: 50%; top: 46%; width: 44%; max-height: 44%; object-fit: contain; translate: -50% -50%; opacity: .5; pointer-events: none; z-index: 2;
     animation: fade .4s var(--ease-out); }
@@ -152,8 +152,6 @@
   @media (hover: hover) { .cam-sq:hover, .cam-card:hover { background: var(--gd-hover); } }
   .cam-card img { display: none; width: 34px; height: 34px; object-fit: contain; } .cam-card.has img { display: block; } .cam-card.has .ic { display: none; }
   .cam-cardwrap { position: relative; display: inline-grid; }
-  .cam-cardwrap .try-x { position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; background: var(--frame); }
-  .cam-cardwrap .try-x .ic { width: 10px; height: 10px; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .cam-side { position: absolute; z-index: 5; right: 16px; bottom: calc(18px + 36px + 24px + 10px); display: none; flex-direction: column; gap: 10px; }
   .card:has(#panelCam:not([hidden])) .cam-side { display: flex; }
@@ -376,7 +374,7 @@
   .fl-selbtn .ic { width: 16px; height: 16px; } .fl-selbtn:active { transform: scale(.95); }
   .fl-selbtn[aria-pressed="true"] { background: var(--n-900); color: #fff; }
   .fl-selbtn { white-space: nowrap; hyphens: none; }
-  @media (max-width: 680px) { .fl-selbtn { height: 42px; padding: 0 14px; } .fl-selbtn .ic { display: none; } }
+  @media (max-width: 680px) { .fl-selbtn .ic { width: 17px; height: 17px; } }
   .fl-dock #flSelInfo { min-width: 88px; text-align: center; color: var(--text-2); }
   .fl-dock .btn.primary { height: 40px; padding: 0 18px; background: var(--n-900); color: #fff; }
   .fl-dock .btn.primary:disabled { opacity: .35; }
@@ -587,9 +585,10 @@
 
 
   /* ---------- Fußzeile (unter der Vollbild-App, beim Scrollen) ---------- */
+  @media (hover: none) and (pointer: coarse) { .ft:not(.open) { display: none; } } /* Handy: Vollbild bleibt Vollbild */
   .ft { background: var(--frame); color: #fff; box-shadow: 0 160px 0 var(--frame), 0 320px 0 var(--frame); }
   /* Überscrollen unten (iOS-Gummiband) zeigt Schwarz wie die Fußzeile, oben Weiß */
-  html { background: var(--frame); overscroll-behavior-y: none; } /* kein Gummiband; falls doch (ältere Browser): dunkel wie die Fußzeile */
+  html, body { overscroll-behavior: none; } html { background: var(--frame); } /* kein Gummiband; falls doch (ältere Browser): dunkel wie die Fußzeile */
   .ft-in { max-width: 1040px; margin: 0 auto; padding: 48px var(--s5) max(28px, env(safe-area-inset-bottom)); display: grid; gap: 36px; }
   .ft-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
   .ft-brand { display: grid; gap: 12px; } .ft-brand a { color: #fff; display: inline-flex; }
@@ -610,14 +609,13 @@
     .top { padding: 0 var(--s2); }
     .brand .logo { height: 17px; }
     .card { --frame-w: 5px; --r-outer: 40px; }
-    .top-r { gap: 6px; } .fl-tools { gap: 4px; }
+    .top { gap: 6px; } .top-r { gap: 4px; } .fl-tools { gap: 4px; }
     .fl-tools .rb { width: 42px; height: 42px; }
     .fl-tools .rb .ic { width: 15px; height: 15px; }
     /* Flashes-Kopfzeile ist voller (Auswählen, +, Einstellungen, Konto, Tabs): Marke nur als Zeichen, Knopf kompakter */
-    .shell[data-tab="flashes"] .brand { width: 17px; overflow: hidden; flex: none; margin-right: 8px; }
-    .shell[data-tab="flashes"] .tabbar button { width: 40px; }
-    .shell[data-tab="flashes"] .fl-selbtn { height: 42px; padding: 0 12px 0 10px; gap: 6px; }
-    .tabbar button { width: 44px; height: 36px; border-radius: 18px; }
+    .fl-selbtn { width: 40px; height: 40px; padding: 0; justify-content: center; } .fl-selbtn span { display: none; }
+    .fl-tools .rb { width: 40px; height: 40px; }
+    .tabbar button { width: 40px; height: 34px; border-radius: 17px; }
     .steps { height: 36px; }
     /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
     .card:has(#info:not([hidden])) .stage > .status { top: calc(56px + 44px + var(--s2)); }
@@ -725,7 +723,7 @@
   .sheet input.acct-mail::placeholder { color: oklch(100% 0 0 / .4); }
   .acct-perks { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; }
   .acct-perks li { display: flex; gap: 10px; align-items: center; } .acct-perks .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
-  @media (max-width: 680px) { .me-pill { padding: 3px; } .me-b { width: 36px; height: 36px; } .me-av { width: 28px; height: 28px; } .me-ring { width: 30px; height: 30px; } .acct[data-in="true"] .me-av { width: 22px; height: 22px; } }
+  @media (max-width: 680px) { .me-pill { padding: 3px; } .me-b { width: 34px; height: 34px; } .me-av { width: 28px; height: 28px; } .me-ring { width: 30px; height: 30px; } .acct[data-in="true"] .me-av { width: 22px; height: 22px; } }
   /* Code aus der Mail: 6 Kästchen; ein unsichtbares Feld darüber nimmt Tippen, Einfügen und iOS-Autofill an */
   .otp { --ok: oklch(84% .2 115); --bad: oklch(64% .21 27); position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 46px)); justify-content: center; gap: 8px; padding: 0 8px; }
   .otp-in { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; color: transparent; caret-color: transparent; background: none; z-index: 1; }
@@ -876,7 +874,7 @@
     <div class="panel" id="panelCam" hidden>
       <div class="group">
         <span class="cam-cardwrap"><button class="cam-card" id="tryHead" aria-label="Stencil aus den Flashes wählen"><img alt="" id="tryThumb"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg><span class="sr" id="tryName">Flash anprobieren</span></button>
-          <button class="try-x" id="tryX" aria-label="Stencil entfernen" hidden><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></span>
+</span>
         <button class="shutter" id="shoot" title="Foto aufnehmen" aria-label="Foto aufnehmen"></button>
         <button class="cam-sq" id="camGallery" title="Aus Galerie" aria-label="Aus Galerie"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg></button>
       </div>
@@ -1083,7 +1081,7 @@ setStep(1);
 
 /* ---------- 1 · Photo ---------- */
 $("#camGallery").onclick = () => $("#photoInput").click();
-$("#tryHead").onclick = () => { closeCam(); setTab("flashes"); }; // Stencil-Karte: aus den eigenen Flashes wählen
+$("#tryHead").onclick = () => pendingFlash ? stencilMenu() : (closeCam(), setTab("flashes")); // Stencil-Karte: ohne Stencil direkt zu den Flashes, sonst Menü
 $("#newPhoto").onclick = () => backToStart();
 $("#photoInput").onchange = e => { e.target.files[0] && loadPhoto(e.target.files[0]); e.target.value = ""; };
 const stage = $("#stage");
@@ -3470,8 +3468,26 @@ function clearTry() {
   pendingFlash = null; idb("handoff", "readwrite", s => s.delete("flash")).catch(() => {});
   $("#tryImg").hidden = true; $("#camGhost").hidden = true; setCard();
 }
-$("#tryX").onclick = () => { noDefault = true; clearTry(); };
-function setCard() { const on = !!pendingFlash; $("#tryHead").classList.toggle("has", on); $("#tryX").hidden = !on;
+// Menü der Stencil-Karte: bearbeiten (Editor mit Auswahl/Stil), anderen wählen, entfernen
+function stencilMenu() {
+  const box = $("#acctSheet"), close = () => closeSheet(box), name = $("#tryName").textContent.replace(/ anprobieren$/, "");
+  const ic = id => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  openSheet(box, `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Stencil">
+    ${sheetHead("Stencil")}
+    <div class="st-prev"><img alt="" src="${$("#tryThumb").src}"><span>${esc(name || "Flash")}</span></div>
+    <div class="set-group">
+      <button class="set-row" id="stEdit"><span>Bearbeiten</span>${ic("pen")}</button>
+      <button class="set-row" id="stSwap"><span>Anderen Stencil wählen</span>${ic("grid")}</button>
+      <button class="set-row danger" id="stDel"><span>Entfernen</span>${ic("trash-can")}</button>
+    </div></div>`);
+  box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
+  $("#stSwap").onclick = () => { close(); closeCam(); setTab("flashes"); };
+  $("#stDel").onclick = () => { close(); noDefault = true; clearTry(); };
+  $("#stEdit").onclick = () => { const c = pendingFlash, nm = name; close(); if (!c) return;
+    openCut(c, { okLabel: "Übernehmen", onDone: out => { pendingFlash = out; showTry(out, nm);
+      toBlob(out, "image/png").then(b => b.arrayBuffer()).then(buf => idb("handoff", "readwrite", st => st.put({ buf, type: "image/png", name: nm || "" }, "flash"))).catch(() => {}); } }); };
+}
+function setCard() { const on = !!pendingFlash; $("#tryHead").classList.toggle("has", on);
   $("#tryHead").setAttribute("aria-label", on ? $("#tryName").textContent + " · tippen zum Wechseln" : "Stencil aus den Flashes wählen"); }
 // Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel) im Linoldruck-Look. Statt gezeichneter
 // Risse und Kleckse entsteht alles aus Rauschen, wie beim echten Druck:
@@ -4032,6 +4048,17 @@ function feedbackMail() {
   return `mailto:studio@stencit.com?subject=${encodeURIComponent("Stencit Feedback")}&body=${encodeURIComponent(body)}`;
 }
 // Fußzeile: Sprache, Feedback-Mail mit Version, Warteliste
+// Auf dem Handy ist sie versteckt (die App bleibt Vollbild). Wer am Seitenende bewusst weiter nach oben zieht
+// (auf der Kopfzeile oder neben der Karte), holt sie herein; wieder ganz oben verschwindet sie.
+if (matchMedia("(hover: none) and (pointer: coarse)").matches) {
+  const ft = $(".ft"); let y0 = null;
+  addEventListener("touchstart", e => { y0 = e.target.closest(".stage, .flashes, .sheet, .sheet-bg, .cut, .fl-view, .ft") ? null : e.touches[0].clientY; }, { passive: true });
+  addEventListener("touchmove", e => {
+    if (y0 == null || ft.classList.contains("open")) return;
+    if (y0 - e.touches[0].clientY > 70) { y0 = null; ft.classList.add("open"); requestAnimationFrame(() => ft.scrollIntoView({ behavior: "smooth", block: "end" })); }
+  }, { passive: true });
+  addEventListener("scroll", () => { if (ft.classList.contains("open") && scrollY < 2) ft.classList.remove("open"); }, { passive: true });
+}
 $("#ftLang").innerHTML = langSwitch(getLang()); bindLang($("#ftLang"));
 $("#ftFeedback").href = feedbackMail();
 $("#ftApp").onclick = () => waitlistSheet();

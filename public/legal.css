@@ -6,8 +6,10 @@ body { background: #fff; color: var(--ink); font: 400 16px/1.6 "Plus Jakarta San
   max-width: 720px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left)) 48px; }
 [hidden] { display: none !important; }
 a { color: inherit; text-underline-offset: 3px; }
-.top { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.home { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-size: 18px; letter-spacing: -.03em; }
+/* Kopfzeile wie in der App: volle Breite, Logo exakt an derselben Stelle (28 px vom Rand, 18 px hoch) */
+.top { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 calc(50% - 50vw); padding: 0 28px; }
+.home { display: inline-flex; color: var(--ink); } .home .logo { height: 18px; width: auto; display: block; }
+@media (max-width: 680px) { .top { height: 60px; padding: 0 16px; } .home .logo { height: 17px; } }
 .lsw { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 999px; background: var(--fill); isolation: isolate; }
 .lsw-thumb { position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 999px; background: var(--ink); transition: translate .45s cubic-bezier(.34, 1.4, .64, 1); }
 .lsw[data-l="en"] .lsw-thumb { translate: 100% 0; }
@@ -28,7 +30,7 @@ li { margin: 4px 0; }
 code { font-size: 14px; padding: 1px 6px; border-radius: 6px; background: var(--fill); }
 .stand { margin-top: 36px; color: var(--dim); font-size: 14px; }
 /* schwarze Fußzeile wie in der App, über die volle Breite */
-html { overflow-x: clip; overscroll-behavior-y: none; }
+html { overflow-x: clip; } html, body { overscroll-behavior: none; }
 body { padding-bottom: 0; }
 .ft { margin: 64px calc(50% - 50vw) 0; background: oklch(17% .003 75); color: #fff; }
 /* Überscrollen unten (Gummiband): Schwarz läuft unter der Fußzeile weiter, statt weiß zu blitzen */
