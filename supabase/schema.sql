@@ -122,6 +122,20 @@ end $$;
 revoke all on function public.use_motif(text) from public;
 grant execute on function public.use_motif(text) to authenticated;
 
+-- ---------- Konto löschen (Einstellungen → Konto löschen) ----------
+-- Die App löscht zuerst die eigenen Dateien im Speicher (die darf nur die Speicher-Schnittstelle löschen),
+-- dann ruft sie das hier auf. really = false prüft nur, ob die Funktion da ist.
+-- Profil, Stencils und Motiv-Nutzung fallen per „on delete cascade“ mit weg.
+create or replace function public.delete_account(really boolean default false) returns boolean
+language plpgsql security definer set search_path = public, auth as $$
+begin
+  if auth.uid() is null then raise exception 'login'; end if;
+  if really then delete from auth.users where id = auth.uid(); end if;
+  return true;
+end $$;
+revoke all on function public.delete_account(boolean) from public, anon;
+grant execute on function public.delete_account(boolean) to authenticated;
+
 -- ---------- Zugriffsrechte für die App (angemeldete Nutzer); welche Zeilen, regeln die Policies oben ----------
 grant select on public.profiles to authenticated;
 grant select, insert, update, delete on public.stencils to authenticated;

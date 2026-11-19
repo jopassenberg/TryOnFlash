@@ -35,7 +35,7 @@ const EN = {
   "Motiv tauschen": "Swap design", "Motiv tauschen oder hinzufügen": "Swap or add a design", "Neues Foto": "New photo", "Zurück zum Platzieren": "Back to placing",
   "Vorher / Nachher": "Before / after", "Speichern": "Save", "Zusammenfassung": "Summary", "Drehung": "Rotation", "Stelle": "Spot",
   "Breite an der Stelle": "Width at this spot", "Mit Maßband nachmessen und eintragen, dann stimmt die Größe genau.": "Measure with a tape and enter it for an exact size.",
-  "Selbst gemessen": "Measured by you", "Hand erkannt": "Hand detected", "Annahme: Armbreite 7,5 cm": "Assumed: arm width 7.5 cm", "Körperproportionen": "Body proportions",
+  "Selbst gemessen": "Measured by you", "Hand erkannt": "Hand detected", "Körperproportionen": "Body proportions",
   "Unterarm": "Forearm", "Oberarm": "Upper arm", "Oberschenkel": "Thigh", "Unterschenkel": "Lower leg", "Oberkörper": "Torso", "Schulter": "Shoulder",
   // Zusammenfassung
   "für Linien": "for lines", "für Flächen": "for fills", "für kleine Flächen": "for small fills", "für Schatten": "for shading",
@@ -93,6 +93,7 @@ const EN = {
   "Dieser Link ist abgelaufen oder wurde vom Artist beendet. Frag einfach nach einem neuen.": "This link has expired or was ended by the artist. Just ask for a new one.",
   "Die Zeit für diesen Link ist um. Frag einfach nach einem neuen.": "This link’s time is up. Just ask for a new one.",
   "Link beschädigt": "Damaged link", "Die Flashes ließen sich nicht entschlüsseln. Bitte den Link ganz kopieren.": "The flashes couldn’t be decrypted. Please copy the whole link.",
+  "Artist-Profil": "Artist profile", "Maßeinheit": "Units", "Zentimeter": "Centimetres", "Inch": "Inches", "Auf diesem Gerät": "On this device", "Speicher": "Storage", "Daten auf diesem Gerät löschen": "Delete data on this device", "Hilfe": "Help", "Feedback senden": "Send feedback", "Konto löschen": "Delete account", "Daten auf diesem Gerät löschen?": "Delete data on this device?", "Konto löschen?": "Delete account?", "Konto endgültig löschen": "Delete account permanently", "Flashes, Links, Profil und geladene KI-Modelle werden von diesem Gerät entfernt. Fotos deiner Haut speichern wir ohnehin nie. Geteilte Links laufen bis zu ihrem Ablauf weiter.": "Flashes, links, profile and downloaded AI models are removed from this device. We never store photos of your skin anyway. Shared links keep working until they expire.", "Flashes, Links, Profil und geladene KI-Modelle werden von diesem Gerät entfernt. Fotos deiner Haut speichern wir ohnehin nie. Im Konto gesicherte Stencils bleiben dort und kommen beim nächsten Öffnen wieder. Geteilte Links laufen bis zu ihrem Ablauf weiter.": "Flashes, links, profile and downloaded AI models are removed from this device. We never store photos of your skin anyway. Stencils backed up in your account stay there and come back next time you open the app. Shared links keep working until they expire.", "Dein Konto, deine gesicherten Stencils in der Cloud und alle Kontodaten werden sofort und endgültig gelöscht. Das lässt sich nicht rückgängig machen. Flashes auf diesem Gerät bleiben erhalten.": "Your account, your stencils backed up in the cloud and all account data are deleted immediately and permanently. This can’t be undone. Flashes on this device are kept.", "Einen Moment …": "One moment …", "Konto gelöscht": "Account deleted", "Das hat gerade nicht geklappt. Bitte später nochmal versuchen oder schreib an studio@stencit.com.": "That didn’t work just now. Please try again later or write to studio@stencit.com.",
 };
 
 // Texte mit Zahlen/Namen
@@ -118,7 +119,10 @@ const EN_RX = [
   [/^(\d+) Seiten? · (.+) passt nicht auf (\S+)( hoch, Querformat probieren)? · im Druckdialog „100 %“ wählen$/, (m, n, list, p, hoch) =>
     `${n} page${n === "1" ? "" : "s"} · ${list} doesn’t fit on ${p}${hoch ? " portrait – try landscape" : ""} · choose “100 %” in the print dialog`],
   [/^Stencit · Flash-Sheet · (\S+)( · gespiegelt)?$/, (m, p, g) => `Stencit · Flash sheet · ${p}${g ? " · mirrored" : ""}`],
-  [/^5 cm · mit 100 % drucken$/, "5 cm · print at 100 %"],
+  [/^(5 cm|2 in) · mit 100 % drucken$/, "$1 · print at 100 %"],
+  [/^Annahme: Armbreite (.+)$/, "Assumed: arm width $1"],
+  [/^(\d+) Flash(es)?( · .+)?$/, (m, n, _, r) => `${n} flash${n === "1" ? "" : "es"}${r || ""}`],
+  [/^Stencit · Version (.+)$/, "Stencit · version $1"],
   [/^(.+) anprobieren$/, (m, n) => `Try on ${n}`],
   [/^(.+) anprobieren · tippen zum Wechseln$/, (m, n) => `Try on ${n} · tap to change`],
   [/^Link konnte nicht erstellt werden\. Bitte nochmal versuchen\. \((.*)\)$/, "Couldn’t create the link. Please try again. ($1)"],

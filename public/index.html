@@ -575,6 +575,10 @@
     .top-r, .fl-tools { gap: 4px; }
     .fl-tools .rb { width: 42px; height: 42px; }
     .fl-tools .rb .ic { width: 15px; height: 15px; }
+    /* Flashes-Kopfzeile ist voller (Auswählen, +, Einstellungen, Konto, Tabs): Marke nur als Zeichen, Knopf kompakter */
+    .shell[data-tab="flashes"] .brand { width: 17px; overflow: hidden; flex: none; }
+    .shell[data-tab="flashes"] .fl-selbtn { height: 42px; padding: 0 12px 0 10px; gap: 6px; }
+    .shell[data-tab="flashes"] #setBtn, .shell[data-tab="flashes"] #acctBtn { width: 42px; height: 42px; }
     .tabbar button { width: 44px; height: 36px; border-radius: 18px; }
     .steps { height: 36px; }
     /* Hinweis unter der Maßstab-Karte, wenn sie da ist */
@@ -735,6 +739,13 @@
   .set-seg button { height: 36px; padding: 0 14px; border-radius: var(--r-full); color: oklch(100% 0 0 / .65); font-size: 14px; }
   .set-seg button[aria-pressed="true"] { background: #fff; color: var(--ink); }
   .set-cap { font-size: 13px; color: oklch(100% 0 0 / .45); margin: 6px 0 -2px 4px; }
+  .lsw[data-l="in"] .lsw-thumb { translate: 100% 0; }
+  .lsw.unit button { padding: 0 16px; justify-content: center; font-size: 14px; letter-spacing: 0; }
+  .set-row.danger { color: oklch(72% .17 25); }
+  .btn.danger { background: oklch(60% .2 25); color: #fff; } .btn.danger:hover { background: oklch(55% .2 25); }
+  .set-ver { margin: 2px 0 0; text-align: center; font-size: 12px; color: oklch(100% 0 0 / .35); }
+  .err-line { margin: 0; font-size: 14px; color: oklch(80% .12 40); }
+  .set-list .prof { min-height: 56px; }
 </style>
 <style id="pageSize">@page { size: 210mm 297mm; margin: 0; }</style>
 </head>
@@ -2304,7 +2315,7 @@ const POSE_SEGS = [["Unterarm", 13, 15], ["Unterarm", 14, 16], ["Oberarm", 11, 1
 function computeScale(B) {
   const W = S.photo.width, H = S.photo.height, c = S.anchor || S.armCenter;
   const px = p => ({ x: p.x * W, y: p.y * H }), d2 = (a, b) => Math.hypot((a.x - b.x) * W, (a.y - b.y) * H), d3 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) * 100;
-  const fallback = { pxPerCm: S.armPx / 7.5, source: "Annahme: Armbreite 7,5 cm", tol: 20, part: null };
+  const fallback = { pxPerCm: S.armPx / 7.5, source: `Annahme: Armbreite ${len(7.5)}`, tol: 20, part: null };
   let part = null, best = null;
   if (B?.pose) { // nearest limb segment names the body part and is a scale candidate
     for (const [name, a, b] of POSE_SEGS) {
@@ -2329,7 +2340,13 @@ function computeScale(B) {
 function pxPerCm() { return S.scale?.pxPerCm || S.armPx / 7.5; }
 
 /* ---------- info card: size and scale while placing, summary after stechen ---------- */
-const fmt = (v, d = 1) => v.toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: 0 });
+const fmt = (v, d = 1) => v.toLocaleString(getLang() === "en" ? "en-US" : "de-DE", { maximumFractionDigits: d, minimumFractionDigits: 0 });
+// Maßeinheit (Einstellungen): gerechnet wird immer in cm, nur die Anzeige wechselt. Ohne Wahl: inch nur für en-US.
+const UNIT_KEY = "stencit-unit";
+const unit = () => { let u = null; try { u = localStorage.getItem(UNIT_KEY); } catch {} return u === "cm" || u === "in" ? u : /^en-US/i.test(navigator.language || "") ? "in" : "cm"; };
+const toU = cm => unit() === "in" ? cm / 2.54 : cm, fromU = v => unit() === "in" ? v * 2.54 : v;
+const len = (cm, d = 1) => `${fmt(toU(cm), d)} ${unit()}`;
+const dims = (w, h) => `${fmt(toU(w))} × ${fmt(toU(h))} ${unit()}`;
 function setInfo(open) { infoOpen = open; $("#info").dataset.open = open; $("#infoHead").setAttribute("aria-expanded", open); }
 $("#infoHead").onclick = () => setInfo(!infoOpen);
 function sizeCm() { const { w, h } = motifSizePx(1), k = pxPerCm(); return { w: w / k, h: h / k }; }
@@ -2339,14 +2356,14 @@ function updateInfo() {
   el.hidden = true; // Maßstab-Karte vorerst ausgeblendet (Größe steht in der Insel, Zusammenfassung nach dem Stechen)
   const { w, h } = sizeCm(), sc = S.scale || {}, rot = Math.round(((S.rot % 360) + 540) % 360 - 180);
   $("#infoTitle").textContent = S.step === 3 ? (sc.part ? `Maßstab · ${sc.part}` : "Maßstab") : "Zusammenfassung"; // die Größe steht oben in der Insel
-  const sz = `${fmt(w)} × ${fmt(h)} cm`; if ($("#islSize").textContent !== sz) { $("#islSize").textContent = sz; syncIsland(); }
+  const sz = dims(w, h); if ($("#islSize").textContent !== sz) { $("#islSize").textContent = sz; syncIsland(); }
   if ($("#infoBody").contains(document.activeElement) || $("#islSumBody").contains(document.activeElement)) return; // nicht neu bauen, während getippt wird
   const limb = S.armPx / pxPerCm();
   if (S.step === 4 && S.summary) {
-    const s = S.summary, key = JSON.stringify([s, sc, fmt(limb), sz]); if (key === infoKey) return syncIsland(); infoKey = key;
+    const s = S.summary, key = JSON.stringify([s, sc, fmt(limb), sz, unit()]); if (key === infoKey) return syncIsland(); infoKey = key;
     $("#infoBody").innerHTML = "";
     $("#islSumBody").innerHTML = `
-      <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="dim">${fmt(s.area, 0)} cm²${sc.part ? " · " + sc.part : ""}</div></div>
+      <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="dim">${unit() === "in" ? fmt(s.area / 6.4516) + " in²" : fmt(s.area, 0) + " cm²"}${sc.part ? " · " + sc.part : ""}</div></div>
         <button class="sum-x" id="sumClose" aria-label="Zusammenfassung schließen"><svg class="ic" aria-hidden="true"><use href="#i-chevron--up"/></svg></button></header>
       <ul class="needles">${s.needles.map(n => `<li><span class="nic">${needleIcon(n)}</span><span class="nname"><span>${n.name}</span><span class="dim">${n.role}</span></span><span class="dim">${n.detail}</span></li>`).join("")}</ul>
       <div class="swatches">${s.colours.map(c => `<span><i style="background:${SWATCH[c] || "#888"}"></i>${c}</span>`).join("")}</div>
@@ -2357,17 +2374,17 @@ function updateInfo() {
   const rows = [["Drehung", `${rot}°`]];
   if (sc.part) rows.push(["Stelle", sc.part]);
   rows.push(["Maßstab", `${sc.source || "–"}<small>± ${sc.tol ?? 20} %</small>`]);
-  const key = JSON.stringify([rows, S.step, fmt(limb)]); if (key === infoKey) return; infoKey = key;
+  const key = JSON.stringify([rows, S.step, fmt(limb), unit()]); if (key === infoKey) return; infoKey = key;
   $("#islSumBody").innerHTML = "";
   $("#infoBody").innerHTML = `<dl>${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
-    <label class="scale-edit">Breite an der Stelle <input id="scaleCm" type="number" min="3" max="40" step="0.5" value="${limb.toFixed(1)}"> cm</label>
+    <label class="scale-edit">Breite an der Stelle <input id="scaleCm" type="number" min="${toU(3).toFixed(1)}" max="${toU(40).toFixed(1)}" step="${unit() === "in" ? .25 : .5}" value="${toU(limb).toFixed(1)}"> ${unit()}</label>
     <div class="note">Mit Maßband nachmessen und eintragen, dann stimmt die Größe genau.</div>`;
   syncIsland();
 }
 const SWATCH = { Schwarz: "#151515", Grau: "#7a7a7a", Rot: "#c4231f", Orange: "#e07020", Gelb: "#e6c229", Grün: "#2f8f4e", Türkis: "#2a9d9d", Blau: "#2f5fb3", Lila: "#7a3fa6", Violett: "#7a3fa6", Pink: "#d64f8f", Braun: "#7a4a2a", Weiß: "#f2f2f2" };
 document.addEventListener("change", e => {
   if (e.target.id !== "scaleCm") return;
-  const cm = clamp(+e.target.value || 7.5, 3, 40);
+  const cm = clamp(fromU(+e.target.value) || 7.5, 3, 40);
   S.scale = { pxPerCm: S.armPx / cm, source: "Selbst gemessen", tol: 3, part: S.scale?.part || null }; infoKey = "";
   if (S.step === 4) { S.summary = summarise(); updateInfo(); } else schedule();
 });
@@ -3500,7 +3517,7 @@ function usePending() { // nach der Analyse aufgerufen
 // Unten auf jeder Seite ein 5-cm-Kontrollmaß: stimmt es nach dem Druck, ist alles maßstabsgetreu.
 const PAPERS = [["A5", 148, 210], ["A4", 210, 297], ["A3", 297, 420], ["Letter", 215.9, 279.4]];
 const PS = { paper: "A4", land: false, steps: new Set([0]), tags: true, mirror: false };
-const fmtCm = v => fmt(Math.round(v * 10) / 10);
+const STEP = () => unit() === "in" ? 1.27 : 1, QUANT = () => unit() === "in" ? .635 : .5; // Größen-Stufen: 1 cm oder ½ inch, Feinschritt ½ cm oder ¼ inch
 // Quelle des Sheets: das Motiv im Studio (Größe vom Arm) oder ein Flash aus der Sammlung (Größe frei wählbar)
 let SRC = null;
 function studioSrc() { const m = S.motif; m.print ||= m.canvas.toDataURL("image/png"); return { url: m.print, ...sizeCm(), free: false }; }
@@ -3511,7 +3528,7 @@ function flashSrc(f) { // längste Seite zum Start 10 cm, Seitenverhältnis vom 
 function printCut() { return { url: SRC.url }; }
 function sheetItems() {
   const { w, h } = SRC, long = Math.max(w, h);
-  return [...PS.steps].sort((a, b) => a - b).map(d => { const k = (long + d) / long, mw = w * k * 10, mh = h * k * 10; // mm
+  return [...PS.steps].sort((a, b) => a - b).map(d => { const k = (long + d * STEP()) / long, mw = w * k * 10, mh = h * k * 10; // mm
     return { d, mw, mh, sw: mw, sh: mh, inv: 0, vw: mw, vh: mh }; }).filter(i => Math.max(i.mw, i.mh) >= 15);
 }
 function sheetPages(items) { // Regale: Zeile für Zeile, nebeneinander, so viele Seiten wie nötig
@@ -3530,8 +3547,8 @@ function sheetPages(items) { // Regale: Zeile für Zeile, nebeneinander, so viel
 function pageHTML(L, pg) {
   const url = printCut().url;
   return `<div class="pp" style="width:${L.W}mm;height:${L.H}mm">${pg.map(i => `<div class="it" style="left:${i.x}mm;top:${i.y}mm;width:${i.vw}mm;height:${i.vh + (PS.tags ? 6 : 0)}mm">
-      <img alt="" src="${url}" style="position:absolute;left:${-i.inv}mm;top:${-i.inv}mm;width:${i.sw}mm;height:${i.sh}mm${PS.mirror ? ";transform:scaleX(-1)" : ""}">${PS.tags ? `<span class="tag" style="position:absolute;left:50%;translate:-50% 0;top:${(i.vh + 1.2).toFixed(2)}mm;margin:0">${fmtCm(i.mw / 10)} × ${fmtCm(i.mh / 10)} cm</span>` : ""}</div>`).join("")}
-    <div class="foot"><span>Stencit · Flash-Sheet · ${PS.paper}${PS.mirror ? " · gespiegelt" : ""}</span><span class="ruler"><i></i>5 cm · mit 100 % drucken</span></div></div>`;
+      <img alt="" src="${url}" style="position:absolute;left:${-i.inv}mm;top:${-i.inv}mm;width:${i.sw}mm;height:${i.sh}mm${PS.mirror ? ";transform:scaleX(-1)" : ""}">${PS.tags ? `<span class="tag" style="position:absolute;left:50%;translate:-50% 0;top:${(i.vh + 1.2).toFixed(2)}mm;margin:0">${dims(i.mw / 10, i.mh / 10)}</span>` : ""}</div>`).join("")}
+    <div class="foot"><span>Stencit · Flash-Sheet · ${PS.paper}${PS.mirror ? " · gespiegelt" : ""}</span><span class="ruler"><i style="width:${unit() === "in" ? 50.8 : 50}mm"></i>${unit() === "in" ? "2 in" : "5 cm"} · mit 100 % drucken</span></div></div>`;
 }
 // Der Dialog wird einmal gebaut; Antippen ändert nur Zustände und die Vorschau (feste Höhe): nichts springt.
 function printSheet(src = studioSrc()) {
@@ -3543,7 +3560,7 @@ function printSheet(src = studioSrc()) {
       <div class="row"><button class="opt" data-land="0">Hochformat</button><button class="opt" data-land="1">Querformat</button></div></div>
     ${SRC.free ? `<div class="stack"><span class="dim">Größe · längste Seite</span><div class="row"><button class="opt" id="psMinus" aria-label="Kleiner">−</button>
       <span class="opt" id="psSize" style="display:grid;place-items:center;min-width:96px"></span><button class="opt" id="psPlus" aria-label="Größer">+</button></div></div>` : ""}
-    <div class="stack"><span class="dim">Größen</span><div class="row">${[-2, -1, 0, 1, 2].map(d => `<button class="opt" data-step="${d}">${d ? (d > 0 ? "+" : "−") + Math.abs(d) + " cm" : "Gewählt"}</button>`).join("")}</div></div>
+    <div class="stack"><span class="dim">Größen</span><div class="row">${[-2, -1, 0, 1, 2].map(d => `<button class="opt" data-step="${d}">${d ? (d > 0 ? "+" : "−") + len(Math.abs(d) * STEP()) : "Gewählt"}</button>`).join("")}</div></div>
     ${sw("psTags", "Größe beschriften", "Tag mit Breite × Höhe unter jedem Stencil")}
     ${sw("psMirror", "Gespiegelt", "Für Thermo-Stencil und Umdruckpapier")}
     <div class="ps-prev" id="psPrev"></div><div class="ps-note" id="psNote"></div>
@@ -3560,7 +3577,7 @@ function printSheet(src = studioSrc()) {
     const PX = 96 / 25.4, k = Math.min((prev.clientWidth - 28) / (L.W * PX), (prev.clientHeight - 28) / (L.H * PX)); // ganze Seite sichtbar
     prev.querySelectorAll(".pw").forEach(w => { w.style.width = L.W * PX * k + "px"; w.style.height = L.H * PX * k + "px"; w.firstElementChild.style.transform = `scale(${k})`; });
     prev.scrollTop = top;
-    $("#psNote").textContent = `${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? ` · ${L.tooBig.map(i => fmtCm(i.mw / 10) + " × " + fmtCm(i.mh / 10) + " cm").join(", ")} passt nicht auf ${PS.paper}${PS.land ? "" : " hoch, Querformat probieren"}` : ""} · im Druckdialog „100 %“ wählen`;
+    $("#psNote").textContent = `${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? ` · ${L.tooBig.map(i => dims(i.mw / 10, i.mh / 10)).join(", ")} passt nicht auf ${PS.paper}${PS.land ? "" : " hoch, Querformat probieren"}` : ""} · im Druckdialog „100 %“ wählen`;
     $("#psGo").disabled = !n;
   };
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet(box));
@@ -3569,10 +3586,10 @@ function printSheet(src = studioSrc()) {
   box.querySelectorAll("[data-step]").forEach(b => b.onclick = () => { const d = +b.dataset.step; PS.steps.has(d) ? PS.steps.size > 1 && PS.steps.delete(d) : PS.steps.add(d); update(); });
   $("#psTags").onclick = () => { PS.tags = !PS.tags; update(); };
   if (SRC.free) { // Größe für Flashes aus der Sammlung: längste Seite in halben Zentimetern
-    const setLong = l => { l = clamp(Math.round(l * 2) / 2, 2, 40); SRC.w = SRC.ar >= 1 ? l : l * SRC.ar; SRC.h = SRC.ar >= 1 ? l / SRC.ar : l; $("#psSize").textContent = `${fmtCm(l)} cm`; };
+    const setLong = l => { l = clamp(Math.round(l / QUANT()) * QUANT(), 2, 40); SRC.w = SRC.ar >= 1 ? l : l * SRC.ar; SRC.h = SRC.ar >= 1 ? l / SRC.ar : l; $("#psSize").textContent = len(l, 2); };
     setLong(Math.max(SRC.w, SRC.h));
-    $("#psMinus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) - .5); update(); };
-    $("#psPlus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) + .5); update(); };
+    $("#psMinus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) - QUANT()); update(); };
+    $("#psPlus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) + QUANT()); update(); };
   }
   $("#psMirror").onclick = () => { PS.mirror = !PS.mirror; update(); };
   $("#psGo").onclick = () => {
@@ -3774,28 +3791,109 @@ async function acctSheet(reason = "") {
   }
 }
 $("#acctBtn").onclick = () => acctSheet();
-// Einstellungen: Sprache, Konto, Rechtliches
+// Einstellungen: Profil, Sprache, Maßeinheit, Konto, Gerät, Hilfe, Rechtliches
 const FLAGS = { de: `<svg viewBox="0 0 18 18" aria-hidden="true"><rect width="18" height="6"/><rect y="6" width="18" height="6" fill="#DD0000"/><rect y="12" width="18" height="6" fill="#FFCE00"/></svg>`, en: `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="#012169"/><path d="M0 0L60 60M60 0L0 60" stroke="#fff" stroke-width="12"/><path d="M0 0L60 60M60 0L0 60" stroke="#C8102E" stroke-width="4"/><path d="M30 0v60M0 30h60" stroke="#fff" stroke-width="18"/><path d="M30 0v60M0 30h60" stroke="#C8102E" stroke-width="10"/></svg>` };
 const langSwitch = l => `<div class="lsw" role="radiogroup" aria-label="Sprache" data-l="${l}"><span class="lsw-thumb"></span>${["de", "en"].map(k =>
   `<button role="radio" data-lang="${k}" aria-checked="${k === l}" aria-label="${k === "de" ? "Deutsch" : "English"}"><span class="flag">${FLAGS[k]}</span>${k.toUpperCase()}</button>`).join("")}</div>`;
 function settingsSheet() {
-  const box = $("#acctSheet"), lang = getLang(), chev = `<svg class="ic" aria-hidden="true"><use href="#i-chevron--right"/></svg>`;
-  openSheet(box, `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Einstellungen">
-    <div class="sheet-head"><h3>Einstellungen</h3><button class="ib-dark" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+  openSheet($("#acctSheet"), `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Einstellungen"></div>`);
+  $("#acctSheet .sheet-bg").onclick = () => closeSheet($("#acctSheet"));
+  renderSettings();
+}
+const unitSwitch = u => `<div class="lsw unit" role="radiogroup" aria-label="Maßeinheit" data-l="${u}"><span class="lsw-thumb"></span>${["cm", "in"].map(k =>
+  `<button role="radio" data-unit="${k}" aria-checked="${k === u}" aria-label="${k === "cm" ? "Zentimeter" : "Inch"}">${k}</button>`).join("")}</div>`;
+const mb = n => n >= 1e9 ? fmt(n / 1e9) + " GB" : fmt(n / 1e6, n < 1e7 ? 1 : 0) + " MB";
+const sheetHead = t => `<div class="sheet-head"><h3>${t}</h3><button class="ib-dark" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>`;
+// Der Inhalt wird im offenen Fenster getauscht (Einstellungen ↔ Rückfrage), ohne dass es neu hereinfliegt
+function renderSettings() {
+  const box = $("#acctSheet"), sh = box.querySelector(".sheet"); if (!sh) return;
+  const chev = `<svg class="ic" aria-hidden="true"><use href="#i-chevron--right"/></svg>`;
+  sh.innerHTML = `${sheetHead("Einstellungen")}
+    <div class="set-list"><div class="set-cap">Artist-Profil</div>${profRow()}</div>
     <div class="set-list">
-      <div class="set-row"><span>Sprache</span>${langSwitch(lang)}</div>
+      <div class="set-row"><span>Sprache</span>${langSwitch(getLang())}</div>
+      <div class="set-row"><span>Maßeinheit</span>${unitSwitch(unit())}</div>
       <button class="set-row" id="setAcct"><span>Konto</span><span class="dim">${ACC.user ? esc(ACC.user.email || "Angemeldet") : "Anmelden"}</span></button>
+    </div>
+    <div class="set-list"><div class="set-cap">Auf diesem Gerät</div>
+      <div class="set-row"><span>Speicher</span><span class="dim" id="setStore">…</span></div>
+      <button class="set-row" id="setWipe"><span>Daten auf diesem Gerät löschen</span></button>
+    </div>
+    <div class="set-list"><div class="set-cap">Hilfe</div>
+      <a class="set-row" id="setMail" href="${feedbackMail()}"><span>Feedback senden</span>${chev}</a>
     </div>
     <div class="set-list"><div class="set-cap">Rechtliches</div>
       <a class="set-row" href="/privacy" target="_blank"><span>Datenschutz</span>${chev}</a>
       <a class="set-row" href="/impressum" target="_blank"><span>Impressum</span>${chev}</a>
-    </div></div>`);
-  box.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet(box));
-  box.querySelectorAll(".lsw [data-lang]").forEach(b => b.onclick = () => { // erst gleiten lassen, dann neu laden
+      ${ACC.user ? `<button class="set-row danger" id="setDel"><span>Konto löschen</span></button>` : ""}
+    </div>
+    <p class="set-ver">Stencit · Version ${APP_VERSION}</p>`;
+  sh.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet(box));
+  sh.querySelectorAll(".lsw [data-lang]").forEach(b => b.onclick = () => { // erst gleiten lassen, dann neu laden
     const l = b.dataset.lang; if (l === getLang()) return; const sw = b.parentNode; sw.dataset.l = l;
     sw.querySelectorAll("button").forEach(x => x.setAttribute("aria-checked", x === b)); setTimeout(() => setLang(l), 380);
   });
+  sh.querySelectorAll(".lsw [data-unit]").forEach(b => b.onclick = () => {
+    const u = b.dataset.unit, sw = b.parentNode; sw.dataset.l = u; sw.querySelectorAll("button").forEach(x => x.setAttribute("aria-checked", x === b));
+    try { localStorage.setItem(UNIT_KEY, u); } catch {} infoKey = ""; try { updateInfo(); } catch {}
+  });
+  bindProf();
   $("#setAcct").onclick = () => acctSheet();
+  $("#setWipe").onclick = () => confirmView({ title: "Daten auf diesem Gerät löschen?", ok: "Löschen",
+    text: `Flashes, Links, Profil und geladene KI-Modelle werden von diesem Gerät entfernt. Fotos deiner Haut speichern wir ohnehin nie.${ACC.user ? " Im Konto gesicherte Stencils bleiben dort und kommen beim nächsten Öffnen wieder." : ""} Geteilte Links laufen bis zu ihrem Ablauf weiter.` },
+    async () => { await wipeLocal(); location.reload(); });
+  $("#setDel")?.addEventListener("click", () => confirmView({ title: "Konto löschen?", ok: "Konto endgültig löschen",
+    text: "Dein Konto, deine gesicherten Stencils in der Cloud und alle Kontodaten werden sofort und endgültig gelöscht. Das lässt sich nicht rückgängig machen. Flashes auf diesem Gerät bleiben erhalten." },
+    async () => { await deleteAccount(); closeSheet(box); status("Konto gelöscht", "ok"); }));
+  (async () => { // Platz auf dem Gerät: Anzahl Flashes + was der Browser für Stencit belegt
+    const n = await idb("flashes", "readonly", s => s.count()).catch(() => null), est = await navigator.storage?.estimate?.().catch(() => null);
+    const el = $("#setStore"); if (!el) return;
+    el.textContent = [n != null ? `${n} Flash${n === 1 ? "" : "es"}` : "", est?.usage ? mb(est.usage) : ""].filter(Boolean).join(" · ") || "–";
+  })();
+}
+function confirmView({ title, text, ok }, run) {
+  const sh = $("#acctSheet .sheet"); if (!sh) return;
+  sh.innerHTML = `${sheetHead(title)}<p class="dim" style="margin:0">${text}</p><p class="err-line" id="cfErr" hidden></p>
+    <div class="stack"><button class="btn wide danger" id="cfOk">${ok}</button><button class="btn ghost wide" id="cfBack">Abbrechen</button></div>`;
+  sh.querySelector("[data-close]").onclick = () => closeSheet($("#acctSheet"));
+  $("#cfBack").onclick = renderSettings;
+  $("#cfOk").onclick = async () => {
+    const b = $("#cfOk"), t = b.textContent; b.disabled = true; b.textContent = "Einen Moment …"; $("#cfErr").hidden = true;
+    try { await run(); } catch (e) { console.warn("settings", e); b.disabled = false; b.textContent = t;
+      const er = $("#cfErr"); if (er) { er.hidden = false; er.textContent = "Das hat gerade nicht geklappt. Bitte später nochmal versuchen oder schreib an studio@stencit.com."; } }
+  };
+}
+const APP_VERSION = "2026.11.19";
+function feedbackMail() {
+  const ua = navigator.userAgent.replace(/\s+/g, " ").slice(0, 160);
+  const body = `\n\n\n— — —\nStencit ${APP_VERSION} · ${getLang()} · ${innerWidth}×${innerHeight}\n${ua}`;
+  return `mailto:studio@stencit.com?subject=${encodeURIComponent("Stencit Feedback")}&body=${encodeURIComponent(body)}`;
+}
+// Alles, was Stencit auf diesem Gerät abgelegt hat; Sprache, Maßeinheit, Anmeldung und das Gratis-Motiv-Zählwerk bleiben
+async function wipeLocal() {
+  for (const st of ["flashes", "links", "handoff"]) await idb(st, "readwrite", s => s.clear()).catch(() => {});
+  try { [PROFILE_KEY, CAM_OK, "stencit-seeded"].forEach(k => localStorage.removeItem(k)); } catch {}
+  try { if (self.caches) for (const k of await caches.keys()) await caches.delete(k); } catch {}
+}
+// Konto löschen: erst prüfen, ob die Datenbank-Funktion da ist, dann eigene Dateien im Speicher entfernen
+// (die darf nur die Speicher-Schnittstelle löschen), dann Konto samt Profil, Stencils und Nutzung (cascade).
+async function deleteAccount() {
+  const c = await sb(); if (!c || !ACC.user) throw new Error("login");
+  const pre = await c.rpc("delete_account", { really: false }); if (pre.error) throw pre.error;
+  const uid = ACC.user.id;
+  for (const bucket of ["stencils", "avatars"]) {
+    const S3 = c.storage.from(bucket), { data: top } = await S3.list(uid, { limit: 1000 }), paths = [];
+    for (const it of top || []) {
+      if (it.id) { paths.push(`${uid}/${it.name}`); continue; } // Datei direkt im Ordner
+      const { data: sub } = await S3.list(`${uid}/${it.name}`, { limit: 100 }); (sub || []).forEach(f => paths.push(`${uid}/${it.name}/${f.name}`));
+    }
+    for (let i = 0; i < paths.length; i += 100) { const { error } = await S3.remove(paths.slice(i, i + 100)); if (error) throw error; }
+  }
+  const { error } = await c.rpc("delete_account", { really: true }); if (error) throw error;
+  await c.auth.signOut({ scope: "local" }).catch(() => {});
+  await setUser(null); ACC.synced = false;
+  await idb("flashes", "readwrite", s => { const rq = s.openCursor(); rq.onsuccess = () => { const cur = rq.result; if (!cur) return; if (cur.value.cloud) cur.update({ ...cur.value, cloud: false }); cur.continue(); }; }).catch(() => {});
+  FL.items.forEach(f => f.cloud = false); if (!$("#flashesView").hidden) loadFlashes();
 }
 $("#setBtn").onclick = settingsSheet;
 
