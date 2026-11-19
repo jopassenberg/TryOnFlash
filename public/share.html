@@ -70,6 +70,8 @@
 </div>
 <script type="module">
 import { layoutCollage } from "/collage.js";
+import { startI18n } from "/i18n.js";
+startI18n();
 const $ = s => document.querySelector(s);
 const b64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
 const id = location.pathname.split("/")[2];

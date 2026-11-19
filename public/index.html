@@ -820,6 +820,8 @@
 
 <script type="module">
 import { layoutCollage } from "/collage.js";
+import { startI18n, setLang, getLang } from "/i18n.js";
+startI18n(); // Englisch/Deutsch nach Gerät oder eigener Wahl
 // Flash Studio: photo -> depth + skin analysis -> surface-true placement -> "stechen" render.
 // Everything runs in the browser; the photo never leaves the device.
 const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js";
@@ -3596,7 +3598,9 @@ async function acctSheet(reason = "") {
       ${reason === "quota" ? `<p style="margin:0">Deine freien Motive für diesen Monat sind aufgebraucht. Bereits angeprobierte Motive kannst du weiter frei verwenden.</p>` : ""}
       <div class="stack"><button class="btn primary wide" disabled>Tokens & Unlimited – bald</button><button class="btn ghost wide" id="acctOut">Abmelden</button><button class="btn ghost wide" data-close>Schließen</button></div>`;
   }
+  const lang = getLang(); html += `<div class="stack"><span class="dim">Sprache</span><div class="row"><button class="opt" data-lang="de" aria-pressed="${lang === "de"}">Deutsch</button><button class="opt" data-lang="en" aria-pressed="${lang === "en"}">English</button></div></div>`;
   box.innerHTML = `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Konto">${html}</div>`;
+  box.querySelectorAll("[data-lang]").forEach(b => b.onclick = () => { if (b.dataset.lang !== getLang()) setLang(b.dataset.lang); });
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#acctAgain")?.addEventListener("click", () => { ACC.sentTo = ""; acctSheet(reason); });
   $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; close(); status("Abgemeldet", "ok"); });
