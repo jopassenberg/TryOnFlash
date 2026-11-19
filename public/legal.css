@@ -30,7 +30,9 @@ code { font-size: 14px; padding: 1px 6px; border-radius: 6px; background: var(--
 /* schwarze Fußzeile wie in der App, über die volle Breite */
 html { overflow-x: clip; }
 body { padding-bottom: 0; }
-.ft { margin: 64px calc(50% - 50vw) 0; background: oklch(17% .003 75); color: #fff; border-radius: 32px 32px 0 0; }
+.ft { margin: 64px calc(50% - 50vw) 0; background: oklch(17% .003 75); color: #fff; }
+/* Überscrollen unten (Gummiband): Schwarz läuft unter der Fußzeile weiter, statt weiß zu blitzen */
+.ft { box-shadow: 0 160px 0 oklch(17% .003 75), 0 320px 0 oklch(17% .003 75); }
 .ft-in { max-width: 720px; margin: 0 auto; padding: 48px max(16px, env(safe-area-inset-left)) max(28px, env(safe-area-inset-bottom)); display: grid; gap: 36px; }
 .ft-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
 .ft-brand { display: grid; gap: 12px; } .ft-brand a { color: #fff; display: inline-flex; }
@@ -42,4 +44,4 @@ body { padding-bottom: 0; }
 .ft .lsw { background: oklch(100% 0 0 / .1); }
 .ft .lsw-thumb { background: #fff; }
 .ft .lsw button { color: oklch(100% 0 0 / .6); } .ft .lsw button[aria-checked="true"] { color: var(--ink); }
-@media (max-width: 680px) { .ft { border-radius: 28px 28px 0 0; } .ft-in { padding: 36px 20px max(24px, env(safe-area-inset-bottom)); gap: 28px; } .ft-links { gap: 12px 22px; } }
+@media (max-width: 680px) { .ft-in { padding: 36px 20px max(24px, env(safe-area-inset-bottom)); gap: 28px; } .ft-links { gap: 12px 22px; } }
