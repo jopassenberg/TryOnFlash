@@ -5,9 +5,10 @@
   const show = l => {
     lang = l; document.documentElement.lang = l;
     document.querySelectorAll("main[data-lang]").forEach(m => m.hidden = m.dataset.lang !== l);
-    document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.l === l));
+    const sw = document.querySelector(".lsw"); if (sw) sw.dataset.l = l;
+    document.querySelectorAll(".lsw button").forEach(b => b.setAttribute("aria-checked", b.dataset.l === l));
     const h = document.querySelector(`main[data-lang="${l}"] h1`); if (h) document.title = h.textContent.replace(/­/g, "") + " · Stencit";
   };
-  document.querySelectorAll(".lang button").forEach(b => b.onclick = () => { try { localStorage.setItem("stencit-lang", b.dataset.l); } catch {} show(b.dataset.l); });
+  document.querySelectorAll(".lsw button").forEach(b => b.onclick = () => { try { localStorage.setItem("stencit-lang", b.dataset.l); } catch {} show(b.dataset.l); });
   show(lang);
 })();
