@@ -344,7 +344,7 @@
   .rb .ic { width: 17px; height: 17px; }
   .rb .badge { position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; line-height: 18px; text-align: center; background: var(--n-900); color: #fff; }
   /* Flashes sind ein Canvas: ziehen zum Verschieben, zwei Finger oder Strg+Scrollen zum Zoomen, Motive mit der Maus/dem Finger verschieben */
-  .flashes { position: relative; min-height: 0; overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .flashes { position: relative; min-height: 0; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 16px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(transparent, #000 16px, #000 calc(100% - 56px), transparent); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
   .flashes.panning { cursor: grabbing; }
   .fl-board { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
   /* Collage: Positionen und Drehung kommen aus collage.js */
@@ -3069,7 +3069,10 @@ async function layoutFlashes(force) {
   }
   grid.querySelectorAll(".fl-tile").forEach(b => b.setAttribute("aria-pressed", FL.sel.has(b.dataset.id)));
 }
-function applyView() { $("#flBoard").style.transform = `translate(${VIEW.x}px, ${VIEW.y}px) scale(${VIEW.z})`; }
+// Senkrecht begrenzt: die Collage kann nie ganz aus dem Bild rutschen (unten bleibt ihr Ende sichtbar, oben ihr Anfang)
+function clampViewY() { const V = $("#flashesView"), H = (parseFloat($("#flGrid").style.height) || 0) * VIEW.z, end = V.clientHeight - 56 - H;
+  VIEW.y = clamp(VIEW.y, Math.min(16, end), Math.max(16, end)); }
+function applyView() { if (!$("#flashesView").hidden) clampViewY(); $("#flBoard").style.transform = `translate(${VIEW.x}px, ${VIEW.y}px) scale(${VIEW.z})`; }
 function fitBoard(x1) { // alles in die Breite passen, oben anfangen
   const V = $("#flashesView");
   VIEW.z = clamp((V.clientWidth - 32) / Math.max(x1, 1), .35, 1); VIEW.x = (V.clientWidth - x1 * VIEW.z) / 2; VIEW.y = 16; VIEW.fitted = true; applyView();
@@ -3122,10 +3125,10 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
     // Scrollen weiterreichen: unten am Ende der Collage scrollt die Seite zur Fußzeile, und zurück nach oben zuerst die Seite
     if (!e.ctrlKey && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
       const bottom = VIEW.y + (parseFloat($("#flGrid").style.height) || V.clientHeight) * VIEW.z;
-      if ((e.deltaY > 0 && bottom <= V.clientHeight - 8) || (e.deltaY < 0 && scrollY > 0)) return;
+      if ((e.deltaY > 0 && bottom <= V.clientHeight - 55) || (e.deltaY < 0 && scrollY > 0)) return;
     }
     e.preventDefault();
-    if (e.ctrlKey) zoomAt(VIEW.z * Math.exp(-e.deltaY * .01), e.clientX, e.clientY); else { VIEW.x -= e.deltaX; VIEW.y = Math.max(VIEW.y - e.deltaY, Math.min(16, V.clientHeight - 8 - (parseFloat($("#flGrid").style.height) || 0) * VIEW.z)); applyView(); } }, { passive: false });
+    if (e.ctrlKey) zoomAt(VIEW.z * Math.exp(-e.deltaY * .01), e.clientX, e.clientY); else { VIEW.x -= e.deltaX; VIEW.y -= e.deltaY; applyView(); } }, { passive: false });
 }
 function toggleSel(id) { FL.sel.has(id) ? FL.sel.delete(id) : FL.sel.add(id); renderFlashes(); }
 $("#flSelect").onclick = () => { FL.selecting = !FL.selecting; if (!FL.selecting) FL.sel.clear(); renderFlashes(); };
