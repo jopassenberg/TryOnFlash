@@ -584,7 +584,7 @@
   /* ---------- Fußzeile (unter der Vollbild-App, beim Scrollen) ---------- */
   .ft { background: var(--frame); color: #fff; box-shadow: 0 160px 0 var(--frame), 0 320px 0 var(--frame); }
   /* Überscrollen unten (iOS-Gummiband) zeigt Schwarz wie die Fußzeile, oben Weiß */
-  html { background: linear-gradient(#fff 50%, var(--frame) 50%); }
+  html { background: var(--frame); overscroll-behavior-y: none; } /* kein Gummiband; falls doch (ältere Browser): dunkel wie die Fußzeile */
   .ft-in { max-width: 1040px; margin: 0 auto; padding: 48px var(--s5) max(28px, env(safe-area-inset-bottom)); display: grid; gap: 36px; }
   .ft-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
   .ft-brand { display: grid; gap: 12px; } .ft-brand a { color: #fff; display: inline-flex; }

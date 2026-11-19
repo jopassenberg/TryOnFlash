@@ -28,7 +28,7 @@ li { margin: 4px 0; }
 code { font-size: 14px; padding: 1px 6px; border-radius: 6px; background: var(--fill); }
 .stand { margin-top: 36px; color: var(--dim); font-size: 14px; }
 /* schwarze Fußzeile wie in der App, über die volle Breite */
-html { overflow-x: clip; }
+html { overflow-x: clip; overscroll-behavior-y: none; }
 body { padding-bottom: 0; }
 .ft { margin: 64px calc(50% - 50vw) 0; background: oklch(17% .003 75); color: #fff; }
 /* Überscrollen unten (Gummiband): Schwarz läuft unter der Fußzeile weiter, statt weiß zu blitzen */
