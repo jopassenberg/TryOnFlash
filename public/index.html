@@ -457,6 +457,9 @@
   .prof .t { display: grid; flex: 1; min-width: 0; } .prof small { font-size: 12px; opacity: .5; }
   .prof input { width: 100%; min-width: 0; height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: oklch(100% 0 0 / .08); color: #fff; font: inherit; }
   .prof input::placeholder { color: oklch(100% 0 0 / .4); }
+  .prof input:focus { outline: none; box-shadow: inset 0 0 0 1.5px oklch(100% 0 0 / .5); }
+  .prof .av .ic { width: 18px; height: 18px; }
+  .prof button.av { cursor: pointer; color: #fff; }
   /* Warteliste iPhone-App: großes Bild läuft weich ins Schwarz aus, Tag oben links */
   .sheet.wl { gap: 0; padding-bottom: 24px; }
   .wl-hero { position: relative; margin: -22px -22px 0; aspect-ratio: 1314 / 921; background: url(/img/app-store-teaser.webp) center top / 100% auto no-repeat;
@@ -3336,12 +3339,12 @@ function avatarFrom(file) { // quadratisch zuschneiden, 128 px, JPEG: ein paar K
 function profRow() {
   const P = getProfile(), av = P.avatar ? `<img alt="" src="${P.avatar}">` : esc((P.name || "?").trim().charAt(0).toUpperCase() || "?");
   return P.name ? `<button class="prof" id="shProf"><span class="av">${av}</span><span class="t">${esc(P.name)}<small>Als Tag an deinen Stencils · ändern</small></span></button>`
-    : `<button class="prof" id="shProf"><span class="av">+</span><span class="t">Name und Profilbild<small>Erscheinen als kleiner Tag an deinen Stencils</small></span></button>`;
+    : `<button class="prof" id="shProf"><span class="av"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></span><span class="t">Name und Profilbild<small>Erscheinen als kleiner Tag an deinen Stencils</small></span></button>`;
 }
 function bindProf() {
   $("#shProf").onclick = () => {
     const P = getProfile(), wrap = $("#shProf");
-    wrap.outerHTML = `<div class="prof" id="shProf"><button class="av" id="prAv" aria-label="Profilbild wählen">${P.avatar ? `<img alt="" src="${P.avatar}">` : "+"}</button>
+    wrap.outerHTML = `<div class="prof" id="shProf"><button class="av" id="prAv" aria-label="Profilbild wählen">${P.avatar ? `<img alt="" src="${P.avatar}">` : `<svg class="ic" aria-hidden="true"><use href="#i-add"/></svg>`}</button>
       <input id="prName" maxlength="32" placeholder="Dein Name oder Studio" value="${esc(P.name || "")}" autocomplete="nickname"><input type="file" id="prFile" accept="image/*" hidden></div>`;
     const save = () => { setProfile({ ...getProfile(), name: $("#prName").value.trim() }); };
     $("#prName").oninput = save; $("#prName").focus();
