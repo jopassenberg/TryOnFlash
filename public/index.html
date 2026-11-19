@@ -393,7 +393,8 @@
   @keyframes pop { from { opacity: 0; transform: scale(.94); } }
   @keyframes fade { from { opacity: 0; } }
   /* Dialoge (Teilen, Links): dunkle Karte unten in der Mitte */
-  .sheet-bg { position: fixed; inset: 0; z-index: 30; background: oklch(0% 0 0 / .35); animation: fade .25s var(--ease-out); }
+  /* milchiges Glas hinter Dialogen: Inhalt verschwimmt, bleibt aber erahnbar */
+  .sheet-bg { position: fixed; inset: 0; z-index: 30; background: oklch(97% .004 20 / .55); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); animation: fade .3s var(--ease-out); }
   .sheet { position: fixed; z-index: 31; left: 50%; bottom: max(var(--s4), env(safe-area-inset-bottom)); translate: -50% 0; width: min(460px, calc(100% - 2 * var(--s2))); max-height: calc(100% - 32px); overflow: auto;
     padding: 22px; border-radius: 30px; background: var(--frame); color: #fff; display: grid; gap: 18px; font-size: 14px; animation: sheet-in .5s var(--spring) both; }
   .sheet > * { min-width: 0; }
@@ -450,7 +451,7 @@
   .prof .t { display: grid; flex: 1; min-width: 0; } .prof small { font-size: 12px; opacity: .5; }
   .prof input { width: 100%; min-width: 0; height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: oklch(100% 0 0 / .08); color: #fff; font: inherit; }
   .prof input::placeholder { color: oklch(100% 0 0 / .4); }
-  .sec-note { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: oklch(100% 0 0 / .5); }
+  .sec-note { hyphens: manual; display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: oklch(100% 0 0 / .5); }
   .sec-note .ic { width: 14px; height: 14px; margin-top: 2px; }
   .fl-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   .fl-links li { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
@@ -652,9 +653,19 @@
   .acct-perks li { display: flex; gap: 10px; align-items: center; } .acct-perks .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
   @media (max-width: 680px) { .rb.acct { width: 42px; height: 42px; } }
   .sheet input.acct-code { text-align: center; letter-spacing: .4em; font-size: 22px; font-variant-numeric: tabular-nums; }
-  .g-btn { display: flex; justify-content: center; min-height: 44px; }
-  .acct-or { display: flex; align-items: center; gap: 12px; font-size: 13px; color: oklch(100% 0 0 / .45); }
-  .acct-or::before, .acct-or::after { content: ""; flex: 1; height: 1px; background: oklch(100% 0 0 / .12); }
+  /* Google: eigener Knopf im Stencit-Stil; Googles echter Knopf liegt unsichtbar darüber und nimmt den Klick an */
+  .g-wrap { position: relative; }
+  .g-wrap[hidden] { display: none; }
+  .g-btn { width: 100%; height: 48px; border-radius: var(--r-full); background: #fff; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 10px; font: inherit; font-size: 15px; }
+  .g-btn svg { width: 18px; height: 18px; flex: none; }
+  .g-wrap:hover .g-btn { background: oklch(94% 0 0); }
+  .g-over { position: absolute; inset: 0; opacity: .001; overflow: hidden; border-radius: var(--r-full); }
+  .g-over > div { transform-origin: 0 0; }
+  .acct-mailbox { display: grid; gap: 8px; }
+  .sheet .acct-mailbox .btn { height: 48px; }
+  .acct-or { text-align: center; font-size: 13px; color: oklch(100% 0 0 / .4); margin: -6px 0; }
+  .acct-later { justify-self: center; height: 32px; padding: 0 12px; background: none; color: oklch(100% 0 0 / .55); font: inherit; font-size: 14px; }
+  .acct-later:hover { color: #fff; }
   .steps { white-space: nowrap; hyphens: none; }
   @media (max-width: 440px) { .steps { display: none; } } /* schmale Handys: die Insel zeigt den Schritt ohnehin */
 </style>
@@ -3506,6 +3517,7 @@ const FREE_MOTIFS = 3, FREE_STENCILS = 3;
 const GOOGLE_CLIENT_ID = "423217379541-9nmas7lsbt4d5fc44te6sq1hao2ka0ur.apps.googleusercontent.com";
 const loadScript = src => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res();
   document.head.append(Object.assign(document.createElement("script"), { src, async: true, onload: res, onerror: rej })); });
+const G_LOGO = `<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
 async function googleButton(el) {
   if (!GOOGLE_CLIENT_ID || !el) return;
   try { await loadScript("https://accounts.google.com/gsi/client"); } catch { return; }
@@ -3516,7 +3528,12 @@ async function googleButton(el) {
     if (error) { console.warn("google", error); status("Google-Anmeldung hat nicht geklappt", "err"); } else $("#acctSheet").innerHTML = "";
   } });
   el.hidden = false; $("#acctOr") && ($("#acctOr").hidden = false);
-  google.accounts.id.renderButton(el, { type: "standard", theme: "filled_black", size: "large", shape: "pill", text: "continue_with", logo_alignment: "center", width: Math.min(400, el.clientWidth || 320), locale: getLang() });
+  const over = el.querySelector(".g-over"), W = el.clientWidth || 320, gw = Math.min(400, W);
+  google.accounts.id.renderButton(over, { type: "standard", theme: "outline", size: "large", shape: "pill", text: "continue_with", width: gw, locale: getLang() });
+  // Googles Knopf (max. 400 × ~40 px) auf die ganze Fläche unseres Knopfs strecken, damit jeder Tipp ihn trifft
+  const fit = () => { const g = over.firstElementChild; if (!g) return; g.style.transform = ""; const w = g.offsetWidth, h = g.offsetHeight;
+    if (w && h) g.style.transform = `scale(${el.clientWidth / w}, ${el.clientHeight / h})`; };
+  requestAnimationFrame(fit); setTimeout(fit, 400);
 }
 let sbP = null;
 const sb = () => (sbP ||= import(SUPABASE).then(m => m.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })).catch(e => (console.warn("supabase", e), null)));
@@ -3583,10 +3600,12 @@ async function acctSheet(reason = "") {
         <div class="stack"><button class="btn primary wide" id="acctVerify">Anmelden</button><button class="btn ghost wide" id="acctAgain">Andere Adresse</button></div>`
       : `<h3>${title}</h3><p class="dim" style="margin:0">${lead}</p>
         <ul class="acct-perks"><li>${check}${FREE_MOTIFS} neue Motive pro Monat anprobieren</li><li>${check}Bis zu ${FREE_STENCILS} Stencils gesichert, auf allen Geräten</li><li>${check}Flashes per Link teilen</li></ul>
-        <div class="g-btn" id="gBtn" hidden></div><div class="acct-or" id="acctOr" hidden>oder mit E-Mail</div>
-        <input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="Deine E-Mail-Adresse">
-        <div class="stack"><button class="btn primary wide" id="acctSend">Anmelde-Mail senden</button><button class="btn ghost wide" data-close>Später</button></div>
-        <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.</span></div>`;
+        <div class="g-wrap" id="gBtn" hidden><button class="g-btn" tabindex="-1" aria-hidden="true">${G_LOGO}<span>Weiter mit Google</span></button><div class="g-over"></div></div>
+        <div class="acct-or" id="acctOr" hidden>oder</div>
+        <div class="acct-mailbox"><input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="Deine E-Mail-Adresse">
+        <button class="btn wide" id="acctSend">Weiter mit E-Mail</button></div>
+        <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.</span></div>
+        <button class="acct-later" data-close>Später</button>`;
   } else {
     await refreshQuota().catch(() => {});
     const unl = unlimited(), left = ACC.freeLeft ?? FREE_MOTIFS, saved = FL.items.filter(f => f.cloud).length;
@@ -3620,7 +3639,7 @@ async function acctSheet(reason = "") {
   }
   const send = $("#acctSend");
   if (send) {
-    const mail = $("#acctMail"); mail.focus();
+    const mail = $("#acctMail"); send.classList.add(GOOGLE_CLIENT_ID ? "ghost" : "primary");
     mail.onkeydown = e => { if (e.key === "Enter") send.click(); };
     send.onclick = async () => {
       const email = mail.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { mail.focus(); return; }

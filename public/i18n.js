@@ -77,7 +77,7 @@ const EN = {
   "Mit einem kostenlosen Konto bekommst du:": "With a free account you get:", "Flashes per Link teilen": "Share flashes via link",
   "Deine E-Mail-Adresse": "Your email address", "Anmelde-Mail senden": "Send sign-in email", "Später": "Later", "Wird gesendet …": "Sending …",
   "Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.": "No password needed. Photos of your skin always stay on your device.",
-  "Schau in dein Postfach": "Check your inbox", "Andere Adresse": "Different address", "Prüfe …": "Checking …", "oder mit E-Mail": "or with email",
+  "Schau in dein Postfach": "Check your inbox", "Andere Adresse": "Different address", "Prüfe …": "Checking …", "oder mit E-Mail": "or with email", "oder": "or", "Weiter mit Google": "Continue with Google", "Weiter mit E-Mail": "Continue with email",
   "Code stimmt nicht": "That code isn’t right", "Code abgelaufen · neu senden": "Code expired · send a new one", "Link konnte nicht gesendet werden": "Couldn’t send the email",
   "Zu viele Versuche · kurz warten": "Too many attempts · wait a moment", "Google-Anmeldung hat nicht geklappt": "Google sign-in didn’t work",
   "Angemeldet": "Signed in", "Abgemeldet": "Signed out", "Konto gerade nicht erreichbar": "Account not reachable right now",
