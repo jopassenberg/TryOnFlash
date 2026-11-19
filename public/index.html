@@ -546,8 +546,11 @@
   .cutbox > .sw.cut-bg { margin: 0 var(--s1); }
   /* Schnellansicht: nur Ergebnis + Anpassen/Übernehmen; Werkzeuge erst nach „Anpassen“ */
   .cut.quick .quickbar { display: grid; }
-  .cut.no-looks .looks, .cut.no-looks .sec-title { display: none; }
-  .cut.quick .looks, .cut.quick .sec-title, .cut.quick .panel:has(#cutTools) .group:first-child, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
+  .adjs { display: grid; gap: 6px; padding: 0 var(--s1); }
+  .adj { display: grid; grid-template-columns: 84px 1fr 52px; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; border-radius: 20px; background: var(--fill); font-size: 14px; }
+  .adj b { font-weight: 400; text-align: right; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .adj input { width: 100%; accent-color: var(--n-900); }
+  .cut.quick .panel:has(#cutTools) .group:first-child, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
   .cut:not(.quick) #cutEdit { display: none; }
   .looks button { display: grid; justify-items: center; gap: 6px; padding: 6px 6px 8px; border-radius: 20px; font-size: 13px; color: var(--text-2); background: var(--fill); transition: background-color .2s, color .2s, transform .3s var(--spring); }
   .looks button:active { transform: scale(.96); }
@@ -668,7 +671,7 @@
     .size { flex: 1 1 100%; width: auto; }
     .cutbox, .cutbox > .panel { min-width: 0; }
     .cutbox .panel .group:first-child { flex-wrap: wrap; }
-    .cutbox .seg { width: 100%; }
+    .cutbox .seg { flex: 1 1 0; width: auto; min-width: 0; } .cut-undo { flex: none; }
     .cutbox .seg button { flex: 1; justify-content: center; padding: 0 var(--s2); white-space: nowrap; font-size: 13px; }
     .cutbox .panel .group.end { flex-wrap: wrap; }
     .cutbox .panel .group.end > .sw { flex: 1 1 100%; }
@@ -970,12 +973,12 @@
       <!-- Hintergrund: zwei Bilder statt Schalter, damit man sieht, was passiert -->
       <button class="sw cut-bg" id="cutBg" role="switch" aria-checked="true"><span class="t">Hintergrund entfernen<small>Papier oder Haut um das Motiv wird durchsichtig</small></span><span class="track"></span></button>
       <!-- Stil: jede Option zeigt sofort, wie das Motiv damit aussieht -->
-      <div class="sec-title">Stil <span class="dim" id="lookDesc"></span></div>
-      <div class="looks" id="cutLook" role="radiogroup" aria-label="Stil">
-        <button data-style="orig" role="radio" aria-checked="true"><canvas width="96" height="96"></canvas><span>Original</span></button>
-        <button data-style="gray" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Graustufen</span></button>
-        <button data-style="clean" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Ohne Schatten</span></button>
-        <button data-style="lines" role="radio" aria-checked="false"><canvas width="96" height="96"></canvas><span>Nur Linien</span></button>
+      <!-- Tinte: Regler statt fester Stile; es erscheinen nur die, die beim Motiv etwas bewirken -->
+      <div class="sec-title">Tinte</div>
+      <div class="adjs" id="cutAdj">
+        <label class="adj" data-k="contrast"><span>Kontrast</span><input type="range" min="-50" max="100" step="1" value="0" aria-label="Kontrast"><b>0</b></label>
+        <label class="adj" data-k="shade"><span>Schatten</span><input type="range" min="0" max="100" step="1" value="100" aria-label="Schatten"><b>100 %</b></label>
+        <label class="adj" data-k="color"><span>Farbe</span><input type="range" min="0" max="100" step="1" value="100" aria-label="Farbe"><b>100 %</b></label>
       </div>
       <div class="panel">
         <div class="group">
@@ -984,6 +987,7 @@
             <button data-tool="erase" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg>Radierer</button>
             <button data-tool="paint" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-paint-brush"/></svg>Pinsel</button>
           </div>
+          <button class="btn soft icon cut-undo" id="cutUndo2" title="Rückgängig" aria-label="Rückgängig" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
           <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
         </div>
         <div class="group end">
@@ -1973,8 +1977,8 @@ function openCut(c, opts = {}) {
     : `<span>Ganzes Bild</span><span class="dim">Nur einen Teil? Unter „Anpassen“ mit dem Lasso auswählen.</span>`;
   cutC.width = c.width; cutC.height = c.height;
   $("#cutBg").hidden = !CUT.opaque; setBg(CUT.bg);
-  CUT.quick = !opts.restore; $("#cut").classList.toggle("quick", CUT.quick); showStyles();
-  lookThumbs();
+  CUT.quick = !opts.restore; $("#cut").classList.toggle("quick", CUT.quick); showAdj();
+  lookThumbs(); undoState();
   const hint = $("#cutHint").textContent; $("#cut").hidden = false; setTool("lasso"); if (CUT.hasMask) $("#cutHint").textContent = hint; fitCut();
   cancelAnimationFrame(CUT.raf);
   const loop = t => { if ($("#cut").hidden) return; drawCut(t); CUT.raf = requestAnimationFrame(loop); };
@@ -2021,68 +2025,63 @@ function paperColor(img) { // Farbe des Hintergrunds: Median der Randpixel
   px.sort((a, b) => a[3] - b[3]); const m = px[px.length >> 1]; return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
 function source() {
-  const removeBg = CUT.bg && CUT.opaque, orig = CUT.look === "color" && CUT.shade;
-  if (orig) return removeBg ? inkOf() : CUT.img;
-  const key = (removeBg ? "ink" : "paper") + CUT.look + CUT.shade;
+  const removeBg = CUT.bg && CUT.opaque;
+  if (isPlain(CUT.adj)) return removeBg ? inkOf() : CUT.img;
+  const key = (removeBg ? "ink" : "paper") + adjKey(CUT.adj);
   if (CUT.lookKey !== key) {
-    let out = applyLook(inkOf(), CUT.look, CUT.shade);
+    let out = applyAdj(inkOf(), CUT.adj);
     if (!removeBg && CUT.opaque) { const c = canvasOf(out.width, out.height), g = c.getContext("2d"); g.fillStyle = CUT.paper ||= paperColor(CUT.img); g.fillRect(0, 0, c.width, c.height); g.drawImage(out, 0, 0); out = c; }
     CUT.lookCanvas = out; CUT.lookKey = key;
   }
   return CUT.lookCanvas;
 }
-// Welche Stile beim Motiv überhaupt etwas ändern; bei reinem Schwarz-Weiß gibt es keine Stil-Auswahl.
-function usefulStyles() {
+// Welche Regler beim Motiv etwas bewirken: Kontrast immer, Schatten nur bei weicher Schattierung, Farbe nur bei Farbe.
+function inkStats() {
   const src = inkOf(), k = Math.min(1, 200 / Math.max(src.width, src.height)), w = Math.max(2, Math.round(src.width * k)), h = Math.max(2, Math.round(src.height * k));
   const c = canvasOf(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(src, 0, 0, w, h);
   const d = g.getImageData(0, 0, w, h).data; let ink = 0, col = 0, shd = 0;
   for (let i = 0; i < d.length; i += 4) { const a = d[i + 3] / 255; if (a < .05) continue; ink++;
     const l = (.299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]) / 255, ch = (Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2])) / 255;
     if (ch > .2 && a > .5) col++; if (a < .6 || (l > .32 && ch < .18 && a < .9)) shd++; }
-  const color = ink && col / ink > .02, shade = ink && shd / ink > .04;
-  return { orig: true, gray: color, clean: shade, lines: color || shade };
+  return { color: ink && col / ink > .02, shade: ink && shd / ink > .04 };
 }
-function showStyles() {
-  const ok = usefulStyles(); if (CUT.style && !ok[CUT.style]) ok[CUT.style] = true;
-  document.querySelectorAll("#cutLook button").forEach(b => b.hidden = !ok[b.dataset.style]);
-  $("#cut").classList.toggle("no-looks", Object.values(ok).filter(Boolean).length < 2);
+function showAdj() {
+  const st = inkStats(), A = CUT.adj || ADJ0;
+  document.querySelector('#cutAdj [data-k="shade"]').hidden = !st.shade && A.shade === 100;
+  document.querySelector('#cutAdj [data-k="color"]').hidden = !st.color && A.color === 100;
 }
-// Farbe: wie es ist · Schwarz-Weiß: Graustufen · Nur Schwarz: nur die dunkle Linienarbeit, als sattes Schwarz.
-// Schattierung aus: weiche, halbtransparente oder mittelgraue Tinte (Schatten, Punkte) fällt weg.
-function applyLook(src, look, shade) {
+// Regler: Kontrast (Tinte kräftiger bzw. weicher), Schatten (weiche, halbtransparente oder mittelgraue Tinte
+// ausblenden), Farbe (bis Schwarz-Weiß). Werte werden als kurzer Text gespeichert (früher: feste Stile).
+const ADJ0 = { contrast: 0, shade: 100, color: 100 };
+const adjKey = A => `c${A.contrast}s${A.shade}f${A.color}`;
+const isPlain = A => !A || (A.contrast === 0 && A.shade === 100 && A.color === 100);
+function parseStyle(s) {
+  const legacy = { orig: {}, gray: { color: 0 }, clean: { shade: 0 }, lines: { color: 0, shade: 0, contrast: 60 } };
+  if (legacy[s]) return { ...ADJ0, ...legacy[s] };
+  const m = /^c(-?\d+)s(\d+)f(\d+)$/.exec(s || ""); return m ? { contrast: +m[1], shade: +m[2], color: +m[3] } : { ...ADJ0 };
+}
+function setStyle(s) { CUT.adj = typeof s === "string" ? parseStyle(s) : { ...s }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj(); }
+function syncAdj() {
+  document.querySelectorAll("#cutAdj .adj").forEach(l => { const k = l.dataset.k, v = CUT.adj[k];
+    l.querySelector("input").value = v; l.querySelector("b").textContent = k === "contrast" ? (v > 0 ? "+" : "") + v : v + " %"; });
+}
+document.querySelectorAll("#cutAdj input").forEach(inp => inp.oninput = () => {
+  const k = inp.closest(".adj").dataset.k; CUT.adj = { ...CUT.adj, [k]: +inp.value }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj();
+});
+function applyAdj(src, A) {
   const c = canvasOf(src.width, src.height), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(src, 0, 0);
-  const id = g.getImageData(0, 0, c.width, c.height), d = id.data;
+  const id = g.getImageData(0, 0, c.width, c.height), d = id.data, kC = 1 + A.contrast / 50, sat = A.color / 100, sh = A.shade / 100;
   for (let i = 0; i < d.length; i += 4) {
     let r = d[i], gg = d[i + 1], b = d[i + 2], a = d[i + 3] / 255; if (a <= 0) continue;
-    const l = (.299 * r + .587 * gg + .114 * b) / 255, ch = (Math.max(r, gg, b) - Math.min(r, gg, b)) / 255;
-    if (!shade && (a < .6 || (l > .32 && ch < .18 && a < .9))) { d[i + 3] = 0; continue; }
-    if (look === "bw") { const v = l * 255; r = gg = b = v; }
-    if (look === "black") { const k = clamp((.66 - l) / .22, 0, 1) * clamp((a - .3) / .3, 0, 1) * (l < .2 ? 1 : clamp((.32 - ch) / .14, 0, 1)); r = gg = b = 18; a = k; } // dunkle, unbunte Striche bleiben; farbige Flächen fallen weg (tiefes Schwarz immer)
+    const L = .299 * r + .587 * gg + .114 * b, l = L / 255, ch = (Math.max(r, gg, b) - Math.min(r, gg, b)) / 255;
+    if (sh < 1 && (a < .6 || (l > .32 && ch < .18 && a < .9))) a *= sh; // Schattierung
+    if (sat < 1) { r = L + (r - L) * sat; gg = L + (gg - L) * sat; b = L + (b - L) * sat; } // Farbe
+    if (kC !== 1) { r = (r - 128) * kC + 128; gg = (gg - 128) * kC + 128; b = (b - 128) * kC + 128; if (kC > 1) a = clamp((a - .5) * kC + .5, 0, 1); } // Kontrast, auch an den Kanten
     d[i] = r; d[i + 1] = gg; d[i + 2] = b; d[i + 3] = a * 255;
   }
   g.putImageData(id, 0, 0); return c;
 }
-// Stile: Original · Graustufen (Farbe weg, Schatten bleiben grau) · Ohne Schatten (Farben, aber ohne
-// Schattierung und Punkte) · Nur Linien (nur die Kontur, schwarz, z. B. als Stencil-Vorlage)
-const STYLES = { orig: ["color", true], gray: ["bw", true], clean: ["color", false], lines: ["black", false] };
-const STYLE_DESC = { orig: "Farben und Schatten wie im Bild", gray: "ohne Farbe, Schatten werden grau", clean: "Farben bleiben, weiche Schatten fallen weg", lines: "nur die Konturen in Schwarz, z. B. als Vorlage" };
-function setStyle(s) {
-  [CUT.look, CUT.shade] = STYLES[s]; CUT.style = s; CUT.dirty = true; $("#lookDesc").textContent = "· " + STYLE_DESC[s];
-  document.querySelectorAll("#cutLook button").forEach(x => x.setAttribute("aria-checked", x.dataset.style === s));
-}
-document.querySelectorAll("#cutLook button").forEach(b => b.onclick = () => setStyle(b.dataset.style));
-function lookThumbs() { // kleine Vorschau je Stil, aus dem Motiv (mit Auswahl, falls schon eine da ist)
-  const base = inkOf();
-  const k = 160 / Math.max(base.width, base.height), w = Math.max(1, Math.round(base.width * k)), h = Math.max(1, Math.round(base.height * k)), sm = canvasOf(w, h), sg = sm.getContext("2d");
-  sg.drawImage(base, 0, 0, w, h);
-  if (CUT.hasMask) { sg.globalCompositeOperation = "destination-in"; sg.drawImage(CUT.mask, 0, 0, w, h); }
-  const src = trim(sm) || sm;
-  document.querySelectorAll("#cutLook button").forEach(b => {
-    const [look, shade] = STYLES[b.dataset.style], c = b.querySelector("canvas"), g = c.getContext("2d"), v = applyLook(src, look, shade);
-    const s = Math.min(84 / v.width, 84 / v.height);
-    g.clearRect(0, 0, 96, 96); g.drawImage(v, (96 - v.width * s) / 2, (96 - v.height * s) / 2, v.width * s, v.height * s);
-  });
-}
+function lookThumbs() {} // früher: Vorschaubilder der Stile
 function drawCut() {
   const c = CUT.img, g = cutG, W = c.width, H = c.height;
   if (CUT.dirty) { // result preview: (ink on paper | image) inside the mask
@@ -2102,12 +2101,17 @@ function drawCut() {
   g.clearRect(0, 0, W, H);
   // Live sehen, was ausgewählt ist: Auswahl hell, außerhalb dunkler Schleier, darüber das Ergebnis.
   // Pinsel und Radierer verändern das sofort sichtbar (auch auf durchsichtigem Hintergrund).
-  if (CUT.hasMask) g.drawImage(CUT.veil, 0, 0);
+  const lassoing = CUT.drawing && CUT.tool === "lasso" && CUT.path?.length > 2;
+  if (CUT.hasMask && !lassoing) g.drawImage(CUT.veil, 0, 0);
+  if (lassoing) { // beim Umfahren: die Fläche innen hell, außen dunkel – so sieht man schon vorher, was ausgewählt wird
+    g.save(); g.beginPath(); g.rect(0, 0, W, H); trace(g, CUT.path); g.closePath(); g.fillStyle = "rgba(10,10,10,.6)"; g.fill("evenodd");
+    g.beginPath(); trace(g, CUT.path); g.closePath(); g.fillStyle = "rgba(255,255,255,.4)"; g.fill(); g.restore();
+  }
   g.drawImage(CUT.comp, 0, 0);
   const lw = 1.5 / (CUT.fit * CUT.zoom);
   if (CUT.drawing && CUT.tool === "lasso" && CUT.path?.length > 1) {
     g.save(); g.beginPath(); trace(g, CUT.path); g.lineJoin = "round";
-    g.lineWidth = lw * 3; g.strokeStyle = "rgba(0,0,0,.5)"; g.stroke(); g.lineWidth = lw * 1.5; g.strokeStyle = "#fff"; g.stroke(); g.restore();
+    g.lineWidth = lw * 4.5; g.strokeStyle = "rgba(0,0,0,.55)"; g.stroke(); g.lineWidth = lw * 2.5; g.strokeStyle = "#fff"; g.stroke(); g.restore();
   }
   if (CUT.tool !== "lasso" && CUT.hover) { // brush cursor
     g.save(); g.beginPath(); g.arc(CUT.hover.x, CUT.hover.y, brushPx() / 2, 0, 7);
@@ -2153,14 +2157,15 @@ function drawLoupe() {
 }
 function snapshot() {
   const s = canvasOf(CUT.mask.width, CUT.mask.height); s.getContext("2d").drawImage(CUT.mask, 0, 0);
-  CUT.hist.push({ mask: s, has: CUT.hasMask }); if (CUT.hist.length > 8) CUT.hist.shift();
+  CUT.hist.push({ mask: s, has: CUT.hasMask }); if (CUT.hist.length > 20) CUT.hist.shift(); undoState();
 }
 function undo() {
   const h = CUT.hist.pop(); if (!h) return;
   const mg = CUT.mask.getContext("2d"); mg.globalCompositeOperation = "copy"; mg.drawImage(h.mask, 0, 0); mg.globalCompositeOperation = "source-over";
-  CUT.hasMask = h.has; CUT.dirty = true;
+  CUT.hasMask = h.has; CUT.dirty = true; undoState();
 }
-$("#cutUndo").onclick = undo;
+$("#cutUndo").onclick = $("#cutUndo2").onclick = undo;
+const undoState = () => { const none = !CUT.hist.length; $("#cutUndo").disabled = $("#cutUndo2").disabled = none; };
 function brushTo(p) {
   const mg = CUT.mask.getContext("2d"), a = CUT.last || p;
   mg.globalCompositeOperation = CUT.tool === "erase" ? "destination-out" : "source-over";
