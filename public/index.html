@@ -3172,7 +3172,7 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
   const zoomAt = (z, cx, cy) => { const r = V.getBoundingClientRect(), ox = cx - r.left, oy = cy - r.top, nz = clamp(z, .35, 3);
     VIEW.x = ox - (ox - VIEW.x) * nz / VIEW.z; VIEW.y = oy - (oy - VIEW.y) * nz / VIEW.z; VIEW.z = nz; applyView(); };
   V.addEventListener("pointerdown", e => {
-    if (e.button > 0) return;
+    if (e.button > 0 || e.target.closest(".fl-bar, .fl-dock, .fl-empty")) return; // Knöpfe der Leisten nicht als Verschieben abfangen
     P.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { V.setPointerCapture(e.pointerId); } catch {}
     if (P.size === 2) { const [a, b] = [...P.values()]; if (g?.tile) { g.tile.classList.remove("dragging"); g.tile.style.left = g.l + "px"; g.tile.style.top = g.t + "px"; }
       g = { pinch: true, d: Math.hypot(b.x - a.x, b.y - a.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, z: VIEW.z, x: VIEW.x, y: VIEW.y }; return; }
