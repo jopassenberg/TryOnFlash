@@ -3118,8 +3118,14 @@ new ResizeObserver(() => { if (!$("#flashesView").hidden && !layoutKey) layoutFl
     }
   };
   V.addEventListener("pointerup", end); V.addEventListener("pointercancel", end);
-  V.addEventListener("wheel", e => { e.preventDefault();
-    if (e.ctrlKey) zoomAt(VIEW.z * Math.exp(-e.deltaY * .01), e.clientX, e.clientY); else { VIEW.x -= e.deltaX; VIEW.y -= e.deltaY; applyView(); } }, { passive: false });
+  V.addEventListener("wheel", e => {
+    // Scrollen weiterreichen: unten am Ende der Collage scrollt die Seite zur Fußzeile, und zurück nach oben zuerst die Seite
+    if (!e.ctrlKey && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      const bottom = VIEW.y + (parseFloat($("#flGrid").style.height) || V.clientHeight) * VIEW.z;
+      if ((e.deltaY > 0 && bottom <= V.clientHeight - 8) || (e.deltaY < 0 && scrollY > 0)) return;
+    }
+    e.preventDefault();
+    if (e.ctrlKey) zoomAt(VIEW.z * Math.exp(-e.deltaY * .01), e.clientX, e.clientY); else { VIEW.x -= e.deltaX; VIEW.y = Math.max(VIEW.y - e.deltaY, Math.min(16, V.clientHeight - 8 - (parseFloat($("#flGrid").style.height) || 0) * VIEW.z)); applyView(); } }, { passive: false });
 }
 function toggleSel(id) { FL.sel.has(id) ? FL.sel.delete(id) : FL.sel.add(id); renderFlashes(); }
 $("#flSelect").onclick = () => { FL.selecting = !FL.selecting; if (!FL.selecting) FL.sel.clear(); renderFlashes(); };
@@ -3987,6 +3993,7 @@ function feedbackMail() {
 $("#ftLang").innerHTML = langSwitch(getLang()); bindLang($("#ftLang"));
 $("#ftFeedback").href = feedbackMail();
 $("#ftApp").onclick = () => waitlistSheet();
+if (location.hash === "#warteliste") { history.replaceState(null, "", location.pathname + location.search); setTimeout(() => waitlistSheet(), 600); } // Link aus der Fußzeile der Rechtsseiten
 // Alles, was Stencit auf diesem Gerät abgelegt hat; Sprache, Maßeinheit, Anmeldung und das Gratis-Motiv-Zählwerk bleiben
 async function wipeLocal() {
   for (const st of ["flashes", "links", "handoff"]) await idb(st, "readwrite", s => s.clear()).catch(() => {});

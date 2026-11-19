@@ -4,8 +4,8 @@
   let lang = saved || ((navigator.language || "").toLowerCase().startsWith("de") ? "de" : "en");
   const show = l => {
     lang = l; document.documentElement.lang = l;
-    document.querySelectorAll("main[data-lang]").forEach(m => m.hidden = m.dataset.lang !== l);
-    const sw = document.querySelector(".lsw"); if (sw) sw.dataset.l = l;
+    document.querySelectorAll("main[data-lang], .ft [data-lang]").forEach(m => m.hidden = m.dataset.lang !== l);
+    document.querySelectorAll(".lsw").forEach(sw => sw.dataset.l = l);
     document.querySelectorAll(".lsw button").forEach(b => b.setAttribute("aria-checked", b.dataset.l === l));
     const h = document.querySelector(`main[data-lang="${l}"] h1`); if (h) document.title = h.textContent.replace(/­/g, "") + " · Stencit";
   };
