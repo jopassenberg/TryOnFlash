@@ -2093,13 +2093,16 @@ function drawCut() {
       const v = CUT.veil && CUT.veil.width === W && CUT.veil.height === H ? CUT.veil : (CUT.veil = canvasOf(W, H)), vg = v.getContext("2d");
       vg.globalCompositeOperation = "source-over"; vg.clearRect(0, 0, W, H); vg.fillStyle = "rgba(10,10,10,.72)"; vg.fillRect(0, 0, W, H);
       vg.globalCompositeOperation = "destination-out"; vg.drawImage(CUT.mask, 0, 0);
+      const lit = CUT.lit && CUT.lit.width === W && CUT.lit.height === H ? CUT.lit : (CUT.lit = canvasOf(W, H)), lg = lit.getContext("2d"); // Auswahl: neutrale helle Fläche
+      lg.globalCompositeOperation = "source-over"; lg.clearRect(0, 0, W, H); lg.drawImage(CUT.mask, 0, 0); lg.globalCompositeOperation = "source-in"; lg.fillStyle = "rgba(255,255,255,.55)"; lg.fillRect(0, 0, W, H);
+      vg.globalCompositeOperation = "source-over"; vg.drawImage(lit, 0, 0);
     }
     CUT.dirty = false;
   }
   g.clearRect(0, 0, W, H);
-  // Live sehen, was ausgewählt ist: das Bild blass darunter (so ist auch durchsichtiger Hintergrund in der Auswahl
-  // hell), außerhalb der dunkle Schleier, darüber das Ergebnis. Pinsel und Radierer verändern das sofort sichtbar.
-  if (CUT.hasMask) { g.globalAlpha = .35; g.drawImage(c, 0, 0); g.globalAlpha = 1; g.drawImage(CUT.veil, 0, 0); }
+  // Live sehen, was ausgewählt ist: Auswahl hell, außerhalb dunkler Schleier, darüber das Ergebnis.
+  // Pinsel und Radierer verändern das sofort sichtbar (auch auf durchsichtigem Hintergrund).
+  if (CUT.hasMask) g.drawImage(CUT.veil, 0, 0);
   g.drawImage(CUT.comp, 0, 0);
   const lw = 1.5 / (CUT.fit * CUT.zoom);
   if (CUT.drawing && CUT.tool === "lasso" && CUT.path?.length > 1) {
