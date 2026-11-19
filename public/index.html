@@ -18,7 +18,7 @@
     --n-400: oklch(84% .004 75); --n-500: oklch(68% .005 75); --n-600: oklch(54% .005 75); --n-800: oklch(32% .004 75); --n-900: oklch(19% .003 75);
     --bordeaux: #730F26; --accent: #DB1A1D; --brand: linear-gradient(in srgb 180deg, #730F26, #DB1A1D);
     --bg: var(--n-100); --ink: var(--n-900); --text-2: var(--n-600); --text-3: var(--n-500); --muted: var(--n-500);
-    --fill: oklch(19% .003 75 / .06); --fill-2: oklch(19% .003 75 / .1);
+    --fill: oklch(19% .003 75 / .09); --fill-2: oklch(19% .003 75 / .14);
     --glass: oklch(26% .004 75 / .42); --glass-light: oklch(100% 0 0 / .66); --glass-strong: oklch(100% 0 0 / .84); --blur: blur(24px) saturate(1.6);
     --on-glass: oklch(100% 0 0); --on-glass-2: oklch(100% 0 0 / .62); --on-glass-fill: oklch(100% 0 0 / .12);
     --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
@@ -29,7 +29,7 @@
     /* konzentrisch: Karte außen 42 → innen 36 (Rahmen 6) → Leiste 28 bei 8 Abstand → Buttons 22 bei 6 Innenabstand */
     --r-outer: 42px; --r-inner-card: calc(var(--r-outer) - var(--frame-w)); --inset: 8px;
     /* Glas-Knopf: fast durchsichtig, weißer Schein von innen (kein Rand, kein Schatten nach außen) */
-    --gb: oklch(95.5% .003 75); --gb-hover: oklch(93% .003 75);
+    --gb: oklch(92% .003 75); --gb-hover: oklch(89% .003 75);
     --gb-glow: none;
     --gd: oklch(25% .003 75); --gd-hover: oklch(28.5% .003 75);
     --gd-glow: none;
@@ -647,7 +647,12 @@
   .acct-quota .bar { height: 8px; border-radius: 4px; background: oklch(100% 0 0 / .12); overflow: hidden; }
   .acct-quota .bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--bordeaux), var(--accent)); }
   .acct-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
-  .sheet input.acct-mail { width: 100%; height: 48px; padding: 0 18px; border: 0; border-radius: 24px; background: oklch(100% 0 0 / .08); color: #fff; font: inherit; font-size: 16px; }
+  /* Eingabefeld ≠ Knopf: kein gefülltes Pill, sondern ein umrandetes Feld mit kleinerer Rundung und Beschriftung darüber */
+  .sheet input.acct-mail { width: 100%; height: 52px; padding: 0 16px; border: 1.5px solid oklch(100% 0 0 / .16); border-radius: 14px; background: oklch(0% 0 0 / .25); color: #fff; font: inherit; font-size: 16px; caret-color: var(--accent); transition: border-color var(--fast); }
+  .sheet input.acct-mail:hover { border-color: oklch(100% 0 0 / .26); }
+  .sheet input.acct-mail:focus { outline: none; border-color: oklch(100% 0 0 / .7); }
+  .acct-label { font-size: 13px; color: oklch(100% 0 0 / .55); margin-bottom: -2px; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -4px -6px -6px 0; }
   .sheet input.acct-mail::placeholder { color: oklch(100% 0 0 / .4); }
   .acct-perks { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; }
   .acct-perks li { display: flex; gap: 10px; align-items: center; } .acct-perks .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
@@ -664,8 +669,7 @@
   .acct-mailbox { display: grid; gap: 8px; }
   .sheet .acct-mailbox .btn { height: 48px; }
   .acct-or { text-align: center; font-size: 13px; color: oklch(100% 0 0 / .4); margin: -6px 0; }
-  .acct-later { justify-self: center; height: 32px; padding: 0 12px; background: none; color: oklch(100% 0 0 / .55); font: inherit; font-size: 14px; }
-  .acct-later:hover { color: #fff; }
+
   .steps { white-space: nowrap; hyphens: none; }
   @media (max-width: 440px) { .steps { display: none; } } /* schmale Handys: die Insel zeigt den Schritt ohnehin */
 </style>
@@ -3602,10 +3606,9 @@ async function acctSheet(reason = "") {
         <ul class="acct-perks"><li>${check}${FREE_MOTIFS} neue Motive pro Monat anprobieren</li><li>${check}Bis zu ${FREE_STENCILS} Stencils gesichert, auf allen Geräten</li><li>${check}Flashes per Link teilen</li></ul>
         <div class="g-wrap" id="gBtn" hidden><button class="g-btn" tabindex="-1" aria-hidden="true">${G_LOGO}<span>Weiter mit Google</span></button><div class="g-over"></div></div>
         <div class="acct-or" id="acctOr" hidden>oder</div>
-        <div class="acct-mailbox"><input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="Deine E-Mail-Adresse">
+        <div class="acct-mailbox"><label class="acct-label" for="acctMail">E-Mail</label><input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="name@beispiel.de">
         <button class="btn wide" id="acctSend">Weiter mit E-Mail</button></div>
-        <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.</span></div>
-        <button class="acct-later" data-close>Später</button>`;
+        <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.</span></div>`;
   } else {
     await refreshQuota().catch(() => {});
     const unl = unlimited(), left = ACC.freeLeft ?? FREE_MOTIFS, saved = FL.items.filter(f => f.cloud).length;
@@ -3615,11 +3618,11 @@ async function acctSheet(reason = "") {
         <div class="acct-row"><span class="dim">Tokens</span><span>${ACC.tokens}</span></div>
         <div class="acct-row"><span class="dim">Gesicherte Stencils</span><span>${saved}${unl || ACC.tokens ? "" : ` von ${FREE_STENCILS}`}</span></div></div>
       ${reason === "quota" ? `<p style="margin:0">Deine freien Motive für diesen Monat sind aufgebraucht. Bereits angeprobierte Motive kannst du weiter frei verwenden.</p>` : ""}
-      <div class="stack"><button class="btn primary wide" disabled>Tokens & Unlimited – bald</button><button class="btn ghost wide" id="acctOut">Abmelden</button><button class="btn ghost wide" data-close>Schließen</button></div>`;
+      <div class="stack"><button class="btn primary wide" disabled>Tokens & Unlimited – bald</button><button class="btn ghost wide" id="acctOut">Abmelden</button></div>`;
   }
-  const lang = getLang(); html += `<div class="stack"><span class="dim">Sprache</span><div class="row"><button class="opt" data-lang="de" aria-pressed="${lang === "de"}">Deutsch</button><button class="opt" data-lang="en" aria-pressed="${lang === "en"}">English</button></div></div>`;
+  // Kopfzeile mit X: die erste Überschrift wandert neben den Schließen-Knopf
+  html = html.replace(/<h3>(.*?)<\/h3>/, (_, t) => `<div class="sheet-head"><h3>${t}</h3><button class="ib-dark" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>`);
   box.innerHTML = `<div class="sheet-bg" data-close></div><div class="sheet" role="dialog" aria-label="Konto">${html}</div>`;
-  box.querySelectorAll("[data-lang]").forEach(b => b.onclick = () => { if (b.dataset.lang !== getLang()) setLang(b.dataset.lang); });
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#acctAgain")?.addEventListener("click", () => { ACC.sentTo = ""; acctSheet(reason); });
   $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; close(); status("Abgemeldet", "ok"); });
