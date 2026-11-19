@@ -986,11 +986,12 @@
       <!-- Stil: jede Option zeigt sofort, wie das Motiv damit aussieht -->
       <!-- Regler für die Tinte; es erscheinen nur die, die beim Motiv etwas bewirken. Wert antippen = zurücksetzen -->
       <div class="adjs" id="cutAdj">
+        <div class="adj" data-k="thresh" data-min="0" data-max="100" data-def="0"><span>Schwelle</span><button class="adj-v" title="Zurücksetzen">Aus</button><input type="range" min="0" max="100" step="1" value="0" aria-label="Schwelle: dunkle Bereiche schwarz, Rest weiß"></div>
         <div class="adj" data-k="bright" data-min="-50" data-max="50" data-def="0"><span>Helligkeit</span><button class="adj-v" title="Zurücksetzen">0</button><input type="range" min="-50" max="50" step="1" value="0" aria-label="Helligkeit"></div>
-        <div class="adj" data-k="contrast" data-min="-50" data-max="100" data-def="0"><span>Kontrast</span><button class="adj-v" title="Zurücksetzen">0</button><input type="range" min="-50" max="100" step="1" value="0" aria-label="Kontrast"></div>
+        <div class="adj" data-k="contrast" data-min="-50" data-max="50" data-def="0"><span>Kontrast</span><button class="adj-v" title="Zurücksetzen">0</button><input type="range" min="-50" max="50" step="1" value="0" aria-label="Kontrast"></div>
         <div class="adj" data-k="gamma" data-min="-50" data-max="50" data-def="0"><span>Gamma</span><button class="adj-v" title="Zurücksetzen">1,00</button><input type="range" min="-50" max="50" step="1" value="0" aria-label="Gamma"></div>
-        <div class="adj" data-k="shade" data-min="0" data-max="100" data-def="100"><span>Schatten</span><button class="adj-v" title="Zurücksetzen">100 %</button><input type="range" min="0" max="100" step="1" value="100" aria-label="Schatten"></div>
-        <div class="adj" data-k="color" data-min="0" data-max="100" data-def="100"><span>Farbe</span><button class="adj-v" title="Zurücksetzen">100 %</button><input type="range" min="0" max="100" step="1" value="100" aria-label="Farbe"></div>
+        <div class="adj" data-k="shade" data-min="0" data-max="200" data-def="100"><span>Schatten</span><button class="adj-v" title="Zurücksetzen">100 %</button><input type="range" min="0" max="200" step="1" value="100" aria-label="Schatten"></div>
+        <div class="adj" data-k="color" data-min="0" data-max="200" data-def="100"><span>Farbe</span><button class="adj-v" title="Zurücksetzen">100 %</button><input type="range" min="0" max="200" step="1" value="100" aria-label="Farbe"></div>
       </div>
       <div class="panel">
         <div class="group">
@@ -2038,8 +2039,9 @@ function source() {
   if (isPlain(CUT.adj)) return removeBg ? inkOf() : CUT.img;
   const key = (removeBg ? "ink" : "paper") + adjKey(CUT.adj);
   if (CUT.lookKey !== key) {
-    let out = applyAdj(inkOf(), CUT.adj);
-    if (!removeBg && CUT.opaque) { const c = canvasOf(out.width, out.height), g = c.getContext("2d"); g.fillStyle = CUT.paper ||= paperColor(CUT.img); g.fillRect(0, 0, c.width, c.height); g.drawImage(out, 0, 0); out = c; }
+    const thr = !removeBg && CUT.adj.thresh > 0;
+    let out = applyAdj(thr ? CUT.img : inkOf(), CUT.adj);
+    if (!removeBg && CUT.opaque) { const c = canvasOf(out.width, out.height), g = c.getContext("2d"); g.fillStyle = thr ? "#fff" : (CUT.paper ||= paperColor(CUT.img)); g.fillRect(0, 0, c.width, c.height); g.drawImage(out, 0, 0); out = c; }
     CUT.lookCanvas = out; CUT.lookKey = key;
   }
   return CUT.lookCanvas;
@@ -2061,21 +2063,21 @@ function showAdj() {
 }
 // Regler: Kontrast (Tinte kräftiger bzw. weicher), Schatten (weiche, halbtransparente oder mittelgraue Tinte
 // ausblenden), Farbe (bis Schwarz-Weiß). Werte werden als kurzer Text gespeichert (früher: feste Stile).
-const ADJ0 = { bright: 0, contrast: 0, gamma: 0, shade: 100, color: 100 };
-const adjKey = A => `c${A.contrast}s${A.shade}f${A.color}b${A.bright || 0}g${A.gamma || 0}`;
-const isPlain = A => !A || (!A.bright && !A.gamma && A.contrast === 0 && A.shade === 100 && A.color === 100);
+const ADJ0 = { thresh: 0, bright: 0, contrast: 0, gamma: 0, shade: 100, color: 100 };
+const adjKey = A => `c${A.contrast}s${A.shade}f${A.color}b${A.bright || 0}g${A.gamma || 0}t${A.thresh || 0}`;
+const isPlain = A => !A || (!A.bright && !A.gamma && !A.thresh && A.contrast === 0 && A.shade === 100 && A.color === 100);
 const gammaOf = v => Math.pow(2, (v || 0) / 50); // Regler −50 … +50 → Gamma 0,5 … 2,0 (mehr = hellere Mitteltöne)
 function parseStyle(s) {
-  const legacy = { orig: {}, gray: { color: 0 }, clean: { shade: 0 }, lines: { color: 0, shade: 0, contrast: 60 } };
+  const legacy = { orig: {}, gray: { color: 0 }, clean: { shade: 0 }, lines: { color: 0, shade: 0, contrast: 40 } };
   if (legacy[s]) return { ...ADJ0, ...legacy[s] };
-  const m = /^c(-?\d+)s(\d+)f(\d+)(?:b(-?\d+))?(?:g(-?\d+))?$/.exec(s || ""); return m ? { contrast: +m[1], shade: +m[2], color: +m[3], bright: +(m[4] || 0), gamma: +(m[5] || 0) } : { ...ADJ0 };
+  const m = /^c(-?\d+)s(\d+)f(\d+)(?:b(-?\d+))?(?:g(-?\d+))?(?:t(\d+))?$/.exec(s || ""); return m ? { contrast: clamp(+m[1], -50, 50), shade: +m[2], color: +m[3], bright: +(m[4] || 0), gamma: +(m[5] || 0), thresh: +(m[6] || 0) } : { ...ADJ0 };
 }
 function setStyle(s) { CUT.adj = typeof s === "string" ? parseStyle(s) : { ...s }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj(); }
 function syncAdj() {
   document.querySelectorAll("#cutAdj .adj").forEach(l => { const k = l.dataset.k, v = CUT.adj[k] ?? +l.dataset.def, mn = +l.dataset.min, mx = +l.dataset.max;
     const pos = x => (x - mn) / (mx - mn) * 100;
     l.querySelector("input").value = v; l.style.setProperty("--p", pos(v) + "%"); l.style.setProperty("--z", pos(+l.dataset.def) + "%");
-    l.querySelector(".adj-v").textContent = k === "gamma" ? gammaOf(v).toFixed(2).replace(".", getLang() === "en" ? "." : ",") : k === "contrast" || k === "bright" ? (v > 0 ? "+" : "") + v : v + " %"; });
+    l.querySelector(".adj-v").textContent = k === "thresh" ? (v ? v + " %" : "Aus") : k === "gamma" ? gammaOf(v).toFixed(2).replace(".", getLang() === "en" ? "." : ",") : k === "contrast" || k === "bright" ? (v > 0 ? "+" : "") + v : v + " %"; });
 }
 const setAdj = (k, v) => { CUT.adj = { ...CUT.adj, [k]: v }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj(); };
 document.querySelectorAll("#cutAdj .adj").forEach(l => {
@@ -2085,15 +2087,16 @@ document.querySelectorAll("#cutAdj .adj").forEach(l => {
 });
 function applyAdj(src, A) {
   const c = canvasOf(src.width, src.height), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(src, 0, 0);
-  const id = g.getImageData(0, 0, c.width, c.height), d = id.data, kC = 1 + A.contrast / 50, sat = A.color / 100, sh = A.shade / 100, br = (A.bright || 0) * 2.2, gm = gammaOf(A.gamma), lut = gm === 1 ? null : Array.from({ length: 256 }, (_, i) => 255 * Math.pow(i / 255, 1 / gm));
+  const id = g.getImageData(0, 0, c.width, c.height), d = id.data, kC = A.contrast >= 0 ? 1 + A.contrast / 25 : 1 + A.contrast / 100, sat = A.color / 100, sh = A.shade / 100, th = A.thresh ? 40 + A.thresh * 1.75 : 0, br = (A.bright || 0) * 2.2, gm = gammaOf(A.gamma), lut = gm === 1 ? null : Array.from({ length: 256 }, (_, i) => 255 * Math.pow(i / 255, 1 / gm));
   for (let i = 0; i < d.length; i += 4) {
     let r = d[i], gg = d[i + 1], b = d[i + 2], a = d[i + 3] / 255; if (a <= 0) continue;
     const L = .299 * r + .587 * gg + .114 * b, l = L / 255, ch = (Math.max(r, gg, b) - Math.min(r, gg, b)) / 255;
-    if (sh < 1 && (a < .6 || (l > .32 && ch < .18 && a < .9))) a *= sh; // Schattierung
-    if (sat < 1) { r = L + (r - L) * sat; gg = L + (gg - L) * sat; b = L + (b - L) * sat; } // Farbe
+    if (sh !== 1 && (a < .6 || (l > .32 && ch < .18 && a < .9))) a = Math.min(1, a * sh); // Schattierung schwächer oder kräftiger
+    if (sat !== 1) { r = L + (r - L) * sat; gg = L + (gg - L) * sat; b = L + (b - L) * sat; } // Farbe
     if (br) { r += br; gg += br; b += br; } // Helligkeit
     if (lut) { r = lut[clamp(Math.round(r), 0, 255)]; gg = lut[clamp(Math.round(gg), 0, 255)]; b = lut[clamp(Math.round(b), 0, 255)]; } // Gamma: Mitteltöne heller/dunkler, Schwarz und Weiß bleiben
     if (kC !== 1) { r = (r - 128) * kC + 128; gg = (gg - 128) * kC + 128; b = (b - 128) * kC + 128; if (kC > 1) a = clamp((a - .5) * kC + .5, 0, 1); } // Kontrast, auch an den Kanten
+    if (th) { const Lp = .299 * r + .587 * gg + .114 * b; a *= clamp((th - Lp) / 12 + .5, 0, 1); r = gg = b = 18; } // Schwelle: dunkler als die Schwelle = schwarz, sonst weg
     d[i] = r; d[i + 1] = gg; d[i + 2] = b; d[i + 3] = a * 255;
   }
   g.putImageData(id, 0, 0); return c;

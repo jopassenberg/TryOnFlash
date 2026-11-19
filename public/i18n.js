@@ -107,6 +107,7 @@ const EN = {
   "Name geben (optional)": "Add a name (optional)", "Name des Stencils": "Stencil name", "Nachricht zum Link (optional) – wird beim Senden mitgeschickt": "Message with the link (optional) – sent along with it",
   "Tinte": "Ink", "Kontrast": "Contrast", "Schatten": "Shading", "Farbe": "Colour",
   "Helligkeit": "Brightness", "Zurücksetzen": "Reset",
+  "Schwelle": "Threshold", "Aus": "Off", "Schwelle: dunkle Bereiche schwarz, Rest weiß": "Threshold: dark areas black, rest white",
 };
 
 // Texte mit Zahlen/Namen
