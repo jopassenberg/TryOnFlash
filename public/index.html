@@ -3576,14 +3576,14 @@ async function acctSheet(reason = "") {
     const title = reason === "limit" ? "Kostenlos weitermachen" : "Anmelden", lead = reason === "limit"
       ? "Dein erstes Tattoo war gratis. Mit einem kostenlosen Konto geht es weiter:" : "Mit einem kostenlosen Konto bekommst du:";
     html = ACC.sentTo ? `<h3>Schau in dein Postfach</h3>
-        <p class="dim" style="margin:0">Wir haben dir an <b style="font-weight:400;color:#fff">${esc(ACC.sentTo)}</b> einen Code geschickt. Gib ihn hier ein – oder tipp in der Mail auf „Anmelden“.</p>
+        <p class="dim" style="margin:0">Wir haben dir an <b style="font-weight:400;color:#fff">${esc(ACC.sentTo)}</b> eine Mail geschickt. Tipp darin auf den Link – oder gib hier den Code ein, falls einer drinsteht.</p>
         <input class="acct-mail acct-code" id="acctCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······">
         <div class="stack"><button class="btn primary wide" id="acctVerify">Anmelden</button><button class="btn ghost wide" id="acctAgain">Andere Adresse</button></div>`
       : `<h3>${title}</h3><p class="dim" style="margin:0">${lead}</p>
         <ul class="acct-perks"><li>${check}${FREE_MOTIFS} neue Motive pro Monat anprobieren</li><li>${check}Bis zu ${FREE_STENCILS} Stencils gesichert, auf allen Geräten</li><li>${check}Flashes per Link teilen</li></ul>
         <div class="g-btn" id="gBtn" hidden></div><div class="acct-or" id="acctOr" hidden>oder mit E-Mail</div>
         <input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="Deine E-Mail-Adresse">
-        <div class="stack"><button class="btn primary wide" id="acctSend">Code senden</button><button class="btn ghost wide" data-close>Später</button></div>
+        <div class="stack"><button class="btn primary wide" id="acctSend">Anmelde-Mail senden</button><button class="btn ghost wide" data-close>Später</button></div>
         <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät.</span></div>`;
   } else {
     await refreshQuota().catch(() => {});
