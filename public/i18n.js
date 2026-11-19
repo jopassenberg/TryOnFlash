@@ -104,10 +104,14 @@ const EN = {
   "Kein Kamerazugriff": "No camera access",
   "Die Flashes werden auf diesem Gerät verschlüsselt. Der Schlüssel steckt nur im Link, unser Server sieht die Flashes nie – nur das Vorschaubild, wenn eingeschaltet. Nach Ablauf wird alles gelöscht.": "The flashes are encrypted on this device. The key is only in the link; our server never sees the flashes – only the preview image, if turned on. Everything is deleted when it expires.", "Vorschau im Chat": "Chat preview", "Bild, Titel und Text, wenn du den Link schickst": "Image, title and text when you send the link", "Titel und Text antippen zum Ändern. Vorschaubild und -text sind nicht verschlüsselt, damit Chat-Apps sie zeigen können.": "Tap title and text to edit. The preview image and text aren’t encrypted, so chat apps can show them.", "Flashes für dich": "Flashes for you", "Titel der Vorschau": "Preview title", "Text der Vorschau": "Preview text",
   "Alle auswählen": "Select all", "Auswahl aufheben": "Deselect all", "Flashes antippen": "Tap flashes", "Auswahl": "Selection", "Was gehört zum Motiv?": "What belongs to the design?", "Hintergrund": "Background", "Motiv": "Design", "Motiv bearbeiten": "Edit design", "Auswahl und Stil anpassen": "Adjust selection and style", "Alles außerhalb fällt weg.": "Everything outside is removed.", "Nur einen Teil? Mit „Anpassen“ per Lasso auswählen.": "Only part of it? Select it with the lasso via “Adjust”.",
+  "Name geben (optional)": "Add a name (optional)", "Name des Stencils": "Stencil name", "Nachricht zum Link (optional) – wird beim Senden mitgeschickt": "Message with the link (optional) – sent along with it",
 };
 
 // Texte mit Zahlen/Namen
 const EN_RX = [
+  [/^(.+) und (\d+) weitere zum Anprobieren · tippe zum Ansehen$/, "$1 and $2 more to try on · tap to view"],
+  [/^(.+) und (.+) zum Anprobieren · tippe zum Ansehen$/, "$1 and $2 to try on · tap to view"],
+  [/^(.+) zum Anprobieren · tippe zum Ansehen$/, (m, a) => /^\d+ Flash/.test(a) ? null : `${a} to try on · tap to view`],
   [/^Flashes von (.+)$/, "Flashes by $1"],
   [/^(\d+) Flash(es)? zum Anprobieren · tippe zum Ansehen$/, (m, n) => `${n} flash${n === "1" ? "" : "es"} to try on · tap to view`],
   [/^(\d+) von (\d+) freien Motiven(?: · (\d+) Tokens)?$/, (m, a, b, t) => `${a} of ${b} free designs${t ? ` · ${t} tokens` : ""}`],
