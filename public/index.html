@@ -881,8 +881,6 @@
       <button class="cs" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></button>
     </div>
     <div class="cam-ask" id="camAsk" hidden role="status">
-      <span class="cam-ask-ic"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
-      <p id="camAskT">Kein Zugriff auf die Kamera</p>
       <p class="dim" id="camAskS">Erlaube den Zugriff, um direkt ein Foto zu machen – oder nimm eins aus der Galerie.</p>
       <button class="btn" id="camAskGo">Kamera erlauben</button>
     </div>
@@ -1188,7 +1186,7 @@ async function openCam() {
     camStream = null; $("#cam").hidden = true; startUI();
     const denied = e?.name === "NotAllowedError";
     if (denied) { try { localStorage.removeItem(CAM_OK); } catch {} }
-    camAsk(denied ? "denied" : "none"); status(""); return;
+    camAsk(denied ? "denied" : "none"); return;
   }
   camAsk(null);
   try { localStorage.setItem(CAM_OK, "1"); } catch {}
@@ -1203,13 +1201,12 @@ function camAsk(kind) {
   const el = $("#camAsk"); if (!kind || S.step !== 1) { el.hidden = true; return; }
   const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const again = kind === "denied" && ++camAsks > 1;
-  $("#camAskT").textContent = kind === "none" ? "Keine Kamera gefunden" : "Kein Zugriff auf die Kamera";
   $("#camAskS").textContent = kind === "none" ? "Nimm ein Foto aus deiner Galerie." : again
     ? (iOS ? "Dein Browser fragt nicht mehr nach. In Safari: in der Adressleiste auf „aA“ → Website-Einstellungen → Kamera → Erlauben." : "Dein Browser fragt nicht mehr nach. Tippe neben der Adresse auf das Schloss-Symbol und erlaube die Kamera.")
     : "Erlaube den Zugriff, um direkt ein Foto zu machen – oder nimm eins aus der Galerie.";
   $("#camAskGo").textContent = kind === "none" ? "Foto aus Galerie" : again ? "Nochmal versuchen" : "Kamera erlauben";
   $("#camAskGo").onclick = () => kind === "none" ? $("#camGallery").click() : openCam();
-  el.hidden = false;
+  el.hidden = false; status(kind === "none" ? "Keine Kamera gefunden" : "Kein Kamerazugriff", "err"); // Titel oben in der Insel (gelb)
 }
 // Blitz: hinten als Dauerlicht (Taschenlampe), wenn der Browser es kann (Android/Chrome);
 // vorne als Bildschirm-Blitz (weißer Bildschirm im Moment der Aufnahme). Safari auf dem iPhone erlaubt
@@ -3666,8 +3663,7 @@ function usePending() { // nach der Analyse aufgerufen
     if (blob) await tryFlash(blob, h.name);
   } catch (e) { console.warn("handoff", e); }
   if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = await cachedLogo(); pendingFlash.__demo = true; showTry(pendingFlash, "Stencit"); } // Start-Stencil
-  if (S.step === 1 && !S.photo) await showStart(!CRASHED); // Start: Kamera-Oberfläche, ggf. Kamera direkt
-  if (CRASHED) status(`Absturz bei: ${CRASHED}`, "err");
+  if (S.step === 1 && !S.photo) await showStart(); // Start: Kamera-Oberfläche, ggf. Kamera direkt
 })();
 
 /* ---------- Flash-Sheet: das Motiv in echter Größe auf Papier (Drucker, AirPrint, PDF) ---------- */

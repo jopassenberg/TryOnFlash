@@ -101,6 +101,7 @@ const EN = {
   "Lädt das Tiefen-Modell …": "Loading the depth model …", "Sucht die Hautfläche …": "Finding your skin …", "Trennt Haut von Kleidung …": "Separating skin from clothing …", "Glättet die Oberfläche …": "Smoothing the surface …", "Erstellt das 3D-Modell …": "Building the 3D model …", "Spannt das Gitter auf …": "Spanning the mesh …", "Sucht Hand und Körper …": "Finding hand and body …", "Mischt die Tinte …": "Mixing the ink …", "Legt die Linien an …": "Laying out the lines …",
   "Kein Zugriff auf die Kamera": "No access to the camera", "Keine Kamera gefunden": "No camera found", "Erlaube den Zugriff, um direkt ein Foto zu machen – oder nimm eins aus der Galerie.": "Allow access to take a photo right here – or pick one from your gallery.", "Nimm ein Foto aus deiner Galerie.": "Pick a photo from your gallery.", "Dein Browser fragt nicht mehr nach. In Safari: in der Adressleiste auf „aA“ → Website-Einstellungen → Kamera → Erlauben.": "Your browser won’t ask again. In Safari: tap “aA” in the address bar → Website Settings → Camera → Allow.", "Dein Browser fragt nicht mehr nach. Tippe neben der Adresse auf das Schloss-Symbol und erlaube die Kamera.": "Your browser won’t ask again. Tap the lock icon next to the address and allow the camera.", "Kamera erlauben": "Allow camera", "Foto aus Galerie": "Photo from gallery",
   "Ganzes Bild": "Whole image", "Nur einen Teil? Unter „Anpassen“ mit dem Lasso auswählen.": "Only part of it? Select it with the lasso under “Adjust”.",
+  "Kein Kamerazugriff": "No camera access",
 };
 
 // Texte mit Zahlen/Namen
