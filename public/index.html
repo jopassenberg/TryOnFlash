@@ -376,8 +376,9 @@
   .fl-dock .btn.primary:disabled { opacity: .35; }
   /* Großansicht eines Flashes: weiß, das Motiv groß, darunter runde Knöpfe */
   .fl-view { position: fixed; inset: 0; z-index: 20; display: grid; grid-template-rows: 1fr auto; gap: 20px; padding: 32px 24px max(24px, env(safe-area-inset-bottom)); background: #fff; animation: fade .25s var(--ease-out); }
-  .fl-view .big { min-height: 0; display: grid; place-items: center; }
-  .fl-view .big img { max-width: min(100%, 760px); max-height: 100%; object-fit: contain; animation: pop .5s var(--spring); }
+  .fl-view .big { position: relative; min-height: 0; margin-bottom: -28px; } /* Knöpfe dürfen leicht über dem Stencil liegen */
+  .fl-view .big img { position: absolute; inset: 0; margin: auto; max-width: min(100%, 760px); max-height: 100%; object-fit: contain; animation: pop .5s var(--spring); }
+  .fl-view .bar { position: relative; z-index: 1; }
   .fl-view .bar { justify-self: center; width: min(100%, 360px); display: grid; gap: 10px; }
   .fl-view .bar .icons { display: flex; justify-content: center; gap: 10px; }
   .fl-view .bar .rb { width: 52px; height: 52px; }
@@ -953,7 +954,7 @@ async function openCam() {
   }
   try { localStorage.setItem(CAM_OK, "1"); } catch {}
   $("#drop").hidden = true;
-  const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false;
+  const v = $("#cam"); v.srcObject = camStream; v.classList.remove("mirror"); v.hidden = false; // nie spiegeln: Vorschau = Foto = seitenrichtig
   v.play().catch(() => {}); status(""); applyFlash();
 }
 // Blitz: hinten als Dauerlicht (Taschenlampe), wenn der Browser es kann (Android/Chrome);
@@ -986,9 +987,9 @@ $("#shoot").onclick = async () => {
   }
   const r = stage.clientWidth / stage.clientHeight; let cw = vw, ch = vw / r; if (ch > vh) { ch = vh; cw = vh * r; }
   const c = document.createElement("canvas"); c.width = Math.round(cw); c.height = Math.round(ch);
-  const g = c.getContext("2d", { willReadFrequently: true }), mirror = camFacing === "user";
+  const g = c.getContext("2d", { willReadFrequently: true }), mirror = false;
   const grab = () => { g.setTransform(mirror ? -1 : 1, 0, 0, 1, mirror ? c.width : 0, 0); g.drawImage(v, (vw - cw) / 2, (vh - ch) / 2, cw, ch, 0, 0, c.width, c.height); g.setTransform(1, 0, 0, 1, 0, 0); };
-  // Selfie: das Foto sieht aus wie die Vorschau (gespiegelt), es dreht sich nach dem Auslösen nicht um.
+  // Weder Vorschau noch Foto sind gespiegelt: was man sieht, ist das Foto (auch bei der Frontkamera).
   // Webcams rauschen stark: am Rechner (Kamera steht still) werden mehrere Bilder gemittelt
   const frames = MOBILE ? 1 : 5;
   if (frames > 1) {
@@ -2960,6 +2961,81 @@ async function editFlash(f) {
     await putFlash(rec); FL.items = FL.items.map(x => x.id === f.id ? rec : x); FL.urls.delete(f.id); layoutKey = ""; renderFlashes();
   } });
 }
+// Löschen: das Stencil wird wie Papier zerknüllt und in den Papierkorb geworfen.
+// Das Bild wird in ein feines Dreiecksnetz zerlegt (jedes Dreieck affin texturiert). Die Ecken knüllen zuerst
+// ein, Knicke laufen über das Blatt, jede Facette bekommt je nach Knick Licht oder Schatten; zum Schluss
+// fliegt die Kugel im Bogen zum Papierkorb, dreht sich und verschwindet.
+function crumplePaper(src, rect, to) {
+  return new Promise(async resolve => {
+    const im = new Image(); im.src = src; try { await im.decode(); } catch { return resolve(); }
+    const dpr = Math.min(2, devicePixelRatio || 1), cv = Object.assign(document.createElement("canvas"), { width: innerWidth * dpr, height: innerHeight * dpr });
+    cv.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:45;pointer-events:none"; document.body.append(cv);
+    const g = cv.getContext("2d"); g.scale(dpr, dpr);
+    // Textur verkleinern (schneller), Seitenverhältnis wie angezeigt
+    const k = Math.min(1, 640 / Math.max(im.naturalWidth, im.naturalHeight)), tex = Object.assign(document.createElement("canvas"), { width: Math.max(1, Math.round(im.naturalWidth * k)), height: Math.max(1, Math.round(im.naturalHeight * k)) });
+    tex.getContext("2d").drawImage(im, 0, 0, tex.width, tex.height);
+    // angezeigte Bildfläche (object-fit: contain) innerhalb des img-Rechtecks
+    const ar = tex.width / tex.height; let w = rect.width, h = w / ar; if (h > rect.height) { h = rect.height; w = h * ar; }
+    const X0 = rect.left + (rect.width - w) / 2, Y0 = rect.top + (rect.height - h) / 2, cx = X0 + w / 2, cy = Y0 + h / 2;
+    let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const G = 15, V = [], ball = Math.min(w, h) * .17, maxD = Math.hypot(w, h) / 2;
+    for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) {
+      const u = i / G, v = j / G, x = X0 + u * w, y = Y0 + v * h, dx = x - cx, dy = y - cy, f = Math.hypot(dx, dy) / maxD, th = Math.atan2(dy, dx) + (rnd() - .5) * 1.4;
+      const rr = ball * (.72 + .28 * rnd()) * (.6 + .4 * f);
+      V.push({ u: u * tex.width, v: v * tex.height, x, y, tx: cx + Math.cos(th) * rr, ty: cy + Math.sin(th) * rr * .92,
+        wx: (rnd() - .5) * 2, wy: (rnd() - .5) * 2, delay: (1 - f) * .28, z: f * .85 + rnd() * .35 }); // Außenbereiche legen sich beim Knüllen außen herum
+    }
+    const T = []; // Dreiecke mit fester „Tiefe“ und zufälliger Knick-Richtung (Licht/Schatten)
+    for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+      const a = j * (G + 1) + i, b = a + 1, c = a + G + 1, d = c + 1, flip = (i + j) % 2;
+      T.push({ v: flip ? [a, b, d] : [a, b, c], s: rnd() * 2 - 1 }, { v: flip ? [a, d, c] : [b, d, c], s: rnd() * 2 - 1 });
+    }
+    T.forEach(t => t.z = (V[t.v[0]].z + V[t.v[1]].z + V[t.v[2]].z) / 3);
+    const sorted = [...T].sort((p, q) => p.z - q.z);
+    const ease = q => q < .5 ? 4 * q * q * q : 1 - (-2 * q + 2) ** 3 / 2;
+    const tri = (x0, y0, x1, y1, x2, y2, u0, v0, u1, v1, u2, v2, shade, back) => {
+      // Dreieck minimal aufweiten, damit keine Haarlinien zwischen den Facetten bleiben
+      const mx = (x0 + x1 + x2) / 3, my = (y0 + y1 + y2) / 3, gr = p => [p[0] + Math.sign(p[0] - mx) * .6, p[1] + Math.sign(p[1] - my) * .6];
+      const [A, B, C] = [gr([x0, y0]), gr([x1, y1]), gr([x2, y2])];
+      g.save(); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.lineTo(C[0], C[1]); g.closePath(); g.clip();
+      const den = u0 * (v2 - v1) - u1 * v2 + u2 * v1 + (u1 - u2) * v0; if (Math.abs(den) < 1e-6) { g.restore(); return; }
+      const m11 = -(v0 * (x2 - x1) - v1 * x2 + v2 * x1 + (v1 - v2) * x0) / den, m12 = (v1 * y2 + v0 * (y1 - y2) - v2 * y1 + (v2 - v1) * y0) / den;
+      const m21 = (u0 * (x2 - x1) - u1 * x2 + u2 * x1 + (u1 - u2) * x0) / den, m22 = -(u1 * y2 + u0 * (y1 - y2) - u2 * y1 + (u2 - u1) * y0) / den;
+      const dx = (u0 * (v2 * x1 - v1 * x2) + v0 * (u1 * x2 - u2 * x1) + (u2 * v1 - u1 * v2) * x0) / den, dy = (u0 * (v2 * y1 - v1 * y2) + v0 * (u1 * y2 - u2 * y1) + (u2 * v1 - u1 * v2) * y0) / den;
+      g.transform(m11, m12, m21, m22, dx, dy); g.drawImage(tex, 0, 0); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Licht nur aufs Papier (source-atop: durchsichtige Ränder bleiben durchsichtig); umgeklappte Facetten zeigen die Rückseite
+      g.globalCompositeOperation = "source-atop";
+      if (back) { g.fillStyle = "#ecebe7"; g.fill(); }
+      if (shade) { g.fillStyle = shade; g.fill(); }
+      g.restore();
+    };
+    const CR = 760, FLY = 560, t0 = performance.now();
+    const frame = now => {
+      const t = now - t0, q = clamp(t / CR, 0, 1), fly = clamp((t - CR) / FLY, 0, 1);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, innerWidth, innerHeight);
+      // Flug zum Papierkorb: Bogen nach oben, Drehung, kleiner werden
+      const fe = fly * fly * (3 - 2 * fly), tx = to ? (to.x - cx) * fe : 0, ty = to ? (to.y - cy) * fe - Math.sin(fly * Math.PI) * 90 : 0, sc = 1 - .72 * fe, rot = fe * 5.2;
+      g.translate(cx + tx, cy + ty); g.rotate(rot); g.scale(sc, sc); g.translate(-cx, -cy);
+      g.globalAlpha = fly > .85 ? 1 - (fly - .85) / .15 : 1;
+      const P = V.map(p => { // Ecken zuerst, Knicke schwellen in der Mitte des Knüllens an und wieder ab
+        const lq = ease(clamp((q - p.delay) / (1 - p.delay), 0, 1)), wr = Math.sin(lq * Math.PI) * Math.min(w, h) * .045;
+        return [p.x + (p.tx - p.x) * lq + p.wx * wr, p.y + (p.ty - p.y) * lq + p.wy * wr, lq];
+      });
+      for (const T1 of sorted) {
+        const [a, b, c] = T1.v, A = P[a], B = P[b], C = P[c], lq = (A[2] + B[2] + C[2]) / 3;
+        // Faltenlicht: gestauchte Facetten liegen in einer Falte (dunkler), dazu sanfte Hell/Dunkel-Wechsel der Knicke;
+        // umgeklappte Facetten (Fläche kehrt das Vorzeichen um) zeigen die Papier-Rückseite
+        const area = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]), rest = (V[b].x - V[a].x) * (V[c].y - V[a].y) - (V[b].y - V[a].y) * (V[c].x - V[a].x);
+        const ratio = rest ? area / rest : 1, back = ratio < 0, fold = clamp(1 - Math.abs(ratio), 0, 1);
+        const dark = lq * (fold * .3 + Math.max(0, -T1.s) * .12 + .04), light = lq * Math.max(0, T1.s) * .2 * (1 - fold);
+        const shade = lq < .02 ? null : dark > light ? `rgba(32,30,28,${dark.toFixed(3)})` : `rgba(255,255,255,${light.toFixed(3)})`;
+        tri(A[0], A[1], B[0], B[1], C[0], C[1], V[a].u, V[a].v, V[b].u, V[b].v, V[c].u, V[c].v, shade, back);
+      }
+      if (fly < 1) requestAnimationFrame(frame); else { cv.remove(); resolve(); }
+    };
+    requestAnimationFrame(frame);
+  });
+}
 function viewFlash(id) {
   const f = FL.items.find(x => x.id === id); if (!f) return;
   $("#flView").innerHTML = `<div class="fl-view" role="dialog" aria-label="${esc(f.name)}"><div class="big"><img alt="" src="${flashURL(f)}"></div>
@@ -2973,12 +3049,18 @@ function viewFlash(id) {
   $("#flView").querySelector(".big").onclick = () => { if (ready()) close(); };
   $("#flView").querySelectorAll("[data-a]").forEach(b => b.onclick = async () => {
     if (!ready()) return;
-    const a = b.dataset.a; close();
+    const a = b.dataset.a, big = $("#flView .big img"), from = big?.getBoundingClientRect(), bin = $('#flView [data-a="del"]')?.getBoundingClientRect(), src = big?.currentSrc || big?.src;
+    close();
     if (a === "try") tryFresh(f.blob, f.name);
     if (a === "share") { FL.sel = new Set([id]); shareSheet(); }
     if (a === "edit") editFlash(f);
     if (a === "print") printSheet(flashSrc(f));
-    if (a === "del") { await idb("flashes", "readwrite", s => s.delete(id)); FL.items = FL.items.filter(x => x.id !== id); renderFlashes(); }
+    if (a === "del") {
+      await idb("flashes", "readwrite", s => s.delete(id));
+      const tile = $(`#flGrid .fl-tile[data-id="${id}"]`); if (tile) tile.style.visibility = "hidden"; // Original sofort weg, das Papier fliegt
+      if (from && src && !matchMedia("(prefers-reduced-motion: reduce)").matches) await crumplePaper(src, from, bin && { x: bin.left + bin.width / 2, y: bin.top + bin.height / 2 });
+      FL.items = FL.items.filter(x => x.id !== id); renderFlashes();
+    }
   });
 }
 $("#flLinksBtn").onclick = () => linksSheet();
