@@ -457,6 +457,20 @@
   .prof .t { display: grid; flex: 1; min-width: 0; } .prof small { font-size: 12px; opacity: .5; }
   .prof input { width: 100%; min-width: 0; height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: oklch(100% 0 0 / .08); color: #fff; font: inherit; }
   .prof input::placeholder { color: oklch(100% 0 0 / .4); }
+  /* Warteliste iPhone-App: großes Bild läuft weich ins Schwarz aus, Tag oben links */
+  .sheet.wl { gap: 0; padding-bottom: 24px; }
+  .wl-hero { position: relative; margin: -22px -22px 0; aspect-ratio: 1314 / 921; background: url(/img/app-store-teaser.webp) center top / 100% auto no-repeat;
+    -webkit-mask-image: linear-gradient(#000 0%, rgb(0 0 0 / 1.0) 58.0%, rgb(0 0 0 / 0.998) 59.8%, rgb(0 0 0 / 0.984) 61.6%, rgb(0 0 0 / 0.951) 63.4%, rgb(0 0 0 / 0.896) 65.2%, rgb(0 0 0 / 0.82) 67.1%, rgb(0 0 0 / 0.725) 68.9%, rgb(0 0 0 / 0.616) 70.7%, rgb(0 0 0 / 0.5) 72.5%, rgb(0 0 0 / 0.384) 74.3%, rgb(0 0 0 / 0.275) 76.1%, rgb(0 0 0 / 0.18) 77.9%, rgb(0 0 0 / 0.104) 79.8%, rgb(0 0 0 / 0.049) 81.6%, rgb(0 0 0 / 0.016) 83.4%, rgb(0 0 0 / 0.002) 85.2%, rgb(0 0 0 / 0.0) 87.0%); mask-image: linear-gradient(#000 0%, rgb(0 0 0 / 1.0) 58.0%, rgb(0 0 0 / 0.998) 59.8%, rgb(0 0 0 / 0.984) 61.6%, rgb(0 0 0 / 0.951) 63.4%, rgb(0 0 0 / 0.896) 65.2%, rgb(0 0 0 / 0.82) 67.1%, rgb(0 0 0 / 0.725) 68.9%, rgb(0 0 0 / 0.616) 70.7%, rgb(0 0 0 / 0.5) 72.5%, rgb(0 0 0 / 0.384) 74.3%, rgb(0 0 0 / 0.275) 76.1%, rgb(0 0 0 / 0.18) 77.9%, rgb(0 0 0 / 0.104) 79.8%, rgb(0 0 0 / 0.049) 81.6%, rgb(0 0 0 / 0.016) 83.4%, rgb(0 0 0 / 0.002) 85.2%, rgb(0 0 0 / 0.0) 87.0%); }
+  .wl-hero .ib-dark { position: absolute; top: 14px; right: 14px; background: oklch(0% 0 0 / .35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  .wl-chip { position: absolute; top: 14px; left: 14px; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px 0 10px; border-radius: var(--r-full);
+    background: oklch(0% 0 0 / .35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 12px; letter-spacing: .01em; color: #fff; }
+  .wl-chip svg { width: 13px; height: 13px; fill: currentColor; }
+  .wl-txt { display: grid; gap: 8px; margin-top: -4px; padding: 0 2px; }
+  .wl-txt p { margin: 0; line-height: 1.5; } .wl-txt b { font-weight: 400; color: #fff; }
+  .wl-form { display: grid; gap: 10px; margin-top: 22px; } .wl-form .btn { height: 48px; }
+  .sheet.wl .sec-note { margin-top: 16px; padding: 0 2px; }
+  .wl-done { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px; border-radius: var(--r-full); background: oklch(100% 0 0 / .07); font-size: 15px; }
+  .wl-done .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
   .sec-note { hyphens: manual; display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: oklch(100% 0 0 / .5); }
   .sec-note .ic { width: 14px; height: 14px; margin-top: 2px; }
   .sec-note a { color: inherit; text-underline-offset: 2px; }
@@ -2788,6 +2802,7 @@ async function stechenRun() {
   S.local = S.inked = res;
   S.summary = summarise(); infoKey = ""; setInfo(false); updateInfo();
   status(""); redraw(); updateInfo();
+  maybeWaitlist();
 }
 // Age is fixed at "healed" (S.age); the renderer still supports fresh to aged (renderInk(t)).
 
@@ -3601,6 +3616,69 @@ function printSheet(src = studioSrc()) {
 }
 addEventListener("afterprint", () => { $("#printRoot").innerHTML = ""; });
 
+/* ---------- Warteliste iPhone-App ---------- */
+// Einwilligung in genau eine Mail zum App-Start. Nachweis: Zeitpunkt + Kennung des Hinweistextes (WL_TEXT) in der Datenbank.
+// Die E-Mail-Adresse wird über den Anmelde-Code bestätigt (doppeltes Opt-in). Normale Anmeldung trägt NICHT ein.
+const WL_TEXT = "wl-de-en-2026-11-19", WL_SEEN = "stencit-wl-seen", WL_PENDING = "stencit-wl-pending";
+const APPLE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.39-.92-2.41-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.76-.96 2.8 1.02.08 2.06-.52 2.69-1.28z"/></svg>`;
+const onWaitlist = () => !!ACC.profile?.waitlist_at;
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } }, lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
+async function joinWaitlist() {
+  const c = await sb(); if (!c || !ACC.user) throw new Error("login");
+  const { data, error } = await c.rpc("join_waitlist", { consent: WL_TEXT }); if (error) throw error;
+  ACC.profile = { ...(ACC.profile || {}), waitlist_at: data || new Date().toISOString() }; lsSet(WL_PENDING, null);
+}
+async function leaveWaitlist() {
+  const c = await sb(); if (!c || !ACC.user) throw new Error("login");
+  const { error } = await c.rpc("leave_waitlist"); if (error) throw error;
+  if (ACC.profile) ACC.profile.waitlist_at = null;
+}
+async function pendingWaitlist() { // nach Anmeldung über die Warteliste (auch per Link aus der Mail in neuem Tab)
+  if (!ACC.user || !lsGet(WL_PENDING)) return;
+  try { await joinWaitlist(); status("Du stehst auf der Warteliste · 3 Credits zum Start", "ok"); } catch (e) { console.warn("waitlist", e); }
+}
+function waitlistSheet() {
+  lsSet(WL_SEEN, "1");
+  const box = $("#acctSheet"), close = () => closeSheet(box), on = onWaitlist(), user = !!ACC.user;
+  const note = user ? `Mit „Benachrichtige mich“ schicken wir dir einmalig eine E-Mail, wenn die iPhone-App erscheint. Die 3 Credits schreiben wir dir zum Start gut. Austragen jederzeit in den Einstellungen oder per Link in der Mail. Mehr in der <a href="/privacy" target="_blank">Datenschutzerklärung</a>.`
+    : `Mit „Benachrichtige mich“ legen wir dein kostenloses Konto an und schicken dir einmalig eine E-Mail, wenn die iPhone-App erscheint. Die 3 Credits schreiben wir dir zum Start gut. Austragen jederzeit in den Einstellungen oder per Link in der Mail. Mehr in der <a href="/privacy" target="_blank">Datenschutzerklärung</a>.`;
+  openSheet(box, `<div class="sheet-bg" data-close></div><div class="sheet wl" role="dialog" aria-label="iPhone-App">
+    <div class="wl-hero"><span class="wl-chip">${APPLE}Bald im App Store</span><button class="ib-dark" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <div class="wl-txt"><h3>Stencit kommt aufs iPhone</h3>
+      <p class="dim">${on ? "Du stehst auf der Warteliste. Wir sagen dir Bescheid, sobald die App da ist, und schreiben dir <b>3 extra Credits</b> gut." : "Lass dich benachrichtigen, sobald die App da ist, und sichere dir <b>3 extra Credits</b>."}</p></div>
+    <div class="wl-form">${on ? `<div class="wl-done"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg>Du bist eingetragen</div><button class="btn ghost wide" id="wlLeave">Austragen</button>`
+      : `${user ? "" : `<div class="field"><label class="acct-label" for="wlMail">E-Mail</label><input class="acct-mail" id="wlMail" type="email" inputmode="email" autocomplete="email" placeholder="name@beispiel.de"></div>`}
+      <button class="btn primary wide" id="wlGo">Benachrichtige mich</button>`}</div>
+    ${on ? "" : `<div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>${note}</span></div>`}</div>`);
+  box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
+  $("#wlLeave")?.addEventListener("click", async e => { const b = e.currentTarget; b.disabled = true;
+    try { await leaveWaitlist(); status("Von der Warteliste ausgetragen", "ok"); close(); } catch (er) { console.warn("waitlist", er); b.disabled = false; status("Gerade nicht möglich", "err"); } });
+  const go = $("#wlGo"); if (!go) return;
+  const mail = $("#wlMail"); if (mail) mail.onkeydown = e => { if (e.key === "Enter") go.click(); };
+  go.onclick = async () => {
+    if (user) {
+      go.disabled = true; go.textContent = "Einen Moment …";
+      try { await joinWaitlist(); waitlistSheet(); status("Du stehst auf der Warteliste", "ok"); }
+      catch (e) { console.warn("waitlist", e); go.disabled = false; go.textContent = "Nochmal versuchen"; status("Gerade nicht möglich", "err"); }
+      return;
+    }
+    const email = mail.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { mail.focus(); return; }
+    go.disabled = true; go.textContent = "Wird gesendet …";
+    const c = await sb(); const { error } = c ? await c.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } }) : { error: new Error("offline") };
+    if (error) { go.disabled = false; go.textContent = "Nochmal versuchen"; console.warn("otp", error); status(/rate/i.test(error.message) ? "Zu viele Versuche · kurz warten" : "Mail konnte nicht gesendet werden", "err"); return; }
+    lsSet(WL_PENDING, WL_TEXT); ACC.sentTo = email; acctSheet(); // Code eingeben wie bei der Anmeldung; danach trägt pendingWaitlist() ein
+  };
+}
+// Einmal automatisch: kurz nach dem ersten fertig gestochenen Tattoo, wenn gerade kein anderes Fenster offen ist
+function maybeWaitlist() {
+  if (lsGet(WL_SEEN) || onWaitlist()) return;
+  setTimeout(() => {
+    if (lsGet(WL_SEEN) || onWaitlist() || S.step !== 4 || S.inking) return;
+    if ([...document.querySelectorAll("#acctSheet, #flSheet, #printSheet")].some(b => b.innerHTML)) return;
+    waitlistSheet();
+  }, 2200);
+}
+
 /* ---------- Konto (Supabase): Anmeldung per E-Mail-Link, Motiv-Kontingent, gesicherte Stencils ---------- */
 // Der Publishable Key ist öffentlich (gehört in die App); was jeder sehen/ändern darf, regeln die Datenbank-Policies.
 const SB_URL = "https://ykxrxwprmeeohctyncnf.supabase.co", SB_KEY = "sb_publishable_6TzaVopBtEE0i-526Vr6mg_u3UR4hCW";
@@ -3641,7 +3719,7 @@ async function acctInit() {
 }
 async function setUser(u) {
   const was = ACC.user?.id; ACC.user = u;
-  if (u && u.id !== was) await refreshQuota();
+  if (u && u.id !== was) { await refreshQuota(); pendingWaitlist(); }
   if (!u) { ACC.profile = null; ACC.freeLeft = null; ACC.tokens = 0; }
   const b = $("#acctBtn"); b.dataset.in = !!u; b.setAttribute("aria-label", u ? "Dein Konto" : "Anmelden");
 }
@@ -3815,6 +3893,9 @@ function renderSettings() {
       <div class="set-row"><span>Maßeinheit</span>${unitSwitch(unit())}</div>
       <button class="set-row" id="setAcct"><span>Konto</span><span class="dim">${ACC.user ? esc(ACC.user.email || "Angemeldet") : "Anmelden"}</span></button>
     </div>
+    <div class="set-list"><div class="set-cap">iPhone-App</div>
+      <button class="set-row" id="setWl"><span>Warteliste</span><span class="dim">${onWaitlist() ? "Eingetragen" : "Benachrichtigen"}</span></button>
+    </div>
     <div class="set-list"><div class="set-cap">Auf diesem Gerät</div>
       <div class="set-row"><span>Speicher</span><span class="dim" id="setStore">…</span></div>
       <button class="set-row" id="setWipe"><span>Daten auf diesem Gerät löschen</span></button>
@@ -3839,6 +3920,7 @@ function renderSettings() {
   });
   bindProf();
   $("#setAcct").onclick = () => acctSheet();
+  $("#setWl").onclick = () => waitlistSheet();
   $("#setWipe").onclick = () => confirmView({ title: "Daten auf diesem Gerät löschen?", ok: "Löschen",
     text: `Flashes, Links, Profil und geladene KI-Modelle werden von diesem Gerät entfernt. Fotos deiner Haut speichern wir ohnehin nie.${ACC.user ? " Im Konto gesicherte Stencils bleiben dort und kommen beim nächsten Öffnen wieder." : ""} Geteilte Links laufen bis zu ihrem Ablauf weiter.` },
     async () => { await wipeLocal(); location.reload(); });
@@ -3940,7 +4022,7 @@ function cloudSave(f) { // nach Speichern/Bearbeiten im Hintergrund sichern
 }
 acctInit();
 
-window.__studio = { ACC, acctSheet, sb, logoStencil, needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
+window.__studio = { ACC, acctSheet, waitlistSheet, sb, logoStencil, needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>

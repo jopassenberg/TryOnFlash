@@ -136,6 +136,31 @@ end $$;
 revoke all on function public.delete_account(boolean) from public, anon;
 grant execute on function public.delete_account(boolean) to authenticated;
 
+-- ---------- Warteliste iPhone-App (Einwilligung in eine Benachrichtigungs-Mail zum Start) ----------
+-- Nachweis der Einwilligung: Zeitpunkt + Kennung des Hinweistextes, der beim Klick galt.
+-- Eintragen/Austragen nur über die Funktionen unten (Spalten sind für die App nicht direkt änderbar).
+alter table public.profiles add column if not exists waitlist_at timestamptz;
+alter table public.profiles add column if not exists waitlist_text text;
+create or replace function public.join_waitlist(consent text) returns timestamptz
+language plpgsql security definer set search_path = public as $$
+declare t timestamptz;
+begin
+  if auth.uid() is null then raise exception 'login'; end if;
+  update profiles set waitlist_at = coalesce(waitlist_at, now()), waitlist_text = coalesce(waitlist_text, left(consent, 64))
+    where id = auth.uid() returning waitlist_at into t;
+  return t;
+end $$;
+create or replace function public.leave_waitlist() returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'login'; end if;
+  update profiles set waitlist_at = null, waitlist_text = null where id = auth.uid();
+end $$;
+revoke all on function public.join_waitlist(text) from public, anon;
+revoke all on function public.leave_waitlist() from public, anon;
+grant execute on function public.join_waitlist(text) to authenticated;
+grant execute on function public.leave_waitlist() to authenticated;
+
 -- ---------- Zugriffsrechte für die App (angemeldete Nutzer); welche Zeilen, regeln die Policies oben ----------
 grant select on public.profiles to authenticated;
 grant select, insert, update, delete on public.stencils to authenticated;
