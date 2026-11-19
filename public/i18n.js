@@ -110,7 +110,7 @@ const EN_RX = [
   [/^(\d+) von (\d+)$/, "$1 of $2"], [/^(\d+) von (\d+)( .*)?$/, "$1 of $2$3"],
   [/^Wir haben dir an$/, "We sent an email to"],
   [/^eine Mail geschickt\. Tipp darin auf den Link – oder gib hier den Code ein, falls einer drinsteht\.$/, ". Tap the link in it – or enter the code here if there is one."],
-  [/^einen 6‑stelligen Code geschickt\. Gib ihn hier ein – oder tipp in der Mail auf den Link\.$/, "a 6-digit code. Enter it here – or tap the link in the email."],
+  [/^einen 6‑stelligen Code geschickt\. Gib ihn hier ein – oder tipp in der Mail auf den Link\. Er gilt 10 Minuten\.$/, "a 6-digit code. Enter it here – or tap the link in the email. It’s valid for 10 minutes."],
   [/^Noch (\d+) Ziffern? fehlen$/, (_, n) => `${n} more digit${n === "1" ? "" : "s"} needed`],
   [/^Neu senden · (0:\d+)$/, (_, n) => `Resend · ${n}`],
   [/^Gültig bis (.+) Uhr, danach gelöscht\. Du kannst ihn jederzeit früher beenden\.$/, "Valid until $1, then deleted. You can end it earlier at any time."],

@@ -3701,7 +3701,7 @@ async function acctSheet(reason = "") {
     const title = reason === "limit" ? "Kostenlos weitermachen" : "Anmelden", lead = reason === "limit"
       ? "Dein erstes Tattoo war gratis. Mit einem kostenlosen Konto geht es weiter:" : "Mit einem kostenlosen Konto bekommst du:";
     html = ACC.sentTo ? `<h3>Schau in dein Postfach</h3>
-        <p class="dim" style="margin:0">Wir haben dir an <b style="font-weight:400;color:#fff">${esc(ACC.sentTo)}</b> einen 6‑stelligen Code geschickt. Gib ihn hier ein – oder tipp in der Mail auf den Link.</p>
+        <p class="dim" style="margin:0">Wir haben dir an <b style="font-weight:400;color:#fff">${esc(ACC.sentTo)}</b> einen 6‑stelligen Code geschickt. Gib ihn hier ein – oder tipp in der Mail auf den Link. Er gilt 10 Minuten.</p>
         <div class="otp" id="otp"><input class="otp-in" id="acctCode" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="${OTP_LEN}" aria-label="6-stelliger Code" aria-describedby="otpMsg">${Array.from({ length: OTP_LEN }, (_, i) => `<span class="otp-box" style="--i:${i}"></span>`).join("")}</div>
         <p class="otp-msg" id="otpMsg" role="status" aria-live="polite"></p>
         <button class="btn primary wide" id="acctVerify" style="height:48px">Anmelden</button>
