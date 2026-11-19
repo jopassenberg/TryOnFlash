@@ -80,7 +80,7 @@ const EN = {
   "Schau in dein Postfach": "Check your inbox", "Andere Adresse": "Different address", "Prüfe …": "Checking …", "oder mit E-Mail": "or with email", "oder": "or", "name@beispiel.de": "name@example.com", "E-Mail": "Email", "Weiter mit Google": "Continue with Google", "Weiter mit E-Mail": "Continue with email",
   "Code stimmt nicht": "That code isn’t right", "Code abgelaufen · neu senden": "Code expired · send a new one", "Link konnte nicht gesendet werden": "Couldn’t send the email",
   "Zu viele Versuche · kurz warten": "Too many attempts · wait a moment", "Google-Anmeldung hat nicht geklappt": "Google sign-in didn’t work",
-  "Angemeldet": "Signed in", "Neuen Code senden": "Send new code", "Keinen Code bekommen?": "Didn’t get a code?", "Neu senden": "Resend", "Neuer Code ist unterwegs": "New code is on its way", "Code stimmt nicht oder ist abgelaufen": "Wrong or expired code", "Code stimmt nicht · versuch's noch mal": "That code isn’t right · try again", "Code abgelaufen · fordere einen neuen an": "Code expired · request a new one", "Mail konnte nicht gesendet werden": "Couldn’t send the email", "6-stelliger Code": "6-digit code", "Abgemeldet": "Signed out", "Konto gerade nicht erreichbar": "Account not reachable right now",
+  "Angemeldet": "Signed in", "Neuen Code senden": "Send new code", "Keinen Code bekommen?": "Didn’t get a code?", "Neu senden": "Resend", "Ändern": "Change", "Der Code gilt 10 Minuten": "The code is valid for 10 minutes", "Gib den 6‑stelligen Code aus der Mail ein – oder tipp dort auf den Link.": "Enter the 6-digit code from the email – or tap the link in it.", "Neuer Code ist unterwegs": "New code is on its way", "Code stimmt nicht oder ist abgelaufen": "Wrong or expired code", "Code stimmt nicht · versuch's noch mal": "That code isn’t right · try again", "Code abgelaufen · fordere einen neuen an": "Code expired · request a new one", "Mail konnte nicht gesendet werden": "Couldn’t send the email", "6-stelliger Code": "6-digit code", "Abgemeldet": "Signed out", "Konto gerade nicht erreichbar": "Account not reachable right now",
   "Konto gerade nicht erreichbar · später nochmal": "Account not reachable · try again later", "Sichern gerade nicht möglich": "Can’t back up right now",
   "Unlimited": "Unlimited", "aktiv": "active", "Freie Motive diesen Monat": "Free designs this month", "Tokens": "Tokens", "Gesicherte Stencils": "Backed-up stencils",
   "Tokens & Unlimited – bald": "Tokens & Unlimited – coming soon",
@@ -112,7 +112,7 @@ const EN_RX = [
   [/^eine Mail geschickt\. Tipp darin auf den Link – oder gib hier den Code ein, falls einer drinsteht\.$/, ". Tap the link in it – or enter the code here if there is one."],
   [/^einen 6‑stelligen Code geschickt\. Gib ihn hier ein – oder tipp in der Mail auf den Link\. Er gilt 10 Minuten\.$/, "a 6-digit code. Enter it here – or tap the link in the email. It’s valid for 10 minutes."],
   [/^Noch (\d+) Ziffern? fehlen$/, (_, n) => `${n} more digit${n === "1" ? "" : "s"} needed`],
-  [/^Neu senden · (0:\d+)$/, (_, n) => `Resend · ${n}`],
+  [/^Neu senden · (\d:\d+)$/, (_, n) => `Resend · ${n}`],
   [/^Gültig bis (.+) Uhr, danach gelöscht\. Du kannst ihn jederzeit früher beenden\.$/, "Valid until $1, then deleted. You can end it earlier at any time."],
   [/^(\d+) Seiten? · im Druckdialog „100 %“ wählen$/, (m, n) => `${n} page${n === "1" ? "" : "s"} · choose “100 %” in the print dialog`],
   [/^(\d+) Seiten? · (.+) passt nicht auf (\S+)( hoch, Querformat probieren)? · im Druckdialog „100 %“ wählen$/, (m, n, list, p, hoch) =>
