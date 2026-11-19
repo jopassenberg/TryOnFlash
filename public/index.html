@@ -451,7 +451,8 @@
   .ib-dark { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .08); color: #fff; }
   .ib-dark:hover { background: oklch(100% 0 0 / .14); }
   .ib-dark .ic { width: 16px; height: 16px; }
-  .needle { position: absolute; z-index: 4; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px oklch(100% 0 0 / .18), 0 0 0 7px oklch(100% 0 0 / .06); pointer-events: none; }
+  .needle { position: absolute; z-index: 4; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: radial-gradient(circle, #ff6a5a, #DB1A1D 70%);
+    box-shadow: 0 0 0 3px oklch(56.8% .221 27.7 / .28), 0 0 0 8px oklch(56.8% .221 27.7 / .1), 0 0 14px 2px oklch(56.8% .221 27.7 / .35); pointer-events: none; }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; }
 
@@ -985,8 +986,9 @@ $("#shoot").onclick = async () => {
   }
   const r = stage.clientWidth / stage.clientHeight; let cw = vw, ch = vw / r; if (ch > vh) { ch = vh; cw = vh * r; }
   const c = document.createElement("canvas"); c.width = Math.round(cw); c.height = Math.round(ch);
-  const g = c.getContext("2d", { willReadFrequently: true }), grab = () => g.drawImage(v, (vw - cw) / 2, (vh - ch) / 2, cw, ch, 0, 0, c.width, c.height);
-  // Das Foto ist nie gespiegelt (die Vorschau der Frontkamera schon): so sitzt das Motiv später seitenrichtig.
+  const g = c.getContext("2d", { willReadFrequently: true }), mirror = camFacing === "user";
+  const grab = () => { g.setTransform(mirror ? -1 : 1, 0, 0, 1, mirror ? c.width : 0, 0); g.drawImage(v, (vw - cw) / 2, (vh - ch) / 2, cw, ch, 0, 0, c.width, c.height); g.setTransform(1, 0, 0, 1, 0, 0); };
+  // Selfie: das Foto sieht aus wie die Vorschau (gespiegelt), es dreht sich nach dem Auslösen nicht um.
   // Webcams rauschen stark: am Rechner (Kamera steht still) werden mehrere Bilder gemittelt
   const frames = MOBILE ? 1 : 5;
   if (frames > 1) {
@@ -1034,7 +1036,7 @@ function onProgress(p) {
   if (p.status !== "progress" || !p.total) return;
   loadProg[p.file] = [p.loaded, p.total];
   let a = 0, b = 0; for (const [l, t] of Object.values(loadProg)) { a += l; b += t; }
-  if (S.step === 2 && b > 1e6 && a < b) status(`Lädt Modell ${Math.round(a / b * 100)} %`);
+  if (S.step === 2 && b > 1e6 && a < b) status(`Scan wird geladen · ${Math.round(a / b * 100)} %`);
 }
 function sizeDepth(dp) {
   const ip = dp.processor?.image_processor, s = DEPTH_SIDE[depthDevice] || 518;
@@ -1127,7 +1129,7 @@ function visionCall(msg, transfer = []) {
 const pixels = c => { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; return { buf: d.buffer, w: c.width, h: c.height }; };
 async function segment() { // → { masks: { skin, cloth }, cw, ch } oder null
   if (useVision) {
-    try { const p = pixels(S.proc); return await visionCall({ type: "seg", ...p, model: SEG_MODEL, classes: { skin: SKIN_CLASS, cloth: CLOTHES_CLASS }, free: MOBILE }, [p.buf]); }
+    try { const p = pixels(S.proc); return await visionCall({ type: "seg", ...p, model: SEG_MODEL, classes: { skin: SKIN_CLASS, cloth: CLOTHES_CLASS, hair: HAIR_CLASS, other: OTHER_CLASS }, free: MOBILE }, [p.buf]); }
     catch (e) { console.warn("vision worker", e); useVision = false; visionWorker?.terminate(); visionWorker = null; }
   }
   const sg = await getSegmenter().catch(e => (console.warn("segmenter", e), null)); if (!sg) return null;
@@ -1145,11 +1147,11 @@ async function analyse() {
   setStep(2); scanStart(); const mark = st => ss.set("stencit-busy", st); mark("Modelle laden");
   let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
-    status("Lädt Modelle …");
+    status("Scan wird vorbereitet …");
     // Handy: nacheinander laden, nie zwei Modelle gleichzeitig im Speicher
     const segP = MOBILE ? null : segment().catch(e => (console.warn("segment", e), null)); // Rechner: läuft parallel
     await depthLoad();
-    status("Tiefe …"); stage = "Tiefe berechnen"; mark("Tiefe");
+    status("Misst die Tiefe …"); stage = "Tiefe berechnen"; mark("Tiefe");
     const out = await depthRun(S.geo);
     stage = "Haut erkennen";
     S.pw = S.geo.width; S.ph = S.geo.height;
@@ -1157,16 +1159,16 @@ async function analyse() {
     // Phones: free each model as soon as it is done, so the next one fits into memory (iOS reloads the
     // page when it runs out). Desktop keeps them for the next photo.
     if (MOBILE) depthFree(); // Worker beenden: der ganze Modell-Speicher ist wieder frei
-    status("Haut …"); mark("Haut-Modell");
+    status("Erkennt deine Haut …"); mark("Haut-Modell");
     await frame(); const sm = await (segP || segment().catch(e => (console.warn("segment", e), null))); S.skin = sm ? skinMask(sm) : null;
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
     mark("Haut aufräumen"); S.skin = tidySkin(S.skin);
-    stage = "3D-Modell"; status("3D-Modell …"); mark("3D-Modell");
+    stage = "3D-Modell"; status("Formt deinen Arm in 3D …"); mark("3D-Modell");
     // one heavy step per frame, so the scan animation and the page stay responsive
     await frame(); refineDepth(); await frame(); buildGeometry(); await frame(); buildMesh(); await frame();
-    stage = "Maßstab"; status("Maßstab …"); mark("Hand/Pose");
+    stage = "Maßstab"; status("Misst die Größe …"); mark("Hand/Pose");
     S.scale = computeScale(await bodyLandmarks().catch(e => (console.warn("body", e), null)));
-    mark("Scan-Ende"); await scanFinish();
+    mark("Scan-Ende"); status("Fast fertig …"); await scanFinish();
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
     mark("Motiv platzieren");
@@ -1195,15 +1197,18 @@ function resizeTensor(t, w, h) {
 // "Kleidung" liegt. Danach prüft ein Hautfarben-Modell aus dem sicheren Hautinneren jeden unsicheren Rand:
 // was farblich nicht zur Haut passt (Ärmel, Stoff), fliegt raus. Das sichere Innere bleibt, auch wenn es
 // anders aussieht (alte Tattoos, Schatten), weil das Modell dort sicher Haut sieht.
-const CLOTHES_CLASS = 4;
+const CLOTHES_CLASS = 4, HAIR_CLASS = 1, OTHER_CLASS = 5; // selfie_multiclass: 0 Hintergrund, 1 Haare, 2 Körperhaut, 3 Gesicht, 4 Kleidung, 5 Sonstiges
 function segMasks(seg) { // Hauptthread-Variante (Fallback), gleiche Form wie das Ergebnis des Workers
   const res = seg.segment(S.proc), cm = res.confidenceMasks, cw = cm[0].width, ch = cm[0].height;
-  const masks = { skin: cm[SKIN_CLASS].getAsFloat32Array().slice(), cloth: cm[CLOTHES_CLASS].getAsFloat32Array().slice() };
+  const masks = { skin: cm[SKIN_CLASS].getAsFloat32Array().slice(), cloth: cm[CLOTHES_CLASS].getAsFloat32Array().slice(),
+    hair: cm[HAIR_CLASS].getAsFloat32Array().slice(), other: cm[OTHER_CLASS].getAsFloat32Array().slice() };
   cm.forEach(x => x.close()); res.close?.();
   return { masks, cw, ch };
 }
-function skinMask({ masks: { skin, cloth }, cw, ch }) {
-  const b = new Float32Array(cw * ch); for (let i = 0; i < b.length; i++) b[i] = clamp(skin[i] - .8 * cloth[i], 0, 1);
+function skinMask({ masks: { skin, cloth, hair, other }, cw, ch }) {
+  // Haut zählt nur, wo sie klar vor Kleidung, Haaren und Sonstigem (Uhr, Schmuck, Gegenstände) liegt
+  const b = new Float32Array(cw * ch);
+  for (let i = 0; i < b.length; i++) b[i] = clamp(skin[i] - 1.0 * cloth[i] - .9 * (hair ? hair[i] : 0) - .6 * (other ? other[i] : 0), 0, 1);
   const bs = blurField(b, cw, ch, 1), m = new Float32Array(S.pw * S.ph);
   for (let y = 0; y < S.ph; y++) for (let x = 0; x < S.pw; x++) { // bilinear
     const fx = clamp((x + .5) * cw / S.pw - .5, 0, cw - 1.001), fy = clamp((y + .5) * ch / S.ph - .5, 0, ch - 1.001), x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * cw + x0;
@@ -2585,8 +2590,8 @@ function renderInk(t) {
   const halo = fresh > 0 ? blurField(I.alpha, bw, bh, Math.round(W / 95)) : null;
   const bump = fresh > 0 ? blurField(I.alpha, bw, bh, Math.max(1, Math.round(unit * 1.6))) : null;
   const l = S.light, hl = Math.hypot(l[0], l[1], l[2] + 1), hv = [l[0] / hl, l[1] / hl, (l[2] + 1) / hl];
-  // minimal blasser als vorher: etwas weniger Deckkraft und ein Hauch Haut, der immer durch die Tinte scheint
-  const sat = 1 - .07 * t - .2 * aged, dens = .93 - .03 * t - .07 * aged, veil = .035 + .03 * t + .05 * aged;
+  // Deckkraft hoch, nur ein Hauch Haut scheint durch (vorher wirkte es etwas blass)
+  const sat = 1 - .07 * t - .2 * aged, dens = .965 - .03 * t - .07 * aged, veil = .022 + .03 * t + .05 * aged;
   // Light the ink layer scatters back on its own (it is not a perfect absorber): neutral to slightly
   // blue, and bluer/greener with age (Tyndall effect, why old black tattoos look blue-grey).
   // Scaled by the local light level (skin brightness / typical skin albedo), not tinted by the skin.
@@ -2635,7 +2640,7 @@ async function stechen() {
   try { await stechenRun(); } finally { S.inking = false; $("#ink").disabled = !S.motif; }
 }
 async function stechenRun() {
-  setStep(4); status("Sticht …"); drawGizmo(); await frame();
+  setStep(4); status("Wird gestochen …"); drawGizmo(); await frame();
   prepareInk();
   const res = composeInk();
   await needleReveal(res, S.inkBox);
@@ -2648,7 +2653,7 @@ async function stechenRun() {
 function hash(i) { const s = Math.sin(i * 12.9898) * 43758.5453; return s - Math.floor(s); }
 // Stechen animation in the Stencit dot language: the ink is laid down as a grid of needle dots that
 // the needle visits like a tattoo machine follows the lines (nearest-neighbour path, so it traces
-// strokes instead of scanning rows). Each puncture flashes white and settles into ink; when all dots
+// strokes instead of scanning rows). Each puncture flashes red (brand) and settles into ink; when all dots
 // are in, the gaps close and the dots melt into solid ink.
 function needlePath(box) {
   const I = S.ink, sp = Math.max(5, Math.round(view.width / 175)), pts = [];
@@ -2678,18 +2683,25 @@ function needleReveal(res, box) {
     const { pts, order, n, sp } = needlePath(box), nd = $("#needle");
     const ox = overlay.width / view.width, oy = overlay.height / view.height, T = clamp(1500 + n * .8, 1900, 3200), t0 = performance.now(), recent = [];
     let done = 0;
+    // Punkt liegt auf der gewölbten Haut: in Richtung der Neigung gestaucht (wie ein Kreis auf einem Zylinder)
+    const tilt = (x, y) => { const N = S.nrm; if (!N) return [1, 0];
+      const gx = clamp((x * S.pw / view.width) | 0, 0, S.pw - 1), gy = clamp((y * S.ph / view.height) | 0, 0, S.ph - 1), j = (gy * S.pw + gx) * 3;
+      return [clamp(N[j + 2], .35, 1), Math.atan2(N[j + 1], N[j])]; };
     vctx.drawImage(S.photo, 0, 0); nd.hidden = !n;
     const step = t => {
       const p = clamp((t - t0) / T, 0, 1), target = Math.floor(p * p * (3 - 2 * p) * n);
       if (target > done) { // punch the new dots: each reveals the finished ink in a small circle
         vctx.save(); vctx.beginPath();
-        for (let o = done; o < target; o++) { const i = order[o], x = pts[i * 2], y = pts[i * 2 + 1]; vctx.moveTo(x + sp * .56, y); vctx.arc(x, y, sp * .56, 0, 7); recent.push({ x, y, t }); }
+        for (let o = done; o < target; o++) { const i = order[o], x = pts[i * 2], y = pts[i * 2 + 1], [sq, ang] = tilt(x, y);
+          vctx.moveTo(x + Math.cos(ang) * sp * .56 * sq, y + Math.sin(ang) * sp * .56 * sq); vctx.ellipse(x, y, sp * .56 * sq, sp * .56, ang, 0, 7); recent.push({ x, y, t, sq, ang }); }
         vctx.clip(); vctx.drawImage(res, 0, 0); vctx.restore(); done = target;
       }
       octx.clearRect(0, 0, overlay.width, overlay.height);
       while (recent.length && (t - recent[0].t > 140 || recent.length > 6)) recent.shift(); // nur die letzten Einstiche blitzen kurz, fein
-      octx.fillStyle = "#fff";
-      for (const d of recent) { const a = 1 - (t - d.t) / 140; octx.globalAlpha = a * .45; octx.beginPath(); octx.arc(d.x * ox, d.y * oy, sp * ox * (.1 + .18 * a), 0, 7); octx.fill(); }
+      for (const d of recent) { // frischer Einstich: kurz rot aufleuchtend, flach auf der Haut
+        const a = 1 - (t - d.t) / 140, r = sp * ox * (.14 + .22 * a);
+        octx.globalAlpha = a * .32; octx.fillStyle = "#DB1A1D"; octx.beginPath(); octx.ellipse(d.x * ox, d.y * oy, r * 1.8 * d.sq, r * 1.8, d.ang, 0, 7); octx.fill();
+        octx.globalAlpha = a * .75; octx.fillStyle = "#ff5a4a"; octx.beginPath(); octx.ellipse(d.x * ox, d.y * oy, r * d.sq, r, d.ang, 0, 7); octx.fill(); }
       octx.globalAlpha = 1;
       if (done > 0) { // the needle sits on the last dot and vibrates like a machine
         const i = order[Math.min(done, n) - 1], b = view.getBoundingClientRect(), wrap = $("#viewWrap").getBoundingClientRect();
