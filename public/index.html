@@ -751,7 +751,13 @@
 
   .steps { white-space: nowrap; hyphens: none; }
   .steps { display: none !important; } /* Schritt-Anzeige entfällt: die Insel zeigt den Schritt; Platz für die Einstellungen */
-  .set-list { display: grid; gap: 6px; }
+  .set-list { display: grid; gap: 8px; }
+  /* Gruppen: eine Fläche, Zeilen darin nur durch feine Linien getrennt */
+  .set-group { display: grid; border-radius: 20px; background: oklch(100% 0 0 / .07); overflow: hidden; }
+  .set-group > .set-row { position: relative; border-radius: 0; background: none; min-height: 50px; }
+  .set-group > .set-row + .set-row::before { content: ""; position: absolute; left: 18px; right: 0; top: 0; height: 1px; background: oklch(100% 0 0 / .08); }
+  .set-group > a.set-row:hover, .set-group > button.set-row:hover { background: oklch(100% 0 0 / .05); }
+  div.set-row { padding-right: 18px; } div.set-row:has(.lsw) { padding-right: 6px; }
   .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 8px 0 18px; border-radius: 20px; background: oklch(100% 0 0 / .07); color: #fff; font: inherit; font-size: 15px; text-decoration: none; text-align: left; }
   button.set-row { padding-right: 18px; } a.set-row { padding-right: 8px; }
   a.set-row, button.set-row { cursor: pointer; } a.set-row:hover, button.set-row:hover { background: oklch(100% 0 0 / .11); }
@@ -3932,26 +3938,22 @@ function renderSettings() {
   const chev = `<svg class="ic" aria-hidden="true"><use href="#i-chevron--right"/></svg>`;
   sh.innerHTML = `${sheetHead("Einstellungen")}
     <div class="set-list"><div class="set-cap">Artist-Profil</div>${profRow()}</div>
-    <div class="set-list">
+    <div class="set-list"><div class="set-cap">Allgemein</div><div class="set-group">
       <div class="set-row"><span>Sprache</span>${langSwitch(getLang())}</div>
       <div class="set-row"><span>Maßeinheit</span>${unitSwitch(unit())}</div>
       <button class="set-row" id="setAcct"><span>Konto</span><span class="dim">${ACC.user ? esc(ACC.user.email || "Angemeldet") : "Anmelden"}</span></button>
-    </div>
-    <div class="set-list"><div class="set-cap">iPhone-App</div>
-      <button class="set-row" id="setWl"><span>Warteliste</span><span class="dim">${onWaitlist() ? "Eingetragen" : "Benachrichtigen"}</span></button>
-    </div>
-    <div class="set-list"><div class="set-cap">Auf diesem Gerät</div>
+    </div></div>
+    <div class="set-list"><div class="set-cap">Auf diesem Gerät</div><div class="set-group">
       <div class="set-row"><span>Speicher</span><span class="dim" id="setStore">…</span></div>
       <button class="set-row" id="setWipe"><span>Daten auf diesem Gerät löschen</span></button>
-    </div>
-    <div class="set-list"><div class="set-cap">Hilfe</div>
+    </div></div>
+    <div class="set-list"><div class="set-cap">Mehr</div><div class="set-group">
+      <button class="set-row" id="setWl"><span>iPhone-App</span><span class="dim">${onWaitlist() ? "Eingetragen" : "Warteliste"}</span></button>
       <a class="set-row" id="setMail" href="${feedbackMail()}"><span>Feedback senden</span>${chev}</a>
-    </div>
-    <div class="set-list"><div class="set-cap">Rechtliches</div>
       <a class="set-row" href="/privacy" target="_blank"><span>Datenschutz</span>${chev}</a>
       <a class="set-row" href="/impressum" target="_blank"><span>Impressum</span>${chev}</a>
-      ${ACC.user ? `<button class="set-row danger" id="setDel"><span>Konto löschen</span></button>` : ""}
-    </div>
+    </div></div>
+    ${ACC.user ? `<div class="set-list"><div class="set-group"><button class="set-row danger" id="setDel"><span>Konto löschen</span></button></div></div>` : ""}
     <p class="set-ver">Stencit · Version ${APP_VERSION}</p>`;
   sh.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet(box));
   bindLang(sh);
