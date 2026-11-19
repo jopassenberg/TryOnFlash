@@ -69,6 +69,10 @@
   .step i::after { content: " / 4"; }
 
   /* die Karte hat einen dunklen Rahmen wie ein Gerät; die Insel oben wächst aus diesem Rahmen */
+  .cam-ask { position: absolute; z-index: 4; left: 50%; top: 46%; translate: -50% -50%; width: min(300px, calc(100% - 48px)); display: grid; justify-items: center; gap: 8px; text-align: center; color: #fff; animation: fade .4s var(--ease-out); }
+  .cam-ask p { margin: 0; font-size: 15px; } .cam-ask .dim { font-size: 13px; color: oklch(100% 0 0 / .55); line-height: 1.45; }
+  .cam-ask-ic { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .08); margin-bottom: 4px; } .cam-ask-ic .ic { width: 20px; height: 20px; }
+  .cam-ask .btn { margin-top: 8px; height: 44px; padding: 0 22px; background: #fff; color: var(--ink); }
   .card { position: relative; min-height: 0; overflow: hidden; color: var(--ink); background: oklch(15% .003 75); border-radius: var(--r-outer); border: var(--frame-w) solid var(--frame); }
   .stage { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; touch-action: none; }
   #viewWrap { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
@@ -201,6 +205,11 @@
     opacity: 0; filter: blur(4px); transition: opacity .25s var(--ease-out), filter .25s var(--ease-out); pointer-events: none; }
   .island[data-mode="status"] .isl-status, .island[data-mode="size"] .isl-size, .island[data-mode="summary"] .isl-sum { opacity: 1; filter: none; pointer-events: auto; transition-delay: .12s; }
   .isl-status > span, .isl-size { max-width: 196px; overflow: hidden; text-overflow: ellipsis; }
+  #islText { white-space: nowrap; }
+  #islText.marq { text-overflow: clip; -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); }
+  #islText .mq { display: inline-flex; gap: 36px; padding-left: 16px; animation: mq var(--d) linear 1.2s infinite; }
+  @keyframes mq { to { transform: translateX(calc(-1 * var(--w))); } }
+  @media (prefers-reduced-motion: reduce) { #islText .mq { animation: none; } }
   /* Zusammenfassung: Kopfzeile ist ein Knopf, darunter klappt der Inhalt auf */
   .island > .isl-sum { left: 0; right: 0; translate: none; }
   .isl-sum-head { width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
@@ -871,6 +880,12 @@
       <button class="cs" id="camFlash" title="Blitz" aria-label="Blitz" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-flash--off"/></svg></button>
       <button class="cs" id="camFlip" title="Kamera wechseln" aria-label="Kamera wechseln"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></button>
     </div>
+    <div class="cam-ask" id="camAsk" hidden role="status">
+      <span class="cam-ask-ic"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
+      <p id="camAskT">Kein Zugriff auf die Kamera</p>
+      <p class="dim" id="camAskS">Erlaube den Zugriff, um direkt ein Foto zu machen – oder nimm eins aus der Galerie.</p>
+      <button class="btn" id="camAskGo">Kamera erlauben</button>
+    </div>
     <div class="panel" id="panelCam" hidden>
       <div class="group">
         <span class="cam-cardwrap"><button class="cam-card" id="tryHead" aria-label="Stencil aus den Flashes wählen"><img alt="" id="tryThumb"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg><span class="sr" id="tryName">Flash anprobieren</span></button>
@@ -1028,8 +1043,21 @@ const S = {
 let infoOpen = false, infoKey = ""; // info card state (declared early: setStep() touches it on load)
 /* ---------- UI helpers ---------- */
 // Swap animation for text that changes in place (step pill, status): a short blur-in, no jump
+// Insel-Text: passt er nicht, läuft er als Endlos-Schleife durch, an den Rändern weich ausgeblendet.
+// Ändern sich nur Zahlen (Fortschritt), läuft die Schleife weiter, statt neu anzufangen.
+function islFit(t, text, fresh) {
+  t.dataset.text = text;
+  const mq = t.querySelector(".mq");
+  if (mq && !fresh) { mq.querySelectorAll("span").forEach(x => x.textContent = text); return; }
+  t.classList.remove("marq"); t.textContent = text;
+  if (t.scrollWidth <= t.clientWidth + 1) return;
+  const w = t.scrollWidth + 36, box = document.createElement("span"); box.className = "mq";
+  box.style.setProperty("--w", w + "px"); box.style.setProperty("--d", (w / 32).toFixed(1) + "s");
+  for (let i = 0; i < 2; i++) { const x = document.createElement("span"); x.textContent = text; if (i) x.setAttribute("aria-hidden", "true"); box.append(x); }
+  t.textContent = ""; t.append(box); t.classList.add("marq");
+}
 function swapAnim(el) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
-function setStep(n) {
+function setStep(n) { if (n !== 1) $("#camAsk").hidden = true;
   if (S.step !== n) swapAnim($(".steps"));
   S.step = n;
   document.querySelectorAll(".step").forEach(el => {
@@ -1047,7 +1075,7 @@ function status(text, s = "busy") {
   const changed = text && !same(text, $("#statusText").textContent);
   el.hidden = !text || inIsland; $("#statusText").textContent = inIsland ? "" : text || ""; el.dataset.s = s;
   if (changed && !inIsland) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
-  if (inIsland) { const t = $("#islText"); if (text && t.textContent !== text) { const anim = !same(text, t.textContent); t.textContent = text; if (anim) swapAnim(t); } $("#islStatus").dataset.s = s; }
+  if (inIsland) { const t = $("#islText"); if (text && t.dataset.text !== text) { const anim = !same(text, t.dataset.text); islFit(t, text, anim); if (anim) swapAnim(t); } $("#islStatus").dataset.s = s; }
   islandText = inIsland ? text || "" : "";
   syncIsland();
 }
@@ -1097,6 +1125,7 @@ function scaled(img, max) {
   return c;
 }
 function loadPhoto(file) {
+  $("#camAsk").hidden = true;
   const img = new Image(), url = URL.createObjectURL(file);
   img.onload = () => { URL.revokeObjectURL(url); usePhoto(img); };
   img.onerror = () => { URL.revokeObjectURL(url); status("Bild nicht lesbar", "err"); };
@@ -1157,13 +1186,30 @@ async function openCam() {
         : { facingMode: camFacing, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } } });
   } catch (e) {
     camStream = null; $("#cam").hidden = true; startUI();
-    if (e?.name === "NotAllowedError") { try { localStorage.removeItem(CAM_OK); } catch {} }
-    status(e?.name === "NotAllowedError" ? "Kein Kamerazugriff · im Browser erlauben" : "Kamera nicht verfügbar · Galerie nutzen", "err"); return;
+    const denied = e?.name === "NotAllowedError";
+    if (denied) { try { localStorage.removeItem(CAM_OK); } catch {} }
+    camAsk(denied ? "denied" : "none"); status(""); return;
   }
+  camAsk(null);
   try { localStorage.setItem(CAM_OK, "1"); } catch {}
   $("#drop").hidden = true;
   const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false; // Frontkamera: Vorschau wie ein Spiegel (wie beim Selfie)
   v.play().catch(() => {}); status(""); applyFlash();
+}
+// Hinweis in der Kartenmitte, wenn die Kamera nicht läuft. Zweimal abgelehnt = der Browser fragt nicht mehr:
+// dann erklären, wo man es in den Website-Einstellungen erlaubt.
+let camAsks = 0;
+function camAsk(kind) {
+  const el = $("#camAsk"); if (!kind || S.step !== 1) { el.hidden = true; return; }
+  const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const again = kind === "denied" && ++camAsks > 1;
+  $("#camAskT").textContent = kind === "none" ? "Keine Kamera gefunden" : "Kein Zugriff auf die Kamera";
+  $("#camAskS").textContent = kind === "none" ? "Nimm ein Foto aus deiner Galerie." : again
+    ? (iOS ? "Dein Browser fragt nicht mehr nach. In Safari: in der Adressleiste auf „aA“ → Website-Einstellungen → Kamera → Erlauben." : "Dein Browser fragt nicht mehr nach. Tippe neben der Adresse auf das Schloss-Symbol und erlaube die Kamera.")
+    : "Erlaube den Zugriff, um direkt ein Foto zu machen – oder nimm eins aus der Galerie.";
+  $("#camAskGo").textContent = kind === "none" ? "Foto aus Galerie" : again ? "Nochmal versuchen" : "Kamera erlauben";
+  $("#camAskGo").onclick = () => kind === "none" ? $("#camGallery").click() : openCam();
+  el.hidden = false;
 }
 // Blitz: hinten als Dauerlicht (Taschenlampe), wenn der Browser es kann (Android/Chrome);
 // vorne als Bildschirm-Blitz (weißer Bildschirm im Moment der Aufnahme). Safari auf dem iPhone erlaubt
@@ -4144,7 +4190,7 @@ function cloudSave(f) { // nach Speichern/Bearbeiten im Hintergrund sichern
 }
 acctInit();
 
-window.__studio = { ACC, acctSheet, waitlistSheet, sb, logoStencil, needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
+window.__studio = { ACC, acctSheet, waitlistSheet, status, sb, logoStencil, needleIcon, needleDots, S, loadPhoto, usePhoto, openCam, closeCam, loadMotif, openCut, extract, addMotif, stechen, warp, depthMask, buildGeometry, redraw, setStep, CUT, scanStart, scanFinish };
 </script>
 </body>
 </html>
