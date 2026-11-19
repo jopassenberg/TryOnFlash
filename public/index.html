@@ -545,13 +545,25 @@
   .sel-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; background: oklch(80% .24 135); box-shadow: 0 0 0 2px oklch(19% .003 75 / .15); }
   .cutbox > .sw.cut-bg { margin: 0 var(--s1); }
   /* Schnellansicht: nur Ergebnis + Anpassen/Übernehmen; Werkzeuge erst nach „Anpassen“ */
-  .cut.quick .quickbar { display: grid; }
-  .adjs { display: grid; gap: 6px; padding: 0 var(--s1); }
-  .adj { display: grid; grid-template-columns: 84px 1fr 52px; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; border-radius: 20px; background: var(--fill); font-size: 14px; }
-  .adj b { font-weight: 400; text-align: right; color: var(--text-2); font-variant-numeric: tabular-nums; }
-  .adj input { width: 100%; accent-color: var(--n-900); }
+  .adjs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px; padding: 0 var(--s1); }
+  .adj { --p: 50%; --z: 50%; display: grid; grid-template-columns: 76px 1fr 54px; grid-template-areas: "l s v"; align-items: center; gap: 10px; padding: 4px 8px 4px 16px; border-radius: 20px; background: var(--fill); font-size: 14px; }
+  .adj > span { grid-area: l; } .adj-v { grid-area: v; justify-self: end; } .adj input { grid-area: s; }
+  .adj-v { white-space: nowrap; padding: 4px 6px; border-radius: 10px; color: var(--text-2); font-variant-numeric: tabular-nums; font-size: 13px; } .adj-v:hover { background: var(--fill); }
+  .adj input { width: 100%; height: 30px; margin: 0; -webkit-appearance: none; appearance: none; background: none; cursor: pointer; touch-action: pan-y; }
+  /* Spur: feine Maßstriche alle 10 %, ein kräftiger am Normalwert, der veränderte Bereich leicht gefüllt */
+  .adj input::-webkit-slider-runnable-track { height: 30px; border-radius: 8px;
+    background: linear-gradient(90deg, transparent calc(var(--z) - 1px), var(--n-900) calc(var(--z) - 1px) calc(var(--z) + 1px), transparent calc(var(--z) + 1px)) 0 50% / 100% 16px no-repeat,
+      repeating-linear-gradient(90deg, oklch(19% .003 75 / .22) 0 1px, transparent 1px calc(10% - .1px)) 0 50% / calc(100% + 1px) 8px no-repeat,
+      linear-gradient(90deg, transparent min(var(--z), var(--p)), oklch(19% .003 75 / .1) min(var(--z), var(--p)) max(var(--z), var(--p)), transparent max(var(--z), var(--p))) 0 50% / 100% 30px no-repeat; }
+  .adj input::-moz-range-track { height: 30px; border-radius: 8px;
+    background: linear-gradient(90deg, transparent calc(var(--z) - 1px), var(--n-900) calc(var(--z) - 1px) calc(var(--z) + 1px), transparent calc(var(--z) + 1px)) 0 50% / 100% 16px no-repeat,
+      repeating-linear-gradient(90deg, oklch(19% .003 75 / .22) 0 1px, transparent 1px calc(10% - .1px)) 0 50% / calc(100% + 1px) 8px no-repeat,
+      linear-gradient(90deg, transparent min(var(--z), var(--p)), oklch(19% .003 75 / .1) min(var(--z), var(--p)) max(var(--z), var(--p)), transparent max(var(--z), var(--p))) 0 50% / 100% 30px no-repeat; }
+  /* Zeiger: schmaler roter Strich mit weißem Rand, wie eine Markierung auf dem Lineal */
+  .adj input::-webkit-slider-thumb { -webkit-appearance: none; width: 6px; height: 30px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 2px #fff, 0 2px 6px oklch(0% 0 0 / .2); }
+  .adj input::-moz-range-thumb { width: 6px; height: 30px; border: 0; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 2px #fff, 0 2px 6px oklch(0% 0 0 / .2); }
+  .adj input:focus-visible { outline: none; } .adj input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent); }
   .cut.quick .panel:has(#cutTools) .group:first-child, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
-  .cut:not(.quick) #cutEdit { display: none; }
   .looks button { display: grid; justify-items: center; gap: 6px; padding: 6px 6px 8px; border-radius: 20px; font-size: 13px; color: var(--text-2); background: var(--fill); transition: background-color .2s, color .2s, transform .3s var(--spring); }
   .looks button:active { transform: scale(.96); }
   .looks canvas { width: 100%; max-width: 72px; aspect-ratio: 1; border-radius: 14px; background: #f4f3f0; }
@@ -969,16 +981,15 @@
         </div>
       </div>
       <!-- Schnellansicht nach dem Hochladen: das automatisch ausgeschnittene Motiv, darunter Anpassen / Übernehmen -->
-      <div class="quickbar" id="cutQuick"><span><i class="sel-swatch"></i>Grün umrandet = erkanntes Motiv</span><span class="dim">Alles außerhalb fällt weg. Passt es nicht? Anpassen.</span></div>
       <!-- Hintergrund: zwei Bilder statt Schalter, damit man sieht, was passiert -->
       <button class="sw cut-bg" id="cutBg" role="switch" aria-checked="true"><span class="t">Hintergrund entfernen<small>Papier oder Haut um das Motiv wird durchsichtig</small></span><span class="track"></span></button>
       <!-- Stil: jede Option zeigt sofort, wie das Motiv damit aussieht -->
-      <!-- Tinte: Regler statt fester Stile; es erscheinen nur die, die beim Motiv etwas bewirken -->
-      <div class="sec-title">Tinte</div>
+      <!-- Regler für die Tinte; es erscheinen nur die, die beim Motiv etwas bewirken. Wert antippen = zurücksetzen -->
       <div class="adjs" id="cutAdj">
-        <label class="adj" data-k="contrast"><span>Kontrast</span><input type="range" min="-50" max="100" step="1" value="0" aria-label="Kontrast"><b>0</b></label>
-        <label class="adj" data-k="shade"><span>Schatten</span><input type="range" min="0" max="100" step="1" value="100" aria-label="Schatten"><b>100 %</b></label>
-        <label class="adj" data-k="color"><span>Farbe</span><input type="range" min="0" max="100" step="1" value="100" aria-label="Farbe"><b>100 %</b></label>
+        <div class="adj" data-k="bright" data-min="-50" data-max="50" data-def="0"><span>Helligkeit</span><button class="adj-v" title="Zurücksetzen">0</button><input type="range" min="-50" max="50" step="1" value="0" aria-label="Helligkeit"></div>
+        <div class="adj" data-k="contrast" data-min="-50" data-max="100" data-def="0"><span>Kontrast</span><button class="adj-v" title="Zurücksetzen">0</button><input type="range" min="-50" max="100" step="1" value="0" aria-label="Kontrast"></div>
+        <div class="adj" data-k="shade" data-min="0" data-max="100" data-def="100"><span>Schatten</span><button class="adj-v" title="Zurücksetzen">100 %</button><input type="range" min="0" max="100" step="1" value="100" aria-label="Schatten"></div>
+        <div class="adj" data-k="color" data-min="0" data-max="100" data-def="100"><span>Farbe</span><button class="adj-v" title="Zurücksetzen">100 %</button><input type="range" min="0" max="100" step="1" value="100" aria-label="Farbe"></div>
       </div>
       <div class="panel">
         <div class="group">
@@ -992,7 +1003,6 @@
         </div>
         <div class="group end">
           <button class="btn ghost" id="cutCancel">Abbrechen</button>
-          <button class="btn soft" id="cutEdit">Anpassen</button>
           <button class="btn primary" id="cutOk">Übernehmen</button>
         </div>
       </div>
@@ -1973,11 +1983,9 @@ function openCut(c, opts = {}) {
     if (R.style) setStyle(R.style);
     $("#cutHint").textContent = "Auswahl anpassen: Lasso, Radierer, Pinsel";
   }
-  $("#cutQuick").innerHTML = CUT.opaque && CUT.bg ? `<span>Hintergrund entfernt</span><span class="dim">Nur einen Teil? Unter „Anpassen“ mit dem Lasso auswählen.</span>`
-    : `<span>Ganzes Bild</span><span class="dim">Nur einen Teil? Unter „Anpassen“ mit dem Lasso auswählen.</span>`;
   cutC.width = c.width; cutC.height = c.height;
   $("#cutBg").hidden = !CUT.opaque; setBg(CUT.bg);
-  CUT.quick = !opts.restore; $("#cut").classList.toggle("quick", CUT.quick); showAdj();
+  CUT.quick = false; $("#cut").classList.remove("quick"); showAdj();
   lookThumbs(); undoState();
   const hint = $("#cutHint").textContent; $("#cut").hidden = false; setTool("lasso"); if (CUT.hasMask) $("#cutHint").textContent = hint; fitCut();
   cancelAnimationFrame(CUT.raf);
@@ -2052,30 +2060,36 @@ function showAdj() {
 }
 // Regler: Kontrast (Tinte kräftiger bzw. weicher), Schatten (weiche, halbtransparente oder mittelgraue Tinte
 // ausblenden), Farbe (bis Schwarz-Weiß). Werte werden als kurzer Text gespeichert (früher: feste Stile).
-const ADJ0 = { contrast: 0, shade: 100, color: 100 };
-const adjKey = A => `c${A.contrast}s${A.shade}f${A.color}`;
-const isPlain = A => !A || (A.contrast === 0 && A.shade === 100 && A.color === 100);
+const ADJ0 = { bright: 0, contrast: 0, shade: 100, color: 100 };
+const adjKey = A => `c${A.contrast}s${A.shade}f${A.color}b${A.bright || 0}`;
+const isPlain = A => !A || (!A.bright && A.contrast === 0 && A.shade === 100 && A.color === 100);
 function parseStyle(s) {
   const legacy = { orig: {}, gray: { color: 0 }, clean: { shade: 0 }, lines: { color: 0, shade: 0, contrast: 60 } };
   if (legacy[s]) return { ...ADJ0, ...legacy[s] };
-  const m = /^c(-?\d+)s(\d+)f(\d+)$/.exec(s || ""); return m ? { contrast: +m[1], shade: +m[2], color: +m[3] } : { ...ADJ0 };
+  const m = /^c(-?\d+)s(\d+)f(\d+)(?:b(-?\d+))?$/.exec(s || ""); return m ? { contrast: +m[1], shade: +m[2], color: +m[3], bright: +(m[4] || 0) } : { ...ADJ0 };
 }
 function setStyle(s) { CUT.adj = typeof s === "string" ? parseStyle(s) : { ...s }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj(); }
 function syncAdj() {
-  document.querySelectorAll("#cutAdj .adj").forEach(l => { const k = l.dataset.k, v = CUT.adj[k];
-    l.querySelector("input").value = v; l.querySelector("b").textContent = k === "contrast" ? (v > 0 ? "+" : "") + v : v + " %"; });
+  document.querySelectorAll("#cutAdj .adj").forEach(l => { const k = l.dataset.k, v = CUT.adj[k] ?? +l.dataset.def, mn = +l.dataset.min, mx = +l.dataset.max;
+    const pos = x => (x - mn) / (mx - mn) * 100;
+    l.querySelector("input").value = v; l.style.setProperty("--p", pos(v) + "%"); l.style.setProperty("--z", pos(+l.dataset.def) + "%");
+    l.querySelector(".adj-v").textContent = k === "contrast" || k === "bright" ? (v > 0 ? "+" : "") + v : v + " %"; });
 }
-document.querySelectorAll("#cutAdj input").forEach(inp => inp.oninput = () => {
-  const k = inp.closest(".adj").dataset.k; CUT.adj = { ...CUT.adj, [k]: +inp.value }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj();
+const setAdj = (k, v) => { CUT.adj = { ...CUT.adj, [k]: v }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj(); };
+document.querySelectorAll("#cutAdj .adj").forEach(l => {
+  const inp = l.querySelector("input");
+  inp.oninput = () => { let v = +inp.value; const d = +l.dataset.def, snap = (+l.dataset.max - +l.dataset.min) * .03; if (Math.abs(v - d) <= snap) v = d; setAdj(l.dataset.k, v); }; // rastet am Normalwert ein
+  l.querySelector(".adj-v").onclick = () => setAdj(l.dataset.k, +l.dataset.def);
 });
 function applyAdj(src, A) {
   const c = canvasOf(src.width, src.height), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(src, 0, 0);
-  const id = g.getImageData(0, 0, c.width, c.height), d = id.data, kC = 1 + A.contrast / 50, sat = A.color / 100, sh = A.shade / 100;
+  const id = g.getImageData(0, 0, c.width, c.height), d = id.data, kC = 1 + A.contrast / 50, sat = A.color / 100, sh = A.shade / 100, br = (A.bright || 0) * 2.2;
   for (let i = 0; i < d.length; i += 4) {
     let r = d[i], gg = d[i + 1], b = d[i + 2], a = d[i + 3] / 255; if (a <= 0) continue;
     const L = .299 * r + .587 * gg + .114 * b, l = L / 255, ch = (Math.max(r, gg, b) - Math.min(r, gg, b)) / 255;
     if (sh < 1 && (a < .6 || (l > .32 && ch < .18 && a < .9))) a *= sh; // Schattierung
     if (sat < 1) { r = L + (r - L) * sat; gg = L + (gg - L) * sat; b = L + (b - L) * sat; } // Farbe
+    if (br) { r += br; gg += br; b += br; } // Helligkeit
     if (kC !== 1) { r = (r - 128) * kC + 128; gg = (gg - 128) * kC + 128; b = (b - 128) * kC + 128; if (kC > 1) a = clamp((a - .5) * kC + .5, 0, 1); } // Kontrast, auch an den Kanten
     d[i] = r; d[i + 1] = gg; d[i + 2] = b; d[i + 3] = a * 255;
   }
@@ -2226,7 +2240,6 @@ cutStage.addEventListener("wheel", e => {
 }, { passive: false });
 function setBg(on) { CUT.bg = on; CUT.dirty = true; $("#cut").classList.toggle("no-bg", on && CUT.opaque); $("#cutBg").setAttribute("aria-checked", on); }
 $("#cutBg").onclick = () => { setBg(!CUT.bg); lookThumbs(); };
-$("#cutEdit").onclick = () => { CUT.quick = false; $("#cut").classList.remove("quick"); fitCut(); };
 $("#cutCancel").onclick = closeCut;
 $("#cutOk").onclick = () => {
   const src = source(), r = canvasOf(src.width, src.height), g = r.getContext("2d");

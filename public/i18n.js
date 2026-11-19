@@ -106,6 +106,7 @@ const EN = {
   "Alle auswählen": "Select all", "Auswahl aufheben": "Deselect all", "Flashes antippen": "Tap flashes", "Auswahl": "Selection", "Was gehört zum Motiv?": "What belongs to the design?", "Hintergrund": "Background", "Motiv": "Design", "Motiv bearbeiten": "Edit design", "Auswahl und Stil anpassen": "Adjust selection and style", "Alles außerhalb fällt weg.": "Everything outside is removed.", "Nur einen Teil? Mit „Anpassen“ per Lasso auswählen.": "Only part of it? Select it with the lasso via “Adjust”.",
   "Name geben (optional)": "Add a name (optional)", "Name des Stencils": "Stencil name", "Nachricht zum Link (optional) – wird beim Senden mitgeschickt": "Message with the link (optional) – sent along with it",
   "Tinte": "Ink", "Kontrast": "Contrast", "Schatten": "Shading", "Farbe": "Colour",
+  "Helligkeit": "Brightness", "Zurücksetzen": "Reset",
 };
 
 // Texte mit Zahlen/Namen
