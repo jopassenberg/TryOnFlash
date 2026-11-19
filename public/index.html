@@ -1956,6 +1956,8 @@ function openCut(c, opts = {}) {
     if (R.style) setStyle(R.style);
     $("#cutHint").textContent = "Auswahl anpassen: Lasso, Radierer, Pinsel";
   } else if (CUT.opaque && CUT.bg && autoMask()) $("#cutHint").textContent = "Motiv erkannt · mit Lasso oder Radierer anpassen";
+  $("#cutQuick").innerHTML = CUT.hasMask ? `<span><i class="sel-swatch"></i>Grün umrandet = erkanntes Motiv</span><span class="dim">Alles außerhalb fällt weg. Passt es nicht? Anpassen.</span>`
+    : `<span>Ganzes Bild</span><span class="dim">Nur einen Teil? Unter „Anpassen“ mit dem Lasso auswählen.</span>`;
   cutC.width = c.width; cutC.height = c.height;
   $("#cutBg").hidden = !CUT.opaque; setBg(CUT.bg);
   CUT.quick = !opts.restore; $("#cut").classList.toggle("quick", CUT.quick);
@@ -2179,51 +2181,39 @@ $("#cutOk").onclick = () => {
   if (!t) return status("Auswahl ist leer", "err");
   done(t, meta);
 };
-// Smart ausstechen: nach dem Entfernen des Hintergrunds die größte zusammenhängende Tinte (plus was in ihrem
-// Rahmen liegt) als Auswahl vorgeben. Text, Wasserzeichen oder Nachbarmotive im Screenshot bleiben draußen.
+// Automatische Auswahl nur bei schlichtem Hintergrund (z. B. schwarz auf weißem Papier): dann ist alles, was nach dem
+// Entfernen des Hintergrunds übrig bleibt, das Motiv – es wird komplett umrandet, nichts wird weggelassen.
+// Bei Fotos oder unruhigem Hintergrund keine Vorauswahl: das ganze Bild bleibt, Auswahl per Lasso.
+function plainBg(img) {
+  const k = Math.min(1, 160 / Math.max(img.width, img.height)), w = Math.max(8, Math.round(img.width * k)), h = Math.max(8, Math.round(img.height * k));
+  const s = canvasOf(w, h), g = s.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, L = [], b = Math.max(2, Math.round(Math.min(w, h) * .04));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (x >= b && x < w - b && y >= b && y < h - b) continue;
+    const i = (y * w + x) * 4; L.push([.299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2], Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2])]);
+  }
+  L.sort((p, q) => p[0] - q[0]); const core = L.slice(Math.floor(L.length * .1), Math.ceil(L.length * .9)); // Ausreißer (Motiv am Rand) ignorieren
+  const m = core.reduce((a, p) => a + p[0], 0) / core.length, sd = Math.sqrt(core.reduce((a, p) => a + (p[0] - m) ** 2, 0) / core.length);
+  const chroma = core.reduce((a, p) => a + p[1], 0) / core.length;
+  return m > 150 && sd < 14 && chroma < 40; // hell, gleichmäßig, kaum farbig = Papier/Hintergrund
+}
 function autoMask() {
+  if (!plainBg(CUT.img)) return false;
   if (!CUT.ink) CUT.ink = extract(CUT.img, null, true).canvas;
   const c = CUT.ink, k = Math.min(1, 480 / Math.max(c.width, c.height)), w = Math.max(2, Math.round(c.width * k)), h = Math.max(2, Math.round(c.height * k));
   const s = canvasOf(w, h), sg = s.getContext("2d", { willReadFrequently: true }); sg.drawImage(c, 0, 0, w, h);
   const d = sg.getImageData(0, 0, w, h).data, n = w * h, ink = new Uint8Array(n); let total = 0;
   for (let i = 0; i < n; i++) if (d[i * 4 + 3] > 110) { ink[i] = 1; total++; }
   if (total < 30) return false;
-  const D = distanceField(ink, w, h), r = Math.max(2, Math.max(w, h) * .02), grow = new Uint8Array(n); for (let i = 0; i < n; i++) grow[i] = D[i] <= r ? 1 : 0;
-  const lab = new Int32Array(n), boxes = [];
-  for (let s0 = 0; s0 < n; s0++) {
-    if (!grow[s0] || lab[s0]) continue;
-    const id = boxes.length + 1, st = [s0], b = { ids: [id], x0: w, y0: h, x1: 0, y1: 0, ink: 0 }; lab[s0] = id;
-    while (st.length) { const i = st.pop(), x = i % w, y = (i / w) | 0;
-      if (ink[i]) { b.ink++; b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y); }
-      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]) if (j >= 0 && grow[j] && !lab[j]) { lab[j] = id; st.push(j); } }
-    boxes.push(b);
-  }
-  if (boxes.length < 2) return false; // nur ein Motiv: keine Auswahl nötig
-  boxes.sort((a, b) => b.ink - a.ink);
-  const main = boxes[0];
-  // was größtenteils im Rahmen des Hauptmotivs liegt, gehört dazu, ebenso was das Hauptmotiv umschließt (Ring um einen Punkt)
-  const area = b => (b.x1 - b.x0 + 1) * (b.y1 - b.y0 + 1);
-  for (let changed = true; changed;) {
-    changed = false;
-    for (const b of boxes) {
-      if (b === main || b.used) continue;
-      const ix = Math.min(main.x1, b.x1) - Math.max(main.x0, b.x0), iy = Math.min(main.y1, b.y1) - Math.max(main.y0, b.y0);
-      if (ix > 0 && iy > 0 && (ix * iy > .7 * area(b) || ix * iy > .7 * area(main))) {
-        main.ids.push(...b.ids); main.ink += b.ink; b.used = true; changed = true;
-        main.x0 = Math.min(main.x0, b.x0); main.y0 = Math.min(main.y0, b.y0); main.x1 = Math.max(main.x1, b.x1); main.y1 = Math.max(main.y1, b.y1);
-      }
-    }
-  }
-  if (main.ink < total * .35) return false; // kein klares Hauptmotiv: lieber nichts vorgeben
-  const own = new Set(main.ids), m = new Uint8Array(n); for (let i = 0; i < n; i++) m[i] = own.has(lab[i]) ? 1 : 0;
-  { // Löcher füllen: alles, was vom Rand aus nicht erreichbar ist, gehört zur Auswahl (eine Fläche statt Ringe)
+  const D = distanceField(ink, w, h), r = Math.max(2, Math.max(w, h) * .02), m = new Uint8Array(n); for (let i = 0; i < n; i++) m[i] = D[i] <= r ? 1 : 0;
+  { // Löcher füllen: was vom Rand aus nicht erreichbar ist, gehört zum Motiv (eine Fläche statt Ringe)
     const out = new Uint8Array(n), st = [], seed = i => { if (!out[i] && !m[i]) { out[i] = 1; st.push(i); } };
     for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); } for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
     while (st.length) { const i = st.pop(), x = i % w; if (x > 0) seed(i - 1); if (x < w - 1) seed(i + 1); if (i >= w) seed(i - w); if (i < n - w) seed(i + w); }
     for (let i = 0; i < n; i++) if (!out[i]) m[i] = 1;
   }
-  const D2 = distanceField(m, w, h), md = sg.createImageData(w, h); // noch etwas Luft um die Auswahl
-  for (let i = 0; i < n; i++) md.data[i * 4 + 3] = clamp(r * 1.5 - D2[i] + .5, 0, 1) * 255;
+  const D2 = distanceField(m, w, h), md = sg.createImageData(w, h); // weicher Rand mit etwas Luft
+  for (let i = 0; i < n; i++) md.data[i * 4 + 3] = clamp(r * .5 - D2[i] + .5, 0, 1) * 255;
   sg.putImageData(md, 0, 0);
   const mg = CUT.mask.getContext("2d"); mg.clearRect(0, 0, CUT.mask.width, CUT.mask.height); mg.imageSmoothingQuality = "high"; mg.drawImage(s, 0, 0, CUT.mask.width, CUT.mask.height);
   CUT.hasMask = true; CUT.dirty = true; return true;
