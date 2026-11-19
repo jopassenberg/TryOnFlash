@@ -3503,7 +3503,7 @@ const ACC = { user: null, profile: null, freeLeft: null, tokens: 0, synced: fals
 const FREE_MOTIFS = 3, FREE_STENCILS = 3;
 // Google: Web-Client-ID aus der Google Cloud Console (öffentlich). Leer = Knopf ausgeblendet.
 // Google meldet direkt auf stencit.com an („Weiter zu stencit.com“) und gibt ein ID-Token, das Supabase prüft.
-const GOOGLE_CLIENT_ID = "";
+const GOOGLE_CLIENT_ID = "423217379541-9nmas7lsbt4d5fc44te6sq1hao2ka0ur.apps.googleusercontent.com";
 const loadScript = src => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res();
   document.head.append(Object.assign(document.createElement("script"), { src, async: true, onload: res, onerror: rej })); });
 async function googleButton(el) {
@@ -3516,7 +3516,7 @@ async function googleButton(el) {
     if (error) { console.warn("google", error); status("Google-Anmeldung hat nicht geklappt", "err"); } else $("#acctSheet").innerHTML = "";
   } });
   el.hidden = false; $("#acctOr") && ($("#acctOr").hidden = false);
-  google.accounts.id.renderButton(el, { type: "standard", theme: "filled_black", size: "large", shape: "pill", text: "continue_with", logo_alignment: "center", width: Math.min(400, el.clientWidth || 320), locale: "de" });
+  google.accounts.id.renderButton(el, { type: "standard", theme: "filled_black", size: "large", shape: "pill", text: "continue_with", logo_alignment: "center", width: Math.min(400, el.clientWidth || 320), locale: getLang() });
 }
 let sbP = null;
 const sb = () => (sbP ||= import(SUPABASE).then(m => m.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })).catch(e => (console.warn("supabase", e), null)));
