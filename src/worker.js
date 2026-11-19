@@ -1,5 +1,6 @@
 // Static site from public/ plus a few routes:
 //   /hf/*            the depth model's files from our own domain
+//   /mp/*            the MediaPipe models (skin, hand, pose) from our own domain – no visitor IP reaches Google
 //   /api/share       store an encrypted flash share for a limited time (POST)
 //   /api/share/:id   read it (GET) or end it early (DELETE)
 //   /f/:id           the page a client opens (public/share.html); the key sits in the URL fragment
@@ -7,6 +8,7 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname.startsWith("/hf/")) return modelFile(url);
+    if (url.pathname.startsWith("/mp/")) return mediapipeFile(url);
     if (url.pathname === "/api/share" || url.pathname.startsWith("/api/share/")) return share(req, env, url);
     if (/^\/f\/[A-Za-z0-9_-]{16,64}\/?$/.test(url.pathname)) {
       // Cloudflare liefert HTML-Dateien ohne Endung aus (/share.html leitet auf /share um)
@@ -27,6 +29,21 @@ async function modelFile(url) {
   const path = url.pathname.slice("/hf/".length);
   if (!path.startsWith(MODEL_PREFIX) || path.includes("..")) return json({ error: "not_allowed" }, 404);
   const r = await fetch(`https://huggingface.co/${path}`, { redirect: "follow", cf: { cacheEverything: true, cacheTtl: 2592000 } });
+  const headers = new Headers({ "Content-Type": r.headers.get("content-type") || "application/octet-stream", "Cache-Control": "public, max-age=2592000" });
+  const len = r.headers.get("content-length"); if (len) headers.set("Content-Length", len);
+  return new Response(r.body, { status: r.status, headers });
+}
+
+// Same idea for the three MediaPipe models; only these exact files may pass.
+const MP_FILES = new Set([
+  "image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite",
+  "hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task",
+  "pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
+]);
+async function mediapipeFile(url) {
+  const path = url.pathname.slice("/mp/".length);
+  if (!MP_FILES.has(path)) return json({ error: "not_allowed" }, 404);
+  const r = await fetch(`https://storage.googleapis.com/mediapipe-models/${path}`, { cf: { cacheEverything: true, cacheTtl: 2592000 } });
   const headers = new Headers({ "Content-Type": r.headers.get("content-type") || "application/octet-stream", "Cache-Control": "public, max-age=2592000" });
   const len = r.headers.get("content-length"); if (len) headers.set("Content-Length", len);
   return new Response(r.body, { status: r.status, headers });
