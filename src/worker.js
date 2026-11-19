@@ -3,19 +3,26 @@
 //   /mp/*            the MediaPipe models (skin, hand, pose) from our own domain – no visitor IP reaches Google
 //   /api/share       store an encrypted flash share for a limited time (POST)
 //   /api/share/:id   read it (GET) or end it early (DELETE)
+//   /api/share/:id/preview  optional chat preview (title, text, image) – NOT encrypted, the artist opts in (POST)
 //   /f/:id           the page a client opens (public/share.html); the key sits in the URL fragment
+//   /f/:id/og.jpg    the preview image for chat apps (iMessage, WhatsApp …)
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname.startsWith("/hf/")) return modelFile(url);
     if (url.pathname.startsWith("/mp/")) return mediapipeFile(url);
     if (url.pathname === "/api/share" || url.pathname.startsWith("/api/share/")) return share(req, env, url);
-    if (/^\/f\/[A-Za-z0-9_-]{16,64}\/?$/.test(url.pathname)) {
+    const og = url.pathname.match(/^\/f\/([A-Za-z0-9_-]{16,64})\/og\.jpg$/);
+    if (og) return previewImage(env, og[1]);
+    const f = url.pathname.match(/^\/f\/([A-Za-z0-9_-]{16,64})\/?$/);
+    if (f) {
       // Cloudflare liefert HTML-Dateien ohne Endung aus (/share.html leitet auf /share um)
       const page = await env.ASSETS.fetch(new Request(new URL("/share", url), { headers: req.headers }));
       const headers = new Headers(page.headers);
       for (const [k, v] of Object.entries(PRIVATE)) headers.set(k, v);
-      return new Response(page.body, { status: page.status, headers });
+      const p = env.SHARES ? await env.SHARES.get("p:" + f[1], { type: "json" }).catch(() => null) : null;
+      return new HTMLRewriter().on("head", { element: el => el.append(ogTags(url, f[1], p), { html: true }) })
+        .transform(new Response(page.body, { status: page.status, headers }));
     }
     return env.ASSETS.fetch(req);
   },
@@ -72,6 +79,7 @@ async function share(req, env, url) {
     return json({ id: sid, del, exp });
   }
   if (!/^[A-Za-z0-9_-]{16,64}$/.test(id)) return json({ error: "not_found" }, 404);
+  if (url.pathname.endsWith("/preview")) return savePreview(req, env, id);
   if (req.method === "GET") {
     const { value, metadata } = await env.SHARES.getWithMetadata("s:" + id, { type: "arrayBuffer" });
     if (!value || !metadata || (metadata.exp && metadata.exp < Date.now())) return json({ error: "expired" }, 404);
@@ -82,6 +90,7 @@ async function share(req, env, url) {
     if (!metadata) return json({ ok: true });
     if (metadata.del !== await sha256(req.headers.get("x-delete-token") || "")) return json({ error: "forbidden" }, 403);
     await env.SHARES.delete("s:" + id);
+    await env.SHARES.delete("p:" + id);
     return json({ ok: true });
   }
   return json({ error: "method" }, 405);
@@ -97,4 +106,33 @@ async function sha256(s) {
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json", ...PRIVATE } });
+}
+
+// ---------- Link-Vorschau für Chat-Apps ----------
+// Chat-Apps holen die Seite ohne #Schlüssel, sehen also nur, was hier unverschlüsselt liegt: Titel, Text und ein
+// kleines Vorschaubild, die der Artist ausdrücklich freigibt. Ohne Freigabe nur ein neutraler Stencit-Text.
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function ogTags(url, id, p) {
+  const title = p?.title || "Flashes für dich · Stencit", desc = p?.desc || "Tippe, um die Flashes anzusehen und anzuprobieren.";
+  let t = `<meta property="og:type" content="website"><meta property="og:site_name" content="Stencit"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta name="description" content="${esc(desc)}">`;
+  if (p?.img) t += `<meta property="og:image" content="${url.origin}/f/${id}/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">`;
+  return t;
+}
+async function savePreview(req, env, id) {
+  if (req.method !== "POST") return json({ error: "method" }, 405);
+  const { metadata } = await env.SHARES.getWithMetadata("s:" + id);
+  if (!metadata) return json({ error: "not_found" }, 404);
+  if (metadata.del !== await sha256(req.headers.get("x-delete-token") || "")) return json({ error: "forbidden" }, 403);
+  const b = await req.json().catch(() => null); if (!b) return json({ error: "bad" }, 400);
+  const title = String(b.title || "").slice(0, 80), desc = String(b.desc || "").slice(0, 160), img = typeof b.img === "string" ? b.img : "";
+  if (img && (img.length > 400000 || !/^[A-Za-z0-9+/=]+$/.test(img))) return json({ error: "bad_image" }, 400);
+  const ttl = metadata.exp ? Math.max(60, Math.ceil((metadata.exp - Date.now()) / 1000)) : 0;
+  await env.SHARES.put("p:" + id, JSON.stringify({ title, desc, img }), ttl ? { expirationTtl: ttl } : {});
+  return json({ ok: true });
+}
+async function previewImage(env, id) {
+  const p = env.SHARES ? await env.SHARES.get("p:" + id, { type: "json" }).catch(() => null) : null;
+  if (!p?.img) return new Response("", { status: 404 });
+  const bytes = Uint8Array.from(atob(p.img), c => c.charCodeAt(0));
+  return new Response(bytes, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=300", "X-Content-Type-Options": "nosniff" } });
 }
