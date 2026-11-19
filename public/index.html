@@ -693,6 +693,10 @@
   .me-av b { font-weight: 400; font-size: 13px; color: var(--ink); }
   .acct[data-in="true"] .me-av { color: var(--ink); }
   .me-av:has(img) { box-shadow: none; } /* echtes Profilbild: ohne Ring */
+  /* Credits-Ring (angemeldet): roter Verlauf zeigt, wie viel noch frei ist; Rest grau */
+  .me-ring { --p: 0; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; }
+  .acct[data-in="true"] .me-ring { background: conic-gradient(var(--bordeaux) 0turn, var(--accent) calc(var(--p) * 1turn), oklch(19% .003 75 / .14) calc(var(--p) * 1turn)); transition: --p .6s; }
+  .acct[data-in="true"] .me-av { width: 25px; height: 25px; box-shadow: 0 0 0 1.5px var(--gb); }
   .acct-dot { position: absolute; right: 4px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--gb); }
   .acct-quota { display: grid; gap: 8px; padding: 14px 16px; border-radius: 20px; background: oklch(100% 0 0 / .07); }
   .acct-quota .bar { height: 8px; border-radius: 4px; background: oklch(100% 0 0 / .12); overflow: hidden; }
@@ -710,7 +714,7 @@
   .sheet input.acct-mail::placeholder { color: oklch(100% 0 0 / .4); }
   .acct-perks { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; }
   .acct-perks li { display: flex; gap: 10px; align-items: center; } .acct-perks .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
-  @media (max-width: 680px) { .me-pill { padding: 3px; } .me-b { width: 36px; height: 36px; } .me-av { width: 28px; height: 28px; } }
+  @media (max-width: 680px) { .me-pill { padding: 3px; } .me-b { width: 36px; height: 36px; } .me-av { width: 28px; height: 28px; } .me-ring { width: 30px; height: 30px; } .acct[data-in="true"] .me-av { width: 23px; height: 23px; } }
   /* Code aus der Mail: 6 Kästchen; ein unsichtbares Feld darüber nimmt Tippen, Einfügen und iOS-Autofill an */
   .otp { --ok: oklch(84% .2 115); --bad: oklch(64% .21 27); position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 46px)); justify-content: center; gap: 8px; padding: 0 8px; }
   .otp-in { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; color: transparent; caret-color: transparent; background: none; z-index: 1; }
@@ -817,7 +821,7 @@
     </div>
     <div class="me-pill">
       <button class="me-b" id="setBtn" aria-label="Einstellungen" title="Einstellungen"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button>
-      <button class="me-b acct" id="acctBtn" aria-label="Konto"><span class="me-av" id="acctAv"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span><span class="acct-dot" hidden></span></button>
+      <button class="me-b acct" id="acctBtn" aria-label="Konto"><span class="me-ring" id="acctRing"><span class="me-av" id="acctAv"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span></span><span class="acct-dot" hidden></span></button>
     </div>
     <nav class="tabbar" aria-label="Bereiche">
       <button data-tab="studio" aria-pressed="true" aria-label="Studio" title="Studio"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></button>
@@ -3310,8 +3314,13 @@ const PROFILE_KEY = "stencit-profile";
 const getProfile = () => { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch { return {}; } };
 const setProfile = p => { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch {} renderAvatar(); };
 // Profil-Knopf oben: eigenes Profilbild, sonst Anfangsbuchstabe des Artist-Namens, sonst Personen-Symbol
+function renderRing() { // Anteil noch freier Credits: Unlimited/Tokens = voll, sonst freie Motive des Monats
+  const r = $("#acctRing"); if (!r) return;
+  const p = !ACC.user ? 0 : unlimited() || ACC.tokens > 0 ? 1 : (ACC.freeLeft ?? FREE_MOTIFS) / FREE_MOTIFS;
+  r.style.setProperty("--p", p.toFixed(3)); $("#acctBtn").title = ACC.user ? (unlimited() ? "Unlimited" : `${ACC.freeLeft ?? FREE_MOTIFS} von ${FREE_MOTIFS} freien Motiven${ACC.tokens ? ` · ${ACC.tokens} Tokens` : ""}`) : "Anmelden";
+}
 function renderAvatar() {
-  const el = $("#acctAv"); if (!el) return; const P = getProfile(), n = (P.name || "").trim();
+  renderRing(); const el = $("#acctAv"); if (!el) return; const P = getProfile(), n = (P.name || "").trim();
   el.innerHTML = P.avatar ? `<img alt="" src="${P.avatar}">` : n ? `<b>${esc(n.charAt(0).toUpperCase())}</b>` : `<svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>`;
 }
 function avatarFrom(file) { // quadratisch zuschneiden, 128 px, JPEG: ein paar KB
@@ -3791,7 +3800,7 @@ async function refreshQuota() { // Profil + wie viele Gratis-Motive diesen Monat
   const [{ data: prof }, { count }] = await Promise.all([
     c.from("profiles").select("*").eq("id", ACC.user.id).maybeSingle(),
     c.from("motif_uses").select("*", { count: "exact", head: true }).eq("period", p).eq("source", "free")]);
-  ACC.profile = prof || null; ACC.tokens = prof?.tokens || 0; ACC.freeLeft = Math.max(0, FREE_MOTIFS - (count || 0));
+  ACC.profile = prof || null; ACC.tokens = prof?.tokens || 0; ACC.freeLeft = Math.max(0, FREE_MOTIFS - (count || 0)); renderRing();
 }
 const unlimited = () => ACC.profile?.plan === "unlimited" && (!ACC.profile.plan_until || new Date(ACC.profile.plan_until) > new Date());
 
@@ -3816,7 +3825,7 @@ async function allowMotif() {
   const c = await sb(); if (!c) { status("Konto gerade nicht erreichbar", "err"); return false; }
   const { data, error } = await c.rpc("use_motif", { hash });
   if (error) { console.warn("use_motif", error); status("Konto gerade nicht erreichbar · später nochmal", "err"); return false; }
-  if (data?.ok) { m.allowed = true; if (data.free_left != null) ACC.freeLeft = data.free_left; if (data.tokens != null) ACC.tokens = data.tokens; return true; }
+  if (data?.ok) { m.allowed = true; if (data.free_left != null) ACC.freeLeft = data.free_left; if (data.tokens != null) ACC.tokens = data.tokens; renderRing(); return true; }
   if (data?.reason === "login") { acctSheet("limit"); return false; }
   acctSheet("quota"); return false;
 }
@@ -3900,13 +3909,15 @@ async function acctSheet(reason = "") {
   } else {
     await refreshQuota().catch(() => {});
     const unl = unlimited(), left = ACC.freeLeft ?? FREE_MOTIFS, saved = FL.items.filter(f => f.cloud).length;
-    html = `<h3>Dein Konto</h3><p class="dim" style="margin:0">${esc(ACC.user.email || "")}</p>
-      <div class="acct-quota">${unl ? `<div class="acct-row"><span>Unlimited</span><span class="dim">aktiv</span></div>`
+    html = `<h3>Dein Konto</h3>
+      <div class="set-list"><div class="set-cap">${esc(ACC.user.email || "")}</div>${profRow()}</div>
+      <div class="set-list"><div class="set-cap">Credits</div><div class="acct-quota">${unl ? `<div class="acct-row"><span>Unlimited</span><span class="dim">aktiv</span></div>`
         : `<div class="acct-row"><span>Freie Motive diesen Monat</span><span>${left} von ${FREE_MOTIFS}</span></div><div class="bar"><i style="width:${left / FREE_MOTIFS * 100}%"></i></div>`}
         <div class="acct-row"><span class="dim">Tokens</span><span>${ACC.tokens}</span></div>
-        <div class="acct-row"><span class="dim">Gesicherte Stencils</span><span>${saved}${unl || ACC.tokens ? "" : ` von ${FREE_STENCILS}`}</span></div></div>
+        <div class="acct-row"><span class="dim">Gesicherte Stencils</span><span>${saved}${unl || ACC.tokens ? "" : ` von ${FREE_STENCILS}`}</span></div></div></div>
       ${reason === "quota" ? `<p style="margin:0">Deine freien Motive für diesen Monat sind aufgebraucht. Bereits angeprobierte Motive kannst du weiter frei verwenden.</p>` : ""}
-      <div class="stack"><button class="btn primary wide" disabled>Tokens & Unlimited – bald</button><button class="btn ghost wide" id="acctOut">Abmelden</button></div>`;
+      <button class="btn primary wide" disabled>Tokens & Unlimited – bald</button>
+      <div class="set-group"><button class="set-row" id="acctOut"><span>Abmelden</span></button><button class="set-row danger" id="setDel"><span>Konto löschen</span></button></div>`;
   }
   // Kopfzeile mit X: die erste Überschrift wandert neben den Schließen-Knopf
   html = html.replace(/<h3>(.*?)<\/h3>/, (_, t) => `<div class="sheet-head"><h3>${t}</h3><button class="ib-dark" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>`);
@@ -3914,6 +3925,10 @@ async function acctSheet(reason = "") {
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#acctAgain")?.addEventListener("click", () => { ACC.sentTo = ""; acctSheet(reason); });
   $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; close(); status("Abgemeldet", "ok"); });
+  if (ACC.user) { if ($("#shProf")) bindProf();
+    $("#setDel")?.addEventListener("click", () => confirmView({ title: "Konto löschen?", ok: "Konto endgültig löschen",
+      text: "Dein Konto, deine gesicherten Stencils in der Cloud und alle Kontodaten werden sofort und endgültig gelöscht. Das lässt sich nicht rückgängig machen. Flashes auf diesem Gerät bleiben erhalten." },
+      async () => { await deleteAccount(); closeSheet(box); status("Konto gelöscht", "ok"); }, () => acctSheet())); }
   googleButton($("#gBtn"));
   const code = $("#acctCode");
   if (code) otpInput(code, close);
@@ -3956,11 +3971,9 @@ function renderSettings() {
   const box = $("#acctSheet"), sh = box.querySelector(".sheet"); if (!sh) return;
   const chev = `<svg class="ic" aria-hidden="true"><use href="#i-chevron--right"/></svg>`;
   sh.innerHTML = `${sheetHead("Einstellungen")}
-    <div class="set-list"><div class="set-cap">Artist-Profil</div>${profRow()}</div>
     <div class="set-list"><div class="set-cap">Allgemein</div><div class="set-group">
       <div class="set-row"><span>Sprache</span>${langSwitch(getLang())}</div>
       <div class="set-row"><span>Maßeinheit</span>${unitSwitch(unit())}</div>
-      <button class="set-row" id="setAcct"><span>Konto</span><span class="dim">${ACC.user ? esc(ACC.user.email || "Angemeldet") : "Anmelden"}</span></button>
     </div></div>
     <div class="set-list"><div class="set-cap">Auf diesem Gerät</div><div class="set-group">
       <div class="set-row"><span>Speicher</span><span class="dim" id="setStore">…</span></div>
@@ -3972,7 +3985,6 @@ function renderSettings() {
       <a class="set-row" href="/privacy" target="_blank"><span>Datenschutz</span>${chev}</a>
       <a class="set-row" href="/impressum" target="_blank"><span>Impressum</span>${chev}</a>
     </div></div>
-    ${ACC.user ? `<div class="set-list"><div class="set-group"><button class="set-row danger" id="setDel"><span>Konto löschen</span></button></div></div>` : ""}
     <p class="set-ver">Stencit · Version ${APP_VERSION}</p>`;
   sh.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet(box));
   bindLang(sh);
@@ -3980,27 +3992,22 @@ function renderSettings() {
     const u = b.dataset.unit, sw = b.parentNode; sw.dataset.l = u; sw.querySelectorAll("button").forEach(x => x.setAttribute("aria-checked", x === b));
     try { localStorage.setItem(UNIT_KEY, u); } catch {} infoKey = ""; try { updateInfo(); } catch {}
   });
-  bindProf();
-  $("#setAcct").onclick = () => acctSheet();
   $("#setWl").onclick = () => waitlistSheet();
   $("#setWipe").onclick = () => confirmView({ title: "Daten auf diesem Gerät löschen?", ok: "Löschen",
     text: `Flashes, Links, Profil und geladene KI-Modelle werden von diesem Gerät entfernt. Fotos deiner Haut speichern wir ohnehin nie.${ACC.user ? " Im Konto gesicherte Stencils bleiben dort und kommen beim nächsten Öffnen wieder." : ""} Geteilte Links laufen bis zu ihrem Ablauf weiter.` },
     async () => { await wipeLocal(); location.reload(); });
-  $("#setDel")?.addEventListener("click", () => confirmView({ title: "Konto löschen?", ok: "Konto endgültig löschen",
-    text: "Dein Konto, deine gesicherten Stencils in der Cloud und alle Kontodaten werden sofort und endgültig gelöscht. Das lässt sich nicht rückgängig machen. Flashes auf diesem Gerät bleiben erhalten." },
-    async () => { await deleteAccount(); closeSheet(box); status("Konto gelöscht", "ok"); }));
   (async () => { // Platz auf dem Gerät: Anzahl Flashes + was der Browser für Stencit belegt
     const n = await idb("flashes", "readonly", s => s.count()).catch(() => null), est = await navigator.storage?.estimate?.().catch(() => null);
     const el = $("#setStore"); if (!el) return;
     el.textContent = [n != null ? `${n} Flash${n === 1 ? "" : "es"}` : "", est?.usage ? mb(est.usage) : ""].filter(Boolean).join(" · ") || "–";
   })();
 }
-function confirmView({ title, text, ok }, run) {
+function confirmView({ title, text, ok }, run, back = renderSettings) {
   const sh = $("#acctSheet .sheet"); if (!sh) return;
   sh.innerHTML = `${sheetHead(title)}<p class="dim" style="margin:0">${text}</p><p class="err-line" id="cfErr" hidden></p>
     <div class="stack"><button class="btn wide danger" id="cfOk">${ok}</button><button class="btn ghost wide" id="cfBack">Abbrechen</button></div>`;
   sh.querySelector("[data-close]").onclick = () => closeSheet($("#acctSheet"));
-  $("#cfBack").onclick = renderSettings;
+  $("#cfBack").onclick = back;
   $("#cfOk").onclick = async () => {
     const b = $("#cfOk"), t = b.textContent; b.disabled = true; b.textContent = "Einen Moment …"; $("#cfErr").hidden = true;
     try { await run(); } catch (e) { console.warn("settings", e); b.disabled = false; b.textContent = t;
