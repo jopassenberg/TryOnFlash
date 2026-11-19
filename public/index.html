@@ -500,7 +500,8 @@
   .wl-txt p { margin: 0; line-height: 1.5; } .wl-txt b { font-weight: 400; color: #fff; }
   .wl-form { display: grid; gap: 10px; margin-top: 22px; } .wl-form .btn { height: 48px; }
   .sheet.wl .sec-note { margin-top: 16px; padding: 0 2px; }
-  .wl-done { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px; border-radius: var(--r-full); background: oklch(100% 0 0 / .07); font-size: 15px; }
+  .wl-leave { justify-self: center; margin-top: 4px; padding: 6px 10px; font-size: 13px; color: oklch(100% 0 0 / .45); text-decoration: underline; text-underline-offset: 3px; }
+  .wl-done { display: flex; align-items: center; justify-content: center; gap: 10px; height: 48px; padding: 0 18px; border-radius: var(--r-full); background: oklch(100% 0 0 / .07); font-size: 15px; }
   .wl-done .ic { width: 16px; height: 16px; color: oklch(84% .2 115); }
   .sec-note { hyphens: manual; display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: oklch(100% 0 0 / .5); }
   .sec-note .ic { width: 14px; height: 14px; margin-top: 2px; }
@@ -3145,6 +3146,7 @@ function timeLeft(ms) {
 
 function setTab(tab) {
   $(".shell").dataset.tab = tab;
+  try { history.replaceState(history.state, "", tab === "flashes" ? location.pathname + location.search + "#flashes" : location.pathname + location.search); } catch {} // Neuladen bleibt im Tab
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tab === tab));
   $("main.card").hidden = tab !== "studio"; $("#flashesView").hidden = tab !== "flashes";
   if (tab !== "flashes") { // Galerie-Bilder freigeben: auf dem iPhone braucht die Analyse den Speicher
@@ -3784,7 +3786,8 @@ function usePending() { // nach der Analyse aufgerufen
     if (blob) await tryFlash(blob, h.name);
   } catch (e) { console.warn("handoff", e); }
   if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = await cachedLogo(); pendingFlash.__demo = true; showTry(pendingFlash, "Stencit"); } // Start-Stencil
-  if (S.step === 1 && !S.photo) await showStart(); // Start: Kamera-Oberfläche, ggf. Kamera direkt
+  if (location.hash === "#flashes" && !pendingFlash?.__fromLink) setTab("flashes"); // nach dem Neuladen wieder in den Flashes
+  else if (S.step === 1 && !S.photo) await showStart(); // Start: Kamera-Oberfläche, ggf. Kamera direkt
 })();
 
 /* ---------- Flash-Sheet: das Motiv in echter Größe auf Papier (Drucker, AirPrint, PDF) ---------- */
@@ -3896,7 +3899,7 @@ async function leaveWaitlist() {
 }
 async function pendingWaitlist() { // nach Anmeldung über die Warteliste (auch per Link aus der Mail in neuem Tab)
   if (!ACC.user || !lsGet(WL_PENDING)) return;
-  try { await joinWaitlist(); status("Du stehst auf der Warteliste · 3 Credits zum Start", "ok"); } catch (e) { console.warn("waitlist", e); }
+  try { await joinWaitlist(); } catch (e) { console.warn("waitlist", e); }
 }
 function waitlistSheet() {
   lsSet(WL_SEEN, "1");
@@ -3907,20 +3910,20 @@ function waitlistSheet() {
     <div class="wl-hero"><span class="wl-chip">${APPLE}Bald im App Store</span><button class="ib-dark" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
     <div class="wl-txt"><h3>Stencit kommt aufs iPhone</h3>
       <p class="dim">${on ? "Du stehst auf der Warteliste. Wir sagen dir Bescheid, sobald die App da ist, und schreiben dir <b>3 extra Credits</b> gut." : "Lass dich benachrichtigen, sobald die App da ist, und sichere dir <b>3 extra Credits</b>."}</p></div>
-    <div class="wl-form">${on ? `<div class="wl-done"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg>Du bist eingetragen</div><button class="btn ghost wide" id="wlLeave">Austragen</button>`
+    <div class="wl-form">${on ? `<div class="wl-done"><svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg>Du bist eingetragen</div><button class="btn primary wide" data-close>Alles klar</button><button class="wl-leave" id="wlLeave">Von der Warteliste austragen</button>`
       : `${user ? "" : `<div class="field"><label class="acct-label" for="wlMail">E-Mail</label><input class="acct-mail" id="wlMail" type="email" inputmode="email" autocomplete="email" placeholder="name@beispiel.de"></div>`}
       <button class="btn primary wide" id="wlGo">Benachrichtige mich</button>`}</div>
     ${on ? "" : `<div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>${note}</span></div>`}</div>`);
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#wlLeave")?.addEventListener("click", async e => { const b = e.currentTarget; b.disabled = true;
-    try { await leaveWaitlist(); status("Von der Warteliste ausgetragen", "ok"); close(); } catch (er) { console.warn("waitlist", er); b.disabled = false; status("Gerade nicht möglich", "err"); } });
+    try { await leaveWaitlist(); close(); } catch (er) { console.warn("waitlist", er); b.disabled = false; b.textContent = "Gerade nicht möglich · nochmal versuchen"; } });
   const go = $("#wlGo"); if (!go) return;
   const mail = $("#wlMail"); if (mail) mail.onkeydown = e => { if (e.key === "Enter") go.click(); };
   go.onclick = async () => {
     if (user) {
       go.disabled = true; go.textContent = "Einen Moment …";
-      try { await joinWaitlist(); waitlistSheet(); status("Du stehst auf der Warteliste", "ok"); }
-      catch (e) { console.warn("waitlist", e); go.disabled = false; go.textContent = "Nochmal versuchen"; status("Gerade nicht möglich", "err"); }
+      try { await joinWaitlist(); waitlistSheet(); }
+      catch (e) { console.warn("waitlist", e); go.disabled = false; go.textContent = "Nochmal versuchen"; }
       return;
     }
     const email = mail.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { mail.focus(); return; }

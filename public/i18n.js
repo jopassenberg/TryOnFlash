@@ -108,6 +108,7 @@ const EN = {
   "Tinte": "Ink", "Kontrast": "Contrast", "Schatten": "Shading", "Farbe": "Colour",
   "Helligkeit": "Brightness", "Zurücksetzen": "Reset",
   "Schwelle": "Threshold", "Aus": "Off", "Schwelle: dunkle Bereiche schwarz, Rest weiß": "Threshold: dark areas black, rest white",
+  "Alles klar": "Got it", "Von der Warteliste austragen": "Leave the waitlist", "Gerade nicht möglich · nochmal versuchen": "Not possible right now · try again",
 };
 
 // Texte mit Zahlen/Namen
