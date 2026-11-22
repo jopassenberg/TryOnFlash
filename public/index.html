@@ -1182,10 +1182,11 @@ function usePhoto(img) {
   view.width = S.photo.width; view.height = S.photo.height;
   $("#drop").hidden = true; $("#viewWrap").hidden = false;
   fitView(); S.view = "photo"; syncViews(); redraw();
+  if (!S.restore) sessionSave({ photo: S.photo, motif: null, place: null });
   analyse();
 }
 function backToStart() {
-  scanStop(); setStep(1); status("");
+  sessionClear(); scanStop(); setStep(1); status("");
   $("#viewWrap").hidden = true; $("#views").hidden = true; $("#info").hidden = true;
   showStart();
 }
@@ -1467,7 +1468,8 @@ async function analyse() {
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
     mark("Motiv platzieren");
-    if (!usePending() && !S.motif) status("Motiv hinzufügen", "ok");
+    if (S.restore) await sessionApply();
+    else if (!usePending() && !S.motif) status("Motiv hinzufügen", "ok");
     setTimeout(() => mark(null), 4000); // das erste Rendern des Motivs gehört noch dazu
   } catch (e) {
     ss.set("stencit-busy", null); console.error(e); scanStop();
@@ -2372,6 +2374,7 @@ function addMotif(src) {
   S.motifs.push(m); selectMotif(m);
 }
 function selectMotif(m) {
+  if (!S.restore && !m.demo) sessionSave({ motif: m.canvas, place: null });
   S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; setStep(3); updateInfo(); schedule();
   status(touchUI() ? "Ziehen · zwei Finger drehen und zoomen" : "", "ok");
 }
@@ -2756,7 +2759,7 @@ function warp(k, src = S.motif.data, grow = [1, 1]) { // k = output px per rende
 
 /* ---------- drawing ---------- */
 let dirty = false;
-function schedule() { if (!dirty) { dirty = true; requestAnimationFrame(() => { dirty = false; redraw(); }); } }
+function schedule() { sessionPlace(); if (!dirty) { dirty = true; requestAnimationFrame(() => { dirty = false; redraw(); }); } }
 function redraw() {
   if (!S.photo) return;
   vctx.globalCompositeOperation = "source-over"; vctx.globalAlpha = 1;
@@ -3152,6 +3155,7 @@ function setTab(tab) {
   if (tab !== "flashes") { // Galerie-Bilder freigeben: auf dem iPhone braucht die Analyse den Speicher
     $("#flView").innerHTML = ""; sheet(""); $("#flGrid").innerHTML = ""; FL.urls.forEach(u => URL.revokeObjectURL(u)); FL.urls.clear(); layoutKey = ""; }
   if (tab === "flashes") loadFlashes();
+  if (tab === "studio" && S.pendingSession && !S.photo) { sessionStart(); return; } // gemerkte Sitzung erst beim Öffnen des Studios laden
   if (tab === "studio" && S.step === 1 && !S.photo && $("#panelCam").hidden) showStart(false); // zurück zum Start: Kamera-Oberfläche wieder da
 }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
@@ -3774,6 +3778,41 @@ async function cachedLogo() {
   return c;
 }
 let noDefault = false; // × am Start-Stencil: in dieser Sitzung nicht wiederbringen
+/* ---------- Sitzung merken: Foto, Motiv und Platzierung bleiben auf diesem Gerät, damit Neuladen nichts zurücksetzt ---------- */
+// Liegt nur in IndexedDB auf dem Gerät (wie die Flashes), verlässt es nie. „Neues Foto“ oder Daten löschen räumt es weg.
+const blobBuf = async c => { const b = await toBlob(c, c === S.photo ? "image/jpeg" : "image/png", .9); return { buf: await b.arrayBuffer(), type: b.type }; };
+let sesQ = Promise.resolve();
+function sessionSave(part) { // Teile ergänzen: { photo?, motif?, place? }
+  sesQ = sesQ.then(async () => {
+    const cur = (await idb("handoff", "readonly", st => st.get("session")).catch(() => null)) || {};
+    const next = { ...cur };
+    if (part.photo) next.photo = await blobBuf(part.photo);
+    if ("motif" in part) next.motif = part.motif ? await blobBuf(part.motif) : null;
+    if ("place" in part) next.place = part.place;
+    await idb("handoff", "readwrite", st => st.put(next, "session"));
+  }).catch(e => console.warn("session", e));
+}
+function sessionClear() { S.pendingSession = null; sesQ = sesQ.then(() => idb("handoff", "readwrite", st => st.delete("session"))).catch(() => {}); }
+let placeT = 0;
+function sessionPlace() {
+  if (S.restore || !S.motif || S.motif.demo || !S.anchor || S.step < 3) return;
+  clearTimeout(placeT); placeT = setTimeout(() => sessionSave({ place: { ax: S.anchor.x, ay: S.anchor.y, rot: S.rot, size: S.sizeCm, step: S.step } }), 500);
+}
+async function sessionStart() { // Foto wieder einsetzen; Analyse läuft wie gewohnt, danach sessionApply()
+  const ses = S.pendingSession; S.pendingSession = null; if (!ses?.photo) return showStart();
+  try { S.restore = ses; startUI(); const c = await blobToCanvas(new Blob([ses.photo.buf], { type: ses.photo.type })); usePhoto(c); }
+  catch (e) { console.warn("session", e); S.restore = null; sessionClear(); showStart(); }
+}
+async function sessionApply() {
+  const ses = S.restore;
+  try {
+    if (ses.motif) { const c = await blobToCanvas(new Blob([ses.motif.buf], { type: ses.motif.type })); addMotif(c); }
+    else status("Motiv hinzufügen", "ok");
+    if (ses.place && S.motif) { S.anchor = { x: ses.place.ax, y: ses.place.ay }; S.rot = ses.place.rot; S.sizeCm = ses.place.size; updateInfo(); schedule(); }
+    S.restore = null;
+    if (ses.place?.step === 4 && S.motif) stechen();
+  } catch (e) { console.warn("session", e); S.restore = null; }
+}
 function usePending() { // nach der Analyse aufgerufen
   if (!pendingFlash) return false;
   const c = pendingFlash; clearTry();
@@ -3785,6 +3824,10 @@ function usePending() { // nach der Analyse aufgerufen
     const blob = h?.buf ? new Blob([h.buf], { type: h.type || "image/png" }) : h?.blob;
     if (blob) await tryFlash(blob, h.name);
   } catch (e) { console.warn("handoff", e); }
+  let ses = null;
+  if (!pendingFlash) { try { ses = await idb("handoff", "readonly", st => st.get("session")); } catch {}
+    if (CRASHED && ses) { sessionClear(); ses = null; } } // nach einem Absturz nicht wieder dasselbe laden
+  if (ses?.photo) { S.pendingSession = ses; if (location.hash !== "#flashes") return sessionStart(); setTab("flashes"); return; }
   if (!pendingFlash && !noDefault && !S.motif) { pendingFlash = await cachedLogo(); pendingFlash.__demo = true; showTry(pendingFlash, "Stencit"); } // Start-Stencil
   if (location.hash === "#flashes" && !pendingFlash?.__fromLink) setTab("flashes"); // nach dem Neuladen wieder in den Flashes
   else if (S.step === 1 && !S.photo) await showStart(); // Start: Kamera-Oberfläche, ggf. Kamera direkt
