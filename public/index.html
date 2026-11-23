@@ -4286,7 +4286,7 @@ function renderHead() { // Profilbild (antippen = Foto ändern), Name (antippen 
   const P = getProfile(), n = (P.name || "").trim(), h = $("#asHead"); if (!h) return;
   h.innerHTML = `<button class="as-av" id="asAv" aria-label="Profilbild ändern">${P.avatar ? `<img alt="" src="${P.avatar}">` : n ? esc(n.charAt(0).toUpperCase()) : ic("user")}<span class="cam">${ic("camera")}</span></button>
     <input type="file" id="asFile" accept="image/*" hidden>
-    <span class="as-who"><button class="as-name${n ? "" : " ph"}" id="asName">${n ? esc(n) : "Name hinzufügen"}</button><small>${ACC.user ? esc(ACC.user.email || "Angemeldet") : "Nicht angemeldet"}${n || getProfile().avatar ? "" : "<br>Name und Bild stehen an geteilten Stencils"}</small></span>
+    <span class="as-who"><button class="as-name${n ? "" : " ph"}" id="asName">${n ? esc(n) : "Dein Name"}</button><small>${ACC.user ? esc(ACC.user.email || "Angemeldet") : "Nicht angemeldet"}</small></span>
     <button class="pn-x" aria-label="Schließen">${ic("close")}</button>`;
   h.querySelector(".pn-x").onclick = closePanel;
   $("#asAv").onclick = () => $("#asFile").click();

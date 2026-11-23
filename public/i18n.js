@@ -112,6 +112,7 @@ const EN = {
   "Dein Artist-Profil und deine Anmeldung": "Your artist profile and sign-in", "Sprache, Gerät und Rechtliches": "Language, device and legal", "Konto und Einstellungen": "Account and settings",
   "Gratis-Credits diesen Monat": "Free credits this month", "Gekaufte Credits": "Purchased credits", "Credits kaufen – bald": "Buy credits – coming soon", "Credits kaufen": "Buy credits", "Deine Gratis-Credits für diesen Monat sind aufgebraucht. Bereits angeprobierte Motive kannst du weiter frei verwenden.": "You’ve used your free credits for this month. Designs you’ve already tried on stay free to use.", "verfügbar": "available", "Unbegrenzt neue Motive": "Unlimited new designs", "Bezahlen kommt bald. 1 Credit = 1 neues Motiv anprobieren, dasselbe Motiv nochmal ist frei.": "Payments are coming soon. 1 credit = try on 1 new design; the same design again is free.", "Name oder Studio hinzufügen": "Add your name or studio", "Nicht angemeldet · Name und Bild erscheinen an geteilten Stencils": "Not signed in · name and picture appear on shared stencils", "Profilbild ändern": "Change profile picture",
   "Name hinzufügen": "Add name", "Nicht angemeldet": "Not signed in", "Name und Bild stehen an geteilten Stencils": "Name and picture appear on shared stencils",
+  "Dein Name": "Your name",
 };
 
 // Texte mit Zahlen/Namen
