@@ -336,15 +336,13 @@
   .tools .btn.primary:hover { background: var(--n-200); }
 
   /* ---------- Menü unten: Studio | Flashes (Desktop rechts, Handy mittig wie eine App-Leiste) ---------- */
-  /* Menü: kleine helle Kapsel oben rechts, nur Icons; das aktive weiß mit Punkt darunter */
+  /* Menü: kleine helle Kapsel oben rechts, nur Icons; das aktive als weiße Fläche */
   .top-r { display: flex; align-items: center; gap: 10px; }
   .tabbar { display: flex; gap: 2px; padding: 4px; border-radius: var(--r-full); background: var(--gb); box-shadow: var(--gb-glow); }
   .tabbar button { position: relative; width: 52px; height: 40px; border-radius: 20px; display: grid; place-items: center; color: var(--text-3); transition: color .2s, background-color .2s; }
   .tabbar button .ic { width: 17px; height: 17px; }
   .tabbar button:hover { color: var(--ink); }
-  .tabbar button[aria-pressed="true"] { background: #fff; color: var(--ink); }
-  .tabbar button[aria-pressed="true"]::after { content: ""; position: absolute; bottom: 3px; width: 3px; height: 3px; border-radius: 50%; background: var(--ink); }
-  body:has(.shell[data-tab="flashes"]) .tabbar button[aria-pressed="true"] { background: oklch(19% .003 75 / .07); box-shadow: none; }
+  .tabbar button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px oklch(19% .003 75 / .1); }
   .shell[data-tab="flashes"] .steps { visibility: hidden; }
 
   /* ---------- Flashes: eigene Seite, eine helle Galerie. Nur die ausgeschnittenen Motive, groß, auf Weiß ---------- */
