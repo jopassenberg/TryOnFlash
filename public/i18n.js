@@ -34,7 +34,7 @@ const EN = {
   "Motiv hinzufügen": "Add a design", "Ziehen, zwei Finger drehen und zoomen": "Drag, two fingers to rotate and zoom",
   "Motiv tauschen": "Swap design", "Motiv tauschen oder hinzufügen": "Swap or add a design", "Neues Foto": "New photo", "Zurück zum Platzieren": "Back to placing",
   "Vorher / Nachher": "Before / after", "Speichern": "Save", "Zusammenfassung": "Summary", "Drehung": "Rotation", "Stelle": "Spot",
-  "Breite an der Stelle": "Width at this spot", "Mit Maßband nachmessen und eintragen, dann stimmt die Größe genau.": "Measure with a tape and enter it for an exact size.",
+  "Breite an der Stelle": "Width at this spot", "Genau an der Motivstelle quer messen (Maßband oder Lineal, von Kante zu Kante, wie man es im Foto sieht) und eintragen, dann stimmt die Größe auf wenige Prozent.": "Measure straight across at the design’s spot (tape or ruler, edge to edge as seen in the photo) and enter it – then the size is accurate to a few percent.",
   "Selbst gemessen": "Measured by you", "Hand erkannt": "Hand detected", "Körperproportionen": "Body proportions",
   "Unterarm": "Forearm", "Oberarm": "Upper arm", "Oberschenkel": "Thigh", "Unterschenkel": "Lower leg", "Oberkörper": "Torso", "Schulter": "Shoulder", "Gesicht": "Face", "Finger": "Finger", "Hand": "Hand", "Augenabstand": "Eye distance",
   // Zusammenfassung
@@ -159,6 +159,7 @@ const EN_RX = [
   [/^Stencit Flash-Sheet, (\S+?)(, gespiegelt)?$/, (m, p, g) => `Stencit flash sheet, ${p}${g ? ", mirrored" : ""}`],
   [/^(5 cm|2 in), mit 100 % drucken$/, "$1, print at 100 %"],
   [/^Annahme: Armbreite (.+)$/, "Assumed: arm width $1"],
+  [/^Annahme: Breite (\S+) ca\. (.+)$/, (m, p, w) => `Assumed: ${(EN[p] || p).toLowerCase()} width approx. ${w}`],
   [/^(\d+) Flash(es)?(, .+)?$/, (m, n, _, r) => `${n} flash${n === "1" ? "" : "es"}${r || ""}`],
   [/^Stencit Version (.+)$/, "Stencit version $1"],
   [/^(.+) anprobieren$/, (m, n) => `Try on ${n}`],
