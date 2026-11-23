@@ -826,13 +826,16 @@
   .steps { white-space: nowrap; hyphens: none; }
   .steps { display: none !important; } /* Schritt-Anzeige entfällt: die Insel zeigt den Schritt; Platz für die Einstellungen */
   /* ---------- Konto & Einstellungen: helles Fenster (Handy von unten, Rechner mittig), ein Einstieg über das Profilbild ---------- */
-  .pn-bg { position: fixed; inset: 0; z-index: 28; background: oklch(19% .003 75 / .3); animation: fade .35s var(--ease-out); }
+  .pn-bg { position: fixed; inset: 0; z-index: 28; background: oklch(19% .003 75 / .3); animation: fade .35s var(--ease-out); touch-action: none; }
   .pn { position: fixed; z-index: 29; left: 0; right: 0; bottom: 0; max-height: 92dvh; display: grid; grid-template-rows: auto 1fr; background: #fff; color: var(--ink);
     border-radius: 30px 30px 0 0; box-shadow: 0 -12px 48px oklch(0% 0 0 / .14); animation: pn-up .55s cubic-bezier(.16, 1, .3, 1); transition: transform .35s cubic-bezier(.4, 0, .2, 1), opacity .3s; }
   @keyframes pn-up { from { transform: translateY(100%); } }
   #panel.out .pn { transform: translateY(105%); } #panel.out .pn-bg { opacity: 0; transition: opacity .3s; }
-  .pn-top { display: grid; gap: 14px; padding: 10px 18px 4px; touch-action: none; }
+  .pn-top { position: relative; z-index: 1; display: grid; gap: 14px; padding: 10px 18px 12px; touch-action: none; background: #fff; border-radius: inherit; }
   .pn-grab { justify-self: center; width: 40px; height: 5px; border-radius: 3px; background: oklch(19% .003 75 / .18); }
+  .pn { overscroll-behavior: none; }
+  /* Inhalt blendet oben weich unter dem Kopf aus statt hart abgeschnitten zu werden */
+  .pn-body { -webkit-mask-image: linear-gradient(transparent, #000 18px); mask-image: linear-gradient(transparent, #000 18px); }
   .pn-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 18px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 16px; hyphens: manual; } .pn-body > * { flex: none; }
   /* Profil-Kopf: Foto antippen = ändern, Name antippen = ändern */
   .as-head { display: flex; align-items: flex-start; gap: 14px; } .as-head .as-who { padding-top: 6px; } .as-head .pn-x { margin-top: 4px; }
@@ -4261,7 +4264,7 @@ const mb = n => n >= 1e9 ? fmt(n / 1e9) + " GB" : fmt(n / 1e6, n < 1e7 ? 1 : 0) 
 const sheetHead = t => `<div class="sheet-head"><h3>${t}</h3><button class="ib-dark" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>`;
 function openPanel() {
   const box = $("#panel"); clearTimeout(box._t); box.classList.remove("out"); PN.open = true;
-  document.documentElement.style.overflow = "hidden"; // Hintergrund scrollt nicht mit
+  if (PN.lock == null) { PN.lock = scrollY; Object.assign(document.body.style, { position: "fixed", top: -scrollY + "px", left: "0", right: "0", width: "100%" }); document.documentElement.style.overflow = "hidden"; } // Hintergrund steht still (auch auf dem iPhone)
   if (!box.querySelector(".pn")) {
     box.innerHTML = `<div class="pn-bg"></div><div class="pn" role="dialog" aria-label="Konto und Einstellungen"><div class="pn-top"><div class="pn-grab"></div><div class="as-head" id="asHead"></div></div><div class="pn-body"></div></div>`;
     box.querySelector(".pn-bg").onclick = closePanel;
@@ -4273,7 +4276,8 @@ function openPanel() {
   renderPanel();
 }
 function closePanel() {
-  const box = $("#panel"); if (!box.querySelector(".pn")) return; PN.open = false; document.documentElement.style.overflow = "";
+  const box = $("#panel"); if (!box.querySelector(".pn")) return; PN.open = false;
+  if (PN.lock != null) { const y = PN.lock; PN.lock = null; Object.assign(document.body.style, { position: "", top: "", left: "", right: "", width: "" }); document.documentElement.style.overflow = ""; scrollTo(0, y); }
   box.classList.add("out"); clearTimeout(box._t); box._t = setTimeout(() => { box.classList.remove("out"); box.innerHTML = ""; }, 380);
 }
 addEventListener("keydown", e => { if (e.key === "Escape" && PN.open && !$("#acctSheet").innerHTML) closePanel(); });
