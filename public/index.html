@@ -4083,7 +4083,7 @@ async function acctInit() {
   const c = await sb(); if (!c) return;
   const { data } = await c.auth.getSession(); await setUser(data.session?.user || null);
   c.auth.onAuthStateChange((ev, session) => { setUser(session?.user || null).then(() => {
-    if (ev === "SIGNED_IN") { ACC.synced = false; if (!$("#flashesView").hidden) loadFlashes(); status("Angemeldet", "ok"); if ($("#acctSheet").innerHTML && !ACC.verifying) acctSheet(); }
+    if (ev === "SIGNED_IN") { ACC.synced = false; if (!$("#flashesView").hidden) loadFlashes(); if ($("#acctSheet").innerHTML && !ACC.verifying) acctSheet(); }
   }); });
 }
 async function setUser(u) {
@@ -4223,7 +4223,7 @@ async function acctSheet(reason = "") {
   openSheet(box, `<div class="sheet-bg" data-close></div><div class="sheet${ACC.sentTo && !ACC.user ? " otp-view" : ""}" role="dialog" aria-label="Konto">${html}</div>`);
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#acctAgain")?.addEventListener("click", () => { ACC.sentTo = ""; acctSheet(reason); });
-  $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; close(); status("Abgemeldet", "ok"); });
+  $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; close(); });
   if (ACC.user) { if ($("#shProf")) bindProf();
     $("#setDel")?.addEventListener("click", () => confirmView({ title: "Konto löschen?", ok: "Konto endgültig löschen",
       text: "Dein Konto, deine gesicherten Stencils in der Cloud und alle Kontodaten werden sofort und endgültig gelöscht. Das lässt sich nicht rückgängig machen. Flashes auf diesem Gerät bleiben erhalten." },
@@ -4341,7 +4341,7 @@ function renderPanel() {
   $("#setWipe").onclick = () => confirmView({ title: "Daten auf diesem Gerät löschen?", ok: "Löschen",
     text: `Flashes, Links, Profil und geladene KI-Modelle werden von diesem Gerät entfernt. Fotos deiner Haut speichern wir ohnehin nie.${ACC.user ? " Im Konto gesicherte Stencils bleiben dort und kommen beim nächsten Öffnen wieder." : ""} Geteilte Links laufen bis zu ihrem Ablauf weiter.` },
     async () => { await wipeLocal(); location.reload(); });
-  $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; status("Abgemeldet", "ok"); });
+  $("#acctOut")?.addEventListener("click", async () => { const c = await sb(); await c?.auth.signOut(); ACC.synced = false; });
   $("#setDel")?.addEventListener("click", () => confirmView({ title: "Konto löschen?", ok: "Konto endgültig löschen",
     text: "Dein Konto, deine gesicherten Stencils in der Cloud und alle Kontodaten werden sofort und endgültig gelöscht. Das lässt sich nicht rückgängig machen. Flashes auf diesem Gerät bleiben erhalten." },
     async () => { await deleteAccount(); closeSheet($("#acctSheet")); closePanel(); status("Konto gelöscht", "ok"); }));
