@@ -115,11 +115,16 @@ const EN = {
   "Dein Name": "Your name",
   "Gratis": "Free", "Gekauft": "Purchased", "Verfallen nicht": "Never expire", "1 Credit = 1 Motiv": "1 credit = 1 design",
   "und im": "and the",
+  "Mit Karte messen": "Measure with a card", "Abbrechen": "Cancel", "Übernehmen": "Apply", "Oder Breite an der Stelle": "Or width at this spot",
+  "Für eine exakte Größe: beim Foto eine Karte im Scheckkartenformat (Bank-, Kranken-, Kundenkarte) flach direkt neben die Stelle halten, Kartennummer verdeckt.": "For an exact size: when taking the photo, hold a standard-size card (bank, health or loyalty card) flat right next to the spot, with the card number covered.",
+  "Ecken auf die Karte im Bild ziehen": "Drag the corners onto the card in the photo", "Karte im Bild": "Card in photo",
+  "Die Ecken passen nicht zu einer Karte – nochmal versuchen": "The corners don’t match a card – try again",
 };
 
 // Texte mit Zahlen/Namen
 const EN_RX = [
   [/^(\d+) übrig$/, "$1 left"],
+  [/^≈ (.+)$/, (m, t) => "≈ " + t],
   [/^Neu am (\d{1,2})\.(\d{1,2})\.$/, (m, d, mo) => "Renews " + new Date(2000, mo - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })],
   [/^(\d+) von (\d+)$/, "$1 of $2"],
   [/^(\d{1,2})\.(\d{1,2})\.$/, (m, d, mo) => new Date(2000, mo - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })],
