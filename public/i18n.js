@@ -110,10 +110,16 @@ const EN = {
   "Schwelle": "Threshold", "Aus": "Off", "Schwelle: dunkle Bereiche schwarz, Rest weiß": "Threshold: dark areas black, rest white",
   "Alles klar": "Got it", "Von der Warteliste austragen": "Leave the waitlist", "Gerade nicht möglich · nochmal versuchen": "Not possible right now · try again",
   "Dein Artist-Profil und deine Anmeldung": "Your artist profile and sign-in", "Sprache, Gerät und Rechtliches": "Language, device and legal", "Konto und Einstellungen": "Account and settings",
+  "Gratis-Credits diesen Monat": "Free credits this month", "Gekaufte Credits": "Purchased credits", "Credits kaufen – bald": "Buy credits – coming soon", "Credits kaufen": "Buy credits", "Deine Gratis-Credits für diesen Monat sind aufgebraucht. Bereits angeprobierte Motive kannst du weiter frei verwenden.": "You’ve used your free credits for this month. Designs you’ve already tried on stay free to use.", "verfügbar": "available", "Unbegrenzt neue Motive": "Unlimited new designs", "Bezahlen kommt bald. 1 Credit = 1 neues Motiv anprobieren, dasselbe Motiv nochmal ist frei.": "Payments are coming soon. 1 credit = try on 1 new design; the same design again is free.", "Name oder Studio hinzufügen": "Add your name or studio", "Nicht angemeldet · Name und Bild erscheinen an geteilten Stencils": "Not signed in · name and picture appear on shared stencils", "Profilbild ändern": "Change profile picture",
 };
 
 // Texte mit Zahlen/Namen
 const EN_RX = [
+  [/^(\d+) von (\d+) Gratis-Credits(?: · (\d+) gekauft)?$/, (m, a, b, t) => `${a} of ${b} free credits${t ? ` · ${t} purchased` : ""}`],
+  [/^(\d+) von (\d+) Gratis-Credits diesen Monat$/, "$1 of $2 free credits this month"],
+  [/^\+ (\d+) gekauft$/, "+ $1 purchased"],
+  [/^(\d+) Gratis-Credits pro Monat für neue Motive$/, "$1 free credits per month for new designs"],
+  [/^Melde dich kostenlos an: (\d+) Gratis-Credits pro Monat, Stencils auf allen Geräten und Links zum Teilen\.$/, "Sign up for free: $1 free credits per month, stencils on all your devices and links to share."],
   [/^Mit einem kostenlosen Konto: (\d+) neue Motive pro Monat, Stencils auf allen Geräten und Links zum Teilen\.$/, "With a free account: $1 new designs per month, stencils on all your devices and links to share."],
   [/^(.+) und (\d+) weitere zum Anprobieren · tippe zum Ansehen$/, "$1 and $2 more to try on · tap to view"],
   [/^(.+) und (.+) zum Anprobieren · tippe zum Ansehen$/, "$1 and $2 to try on · tap to view"],
