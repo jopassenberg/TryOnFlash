@@ -116,7 +116,7 @@ function json(obj, status = 200) {
 // kleines Vorschaubild, die der Artist ausdrücklich freigibt. Ohne Freigabe nur ein neutraler Stencit-Text.
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function ogTags(url, id, p) {
-  const title = p?.title || "Flashes für dich · Stencit", desc = p?.desc || "Tippe, um die Flashes anzusehen und anzuprobieren.";
+  const title = p?.title || "Flashes für dich – Stencit", desc = p?.desc || "Tippe, um die Flashes anzusehen und anzuprobieren.";
   let t = `<meta property="og:type" content="website"><meta property="og:site_name" content="Stencit"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta name="description" content="${esc(desc)}">`;
   if (p?.img) t += `<meta property="og:image" content="${url.origin}/f/${id}/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">`;
   return t;

@@ -7,7 +7,7 @@
     document.querySelectorAll("main[data-lang], .ft [data-lang]").forEach(m => m.hidden = m.dataset.lang !== l);
     document.querySelectorAll(".lsw").forEach(sw => sw.dataset.l = l);
     document.querySelectorAll(".lsw button").forEach(b => b.setAttribute("aria-checked", b.dataset.l === l));
-    const h = document.querySelector(`main[data-lang="${l}"] h1`); if (h) document.title = h.textContent.replace(/­/g, "") + " · Stencit";
+    const h = document.querySelector(`main[data-lang="${l}"] h1`); if (h) document.title = h.textContent.replace(/­/g, "") + " – Stencit";
   };
   document.querySelectorAll(".lsw button").forEach(b => b.onclick = () => { try { localStorage.setItem("stencit-lang", b.dataset.l); } catch {} show(b.dataset.l); });
   show(lang);

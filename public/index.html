@@ -1383,7 +1383,7 @@ function onProgress(p) {
   if (p.status !== "progress" || !p.total) return;
   loadProg[p.file] = [p.loaded, p.total];
   let a = 0, b = 0; for (const [l, t] of Object.values(loadProg)) { a += l; b += t; }
-  if (S.step === 2 && b > 1e6 && a < b) status(`Lädt das Tiefen-Modell · ${Math.round(a / b * 100)} %`);
+  if (S.step === 2 && b > 1e6 && a < b) status(`Lädt das Tiefen-Modell (${Math.round(a / b * 100)} %)`);
 }
 function sizeDepth(dp) {
   const ip = dp.processor?.image_processor, s = DEPTH_SIDE[depthDevice] || 518;
@@ -2437,7 +2437,7 @@ function addMotif(src) {
 function selectMotif(m) {
   if (!S.restore && !m.demo) sessionSave({ motif: m.canvas, place: null });
   S.motif = m; S.inked = null; S.ink = null; renderThumbs(); $("#ink").disabled = false; setStep(3); updateInfo(); schedule();
-  status(touchUI() ? "Ziehen · zwei Finger drehen und zoomen" : "", "ok");
+  status(touchUI() ? "Ziehen, zwei Finger drehen und zoomen" : "", "ok");
 }
 function stickerThumb(m) { // small sticker image for the motif tray (readable on the dark dock)
   if (m.thumb) return m.thumb;
@@ -2616,7 +2616,7 @@ function updateInfo() {
   if (S.step < 3 || !S.motif || !S.anchor) { el.hidden = true; if ($("#islSize").textContent) { $("#islSize").textContent = ""; syncIsland(); } return; }
   el.hidden = true; // Maßstab-Karte vorerst ausgeblendet (Größe steht in der Insel, Zusammenfassung nach dem Stechen)
   const { w, h } = sizeCm(), sc = S.scale || {}, rot = Math.round(((S.rot % 360) + 540) % 360 - 180);
-  $("#infoTitle").textContent = S.step === 3 ? (sc.part ? `Maßstab · ${sc.part}` : "Maßstab") : "Zusammenfassung"; // die Größe steht oben in der Insel
+  $("#infoTitle").textContent = S.step === 3 ? (sc.part ? `Maßstab: ${sc.part}` : "Maßstab") : "Zusammenfassung"; // die Größe steht oben in der Insel
   const sz = dims(w, h); if ($("#islSize").textContent !== sz) { $("#islSize").textContent = sz; syncIsland(); }
   if ($("#infoBody").contains(document.activeElement) || $("#islSumBody").contains(document.activeElement)) return; // nicht neu bauen, während getippt wird
   const limb = S.armPx / pxPerCm();
@@ -2624,7 +2624,7 @@ function updateInfo() {
     const s = S.summary, key = JSON.stringify([s, sc, fmt(limb), sz, unit()]); if (key === infoKey) return syncIsland(); infoKey = key;
     $("#infoBody").innerHTML = "";
     $("#islSumBody").innerHTML = `
-      <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="dim">${unit() === "in" ? fmt(s.area / 6.4516) + " in²" : fmt(s.area, 0) + " cm²"}${sc.part ? " · " + sc.part : ""}</div></div>
+      <header class="sum-head"><div><div class="sum-size">${sz}</div><div class="dim">${unit() === "in" ? fmt(s.area / 6.4516) + " in²" : fmt(s.area, 0) + " cm²"}${sc.part ? ", " + sc.part : ""}</div></div>
         <button class="sum-x" id="sumClose" aria-label="Zusammenfassung schließen"><svg class="ic" aria-hidden="true"><use href="#i-chevron--up"/></svg></button></header>
       <ul class="needles">${s.needles.map(n => `<li><span class="nic">${needleIcon(n)}</span><span class="nname"><span>${n.name}</span><span class="dim">${n.role}</span></span><span class="dim">${n.detail}</span></li>`).join("")}</ul>
       <div class="swatches">${s.colours.map(c => `<span><i style="background:${SWATCH[c] || "#888"}"></i>${c}</span>`).join("")}</div>
@@ -3261,7 +3261,7 @@ function renderFlashes() {
   $("#flashesView").classList.toggle("selecting", FL.selecting); $("#flSelect").setAttribute("aria-pressed", FL.selecting);
   layoutFlashes();
   $("#flDock").hidden = !FL.selecting;
-  $("#flSelInfo").textContent = FL.sel.size ? `${FL.sel.size} ausgewählt` : "Flashes antippen"; $("#flShare").disabled = !FL.sel.size; $("#flShareN").textContent = FL.sel.size ? ` · ${FL.sel.size}` : "";
+  $("#flSelInfo").textContent = FL.sel.size ? `${FL.sel.size} ausgewählt` : "Flashes antippen"; $("#flShare").disabled = !FL.sel.size; $("#flShareN").textContent = FL.sel.size ? ` (${FL.sel.size})` : "";
   $("#flSelect").querySelector("span").textContent = FL.selecting ? "Fertig" : "Auswählen";
   $("#flAll").textContent = n && FL.sel.size === n ? "Auswahl aufheben" : "Alle auswählen";
   $("#flLinksBtn").hidden = !FL.links.length; $("#flLinksN").textContent = FL.links.length;
@@ -3490,7 +3490,7 @@ function viewFlash(id) {
 $("#flLinksBtn").onclick = () => linksSheet();
 function linksSheet() {
   if (!FL.links.length) return sheet("");
-  sheet(`<h3>Geteilte Links</h3><ul class="fl-links">${FL.links.map(l => `<li><span>${l.count} Flash${l.count > 1 ? "es" : ""} <span class="dim">· ${l.exp ? "noch " + timeLeft(l.exp - Date.now()) : "unbegrenzt"}</span></span>
+  sheet(`<h3>Geteilte Links</h3><ul class="fl-links">${FL.links.map(l => `<li><span>${l.count} Flash${l.count > 1 ? "es" : ""} <span class="dim">${l.exp ? "noch " + timeLeft(l.exp - Date.now()) : "unbegrenzt"}</span></span>
     <span class="acts"><button class="ib-dark" data-copy="${l.id}" aria-label="Link kopieren"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button>
     <button class="ib-dark" data-end="${l.id}" aria-label="Link beenden"><svg class="ic" aria-hidden="true"><use href="#i-trash-can"/></svg></button></span></li>`).join("")}</ul>
     <button class="btn ghost wide" data-close>Fertig</button>`);
@@ -3532,7 +3532,7 @@ function avatarFrom(file) { // quadratisch zuschneiden, 128 px, JPEG: ein paar K
 }
 function profRow() {
   const P = getProfile(), av = P.avatar ? `<img alt="" src="${P.avatar}">` : esc((P.name || "?").trim().charAt(0).toUpperCase() || "?");
-  return P.name ? `<button class="prof" id="shProf"><span class="av">${av}</span><span class="t">${esc(P.name)}<small>Als Tag an deinen Stencils · ändern</small></span></button>`
+  return P.name ? `<button class="prof" id="shProf"><span class="av">${av}</span><span class="t">${esc(P.name)}<small>Als Tag an deinen Stencils, tippen zum Ändern</small></span></button>`
     : `<button class="prof" id="shProf"><span class="av"><svg class="ic" aria-hidden="true"><use href="#i-add"/></svg></span><span class="t">Name und Profilbild<small>Erscheinen als kleiner Tag an deinen Stencils</small></span></button>`;
 }
 function bindProf() {
@@ -3583,8 +3583,8 @@ function shareSheet() {
   const P0 = getProfile(); let ogC = null, prev = true;
   $("#ogTitle").value = P0.name ? `Flashes von ${P0.name}` : "Flashes für dich";
   const names = ids.map(i => FL.items.find(x => x.id === i)).filter(f => f?.named).map(f => f.name);
-  $("#ogDesc").value = names.length ? `${names.length > 2 ? names.slice(0, 2).join(", ") + ` und ${n - 2} weitere` : names.join(" und ")} zum Anprobieren · tippe zum Ansehen`
-    : `${n} Flash${n > 1 ? "es" : ""} zum Anprobieren · tippe zum Ansehen`;
+  $("#ogDesc").value = names.length ? `${names.length > 2 ? names.slice(0, 2).join(", ") + ` und ${n - 2} weitere` : names.join(" und ")} zum Anprobieren. Tippe zum Ansehen.`
+    : `${n} Flash${n > 1 ? "es" : ""} zum Anprobieren. Tippe zum Ansehen.`;
   ogImage(ids).then(c => { ogC = c; const im = $("#ogImg"); if (!im) return; im.src = c.toDataURL("image/jpeg", .82); im.hidden = false; }).catch(e => console.warn("og", e));
   $("#shPrev").onclick = () => { prev = !prev; $("#shPrev").setAttribute("aria-checked", prev); $("#ogEdit").hidden = !prev; };
   $("#shGo").onclick = async () => {
@@ -3719,7 +3719,7 @@ function stencilMenu() {
       toBlob(out, "image/png").then(b => b.arrayBuffer()).then(buf => idb("handoff", "readwrite", st => st.put({ buf, type: "image/png", name: nm || "" }, "flash"))).catch(() => {}); } }); };
 }
 function setCard() { const on = !!pendingFlash; $("#tryHead").classList.toggle("has", on);
-  $("#tryHead").setAttribute("aria-label", on ? $("#tryName").textContent + " · tippen zum Wechseln" : "Stencil aus den Flashes wählen"); }
+  $("#tryHead").setAttribute("aria-label", on ? $("#tryName").textContent + ", tippen zum Wechseln" : "Stencil aus den Flashes wählen"); }
 // Start-Stencil: das Stencit-Zeichen (9 Punkte wie eine Round-Liner-Nadel) im Linoldruck-Look. Statt gezeichneter
 // Risse und Kleckse entsteht alles aus Rauschen, wie beim echten Druck:
 // - Kante: der Kreis wird mit feinem Rauschen verschoben → organisch geschnitten, nicht polygonal
@@ -3931,7 +3931,7 @@ function pageHTML(L, pg) {
   const url = printCut().url;
   return `<div class="pp" style="width:${L.W}mm;height:${L.H}mm">${pg.map(i => `<div class="it" style="left:${i.x}mm;top:${i.y}mm;width:${i.vw}mm;height:${i.vh + (PS.tags ? 6 : 0)}mm">
       <img alt="" src="${url}" style="position:absolute;left:${-i.inv}mm;top:${-i.inv}mm;width:${i.sw}mm;height:${i.sh}mm${PS.mirror ? ";transform:scaleX(-1)" : ""}">${PS.tags ? `<span class="tag" style="position:absolute;left:50%;translate:-50% 0;top:${(i.vh + 1.2).toFixed(2)}mm;margin:0">${dims(i.mw / 10, i.mh / 10)}</span>` : ""}</div>`).join("")}
-    <div class="foot"><span>Stencit · Flash-Sheet · ${PS.paper}${PS.mirror ? " · gespiegelt" : ""}</span><span class="ruler"><i style="width:${unit() === "in" ? 50.8 : 50}mm"></i>${unit() === "in" ? "2 in" : "5 cm"} · mit 100 % drucken</span></div></div>`;
+    <div class="foot"><span>Stencit Flash-Sheet, ${PS.paper}${PS.mirror ? ", gespiegelt" : ""}</span><span class="ruler"><i style="width:${unit() === "in" ? 50.8 : 50}mm"></i>${unit() === "in" ? "2 in" : "5 cm"}, mit 100 % drucken</span></div></div>`;
 }
 // Der Dialog wird einmal gebaut; Antippen ändert nur Zustände und die Vorschau (feste Höhe): nichts springt.
 function printSheet(src = studioSrc()) {
@@ -3941,7 +3941,7 @@ function printSheet(src = studioSrc()) {
     <h3>Flash-Sheet</h3>
     <div class="stack"><span class="dim">Papier</span><div class="row">${PAPERS.map(p => `<button class="opt" data-paper="${p[0]}">${p[0]}</button>`).join("")}</div>
       <div class="row"><button class="opt" data-land="0">Hochformat</button><button class="opt" data-land="1">Querformat</button></div></div>
-    ${SRC.free ? `<div class="stack"><span class="dim">Größe · längste Seite</span><div class="row"><button class="opt" id="psMinus" aria-label="Kleiner">−</button>
+    ${SRC.free ? `<div class="stack"><span class="dim">Größe der längsten Seite</span><div class="row"><button class="opt" id="psMinus" aria-label="Kleiner">−</button>
       <span class="opt" id="psSize" style="display:grid;place-items:center;min-width:96px"></span><button class="opt" id="psPlus" aria-label="Größer">+</button></div></div>` : ""}
     <div class="stack"><span class="dim">Größen</span><div class="row">${[-2, -1, 0, 1, 2].map(d => `<button class="opt" data-step="${d}">${d ? (d > 0 ? "+" : "−") + len(Math.abs(d) * STEP()) : "Gewählt"}</button>`).join("")}</div></div>
     ${sw("psTags", "Größe beschriften", "Tag mit Breite × Höhe unter jedem Stencil")}
@@ -3960,7 +3960,7 @@ function printSheet(src = studioSrc()) {
     const PX = 96 / 25.4, k = Math.min((prev.clientWidth - 28) / (L.W * PX), (prev.clientHeight - 28) / (L.H * PX)); // ganze Seite sichtbar
     prev.querySelectorAll(".pw").forEach(w => { w.style.width = L.W * PX * k + "px"; w.style.height = L.H * PX * k + "px"; w.firstElementChild.style.transform = `scale(${k})`; });
     prev.scrollTop = top;
-    $("#psNote").textContent = `${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? ` · ${L.tooBig.map(i => dims(i.mw / 10, i.mh / 10)).join(", ")} passt nicht auf ${PS.paper}${PS.land ? "" : " hoch, Querformat probieren"}` : ""} · im Druckdialog „100 %“ wählen`;
+    $("#psNote").textContent = `${n} Seite${n === 1 ? "" : "n"}${L.tooBig.length ? `. ${L.tooBig.map(i => dims(i.mw / 10, i.mh / 10)).join(", ")} passt nicht auf ${PS.paper}${PS.land ? "" : " hoch, Querformat probieren"}` : ""}. Im Druckdialog „100 %“ wählen`;
     $("#psGo").disabled = !n;
   };
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet(box));
@@ -4020,7 +4020,7 @@ function waitlistSheet() {
     ${on ? "" : `<div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>${note}</span></div>`}</div>`);
   box.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#wlLeave")?.addEventListener("click", async e => { const b = e.currentTarget; b.disabled = true;
-    try { await leaveWaitlist(); close(); } catch (er) { console.warn("waitlist", er); b.disabled = false; b.textContent = "Gerade nicht möglich · nochmal versuchen"; } });
+    try { await leaveWaitlist(); close(); } catch (er) { console.warn("waitlist", er); b.disabled = false; b.textContent = "Gerade nicht möglich, nochmal versuchen"; } });
   const go = $("#wlGo"); if (!go) return;
   const mail = $("#wlMail"); if (mail) mail.onkeydown = e => { if (e.key === "Enter") go.click(); };
   go.onclick = async () => {
@@ -4033,7 +4033,7 @@ function waitlistSheet() {
     const email = mail.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { mail.focus(); return; }
     go.disabled = true; go.textContent = "Wird gesendet …";
     const c = await sb(); const { error } = c ? await c.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } }) : { error: new Error("offline") };
-    if (error) { go.disabled = false; go.textContent = "Nochmal versuchen"; console.warn("otp", error); status(/rate/i.test(error.message) ? "Zu viele Versuche · kurz warten" : "Mail konnte nicht gesendet werden", "err"); return; }
+    if (error) { go.disabled = false; go.textContent = "Nochmal versuchen"; console.warn("otp", error); status(/rate/i.test(error.message) ? "Zu viele Versuche, kurz warten" : "Mail konnte nicht gesendet werden", "err"); return; }
     lsSet(WL_PENDING, WL_TEXT); ACC.sentTo = email; acctSheet(); // Code eingeben wie bei der Anmeldung; danach trägt pendingWaitlist() ein
   };
 }
@@ -4122,7 +4122,7 @@ async function allowMotif() {
   }
   const c = await sb(); if (!c) { status("Konto gerade nicht erreichbar", "err"); return false; }
   const { data, error } = await c.rpc("use_motif", { hash });
-  if (error) { console.warn("use_motif", error); status("Konto gerade nicht erreichbar · später nochmal", "err"); return false; }
+  if (error) { console.warn("use_motif", error); status("Konto gerade nicht erreichbar, später nochmal", "err"); return false; }
   if (data?.ok) { m.allowed = true; if (data.free_left != null) ACC.freeLeft = data.free_left; if (data.tokens != null) ACC.tokens = data.tokens; renderRing(); return true; }
   if (data?.reason === "login") { acctSheet("limit"); return false; }
   acctSheet("quota"); return false;
@@ -4157,7 +4157,7 @@ function otpInput(code, close) {
     const c = await sb(); const { error } = c ? await c.auth.verifyOtp({ email: ACC.sentTo, token, type: "email" }) : { error: new Error("offline") };
     if (error) {
       ACC.verifying = false; console.warn("otp", error);
-      return fail(/rate|many/i.test(error.message) ? "Zu viele Versuche · kurz warten" : "Code stimmt nicht oder ist abgelaufen"); // Supabase unterscheidet falsch/abgelaufen nicht
+      return fail(/rate|many/i.test(error.message) ? "Zu viele Versuche, kurz warten" : "Code stimmt nicht oder ist abgelaufen"); // Supabase unterscheidet falsch/abgelaufen nicht
     }
     wrap.classList.remove("busy"); wrap.classList.add("ok"); navigator.vibrate?.(20);
     say(`<svg class="ic" aria-hidden="true"><use href="#i-checkmark"/></svg>Angemeldet`, "ok");
@@ -4174,12 +4174,12 @@ function otpInput(code, close) {
   // neuen Code anfordern, mit 60 s Pause (Supabase sendet vorher ohnehin nicht)
   const resend = $("#acctResend"); let wait = 0, timer;
   const tick = () => { if (!resend.isConnected) return; resend.disabled = wait > 0;
-    resend.innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg><span>Keinen Code bekommen?</span> <b>${wait > 0 ? `Neu senden · ${Math.floor(wait / 60)}:${String(wait % 60).padStart(2, "0")}` : "Neu senden"}</b>`;
+    resend.innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg><span>Keinen Code bekommen?</span> <b>${wait > 0 ? `Neu senden in ${Math.floor(wait / 60)}:${String(wait % 60).padStart(2, "0")}` : "Neu senden"}</b>`;
     if (wait-- > 0) timer = setTimeout(tick, 1000); };
   resend.onclick = async () => {
     resend.disabled = true; const c = await sb();
     const { error } = c ? await c.auth.signInWithOtp({ email: ACC.sentTo, options: { emailRedirectTo: location.origin + location.pathname } }) : { error: new Error("offline") };
-    if (error) { resend.disabled = false; say(/rate/i.test(error.message) ? "Zu viele Versuche · kurz warten" : "Mail konnte nicht gesendet werden", "err"); return; }
+    if (error) { resend.disabled = false; say(/rate/i.test(error.message) ? "Zu viele Versuche, kurz warten" : "Mail konnte nicht gesendet werden", "err"); return; }
     say("Neuer Code ist unterwegs"); code.value = ""; draw(); code.focus(); wait = 60; clearTimeout(timer); tick();
   };
   wait = 60; tick(); say(""); code.focus(); draw();
@@ -4203,7 +4203,7 @@ async function acctSheet(reason = "") {
         <div class="acct-or" id="acctOr" hidden>oder</div>
         <div class="acct-mailbox"><div class="field"><label class="acct-label" for="acctMail">E-Mail</label><input class="acct-mail" id="acctMail" type="email" inputmode="email" autocomplete="email" placeholder="name@beispiel.de"></div>
         <button class="btn wide" id="acctSend">Weiter mit E-Mail</button></div>
-        <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät. Mehr in der <a href="/privacy" target="_blank">Datenschutzerklärung</a> · <a href="/impressum" target="_blank">Impressum</a>.</span></div>`;
+        <div class="sec-note"><svg class="ic" aria-hidden="true"><use href="#i-locked"/></svg><span>Kein Passwort nötig. Fotos deiner Haut bleiben immer nur auf deinem Gerät. Mehr in der <a href="/privacy" target="_blank">Datenschutzerklärung</a> und im <a href="/impressum" target="_blank">Impressum</a>.</span></div>`;
   } else {
     await refreshQuota().catch(() => {});
     const unl = unlimited(), left = ACC.freeLeft ?? FREE_MOTIFS, saved = FL.items.filter(f => f.cloud).length;
@@ -4238,7 +4238,7 @@ async function acctSheet(reason = "") {
       const email = mail.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { mail.focus(); return; }
       send.disabled = true; send.textContent = "Wird gesendet …";
       const c = await sb(); const { error } = c ? await c.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } }) : { error: new Error("offline") };
-      if (error) { send.disabled = false; send.textContent = "Nochmal versuchen"; console.warn("otp", error); status(/rate/i.test(error.message) ? "Zu viele Versuche · kurz warten" : "Link konnte nicht gesendet werden", "err"); return; }
+      if (error) { send.disabled = false; send.textContent = "Nochmal versuchen"; console.warn("otp", error); status(/rate/i.test(error.message) ? "Zu viele Versuche, kurz warten" : "Link konnte nicht gesendet werden", "err"); return; }
       ACC.sentTo = email; acctSheet(reason);
     };
   }
@@ -4329,7 +4329,7 @@ function renderPanel() {
       <a class="set-row" href="/impressum" target="_blank">${ic("document", "lead")}<span>Impressum</span>${chev}</a>
     </div>
     ${ACC.user ? `<div class="set-group"><button class="set-row" id="acctOut">${ic("logout", "lead")}<span>Abmelden</span></button><button class="set-row danger" id="setDel">${ic("trash-can", "lead")}<span>Konto löschen</span></button></div>` : ""}
-    <p class="set-ver">Stencit · Version ${APP_VERSION}</p>`;
+    <p class="set-ver">Stencit Version ${APP_VERSION}</p>`;
   $("#pnLogin")?.addEventListener("click", () => acctSheet());
   bindLang(body);
   body.querySelectorAll(".lsw [data-unit]").forEach(b => b.onclick = () => {
@@ -4368,7 +4368,7 @@ function confirmView({ title, text, ok }, run) {
 const APP_VERSION = "2026.11.19";
 function feedbackMail() {
   const ua = navigator.userAgent.replace(/\s+/g, " ").slice(0, 160);
-  const body = `\n\n\n— — —\nStencit ${APP_VERSION} · ${getLang()} · ${innerWidth}×${innerHeight}\n${ua}`;
+  const body = `\n\n\n— — —\nStencit ${APP_VERSION}, ${getLang()}, ${innerWidth}×${innerHeight}\n${ua}`;
   return `mailto:studio@stencit.com?subject=${encodeURIComponent("Stencit Feedback")}&body=${encodeURIComponent(body)}`;
 }
 // Fußzeile: Sprache, Feedback-Mail mit Version, Warteliste
@@ -4454,7 +4454,7 @@ async function cloudSync() { // einmal pro Sitzung: fehlende Stencils holen, lok
 }
 function cloudSave(f) { // nach Speichern/Bearbeiten im Hintergrund sichern
   if (!ACC.user) return;
-  cloudPush(f).then(() => renderFlashes()).catch(e => status(/free_limit/.test(e.message || "") ? `Free-Konto: ${FREE_STENCILS} Stencils gesichert · dieses bleibt auf dem Gerät` : "Sichern gerade nicht möglich", /free_limit/.test(e.message || "") ? "ok" : "err"));
+  cloudPush(f).then(() => renderFlashes()).catch(e => status(/free_limit/.test(e.message || "") ? `Free-Konto: ${FREE_STENCILS} Stencils gesichert. Dieses bleibt auf dem Gerät.` : "Sichern gerade nicht möglich", /free_limit/.test(e.message || "") ? "ok" : "err"));
 }
 acctInit();
 
