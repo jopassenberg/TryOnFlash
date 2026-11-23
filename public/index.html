@@ -2062,16 +2062,25 @@ function ramp(t) {
   const a = RAMP[i - 1], b = RAMP[i], f = (t - a[0]) / (b[0] - a[0] || 1);
   return [a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f];
 }
-// Depth view: refined depth as a graphite-to-white ramp, with the fine relief as hill shading on top
+// Tiefe: klassische Tiefenkarte in Graustufen (nah = hell, fern = dunkel), mit feinen roten Höhenlinien.
+// So sieht sie klar anders aus als das Foto und als das rote 3D-Gitter: man liest ab, wie sich Arm oder Bein wölben.
 function depthImage() {
   if (depthCanvas) return depthCanvas;
   const c = document.createElement("canvas"); c.width = S.pw; c.height = S.ph;
-  const g = c.getContext("2d"), img = g.createImageData(S.pw, S.ph), D = normalised(S.disp), N = S.nrmF, l = S.light;
+  const g = c.getContext("2d"), img = g.createImageData(S.pw, S.ph), D = normalised(S.disp), N = S.nrmF, l = S.light, w = S.pw, h = S.ph;
+  const H = S.height, hm = (() => { let lo = Infinity, hi = -Infinity; for (let i = 0; i < H.length; i++) if (S.skin[i] > .5) { lo = Math.min(lo, H[i]); hi = Math.max(hi, H[i]); } return [lo, hi - lo || 1]; })();
+  const step = 9; // Anzahl Höhenlinien über die Wölbung
   for (let i = 0; i < D.length; i++) {
-    const v = clamp(D[i], 0, 1), sk = S.skin[i];
-    const hs = N ? clamp(.55 + .9 * (N[i * 3] * l[0] + N[i * 3 + 1] * l[1] + N[i * 3 + 2] * l[2] - .7), .35, 1.25) : 1;
-    const [r, gg, b] = ramp((.04 + v * .9 * (.3 + .7 * sk)) * hs);
-    img.data[i * 4] = r; img.data[i * 4 + 1] = gg; img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = 255;
+    const sk = S.skin[i], v = clamp(D[i], 0, 1);
+    const hs = N ? clamp(.75 + .5 * (N[i * 3] * l[0] + N[i * 3 + 1] * l[1] + N[i * 3 + 2] * l[2] - .7), .55, 1.15) : 1;
+    let gray = (sk > .5 ? .18 + .78 * v : .04 + .3 * v) * (sk > .5 ? hs : 1);
+    let r = gray, gg = gray, b = gray;
+    if (sk > .5) { // Höhenlinie: wo die Wölbung eine Stufe überschreitet, dünn in Markenrot
+      const t = (H[i] - hm[0]) / hm[1] * step, x = i % w, y = (i / w) | 0;
+      const tr = x < w - 1 ? (H[i + 1] - hm[0]) / hm[1] * step : t, td = y < h - 1 ? (H[i + w] - hm[0]) / hm[1] * step : t;
+      if (Math.floor(t) !== Math.floor(tr) || Math.floor(t) !== Math.floor(td)) { r = .86; gg = .1; b = .11; }
+    }
+    img.data[i * 4] = clamp(r, 0, 1) * 255; img.data[i * 4 + 1] = clamp(gg, 0, 1) * 255; img.data[i * 4 + 2] = clamp(b, 0, 1) * 255; img.data[i * 4 + 3] = 255;
   }
   g.putImageData(img, 0, 0); return (depthCanvas = c);
 }
@@ -2949,6 +2958,7 @@ function redraw() {
     if (S.comparing) { const cx = S.compare * view.width; vctx.save(); vctx.beginPath(); vctx.rect(0, 0, cx, view.height); vctx.clip(); vctx.drawImage(S.photo, 0, 0); vctx.restore(); }
   } else if (S.view === "depth" && S.disp) {
     vctx.drawImage(depthImage(), 0, 0, view.width, view.height);
+    if (S.step === 3 && S.motif && S.anchor) previewTattoo();
   } else {
     vctx.drawImage(S.photo, 0, 0);
     if (S.view === "mesh" && S.mesh) { vctx.fillStyle = "rgba(8,9,8,.62)"; vctx.fillRect(0, 0, view.width, view.height); drawMesh3D(vctx, 1, 1, Infinity, 1, false); }
