@@ -1240,7 +1240,7 @@ function levels(c) {
 function usePhoto(img) {
   closeCam();
   S.photo = scaled(img, RENDER_MAX); S.proc = levels(scaled(img, PROC_MAX)); S.geo = levels(scaled(img, GEO_MAX));
-  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
+  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = S.body = S.hands = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null;
   view.width = S.photo.width; view.height = S.photo.height;
   $("#drop").hidden = true; $("#viewWrap").hidden = false;
   fitView(); S.view = "photo"; syncViews(); redraw();
@@ -1477,7 +1477,7 @@ function visionCall(msg, transfer = []) {
 const pixels = c => { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; return { buf: d.buffer, w: c.width, h: c.height }; };
 async function segment() { // → { masks: { skin, cloth }, cw, ch } oder null
   if (useVision) {
-    try { const p = pixels(S.proc); return await visionCall({ type: "seg", ...p, model: SEG_MODEL, classes: { skin: SKIN_CLASS, cloth: CLOTHES_CLASS, hair: HAIR_CLASS, other: OTHER_CLASS }, free: MOBILE }, [p.buf]); }
+    try { const p = pixels(S.proc); return await visionCall({ type: "seg", ...p, model: SEG_MODEL, classes: { skin: SKIN_CLASS, face: FACE_CLASS, cloth: CLOTHES_CLASS, hair: HAIR_CLASS, other: OTHER_CLASS }, free: MOBILE }, [p.buf]); }
     catch (e) { console.warn("vision worker", e); useVision = false; visionWorker?.terminate(); visionWorker = null; }
   }
   const sg = await getSegmenter().catch(e => (console.warn("segmenter", e), null)); if (!sg) return null;
@@ -1517,15 +1517,16 @@ async function analyse() {
     await say("Sucht die Hautfläche …"); mark("Haut-Modell");
     const sm = await (segP || segment().catch(e => (console.warn("segment", e), null))); S.skin = sm ? skinMask(sm) : null;
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
-    await say("Trennt Haut von Kleidung …"); mark("Haut aufräumen"); S.skin = tidySkin(S.skin);
+    // Hand und Körper schon hier: die Fingerlücken dürfen beim Aufräumen nicht zuwachsen
+    stage = "Hand/Körper"; await say("Sucht Hand und Körper …"); mark("Hand/Pose");
+    S.body = await bodyLandmarks().catch(e => (console.warn("body", e), null)); S.hands = handZones(S.body);
+    stage = "Haut erkennen"; await say("Trennt Haut von Kleidung …"); mark("Haut aufräumen"); S.skin = tidySkin(S.skin);
     stage = "3D-Modell"; mark("3D-Modell");
     // one heavy step per frame, so the scan animation and the page stay responsive
     await say("Glättet die Oberfläche …"); refineDepth();
     await say("Erstellt das 3D-Modell …"); buildGeometry();
     await say("Spannt das Gitter auf …"); buildMesh();
-    stage = "Maßstab"; await say("Sucht Hand und Körper …"); mark("Hand/Pose");
-    const body = await bodyLandmarks().catch(e => (console.warn("body", e), null));
-    await say("Misst die Größe …"); S.scale = computeScale(body);
+    stage = "Maßstab"; await say("Misst die Größe …"); S.scale = computeScale(S.body);
     mark("Scan-Ende"); await say("Fast fertig …"); await scanFinish();
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
     S.view = "photo"; syncViews(); setStep(3); redraw();
@@ -1556,18 +1557,19 @@ function resizeTensor(t, w, h) {
 // "Kleidung" liegt. Danach prüft ein Hautfarben-Modell aus dem sicheren Hautinneren jeden unsicheren Rand:
 // was farblich nicht zur Haut passt (Ärmel, Stoff), fliegt raus. Das sichere Innere bleibt, auch wenn es
 // anders aussieht (alte Tattoos, Schatten), weil das Modell dort sicher Haut sieht.
-const CLOTHES_CLASS = 4, HAIR_CLASS = 1, OTHER_CLASS = 5; // selfie_multiclass: 0 Hintergrund, 1 Haare, 2 Körperhaut, 3 Gesicht, 4 Kleidung, 5 Sonstiges
+const CLOTHES_CLASS = 4, HAIR_CLASS = 1, OTHER_CLASS = 5, FACE_CLASS = 3; // selfie_multiclass: 0 Hintergrund, 1 Haare, 2 Körperhaut, 3 Gesicht, 4 Kleidung, 5 Sonstiges
 function segMasks(seg) { // Hauptthread-Variante (Fallback), gleiche Form wie das Ergebnis des Workers
   const res = seg.segment(S.proc), cm = res.confidenceMasks, cw = cm[0].width, ch = cm[0].height;
-  const masks = { skin: cm[SKIN_CLASS].getAsFloat32Array().slice(), cloth: cm[CLOTHES_CLASS].getAsFloat32Array().slice(),
+  const masks = { skin: cm[SKIN_CLASS].getAsFloat32Array().slice(), face: cm[FACE_CLASS].getAsFloat32Array().slice(), cloth: cm[CLOTHES_CLASS].getAsFloat32Array().slice(),
     hair: cm[HAIR_CLASS].getAsFloat32Array().slice(), other: cm[OTHER_CLASS].getAsFloat32Array().slice() };
   cm.forEach(x => x.close()); res.close?.();
   return { masks, cw, ch };
 }
-function skinMask({ masks: { skin, cloth, hair, other }, cw, ch }) {
+function skinMask({ masks: { skin, face, cloth, hair, other }, cw, ch }) {
   // Haut zählt nur, wo sie klar vor Kleidung, Haaren und Sonstigem (Uhr, Schmuck, Gegenstände) liegt
   const b = new Float32Array(cw * ch);
-  for (let i = 0; i < b.length; i++) b[i] = clamp(skin[i] - 1.0 * cloth[i] - .9 * (hair ? hair[i] : 0) - .6 * (other ? other[i] : 0), 0, 1);
+  // Gesicht ist eine eigene Klasse im Modell, gehört für Tattoos aber genauso zur Haut
+  for (let i = 0; i < b.length; i++) b[i] = clamp(Math.max(skin[i], face ? face[i] : 0) - 1.0 * cloth[i] - .9 * (hair ? hair[i] : 0) - .6 * (other ? other[i] : 0), 0, 1);
   const bs = blurField(b, cw, ch, 1), m = new Float32Array(S.pw * S.ph);
   for (let y = 0; y < S.ph; y++) for (let x = 0; x < S.pw; x++) { // bilinear
     const fx = clamp((x + .5) * cw / S.pw - .5, 0, cw - 1.001), fy = clamp((y + .5) * ch / S.ph - .5, 0, ch - 1.001), x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * cw + x0;
@@ -1661,6 +1663,17 @@ function depthMask(d) {
 // 2 · Lücken am Rand schließen (Closing über exakte Distanzfelder): Tattoos, Schatten oder Haare am Armrand
 //     reißen sonst Kerben und Löcher in die Haut. Der Radius ist an die Armbreite gekoppelt, darum
 //     wachsen keine großen Flächen zwischen Arm und Umgebung zu.
+// Hände im Analysebild: Rahmen um die 21 Punkte und die Fingerbreite in Pixeln (Fingerbreite ≈ 0,19 × Abstand
+// Handgelenk–Mittelfinger-Grundgelenk). In diesen Rahmen bleiben Lücken zwischen den Fingern offen.
+const FINGERS = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]];
+function handZones(B) {
+  return (B?.hands || []).map(h => {
+    const P = h.img.map(p => ({ x: p.x * S.pw, y: p.y * S.ph })), fw = Math.max(2, .19 * Math.hypot(P[9].x - P[0].x, P[9].y - P[0].y));
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const p of P) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+    return { P, fw, x0: x0 - fw, y0: y0 - fw, x1: x1 + fw, y1: y1 + fw };
+  }).filter(z => z.fw > 2);
+}
+const inHand = (x, y) => { for (const z of S.hands || []) if (x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1) return z; return null; };
 function tidySkin(m) {
   const w = S.pw, h = S.ph, n = w * h, lab = new Int32Array(n), sizes = [0];
   for (let s = 0; s < n; s++) {
@@ -1678,9 +1691,12 @@ function tidySkin(m) {
   // Armbreite grob aus dem größten Stück: Fläche / Länge der Diagonale
   let area = 0; for (let i = 0; i < n; i++) area += bin[i];
   const r = clamp(.34 * area / Math.hypot(w, h), 3, .12 * Math.min(w, h)); // Kerben bis ca. ein Drittel der Armbreite (Tattoos am Rand)
-  const dOut = distanceField(bin, w, h), dil = new Uint8Array(n); for (let i = 0; i < n; i++) dil[i] = dOut[i] <= r ? 0 : 1;
+  // an der Hand nur ganz kleine Kerben schließen, sonst wachsen die Finger zu einer Fläche zusammen
+  const rr = new Float32Array(n).fill(r);
+  if (S.hands?.length) for (let i = 0; i < n; i++) { const z = inHand(i % w, (i / w) | 0); if (z) rr[i] = Math.min(r, Math.max(1, .3 * z.fw)); }
+  const dOut = distanceField(bin, w, h), dil = new Uint8Array(n); for (let i = 0; i < n; i++) dil[i] = dOut[i] <= rr[i] ? 0 : 1;
   const dIn = distanceField(dil, w, h);
-  for (let i = 0; i < n; i++) { const c = clamp(dIn[i] - r + .5, 0, 1); if (c > out[i]) out[i] = c; }
+  for (let i = 0; i < n; i++) { const c = clamp(dIn[i] - rr[i] + .5, 0, 1); if (c > out[i]) out[i] = c; }
   return out;
 }
 const coverage = m => { let s = 0; for (let i = 0; i < m.length; i++) s += m[i] > .5; return s / m.length; };
@@ -1716,7 +1732,8 @@ function fillHoles(m, w, h) {
     while (q.length) { const i = q.pop(), x = i % w;
       for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1])
         if (j >= 0 && !seen[j] && !out[j] && m[j] <= .5) { seen[j] = 1; q.push(j); comp.push(j); } }
-    if (comp.length <= maxHole) for (const i of comp) o[i] = 1;
+    let lim = maxHole; const z = inHand(comp[0] % w, (comp[0] / w) | 0); if (z) lim = Math.min(lim, z.fw * z.fw * 1.5);
+    if (comp.length <= lim) for (const i of comp) o[i] = 1;
   }
   return o;
 }
@@ -1748,10 +1765,11 @@ function buildGeometry() {
   // its outline. Depth maps are least reliable right there (edge shadows, background), so near the
   // outline the prior leads and towards the middle the depth model does.
   const outside = new Uint8Array(np); for (let i = 0; i < np; i++) outside[i] = m[i] <= .5 ? 1 : 0;
-  const E = distanceField(outside, w, h), Hs = new Float32Array(np);
+  const E = distanceField(outside, w, h), Hs = new Float32Array(np), R = localRadius(E, m, w, h, relief);
   for (let i = 0; i < np; i++) {
     if (m[i] <= .5) { Hs[i] = bM[i] > .05 ? bH[i] / bM[i] : H[i]; continue; }
-    const e = Math.min(E[i], relief), prior = Math.sqrt(Math.max(0, 2 * relief * e - e * e)), wd = clamp(E[i] / relief, 0, 1) * .6;
+    // Rundung nach der eigenen Dicke: ein Finger ist ein dünner Zylinder, die Wange eine flache Kuppel, der Arm ein dicker
+    const Ri = R[i], e = Math.min(E[i], Ri), prior = Math.sqrt(Math.max(0, 2 * Ri * e - e * e)), wd = clamp(E[i] / Ri, 0, 1) * .6;
     Hs[i] = prior * (1 - wd) + (bM[i] > .05 ? bH[i] / bM[i] : H[i]) * wd;
   }
   S.height = blurField(Hs, w, h, rb); // smooth surface: used for mapping the motif
@@ -1767,6 +1785,25 @@ function buildGeometry() {
   S.relief = F;
   S.nrm = normals(S.height, w, h); S.nrmF = normals(F, w, h);
   S.light = estimateLight();
+}
+// Lokaler Radius je Hautpixel: dem Abstand zum Rand bergauf folgen bis zur Mittellinie des Körperteils, dort
+// ist der Abstand die halbe Dicke. So bekommt jeder Finger seinen eigenen Radius statt der Breite des ganzen Arms.
+function localRadius(E, m, w, h, cap) {
+  const np = w * h, ids = []; for (let i = 0; i < np; i++) if (m[i] > .5) ids.push(i);
+  const ord = Uint32Array.from(ids).sort((a, b) => E[b] - E[a]), R = new Float32Array(np);
+  for (const i of ord) {
+    const x = i % w, y = (i / w) | 0; let best = -1, be = E[i];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue; const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+      const j = yy * w + xx; if (R[j] > 0 && E[j] > be) { be = E[j]; best = j; }
+    }
+    R[i] = best >= 0 ? R[best] : Math.max(1, E[i]);
+  }
+  // weiche Übergänge (Fingeransatz, Handgelenk), nur über Haut gemittelt
+  const RM = new Float32Array(np), M = new Float32Array(np); for (let i = 0; i < np; i++) if (R[i] > 0) { RM[i] = R[i]; M[i] = 1; }
+  const rb = Math.max(2, Math.round(w / 200)), bR = blurField(RM, w, h, rb), bm = blurField(M, w, h, rb);
+  for (let i = 0; i < np; i++) R[i] = clamp(bm[i] > .05 ? bR[i] / bm[i] : cap, 1, cap);
+  return R;
 }
 const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 function normalised(a) {
@@ -2574,6 +2611,15 @@ async function detectBody(canvas) {
 function segDist(p, a, b) { const vx = b.x - a.x, vy = b.y - a.y, t = clamp(((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy || 1), 0, 1); return Math.hypot(p.x - a.x - vx * t, p.y - a.y - vy * t); }
 const POSE_SEGS = [["Unterarm", 13, 15], ["Unterarm", 14, 16], ["Oberarm", 11, 13], ["Oberarm", 12, 14], ["Oberschenkel", 23, 25], ["Oberschenkel", 24, 26],
   ["Unterschenkel", 25, 27], ["Unterschenkel", 26, 28], ["Oberkörper", 11, 23], ["Oberkörper", 12, 24], ["Schulter", 11, 12]];
+// Liegt die Stelle auf einem Finger oder auf der Hand? (Abstand zu den Fingerknochen, Fingerbreite als Toleranz)
+function handPart(h, c, W, H) {
+  const P = h.img.map(p => ({ x: p.x * W, y: p.y * H })), fw = .19 * Math.hypot(P[9].x - P[0].x, P[9].y - P[0].y);
+  for (const f of FINGERS) for (let k = 0; k < 3; k++) if (segDist(c, P[f[k]], P[f[k + 1]]) < fw * .7) return "Finger";
+  const palm = [0, 1, 5, 9, 13, 17].map(i => P[i]); let inside = false;
+  for (let i = 0, j = palm.length - 1; i < palm.length; j = i++) { const a = palm[i], b = palm[j];
+    if ((a.y > c.y) !== (b.y > c.y) && c.x < (b.x - a.x) * (c.y - a.y) / (b.y - a.y) + a.x) inside = !inside; }
+  return inside || segDist(c, P[0], P[9]) < fw * 2 ? "Hand" : null;
+}
 function computeScale(B) {
   const W = S.photo.width, H = S.photo.height, c = S.anchor || S.armCenter;
   const px = p => ({ x: p.x * W, y: p.y * H }), d2 = (a, b) => Math.hypot((a.x - b.x) * W, (a.y - b.y) * H), d3 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) * 100;
@@ -2588,12 +2634,17 @@ function computeScale(B) {
     }
     if (best && best.dist < S.armPx * 1.5) part = best.part; else best = null;
   }
+  const pz = B?.pose?.img; // Gesicht: Augenabstand (Pupillen ca. 6,3 cm) ist der genaueste Maßstab im Gesicht
+  if (pz && (pz[2].visibility ?? 1) > .5 && (pz[5].visibility ?? 1) > .5) {
+    const eye = d2(pz[2], pz[5]), nose = px(pz[0]);
+    if (eye > 4 && Math.hypot(nose.x - c.x, nose.y - c.y) < eye * 2.6) return { pxPerCm: eye / 6.3, source: "Augenabstand", tol: 10, part: "Gesicht" };
+  }
   for (const h of B?.hands || []) { // a hand near the spot beats the pose (smaller, better known bones)
     const bones = [[0, 5], [0, 9], [0, 13], [0, 17], [5, 9], [9, 13], [13, 17], [5, 17]];
     const r = bones.map(([a, b]) => d2(h.img[a], h.img[b]) / d3(h.world[a], h.world[b])).filter(v => v > 0 && isFinite(v)).sort((a, b) => a - b);
     if (r.length < 5) continue;
     const dist = Math.hypot(h.img[0].x * W - c.x, h.img[0].y * H - c.y);
-    if (dist < S.armPx * 3) { best = { pxPerCm: r[Math.floor(r.length * .75)], source: "Hand erkannt", tol: 12, dist, part: part || "Unterarm" }; break; }
+    if (dist < S.armPx * 3) { best = { pxPerCm: r[Math.floor(r.length * .75)], source: "Hand erkannt", tol: 12, dist, part: handPart(h, c, W, H) || part || "Unterarm" }; break; }
   }
   if (!best) return { ...fallback, part };
   const armCm = S.armPx / best.pxPerCm; // plausibility: the implied limb width must be human
@@ -2914,10 +2965,19 @@ view.addEventListener("pointermove", e => {
     touches.delete(e.pointerId);
     if (touches.size >= 2) startPinch();
     else { pinch = null; drag = touches.size === 1 ? moveFrom([...touches.values()][0]) : null; } // lifting one finger keeps the motif still
+    if (!touches.size) rescale();
     return;
   }
+  if (drag) rescale();
   drag = null;
 }));
+// Nach dem Verschieben: Maßstab und Körperteil für die neue Stelle (Gesicht, Finger, Hand, Arm), außer selbst gemessen
+function rescale() {
+  if (!S.body || !S.scale || S.scale.source === "Selbst gemessen" || !S.anchor) return;
+  const ns = computeScale(S.body);
+  if (ns.part === S.scale.part && Math.abs(ns.pxPerCm / S.scale.pxPerCm - 1) < .02) return;
+  S.scale = ns; infoKey = ""; updateInfo(); schedule();
+}
 view.addEventListener("wheel", e => {
   if (S.step !== 3 || !S.motif) return; e.preventDefault();
   if (e.shiftKey) S.rot += (e.deltaY || e.deltaX) * .15; else S.sizeCm = clamp(S.sizeCm * Math.exp(-e.deltaY * .0015), 2, 40);
@@ -3003,7 +3063,9 @@ function renderInk(t) {
     const s = I.spec[j]; let R = I.R[j] - s, G = I.G[j] - s, B = I.B[j] - s;
     if (halo) { const hh = clamp(halo[j] * 2, 0, 1) * .6 * fresh * (1 - clamp(a[j], 0, 1) * .7); R *= 1 + hh * .05; G *= 1 - hh * .4; B *= 1 - hh * .44; }
     const dj = I.det[j], hair = clamp((.82 - dj) / .25, 0, 1) * .45; // dunkle feine Linien (Haare) liegen über der Tinte
-    const aj = clamp(a[j], 0, 1) * dens * (1 - hair);
+    // Pigment liegt nie ganz gleichmäßig: leichte, weiche Dichteschwankung (grob + fein), mit den Jahren etwas mehr
+    const xj = j % bw, yj = (j / bw) | 0, mot = 1 + (vnoise(xj, yj, 9 * unit) - .5) * (.09 + .07 * aged) + (vnoise(xj + 37, yj + 11, 2.4 * unit) - .5) * .05;
+    const aj = clamp(clamp(a[j], 0, 1) * dens * mot, 0, .985) * (1 - hair);
     if (aj > .002) {
       const inv = 1 / Math.max(ca[j], .02);
       let ir = clamp(cr[j] * inv, 0, 1), ig = clamp(cg[j] * inv, 0, 1), ib = clamp(cbl[j] * inv, 0, 1);

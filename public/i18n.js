@@ -36,7 +36,7 @@ const EN = {
   "Vorher / Nachher": "Before / after", "Speichern": "Save", "Zusammenfassung": "Summary", "Drehung": "Rotation", "Stelle": "Spot",
   "Breite an der Stelle": "Width at this spot", "Mit Maßband nachmessen und eintragen, dann stimmt die Größe genau.": "Measure with a tape and enter it for an exact size.",
   "Selbst gemessen": "Measured by you", "Hand erkannt": "Hand detected", "Körperproportionen": "Body proportions",
-  "Unterarm": "Forearm", "Oberarm": "Upper arm", "Oberschenkel": "Thigh", "Unterschenkel": "Lower leg", "Oberkörper": "Torso", "Schulter": "Shoulder",
+  "Unterarm": "Forearm", "Oberarm": "Upper arm", "Oberschenkel": "Thigh", "Unterschenkel": "Lower leg", "Oberkörper": "Torso", "Schulter": "Shoulder", "Gesicht": "Face", "Finger": "Finger", "Hand": "Hand", "Augenabstand": "Eye distance",
   // Zusammenfassung
   "für Linien": "for lines", "für Flächen": "for fills", "für kleine Flächen": "for small fills", "für Schatten": "for shading",
   "Schwarz": "Black", "Grau": "Grey", "Rot": "Red", "Orange": "Orange", "Gelb": "Yellow", "Grün": "Green", "Türkis": "Turquoise", "Blau": "Blue", "Lila": "Purple",
