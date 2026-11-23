@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stencit Konto & Einstellungen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: oklch(19% .003 75); --n-100: oklch(97% .003 75); --n-50: oklch(98.6% .002 75); --dim: oklch(54% .005 75); --dim2: oklch(68% .005 75);
+    --fill: oklch(19% .003 75 / .06); --line: oklch(19% .003 75 / .09); --frame: oklch(17% .003 75); --accent: #DB1A1D; --bord: #730F26; --gb: oklch(92% .003 75); }
+  * { box-sizing: border-box; } body { margin: 0; background: var(--n-100); color: var(--ink); font: 400 15px/1.45 "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; letter-spacing: inherit; }
+  .wrap { max-width: 1260px; margin: 0 auto; padding: 48px 24px 96px; display: grid; gap: 36px; }
+  h1 { margin: 0; font-weight: 400; font-size: 44px; letter-spacing: -.045em; line-height: 1; } h1 span { color: var(--dim); }
+  .sub { margin: 10px 0 0; color: var(--dim); max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; } @media (max-width: 1150px) { .grid { grid-template-columns: 1fr; justify-items: center; } }
+  .cap b { font-weight: 400; font-size: 22px; letter-spacing: -.03em; display: block; } .cap span { color: var(--dim); font-size: 13px; } .cap { margin: 0 0 12px; max-width: 375px; }
+  .notes { margin: 14px 0 0; padding-left: 18px; color: var(--dim); font-size: 13px; display: grid; gap: 4px; max-width: 375px; }
+  .ic { width: 18px; height: 18px; fill: currentColor; flex: none; }
+
+  /* Handy mit der App dahinter (Kopfzeile + Kamera-Karte wie in Stencit) */
+  .phone { width: 375px; height: 780px; border-radius: 44px; position: relative; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px oklch(0% 0 0 / .06); }
+  .top { position: absolute; top: 12px; left: 16px; right: 12px; height: 48px; display: flex; align-items: center; justify-content: space-between; z-index: 1; }
+  .logo { font-size: 18px; letter-spacing: -.03em; display: flex; gap: 7px; align-items: center; } .logo i { width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle, var(--ink) 30%, transparent 32%) 0 0/6px 6px; }
+  .tr { display: flex; gap: 6px; align-items: center; }
+  .pill { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--gb); } .pill .b { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; } .pill .b.on { background: #fff; }
+  .av { border-radius: 50%; display: grid; place-items: center; background: #fff; overflow: hidden; }
+  .ring { width: 32px; height: 32px; border-radius: 50%; background: conic-gradient(var(--bord), var(--accent) 66%, oklch(19% .003 75 / .12) 66%); display: grid; place-items: center; }
+  .ring .av { width: 25px; height: 25px; font-size: 12px; }
+  .card { position: absolute; top: 68px; left: 8px; right: 8px; bottom: 8px; border-radius: 36px; background: oklch(15% .003 75); }
+  .card::after { content: ""; position: absolute; left: 50%; bottom: 24px; width: 64px; height: 64px; translate: -50% 0; border-radius: 50%; border: 4px solid #fff; }
+  .dimmer { position: absolute; inset: 0; background: oklch(19% .003 75 / .28); }
+
+  /* gemeinsame Zeilen (hell) */
+  .grp { border-radius: 18px; background: var(--n-100); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; font-size: 15px; position: relative; }
+  .row + .row::before { content: ""; position: absolute; left: 44px; right: 0; top: 0; height: 1px; background: var(--line); }
+  .row .ic { color: var(--dim); } .row .v { margin-left: auto; color: var(--dim); font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .row .chev { width: 14px; height: 14px; color: var(--dim2); }
+  .seg { margin-left: auto; display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: oklch(19% .003 75 / .07); font-size: 13px; }
+  .seg span { padding: 5px 11px; border-radius: 999px; color: var(--dim); } .seg span.on { background: var(--ink); color: #fff; }
+  .cap2 { font-size: 12px; color: var(--dim); margin: 0 4px 6px; }
+  .danger { color: oklch(55% .2 25); }
+  .btn { height: 46px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 15px; width: 100%; }
+  .btn.dark { background: var(--ink); color: #fff; } .btn.soft { background: var(--n-100); }
+
+  /* Profil-Kopf mit Foto (antippen = ändern) */
+  .prof-av { position: relative; flex: none; }
+  .prof-av .av { background: oklch(19% .003 75 / .08); font-size: 22px; }
+  .prof-av .cam { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: #fff; box-shadow: 0 0 0 2px #fff; }
+  .prof-av .cam .ic { width: 12px; height: 12px; }
+  .credit { display: flex; align-items: center; gap: 12px; }
+  .bar { height: 6px; border-radius: 3px; background: oklch(19% .003 75 / .1); overflow: hidden; } .bar i { display: block; height: 100%; width: 66%; background: linear-gradient(90deg, var(--bord), var(--accent)); border-radius: inherit; }
+
+  /* ===== A · Menü am Profilbild (Popover oben rechts) ===== */
+  .pop { position: absolute; z-index: 3; top: 66px; right: 10px; width: 300px; border-radius: 24px; background: #fff; box-shadow: 0 18px 50px oklch(0% 0 0 / .22), 0 0 0 1px oklch(0% 0 0 / .04); padding: 10px; display: grid; gap: 8px; }
+  .pop::before { content: ""; position: absolute; top: -6px; right: 46px; width: 14px; height: 14px; background: #fff; rotate: 45deg; border-radius: 3px; }
+  .pop .head { display: flex; gap: 12px; align-items: center; padding: 6px 6px 4px; }
+  .pop .head .av { width: 52px; height: 52px; }
+  .pop .head .t { display: grid; min-width: 0; } .pop .head .t small { color: var(--dim); font-size: 12px; }
+  .pop .credit { padding: 10px 12px; border-radius: 16px; background: var(--n-100); font-size: 13px; } .pop .credit > div { flex: 1; display: grid; gap: 6px; }
+
+  /* ===== B · Eigene Seite (wie iOS-Einstellungen) ===== */
+  .page { position: absolute; z-index: 3; inset: 0; background: #fff; display: grid; grid-template-rows: auto 1fr; }
+  .page .bar-top { height: 60px; padding: 12px 16px 0; display: flex; align-items: center; justify-content: space-between; }
+  .page .bar-top b { font-weight: 400; font-size: 17px; } .page .bar-top button { font-size: 15px; } .page .done { background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 999px; }
+  .page .body { overflow: auto; padding: 8px 16px 16px; display: grid; gap: 18px; align-content: start; }
+  .page .hero { display: grid; justify-items: center; gap: 8px; padding: 4px 0 2px; text-align: center; }
+  .page .hero .av { width: 84px; height: 84px; font-size: 32px; } .page .hero .prof-av .cam { width: 28px; height: 28px; }
+  .page .hero .nm { font-size: 22px; letter-spacing: -.03em; display: flex; gap: 6px; align-items: center; } .page .hero .nm .ic { width: 14px; height: 14px; color: var(--dim); }
+  .page .hero small { color: var(--dim); font-size: 13px; }
+  .page .creditcard { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: var(--n-100); }
+  .page .creditcard .big { width: 46px; height: 46px; border-radius: 50%; background: conic-gradient(var(--bord), var(--accent) 66%, oklch(19% .003 75 / .12) 66%); display: grid; place-items: center; }
+  .page .creditcard .big::after { content: "2"; width: 36px; height: 36px; border-radius: 50%; background: var(--n-100); display: grid; place-items: center; font-size: 15px; }
+  .page .creditcard .t { display: grid; flex: 1; font-size: 14px; } .page .creditcard .t small { color: var(--dim); font-size: 12px; }
+  .page .creditcard .up { font-size: 13px; padding: 7px 12px; border-radius: 999px; background: #fff; }
+
+  /* ===== C · Dunkles Fenster von unten, wie die übrigen Stencit-Fenster ===== */
+  .dsheet { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; height: 640px; border-radius: 30px 30px 0 0; background: var(--frame); color: #fff; padding: 10px 16px 16px; display: grid; gap: 14px; align-content: start; }
+  .dsheet .grab { justify-self: center; width: 40px; height: 5px; border-radius: 3px; background: oklch(100% 0 0 / .22); }
+  .dsheet .phead { display: flex; gap: 14px; align-items: center; }
+  .dsheet .phead .av { width: 58px; height: 58px; background: oklch(100% 0 0 / .1); color: #fff; font-size: 22px; } .dsheet .prof-av .cam { background: #fff; color: var(--ink); box-shadow: 0 0 0 2px var(--frame); }
+  .dsheet .phead .t { display: grid; flex: 1; } .dsheet .phead .t small { color: oklch(100% 0 0 / .5); font-size: 13px; }
+  .dsheet .x { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: oklch(100% 0 0 / .08); } .dsheet .x .ic { width: 14px; height: 14px; }
+  .dsheet .chips { display: flex; gap: 6px; }
+  .dsheet .chip { flex: 1; display: grid; gap: 2px; padding: 12px; border-radius: 16px; background: oklch(100% 0 0 / .07); font-size: 12px; color: oklch(100% 0 0 / .55); }
+  .dsheet .chip b { font-weight: 400; font-size: 18px; color: #fff; }
+  .dsheet .chip .bar { background: oklch(100% 0 0 / .12); margin-top: 6px; }
+  .dsheet .grp { background: oklch(100% 0 0 / .07); } .dsheet .row + .row::before { background: oklch(100% 0 0 / .08); }
+  .dsheet .row .ic, .dsheet .row .v { color: oklch(100% 0 0 / .5); } .dsheet .seg { background: oklch(0% 0 0 / .35); } .dsheet .seg span { color: oklch(100% 0 0 / .55); } .dsheet .seg span.on { background: #fff; color: var(--ink); }
+  .dsheet .cap2 { color: oklch(100% 0 0 / .45); } .dsheet .danger { color: oklch(72% .17 25); }
+  .dsheet .acc .row:first-child .v { transform: none; }
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="user" viewBox="0 0 32 32"><path d="M16 4a5 5 0 11-5 5 5 5 0 015-5m0-2a7 7 0 107 7A7 7 0 0016 2zM26 30H24V25a5 5 0 00-5-5H13a5 5 0 00-5 5v5H6V25a7 7 0 017-7h6a7 7 0 017 7z"/></symbol>
+  <symbol id="cam" viewBox="0 0 32 32"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Z"/></symbol>
+  <symbol id="chev" viewBox="0 0 32 32"><path d="M22 16L12 26 10.6 24.6 19.2 16 10.6 7.4 12 6z"/></symbol>
+  <symbol id="globe" viewBox="0 0 32 32"><path d="M16,2A14,14,0,1,0,30,16,14,14,0,0,0,16,2Zm12,13H22a24.65,24.65,0,0,0-2.4-10.33A12,12,0,0,1,28,15ZM16,28a5.22,5.22,0,0,1-.78-.06A21.81,21.81,0,0,1,12,17H20a21.81,21.81,0,0,1-3.22,10.94A5.22,5.22,0,0,1,16,28Zm-4-13a21.81,21.81,0,0,1,3.22-10.94,5,5,0,0,1,1.56,0A21.81,21.81,0,0,1,20,15Zm.4-10.33A24.65,24.65,0,0,0,10,15H4A12,12,0,0,1,12.4,4.67ZM4,17h6a24.65,24.65,0,0,0,2.4,10.33A12,12,0,0,1,4,17Zm15.6,10.33A24.65,24.65,0,0,0,22,17h6A12,12,0,0,1,19.6,27.33Z"/></symbol>
+  <symbol id="ruler" viewBox="0 0 32 32"><path d="M29.41,21.67,10.34,2.58a2,2,0,0,0-2.83,0L2.59,7.51a2,2,0,0,0,0,2.82L21.66,29.42a2,2,0,0,0,2.83,0l4.92-4.93A2,2,0,0,0,29.41,21.67ZM23.07,28,4,8.92,8.92,4l3.54,3.54-2.13,2.12L11.74,11l2.13-2.12,4.25,4.24-2.13,2.13,1.42,1.41,2.12-2.12,4.25,4.24-2.13,2.13L23,22.61l2.12-2.13L28,23.07Z"/></symbol>
+  <symbol id="phone" viewBox="0 0 32 32"><path d="M23,2H9A2,2,0,0,0,7,4V28a2,2,0,0,0,2,2H23a2,2,0,0,0,2-2V4A2,2,0,0,0,23,2ZM9,4H23V6H9ZM9,28V8H23V28Z"/><circle cx="16" cy="25" r="1.5"/></symbol>
+  <symbol id="mail" viewBox="0 0 32 32"><path d="M28,6H4A2,2,0,0,0,2,8V24a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V8A2,2,0,0,0,28,6ZM25.8,8,16,14.78,6.2,8ZM4,24V8.91l11.43,7.91a1,1,0,0,0,1.14,0L28,8.91V24Z"/></symbol>
+  <symbol id="doc" viewBox="0 0 32 32"><path d="M25.7,9.3l-7-7A.91.91,0,0,0,18,2H8A2,2,0,0,0,6,4V28a2,2,0,0,0,2,2H24a2,2,0,0,0,2-2V10A.91.91,0,0,0,25.7,9.3ZM18,4.4,23.6,10H18ZM24,28H8V4h8v6a2,2,0,0,0,2,2h6Z"/></symbol>
+  <symbol id="out" viewBox="0 0 32 32"><path d="M6,30H18a2,2,0,0,0,2-2V25H18v3H6V4H18V7h2V4a2,2,0,0,0-2-2H6A2,2,0,0,0,4,4V28A2,2,0,0,0,6,30Z"/><path d="M20.59 20.59L24.17 17 10 17 10 15 24.17 15 20.59 11.41 22 10 28 16 22 22 20.59 20.59z"/></symbol>
+  <symbol id="apple" viewBox="0 0 24 24"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.39-.92-2.41-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.76-.96 2.8 1.02.08 2.06-.52 2.69-1.28z"/></symbol>
+  <symbol id="x" viewBox="0 0 32 32"><path d="M17.4141 16L24 9.4141 22.5859 8 16 14.5859 9.4143 8 8 9.4141 14.5859 16 8 22.5859 9.4143 24 16 17.4141 22.5859 24 24 22.5859 17.4141 16z"/></symbol>
+  <symbol id="pen" viewBox="0 0 32 32"><path d="M27.3069,6.1069,30,3.4141,28.5859,2,25.8931,4.6929,24.8,3.6a1.9328,1.9328,0,0,0-2.8,0L4,21.6V28h6.4l18-18a1.9329,1.9329,0,0,0,0-2.8ZM9.6,26H6V22.4L23.4,5,27,8.6Z"/></symbol>
+  <symbol id="cdown" viewBox="0 0 32 32"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"/></symbol>
+</defs></svg>
+<div class="wrap">
+  <header><h1>Konto & Einstellungen <span>· 3 Entwürfe</span></h1>
+    <p class="sub">Alle drei: <b style="font-weight:400;color:var(--ink)">ein</b> Einstieg über das Profilbild oben rechts (das Zahnrad entfällt), keine Reiter, keine doppelten Überschriften. Das große Profilbild darin heißt immer „antippen = Foto ändern“, der Name ist direkt editierbar. Der Hintergrund scrollt nicht mit.</p></header>
+  <div class="grid">
+
+    <!-- A -->
+    <div><p class="cap"><b>A · Menü am Profilbild</b><span>Wie bei Google oder Notion: ein kompaktes Menü klappt unter dem Profilbild auf. Alles auf einen Blick, kein Scrollen.</span></p>
+      <div class="phone">
+        <div class="top"><span class="logo"><i></i>Stencit</span><span class="tr"><span class="pill"><span class="b on"><svg class="ic" style="width:15px;height:15px"><use href="#cam"/></svg></span><span class="b"><svg class="ic" style="width:15px;height:15px;opacity:.4"><use href="#chev"/></svg></span></span><span class="ring"><span class="av">J</span></span></span></div>
+        <div class="card"></div><div class="dimmer"></div>
+        <div class="pop">
+          <div class="head"><span class="prof-av"><span class="av">J</span><span class="cam"><svg class="ic"><use href="#cam"/></svg></span></span>
+            <span class="t"><span>Jonas · Studio Ink</span><small>studio@stencit.com</small></span></div>
+          <div class="credit"><div><span>2 von 3 freien Motiven diesen Monat</span><span class="bar"><i></i></span></div></div>
+          <div class="grp">
+            <div class="row"><svg class="ic"><use href="#globe"/></svg>Sprache<span class="seg"><span class="on">DE</span><span>EN</span></span></div>
+            <div class="row"><svg class="ic"><use href="#ruler"/></svg>Maßeinheit<span class="seg"><span class="on">cm</span><span>in</span></span></div>
+          </div>
+          <div class="grp">
+            <div class="row"><svg class="ic"><use href="#apple"/></svg>iPhone-App<span class="v">Warteliste<svg class="ic chev"><use href="#chev"/></svg></span></div>
+            <div class="row"><svg class="ic"><use href="#phone"/></svg>Speicher<span class="v">77 MB<svg class="ic chev"><use href="#chev"/></svg></span></div>
+            <div class="row"><svg class="ic"><use href="#mail"/></svg>Feedback senden<span class="v"><svg class="ic chev"><use href="#chev"/></svg></span></div>
+            <div class="row"><svg class="ic"><use href="#doc"/></svg>Datenschutz · Impressum<span class="v"><svg class="ic chev"><use href="#chev"/></svg></span></div>
+          </div>
+          <div class="grp"><div class="row"><svg class="ic"><use href="#out"/></svg>Abmelden</div></div>
+        </div>
+      </div>
+      <ul class="notes"><li>Schnellster Weg, fühlt sich wie ein Menü an, nicht wie eine neue Seite</li><li>„Konto löschen“ steckt unter „Daten auf diesem Gerät“ bzw. ganz unten im Datenschutz-Bereich</li><li>Am Rechner identisch, hängt am Profilbild</li></ul></div>
+
+    <!-- B -->
+    <div><p class="cap"><b>B · Eigene Profil-Seite</b><span>Wie die iPhone-Einstellungen: eine ruhige Seite mit großem Profil oben, darunter Gruppen. „Fertig“ oben rechts bringt zurück.</span></p>
+      <div class="phone">
+        <div class="page">
+          <div class="bar-top"><span style="width:62px"></span><b>Profil</b><button class="done">Fertig</button></div>
+          <div class="body">
+            <div class="hero"><span class="prof-av"><span class="av">J</span><span class="cam"><svg class="ic"><use href="#cam"/></svg></span></span>
+              <span class="nm">Jonas · Studio Ink <svg class="ic"><use href="#pen"/></svg></span><small>studio@stencit.com · erscheint als Tag an geteilten Stencils</small></div>
+            <div class="creditcard"><span class="big"></span><span class="t">Freie Motive diesen Monat<small>2 von 3 · 0 Tokens · 0 von 3 Stencils gesichert</small></span><span class="up">Mehr</span></div>
+            <div><div class="cap2">App</div><div class="grp">
+              <div class="row"><svg class="ic"><use href="#globe"/></svg>Sprache<span class="seg"><span class="on">DE</span><span>EN</span></span></div>
+              <div class="row"><svg class="ic"><use href="#ruler"/></svg>Maßeinheit<span class="seg"><span class="on">cm</span><span>in</span></span></div>
+              <div class="row"><svg class="ic"><use href="#phone"/></svg>Speicher<span class="v">1 Flash · 77 MB<svg class="ic chev"><use href="#chev"/></svg></span></div>
+            </div></div>
+            <div><div class="cap2">Mehr</div><div class="grp">
+              <div class="row"><svg class="ic"><use href="#apple"/></svg>iPhone-App<span class="v">Warteliste<svg class="ic chev"><use href="#chev"/></svg></span></div>
+              <div class="row"><svg class="ic"><use href="#mail"/></svg>Feedback senden<span class="v"><svg class="ic chev"><use href="#chev"/></svg></span></div>
+              <div class="row"><svg class="ic"><use href="#doc"/></svg>Datenschutz<span class="v"><svg class="ic chev"><use href="#chev"/></svg></span></div>
+              <div class="row"><svg class="ic"><use href="#doc"/></svg>Impressum<span class="v"><svg class="ic chev"><use href="#chev"/></svg></span></div>
+            </div></div>
+            <div class="grp"><div class="row"><svg class="ic"><use href="#out"/></svg>Abmelden</div><div class="row danger"><svg class="ic" style="color:inherit"><use href="#x"/></svg>Konto löschen</div></div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes"><li>Wirkt am „aufgeräumtesten“, viel Platz, gut für später (Abo, Rechnungen)</li><li>Fühlt sich wie ein eigener Bereich an – ein Schritt weiter weg von der Kamera</li><li>Am Rechner: gleiche Seite, mittig in schmaler Spalte</li></ul></div>
+
+    <!-- C -->
+    <div><p class="cap"><b>C · Dunkles Fenster von unten</b><span>Im Stil der übrigen Stencit-Fenster (dunkel). Oben Profil + zwei Kacheln für Credits, darunter kompakte Gruppen.</span></p>
+      <div class="phone">
+        <div class="top"><span class="logo"><i></i>Stencit</span><span class="tr"><span class="pill"><span class="b on"><svg class="ic" style="width:15px;height:15px"><use href="#cam"/></svg></span><span class="b"><svg class="ic" style="width:15px;height:15px;opacity:.4"><use href="#chev"/></svg></span></span><span class="ring"><span class="av">J</span></span></span></div>
+        <div class="card"></div><div class="dimmer"></div>
+        <div class="dsheet">
+          <div class="grab"></div>
+          <div class="phead"><span class="prof-av"><span class="av">J</span><span class="cam"><svg class="ic"><use href="#cam"/></svg></span></span>
+            <span class="t"><span>Jonas · Studio Ink</span><small>studio@stencit.com</small></span><span class="x"><svg class="ic"><use href="#x"/></svg></span></div>
+          <div class="chips"><span class="chip">Freie Motive<b>2 von 3</b><span class="bar"><i></i></span></span><span class="chip">Tokens<b>0</b><span style="margin-top:6px">Unlimited bald</span></span></div>
+          <div class="grp">
+            <div class="row"><svg class="ic"><use href="#globe"/></svg>Sprache<span class="seg"><span class="on">DE</span><span>EN</span></span></div>
+            <div class="row"><svg class="ic"><use href="#ruler"/></svg>Maßeinheit<span class="seg"><span class="on">cm</span><span>in</span></span></div>
+          </div>
+          <div class="grp">
+            <div class="row"><svg class="ic"><use href="#apple"/></svg>iPhone-App<span class="v">Warteliste<svg class="ic chev"><use href="#chev"/></svg></span></div>
+            <div class="row"><svg class="ic"><use href="#phone"/></svg>Speicher<span class="v">77 MB<svg class="ic chev"><use href="#chev"/></svg></span></div>
+            <div class="row"><svg class="ic"><use href="#mail"/></svg>Feedback senden<span class="v"><svg class="ic chev"><use href="#chev"/></svg></span></div>
+            <div class="row"><svg class="ic"><use href="#doc"/></svg>Datenschutz · Impressum<span class="v"><svg class="ic chev"><use href="#chev"/></svg></span></div>
+          </div>
+          <div class="grp"><div class="row"><svg class="ic"><use href="#out"/></svg>Abmelden</div><div class="row danger"><svg class="ic" style="color:inherit"><use href="#x"/></svg>Konto löschen</div></div>
+        </div>
+      </div>
+      <ul class="notes"><li>Passt am besten zu den anderen Fenstern (Teilen, Anmelden, Warteliste)</li><li>Credits auf einen Blick als Kacheln</li><li>Am Rechner: gleiches Fenster, mittig</li></ul></div>
+
+  </div>
+</div>
+</body></html>
