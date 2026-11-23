@@ -910,6 +910,10 @@
   .set-ver { margin: 2px 0 0; text-align: center; font-size: 12px; color: oklch(100% 0 0 / .35); }
   .err-line { margin: 0; font-size: 14px; color: oklch(80% .12 40); }
   .set-list .prof { min-height: 56px; }
+  /* iOS Safari blendet sonst manchmal einen Play/Pause-Knopf über das Kamerabild (z. B. im Stromsparmodus) */
+  #cam::-webkit-media-controls, #cam::-webkit-media-controls-panel, #cam::-webkit-media-controls-play-button,
+  #cam::-webkit-media-controls-start-playback-button, #cam::-webkit-media-controls-overlay-play-button { display: none !important; -webkit-appearance: none; opacity: 0; }
+  #cam { pointer-events: none; }
 </style>
 <style id="pageSize">@page { size: 210mm 297mm; margin: 0; }</style>
 </head>
@@ -941,7 +945,7 @@
     <div class="siri" id="siri" hidden><i class="haze"></i><i class="wide"></i><i class="band"></i><i class="ring"></i></div>
     <div class="stage" id="stage">
       <div class="drop" id="drop"><img alt="" id="tryImg" hidden></div>
-      <video id="cam" playsinline muted autoplay hidden></video>
+      <video id="cam" playsinline webkit-playsinline muted autoplay disablepictureinpicture disableremoteplayback hidden></video>
       <img class="cam-ghost" id="camGhost" alt="" hidden>
       <div class="shot" id="shot"></div>
       <div id="viewWrap" hidden>
@@ -1290,6 +1294,8 @@ async function openCam() {
   $("#drop").hidden = true;
   const v = $("#cam"); v.srcObject = camStream; v.classList.toggle("mirror", camFacing === "user"); v.hidden = false; // Frontkamera: Vorschau wie ein Spiegel (wie beim Selfie)
   v.play().catch(() => {}); status(""); applyFlash();
+  // iOS hält das Kamerabild manchmal an (App gewechselt, Stromsparen): sofort weiterlaufen lassen statt Pause-Knopf
+  v.onpause = () => { if (camStream && !v.hidden && document.visibilityState === "visible") v.play().catch(() => {}); };
 }
 // Hinweis in der Kartenmitte, wenn die Kamera nicht läuft. Zweimal abgelehnt = der Browser fragt nicht mehr:
 // dann erklären, wo man es in den Website-Einstellungen erlaubt.
@@ -2641,11 +2647,16 @@ function computeScale(B) {
     if (eye > 4 && Math.hypot(nose.x - c.x, nose.y - c.y) < eye * 2.6) return { pxPerCm: eye / 6.3, source: "Augenabstand", tol: 10, part: "Gesicht" };
   }
   for (const h of B?.hands || []) { // a hand near the spot beats the pose (smaller, better known bones)
-    const bones = [[0, 5], [0, 9], [0, 13], [0, 17], [5, 9], [9, 13], [13, 17], [5, 17]];
-    const r = bones.map(([a, b]) => d2(h.img[a], h.img[b]) / d3(h.world[a], h.world[b])).filter(v => v > 0 && isFinite(v)).sort((a, b) => a - b);
-    if (r.length < 5) continue;
+    // Feste Handmaße (Gelenkmitten, Erwachsene im Mittel): Handrücken quer (Zeigefinger- bis kleiner Finger-
+    // Grundgelenk) ≈ 6,6 cm, Handgelenk bis Mittelfinger-Grundgelenk ≈ 9 cm, Handgelenk bis Zeigefinger ≈ 8,2 cm.
+    // Schräg gehaltene Strecken wirken im Bild kürzer; die am wenigsten verkürzte (größter Wert) zählt.
+    // Die metrischen "Welt"-Punkte des Hand-Modells taugen dafür nicht: ihre Größe ist geschätzt und lag oft
+    // um das Doppelte daneben (Motiv wirkte viel zu groß).
+    const ANAT = [[5, 17, 6.6], [0, 9, 9.0], [0, 5, 8.2], [0, 17, 7.2]];
+    const r = ANAT.map(([a, b, cm]) => d2(h.img[a], h.img[b]) / cm).filter(v => v > 0 && isFinite(v)).sort((a, b) => a - b);
+    if (r.length < 3) continue;
     const dist = Math.hypot(h.img[0].x * W - c.x, h.img[0].y * H - c.y);
-    if (dist < S.armPx * 3) { best = { pxPerCm: r[Math.floor(r.length * .75)], source: "Hand erkannt", tol: 12, dist, part: handPart(h, c, W, H) || part || "Unterarm" }; break; }
+    if (dist < S.armPx * 3) { best = { pxPerCm: r[r.length - 1], source: "Hand erkannt", tol: 15, dist, part: handPart(h, c, W, H) || part || "Unterarm" }; break; }
   }
   if (!best) return { ...fallback, part };
   const armCm = S.armPx / best.pxPerCm; // plausibility: the implied limb width must be human
@@ -2946,7 +2957,7 @@ view.addEventListener("pointermove", e => {
     touches.set(e.pointerId, p);
     if (pinch && touches.size >= 2) {
       const [a, b] = [...touches.values()], d = Math.hypot(b.x - a.x, b.y - a.y), ang = Math.atan2(b.y - a.y, b.x - a.x);
-      S.sizeCm = clamp(pinch.size * d / pinch.d, 2, 40);
+      S.sizeCm = clamp(pinch.size * d / pinch.d, 1, 40);
       S.rot = pinch.rot + (ang - pinch.ang) * 180 / Math.PI;
       S.anchor = { x: clamp(pinch.ax + (a.x + b.x) / 2 - pinch.mx, 0, view.width), y: clamp(pinch.ay + (a.y + b.y) / 2 - pinch.my, 0, view.height) };
       schedule(); return;
@@ -2957,7 +2968,7 @@ view.addEventListener("pointermove", e => {
   else {
     const dx = p.x - S.anchor.x, dy = p.y - S.anchor.y;
     let a = Math.atan2(dx, -dy) * 180 / Math.PI; for (const s of [-180, -90, 0, 90, 180]) if (Math.abs(a - s) < 4) a = s;
-    S.rot = a; S.sizeCm = clamp(Math.hypot(dx, dy) / .55 / pxPerCm(), 2, 40);
+    S.rot = a; S.sizeCm = clamp(Math.hypot(dx, dy) / .55 / pxPerCm(), 1, 40);
   }
   schedule();
 });
@@ -2981,7 +2992,7 @@ function rescale() {
 }
 view.addEventListener("wheel", e => {
   if (S.step !== 3 || !S.motif) return; e.preventDefault();
-  if (e.shiftKey) S.rot += (e.deltaY || e.deltaX) * .15; else S.sizeCm = clamp(S.sizeCm * Math.exp(-e.deltaY * .0015), 2, 40);
+  if (e.shiftKey) S.rot += (e.deltaY || e.deltaX) * .15; else S.sizeCm = clamp(S.sizeCm * Math.exp(-e.deltaY * .0015), 1, 40);
   schedule();
 }, { passive: false });
 
@@ -3217,8 +3228,8 @@ document.addEventListener("keydown", e => {
   if (S.step === 3 && S.motif && S.anchor) {
     const step = e.shiftKey ? 20 : 4, mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (mv) { e.preventDefault(); S.anchor = { x: clamp(S.anchor.x + mv[0] * step, 0, view.width), y: clamp(S.anchor.y + mv[1] * step, 0, view.height) }; schedule(); }
-    else if (e.key === "+" || e.key === "=") { S.sizeCm = clamp(S.sizeCm * 1.05, 2, 40); schedule(); }
-    else if (e.key === "-") { S.sizeCm = clamp(S.sizeCm / 1.05, 2, 40); schedule(); }
+    else if (e.key === "+" || e.key === "=") { S.sizeCm = clamp(S.sizeCm * 1.05, 1, 40); schedule(); }
+    else if (e.key === "-") { S.sizeCm = clamp(S.sizeCm / 1.05, 1, 40); schedule(); }
     else if (e.key === "[" || e.key === "]") { S.rot += (e.key === "]" ? 1 : -1) * (e.shiftKey ? 15 : 3); schedule(); }
     else if (e.key === "Enter") stechen();
   }
@@ -4033,7 +4044,7 @@ function printSheet(src = studioSrc()) {
   box.querySelectorAll("[data-step]").forEach(b => b.onclick = () => { const d = +b.dataset.step; PS.steps.has(d) ? PS.steps.size > 1 && PS.steps.delete(d) : PS.steps.add(d); update(); });
   $("#psTags").onclick = () => { PS.tags = !PS.tags; update(); };
   if (SRC.free) { // Größe für Flashes aus der Sammlung: längste Seite in halben Zentimetern
-    const setLong = l => { l = clamp(Math.round(l / QUANT()) * QUANT(), 2, 40); SRC.w = SRC.ar >= 1 ? l : l * SRC.ar; SRC.h = SRC.ar >= 1 ? l / SRC.ar : l; $("#psSize").textContent = len(l, 2); };
+    const setLong = l => { l = clamp(Math.round(l / QUANT()) * QUANT(), 1, 40); SRC.w = SRC.ar >= 1 ? l : l * SRC.ar; SRC.h = SRC.ar >= 1 ? l / SRC.ar : l; $("#psSize").textContent = len(l, 2); };
     setLong(Math.max(SRC.w, SRC.h));
     $("#psMinus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) - QUANT()); update(); };
     $("#psPlus").onclick = () => { setLong(Math.max(SRC.w, SRC.h) + QUANT()); update(); };
@@ -4435,6 +4446,7 @@ function feedbackMail() {
   const body = `\n\n\n— — —\nStencit ${APP_VERSION}, ${getLang()}, ${innerWidth}×${innerHeight}\n${ua}`;
   return `mailto:studio@stencit.com?subject=${encodeURIComponent("Stencit Feedback")}&body=${encodeURIComponent(body)}`;
 }
+document.addEventListener("visibilitychange", () => { const v = $("#cam"); if (document.visibilityState === "visible" && camStream && !v.hidden && v.paused) v.play().catch(() => {}); }); // camResume
 // Fußzeile: Sprache, Feedback-Mail mit Version, Warteliste
 // Auf dem Handy ist sie versteckt (die App bleibt Vollbild). Wer am Seitenende bewusst weiter nach oben zieht
 // (auf der Kopfzeile oder neben der Karte), holt sie herein; wieder ganz oben verschwindet sie.
@@ -4444,8 +4456,14 @@ if (matchMedia("(hover: none) and (pointer: coarse)").matches) {
   const open = () => { ft.classList.add("open"); openedAt = performance.now(); lastY = scrollY;
     requestAnimationFrame(() => scrollTo({ top: document.scrollingElement.scrollHeight, behavior: "smooth" })); };
   const close = () => { ft.classList.remove("open"); lastY = 0; };
-  addEventListener("touchstart", e => { y0 = isOpen() || e.target.closest(".stage, .flashes, .sheet, .sheet-bg, .cut, .fl-view, .ft, .pn") ? null : e.touches[0].clientY; }, { passive: true });
-  addEventListener("touchmove", e => { if (y0 != null && y0 - e.touches[0].clientY > 60) { y0 = null; open(); } }, { passive: true });
+  // Wo Wischen schon etwas tut, bleibt es dabei: Motiv verschieben (ab dem Platzieren), Flashes-Fläche, Fenster.
+  // Im Kamerabild und auf Kopfzeile/Rand holt ein klares Wischen nach oben die Fußzeile.
+  let x0 = 0;
+  const busy = t => t.closest(".flashes, .sheet, .sheet-bg, .cut, .fl-view, .ft, .pn, .tools, .motifs, .tray, button, input, a") || (S.step >= 3 && t.closest(".stage"));
+  addEventListener("touchstart", e => { y0 = isOpen() || e.touches.length > 1 || busy(e.target) ? null : e.touches[0].clientY; x0 = e.touches[0].clientX; }, { passive: true });
+  addEventListener("touchmove", e => { if (y0 == null) return; const dy = y0 - e.touches[0].clientY, dx = Math.abs(e.touches[0].clientX - x0);
+    if (dx > 40 && dx > dy) { y0 = null; return; } // seitlich gewischt: keine Absicht
+    if (dy > 70) { y0 = null; open(); } }, { passive: true });
   // Erst schließen, wenn man wirklich wieder oben angekommen ist: nicht im ersten Moment nach dem Öffnen
   // (das weiche Scrollen startet bei 0) und nur bei einer Bewegung nach oben, kurz abgewartet (Schwung, Gummiband)
   addEventListener("scroll", () => {
