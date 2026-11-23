@@ -558,10 +558,11 @@
   .cutbox > .sw.cut-bg { margin: 0 var(--s1); }
   /* Schnellansicht: nur Ergebnis + Anpassen/Übernehmen; Werkzeuge erst nach „Anpassen“ */
   .adjs { display: grid; gap: 6px; padding: 0 var(--s1); } /* immer untereinander */
-  .adj { --p: 50%; --z: 50%; display: grid; grid-template-columns: 76px 1fr 54px; grid-template-areas: "l s v"; align-items: center; gap: 10px; padding: 4px 8px 4px 16px; border-radius: 20px; background: var(--fill); font-size: 14px; }
+  .adj { --p: 50%; --z: 50%; display: grid; grid-template-columns: 76px 1fr 54px; grid-template-areas: "l s v"; align-items: center; gap: 10px; min-height: 52px; padding: 4px 8px 4px 16px; border-radius: 22px; background: var(--fill); font-size: 14px; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: ew-resize; }
+  .adj.on { background: oklch(19% .003 75 / .1); }
   .adj > span { grid-area: l; } .adj-v { grid-area: v; justify-self: end; } .adj input { grid-area: s; }
   .adj-v { white-space: nowrap; padding: 4px 6px; border-radius: 10px; color: var(--text-2); font-variant-numeric: tabular-nums; font-size: 13px; } .adj-v:hover { background: var(--fill); }
-  .adj input { width: 100%; height: 30px; margin: 0; -webkit-appearance: none; appearance: none; background: none; cursor: pointer; touch-action: pan-y; }
+  .adj input { width: 100%; height: 36px; margin: 0; -webkit-appearance: none; appearance: none; background: none; cursor: ew-resize; touch-action: pan-y; pointer-events: none; }
   /* Spur: feine Maßstriche alle 10 %, ein kräftiger am Normalwert, der veränderte Bereich leicht gefüllt */
   .adj input::-webkit-slider-runnable-track { height: 30px; border-radius: 8px;
     background: linear-gradient(90deg, transparent calc(var(--z) - 1px), var(--n-900) calc(var(--z) - 1px) calc(var(--z) + 1px), transparent calc(var(--z) + 1px)) 0 50% / 100% 16px no-repeat,
@@ -572,8 +573,8 @@
       repeating-linear-gradient(90deg, oklch(19% .003 75 / .22) 0 1px, transparent 1px calc(10% - .1px)) 0 50% / calc(100% + 1px) 8px no-repeat,
       linear-gradient(90deg, transparent min(var(--z), var(--p)), oklch(19% .003 75 / .1) min(var(--z), var(--p)) max(var(--z), var(--p)), transparent max(var(--z), var(--p))) 0 50% / 100% 30px no-repeat; }
   /* Zeiger: schmaler roter Strich mit weißem Rand, wie eine Markierung auf dem Lineal */
-  .adj input::-webkit-slider-thumb { -webkit-appearance: none; width: 6px; height: 30px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 2px #fff, 0 2px 6px oklch(0% 0 0 / .2); }
-  .adj input::-moz-range-thumb { width: 6px; height: 30px; border: 0; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 2px #fff, 0 2px 6px oklch(0% 0 0 / .2); }
+  .adj input::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 34px; border-radius: 5px; background: var(--accent); box-shadow: 0 0 0 2px #fff, 0 2px 6px oklch(0% 0 0 / .2); }
+  .adj input::-moz-range-thumb { width: 10px; height: 34px; border: 0; border-radius: 5px; background: var(--accent); box-shadow: 0 0 0 2px #fff, 0 2px 6px oklch(0% 0 0 / .2); }
   .adj input:focus-visible { outline: none; } .adj input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent); }
   .cut.quick .panel:has(#cutTools) .group:first-child, .cut.quick .cuttools, .cut.quick .cutstage .status { display: none; }
   .looks button { display: grid; justify-items: center; gap: 6px; padding: 6px 6px 8px; border-radius: 20px; font-size: 13px; color: var(--text-2); background: var(--fill); transition: background-color .2s, color .2s, transform .3s var(--spring); }
@@ -921,6 +922,7 @@
   .info .card-go { width: 100%; height: 40px; margin-top: var(--s3); border-radius: 20px; background: var(--on-glass); color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
   .info .card-go .ic { width: 18px; height: 18px; }
   .isl-size { cursor: pointer; }
+  .cut-note { flex: 1 0 100%; order: 0; margin: 0; padding: 0 var(--s2); font-size: 13px; line-height: 1.45; color: var(--text-2); } .cut-note b { font-weight: 400; color: var(--ink); margin-right: 4px; } .cut-note em { font-style: normal; color: var(--ink); }
 </style>
 <style id="pageSize">@page { size: 210mm 297mm; margin: 0; }</style>
 </head>
@@ -1061,7 +1063,6 @@
       <!-- Stil: jede Option zeigt sofort, wie das Motiv damit aussieht -->
       <!-- Regler für die Tinte; es erscheinen nur die, die beim Motiv etwas bewirken. Wert antippen = zurücksetzen -->
       <div class="adjs" id="cutAdj">
-        <div class="adj" data-k="thresh" data-min="0" data-max="100" data-def="0"><span>Schwelle</span><button class="adj-v" title="Zurücksetzen">Aus</button><input type="range" min="0" max="100" step="1" value="0" aria-label="Schwelle: dunkle Bereiche schwarz, Rest weiß"></div>
         <div class="adj" data-k="bright" data-min="-50" data-max="50" data-def="0"><span>Helligkeit</span><button class="adj-v" title="Zurücksetzen">0</button><input type="range" min="-50" max="50" step="1" value="0" aria-label="Helligkeit"></div>
         <div class="adj" data-k="contrast" data-min="-50" data-max="50" data-def="0"><span>Kontrast</span><button class="adj-v" title="Zurücksetzen">0</button><input type="range" min="-50" max="50" step="1" value="0" aria-label="Kontrast"></div>
         <div class="adj" data-k="gamma" data-min="-50" data-max="50" data-def="0"><span>Gamma</span><button class="adj-v" title="Zurücksetzen">1,00</button><input type="range" min="-50" max="50" step="1" value="0" aria-label="Gamma"></div>
@@ -1078,6 +1079,7 @@
           <button class="btn soft icon cut-undo" id="cutUndo2" title="Rückgängig" aria-label="Rückgängig" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
           <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
         </div>
+        <p class="cut-note" id="cutNote"></p>
         <div class="group end">
           <button class="btn ghost" id="cutCancel">Abbrechen</button>
           <button class="btn primary" id="cutOk">Übernehmen</button>
@@ -2082,7 +2084,11 @@ $("#motifInput").onchange = e => { e.target.files[0] && loadMotif(e.target.files
 const cutC = $("#cutCanvas"), cutG = cutC.getContext("2d"), cutStage = $("#cutStage");
 const CUT = { img: null, ink: null, mask: null, hasMask: false, comp: null, dirty: true, bg: true, opaque: true, tool: "lasso",
   size: 30, zoom: 1, px: 0, py: 0, fit: 1, hist: [], path: null, drawing: false, last: null, hover: null, raf: 0, ptrs: new Map(), pinch: null };
-const HINT = { lasso: "Tattoo umfahren", erase: "Wegwischen, was nicht dazugehört", paint: "Fehlende Teile zurückmalen" };
+const HINT = { lasso: "Lasso: ums Motiv fahren", erase: "Radierer: wegwischen", paint: "Pinsel: zurückmalen" };
+const TOOL_NOTE = {
+  lasso: "<b>Lasso</b> Mit dem Finger einmal ums Motiv fahren. Alles innerhalb bleibt, der Rest wird ausgeblendet.",
+  erase: "<b>Radierer</b> Über Stellen wischen, die <em>nicht</em> zum Motiv gehören (Papierrand, Schatten). Sie werden dunkel und sind weg.",
+  paint: "<b>Pinsel</b> Über Stellen malen, die zum Motiv gehören, aber fehlen. Sie werden wieder hell und sind zurück." };
 const canvasOf = (w, h) => Object.assign(document.createElement("canvas"), { width: w, height: h });
 function loadMotif(file) {
   const img = new Image(), url = URL.createObjectURL(file);
@@ -2117,6 +2123,7 @@ const trace = (g, P, dx = 0, dy = 0) => { g.moveTo(P[0].x - dx, P[0].y - dy); fo
 function setTool(t) {
   CUT.tool = t; document.querySelectorAll("#cutTools button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tool === t));
   $("#cutSizeWrap").hidden = t === "lasso"; $("#cutHint").textContent = HINT[t];
+  $("#cutNote").innerHTML = TOOL_NOTE[t] + (t === "lasso" ? "" : " Größe mit dem Regler, zoomen mit zwei Fingern.");
   cutC.style.cursor = t === "lasso" ? "crosshair" : "none";
 }
 document.querySelectorAll("#cutTools button").forEach(b => b.onclick = () => setTool(b.dataset.tool));
@@ -2199,7 +2206,14 @@ function syncAdj() {
 const setAdj = (k, v) => { CUT.adj = { ...CUT.adj, [k]: v }; CUT.style = adjKey(CUT.adj); CUT.dirty = true; syncAdj(); };
 document.querySelectorAll("#cutAdj .adj").forEach(l => {
   const inp = l.querySelector("input");
-  inp.oninput = () => { let v = +inp.value; const d = +l.dataset.def, snap = (+l.dataset.max - +l.dataset.min) * .03; if (Math.abs(v - d) <= snap) v = d; setAdj(l.dataset.k, v); }; // rastet am Normalwert ein
+  const put = raw => { let v = Math.round(clamp(raw, +l.dataset.min, +l.dataset.max)); const d = +l.dataset.def, snap = (+l.dataset.max - +l.dataset.min) * .03; if (Math.abs(v - d) <= snap) v = d; setAdj(l.dataset.k, v); }; // rastet am Normalwert ein
+  inp.oninput = () => put(+inp.value); // Tastatur
+  // Touch/Maus: irgendwo in der Zeile waagerecht ziehen verschiebt den Wert (relativ, wie in Foto-Apps); senkrecht scrollt die Seite
+  let drag = null;
+  l.addEventListener("pointerdown", e => { if (e.target.closest(".adj-v")) return; drag = { x: e.clientX, v: +inp.value, w: inp.getBoundingClientRect().width, moved: false }; l.setPointerCapture(e.pointerId); l.classList.add("on"); });
+  l.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 3) drag.moved = true; if (drag.moved) put(drag.v + dx / drag.w * (+l.dataset.max - +l.dataset.min)); });
+  const end = e => { if (!drag) return; const r = inp.getBoundingClientRect(); if (!drag.moved && e.type === "pointerup" && e.clientX >= r.left && e.clientX <= r.right) { put(+l.dataset.min + (e.clientX - r.left) / r.width * (+l.dataset.max - +l.dataset.min)); } drag = null; l.classList.remove("on"); };
+  l.addEventListener("pointerup", end); l.addEventListener("pointercancel", end);
   l.querySelector(".adj-v").onclick = () => setAdj(l.dataset.k, +l.dataset.def);
 });
 function applyAdj(src, A) {

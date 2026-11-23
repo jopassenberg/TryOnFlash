@@ -119,6 +119,11 @@ const EN = {
   "Für eine exakte Größe: beim Foto eine Karte im Scheckkartenformat (Bank-, Kranken-, Kundenkarte) flach direkt neben die Stelle halten, Kartennummer verdeckt.": "For an exact size: when taking the photo, hold a standard-size card (bank, health or loyalty card) flat right next to the spot, with the card number covered.",
   "Ecken auf die Karte im Bild ziehen": "Drag the corners onto the card in the photo", "Karte im Bild": "Card in photo",
   "Die Ecken passen nicht zu einer Karte – nochmal versuchen": "The corners don’t match a card – try again",
+  "Lasso: ums Motiv fahren": "Lasso: trace around the design", "Radierer: wegwischen": "Eraser: wipe away", "Pinsel: zurückmalen": "Brush: paint back",
+  "Mit dem Finger einmal ums Motiv fahren. Alles innerhalb bleibt, der Rest wird ausgeblendet.": "Trace once around the design with your finger. Everything inside stays, the rest is hidden.",
+  "Über Stellen wischen, die": "Wipe over areas that do", "zum Motiv gehören (Papierrand, Schatten). Sie werden dunkel und sind weg.": "belong to the design (paper edge, shadows). They turn dark and are removed.",
+  "Über Stellen malen, die zum Motiv gehören, aber fehlen. Sie werden wieder hell und sind zurück.": "Paint over parts of the design that are missing. They turn light again and are back.",
+  "Größe mit dem Regler, zoomen mit zwei Fingern.": "Set the size with the slider, zoom with two fingers.", "nicht": "not",
 };
 
 // Texte mit Zahlen/Namen
