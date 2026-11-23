@@ -855,9 +855,8 @@
   .as-chip { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: #fff; color: var(--ink); }
   .as-track { --p: 0; position: relative; height: 8px; border-radius: 4px; background: oklch(19% .003 75 / .1); overflow: hidden; }
   .as-track::before { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--p) * 100%); border-radius: inherit; background: linear-gradient(90deg, var(--bordeaux), var(--accent)); transition: width .6s var(--ease-out); }
-  .as-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 14px; color: var(--ink); }
-  .as-stats span { display: grid; gap: 1px; } .as-stats small { font-size: 12px; color: var(--text-3); }
-  .as-stats span + span { padding-left: 10px; box-shadow: inset 1px 0 oklch(19% .003 75 / .08); }
+  .as-bar { display: grid; gap: 7px; } .as-bar-l { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; } .as-bar-l small { font-size: 12px; color: var(--text-3); }
+  .as-track.buy::before { background: var(--n-900); } .as-bar + .as-bar { margin-top: 6px; }
   .as-cr .as-buy { height: 44px; margin-top: 2px; background: var(--n-900); color: #fff; } .as-cr .as-buy:disabled { opacity: .45; }
   .as-cr .note { font-size: 12px; color: var(--text-3); }
   .as-cr p { margin: 0; color: var(--text-2); font-size: 15px; } .as-cr .btn.wide { height: 46px; background: var(--n-900); color: #fff; }
@@ -4304,11 +4303,12 @@ function creditsHTML() {
   const n = new Date(), next = new Date(n.getFullYear(), n.getMonth() + 1, 1), reset = `${next.getDate()}.${next.getMonth() + 1}.`;
   return `<div class="as-cr">
     <div class="as-cr-top"><span>Credits</span><span class="as-chip">${unl ? "Unlimited" : `${left + tok} übrig`}</span></div>
-    <div class="as-track" style="--p:${unl ? 1 : left / FREE_MOTIFS}"></div>
-    ${unl ? `<span class="note">Unbegrenzt neue Motive</span>` : `<div class="as-stats">
-      <span><small>Gratis</small>${left} von ${FREE_MOTIFS}</span>
-      <span><small>Gekauft</small>${tok}</span>
-      <span><small>Neu am</small>${reset}</span></div>
+    ${unl ? `<div class="as-track" style="--p:1"></div><span class="note">Unbegrenzt neue Motive</span>` : `<div class="as-bar">
+      <div class="as-bar-l"><span>Gratis <small>· neu am ${reset}</small></span><span>${left} von ${FREE_MOTIFS}</span></div>
+      <div class="as-track" style="--p:${left / FREE_MOTIFS}"></div></div>
+    <div class="as-bar">
+      <div class="as-bar-l"><span>Gekauft <small>· verfallen nicht</small></span><span>${tok}</span></div>
+      <div class="as-track buy" style="--p:${tok ? 1 : 0}"></div></div>
     <button class="btn primary as-buy" disabled>Credits kaufen</button>
     <span class="note">Bezahlen kommt bald. 1 Credit = 1 neues Motiv anprobieren, dasselbe Motiv nochmal ist frei.</span>`}</div>`;
 }
