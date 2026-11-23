@@ -855,10 +855,10 @@
   .as-chip { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: #fff; color: var(--ink); }
   .as-track { --p: 0; position: relative; height: 8px; border-radius: 4px; background: oklch(19% .003 75 / .1); overflow: hidden; }
   .as-track::before { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--p) * 100%); border-radius: inherit; background: linear-gradient(90deg, var(--bordeaux), var(--accent)); transition: width .6s var(--ease-out); }
-  .as-bar { display: grid; gap: 7px; } .as-bar-l { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; } .as-bar-l small { font-size: 12px; color: var(--text-3); }
-  .as-track.buy::before { background: var(--n-900); } .as-bar + .as-bar { margin-top: 6px; }
+  .as-bar { display: grid; gap: 7px; } .as-bar-l { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; font-size: 14px; } .as-bar-l span { display: grid; } .as-bar-l small { font-size: 12px; color: var(--text-3); } .as-bar-l b { font-weight: 400; }
+  .as-track.buy::before { background: linear-gradient(90deg, oklch(56% .15 155), oklch(72% .19 140)); } .as-bar + .as-bar { margin-top: 6px; }
   .as-cr .as-buy { height: 44px; margin-top: 2px; background: var(--n-900); color: #fff; } .as-cr .as-buy:disabled { opacity: .45; }
-  .as-cr .note { font-size: 12px; color: var(--text-3); }
+  .as-cr .note { font-size: 12px; color: var(--text-3); text-align: center; }
   .as-cr p { margin: 0; color: var(--text-2); font-size: 15px; } .as-cr .btn.wide { height: 46px; background: var(--n-900); color: #fff; }
   /* helle Zeilen und Schalter im Fenster */
   .pn .set-group { background: var(--n-100); } .pn .set-row { color: var(--ink); min-height: 50px; }
@@ -3518,7 +3518,7 @@ const setProfile = p => { try { localStorage.setItem(PROFILE_KEY, JSON.stringify
 function renderRing() { // Anteil noch freier Credits: Unlimited/Tokens = voll, sonst freie Motive des Monats
   const r = $("#acctRing"); if (!r) return;
   const p = !ACC.user ? 0 : unlimited() || ACC.tokens > 0 ? 1 : (ACC.freeLeft ?? FREE_MOTIFS) / FREE_MOTIFS;
-  const v = r.querySelector(".val"); v.setAttribute("stroke-dasharray", `${(p * 100).toFixed(1)} 100`); v.style.opacity = p > 0 ? 1 : 0; $("#acctBtn").title = ACC.user ? (unlimited() ? "Unlimited" : `${ACC.freeLeft ?? FREE_MOTIFS} von ${FREE_MOTIFS} Gratis-Credits${ACC.tokens ? ` · ${ACC.tokens} gekauft` : ""}`) : "Anmelden";
+  const v = r.querySelector(".val"); v.setAttribute("stroke-dasharray", `${(p * 100).toFixed(1)} 100`); v.style.opacity = p > 0 ? 1 : 0; $("#acctBtn").title = ACC.user ? (unlimited() ? "Unlimited" : `${ACC.freeLeft ?? FREE_MOTIFS} von ${FREE_MOTIFS} Gratis-Credits${ACC.tokens ? `, ${ACC.tokens} gekauft` : ""}`) : "Anmelden";
 }
 function renderAvatar() {
   renderRing(); const el = $("#acctAv"); if (!el) return; const P = getProfile(), n = (P.name || "").trim();
@@ -4304,13 +4304,13 @@ function creditsHTML() {
   return `<div class="as-cr">
     <div class="as-cr-top"><span>Credits</span><span class="as-chip">${unl ? "Unlimited" : `${left + tok} übrig`}</span></div>
     ${unl ? `<div class="as-track" style="--p:1"></div><span class="note">Unbegrenzt neue Motive</span>` : `<div class="as-bar">
-      <div class="as-bar-l"><span>Gratis <small>· neu am ${reset}</small></span><span>${left} von ${FREE_MOTIFS}</span></div>
+      <div class="as-bar-l"><span>Gratis<small>Neu am ${reset}</small></span><b>${left} von ${FREE_MOTIFS}</b></div>
       <div class="as-track" style="--p:${left / FREE_MOTIFS}"></div></div>
     <div class="as-bar">
-      <div class="as-bar-l"><span>Gekauft <small>· verfallen nicht</small></span><span>${tok}</span></div>
+      <div class="as-bar-l"><span>Gekauft<small>Verfallen nicht</small></span><b>${tok}</b></div>
       <div class="as-track buy" style="--p:${tok ? 1 : 0}"></div></div>
     <button class="btn primary as-buy" disabled>Credits kaufen</button>
-    <span class="note">Bezahlen kommt bald. 1 Credit = 1 neues Motiv anprobieren, dasselbe Motiv nochmal ist frei.</span>`}</div>`;
+    <span class="note">1 Credit = 1 Motiv</span>`}</div>`;
 }
 function renderPanel() {
   const body = $("#panel .pn-body"); if (!body) return;
@@ -4347,7 +4347,7 @@ function renderPanel() {
   (async () => { // Platz auf dem Gerät
     const n = await idb("flashes", "readonly", st => st.count()).catch(() => null), est = await navigator.storage?.estimate?.().catch(() => null);
     const el = $("#setStore"); if (!el) return;
-    el.textContent = [n != null ? `${n} Flash${n === 1 ? "" : "es"}` : "", est?.usage ? mb(est.usage) : ""].filter(Boolean).join(" · ") || "–";
+    el.textContent = [n != null ? `${n} Flash${n === 1 ? "" : "es"}` : "", est?.usage ? mb(est.usage) : ""].filter(Boolean).join(", ") || "–";
   })();
   if (ACC.user && !PN.fresh) { PN.fresh = true; refreshQuota().then(() => { if (PN.open) renderPanel(); }).catch(() => {}).finally(() => { PN.fresh = false; }); }
 }
