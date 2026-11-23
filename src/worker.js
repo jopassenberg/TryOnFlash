@@ -9,6 +9,9 @@
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    // Nur eine Adresse: die technische workers.dev-Adresse leitet dauerhaft auf stencit.com um
+    // (Google-Anmeldung, Kamera-Erlaubnis und Speicher hängen an der Adresse). Vorschau-Versionen bleiben erreichbar.
+    if (url.hostname === "tryonflash.jopassenberg.workers.dev") return Response.redirect("https://stencit.com" + url.pathname + url.search + url.hash, 301);
     if (url.pathname.startsWith("/hf/")) return modelFile(url);
     if (url.pathname.startsWith("/mp/")) return mediapipeFile(url);
     if (url.pathname === "/api/share" || url.pathname.startsWith("/api/share/")) return share(req, env, url);
