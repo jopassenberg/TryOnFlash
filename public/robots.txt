@@ -1,0 +1,6 @@
+# Startseite, Datenschutz und Impressum dürfen gefunden werden.
+# Geteilte Kunden-Links (/f/…) liefert der Server mit „noindex“ aus; sie bleiben hier erlaubt,
+# damit Chat-Apps (iMessage, WhatsApp, X …) ihre Vorschau laden können.
+User-agent: *
+Allow: /
+Disallow: /api/
