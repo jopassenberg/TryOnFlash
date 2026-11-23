@@ -1,6 +1,8 @@
-# Startseite, Datenschutz und Impressum dürfen gefunden werden.
+# Startseite darf gefunden werden. Impressum und Datenschutz tragen „noindex“ (erreichbar, aber kein Suchergebnis).
 # Geteilte Kunden-Links (/f/…) liefert der Server mit „noindex“ aus; sie bleiben hier erlaubt,
 # damit Chat-Apps (iMessage, WhatsApp, X …) ihre Vorschau laden können.
 User-agent: *
 Allow: /
 Disallow: /api/
+
+Sitemap: https://stencit.com/sitemap.xml

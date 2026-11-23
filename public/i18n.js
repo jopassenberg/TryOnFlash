@@ -206,7 +206,7 @@ function trTree(root) {
 export function startI18n() {
   const lang = getLang(); document.documentElement.lang = lang;
   if (lang !== "en") return lang;
-  document.title = document.title.replace("Studio", "Studio").replace("Flashes – Stencit", "Flashes – Stencit");
+  document.title = document.title.replace("Tattoos vorher anprobieren", "Try on tattoos first");
   trTree(document.body);
   new MutationObserver(ms => { for (const m of ms) {
     if (m.type === "childList") m.addedNodes.forEach(trTree);
