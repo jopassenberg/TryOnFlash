@@ -109,10 +109,12 @@ const EN = {
   "Helligkeit": "Brightness", "Zurücksetzen": "Reset",
   "Schwelle": "Threshold", "Aus": "Off", "Schwelle: dunkle Bereiche schwarz, Rest weiß": "Threshold: dark areas black, rest white",
   "Alles klar": "Got it", "Von der Warteliste austragen": "Leave the waitlist", "Gerade nicht möglich · nochmal versuchen": "Not possible right now · try again",
+  "Dein Artist-Profil und deine Anmeldung": "Your artist profile and sign-in", "Sprache, Gerät und Rechtliches": "Language, device and legal", "Konto und Einstellungen": "Account and settings",
 };
 
 // Texte mit Zahlen/Namen
 const EN_RX = [
+  [/^Mit einem kostenlosen Konto: (\d+) neue Motive pro Monat, Stencils auf allen Geräten und Links zum Teilen\.$/, "With a free account: $1 new designs per month, stencils on all your devices and links to share."],
   [/^(.+) und (\d+) weitere zum Anprobieren · tippe zum Ansehen$/, "$1 and $2 more to try on · tap to view"],
   [/^(.+) und (.+) zum Anprobieren · tippe zum Ansehen$/, "$1 and $2 to try on · tap to view"],
   [/^(.+) zum Anprobieren · tippe zum Ansehen$/, (m, a) => /^\d+ Flash/.test(a) ? null : `${a} to try on · tap to view`],
