@@ -2448,28 +2448,35 @@ function extract(img, P, removeBg) {
 // Background = the brighter of the two brightness clusters (Otsu), averaged locally so uneven light
 // on paper or skin is followed. Each pixel is then un-mixed: how much ink (alpha) over that
 // background explains its colour, and which ink colour it is.
+// Hintergrund entfernen: Papierfarbe vom Bildrand nehmen (Median), dann nur Pixel, die farblich wirklich zu diesem
+// Papier passen, als Hintergrund-Proben zählen (in zwei Durchgängen, damit Schatten und Verläufe auf dem Papier
+// mitgehen). Jedes Pixel bekommt so viel Deckkraft, wie es sich vom Papier an seiner Stelle unterscheidet, und seine
+// Farbe wird vom Papier "entmischt". Hellgraue Schattierung, Gelb oder Pastell bleiben dadurch erhalten (vorher
+// galten alle helleren Töne als Papier und verschwanden fast ganz). Weiß auf weißem Papier ist nicht unterscheidbar.
 function inkFromBackground(c, id) {
   const sm = scaled(c, 240), sw = sm.width, sh = sm.height, sd = sm.getContext("2d").getImageData(0, 0, sw, sh).data, n = sw * sh;
-  const Ls = new Float32Array(n); for (let i = 0; i < n; i++) Ls[i] = (.299 * sd[i * 4] + .587 * sd[i * 4 + 1] + .114 * sd[i * 4 + 2]) / 255;
-  const thr = otsu(Ls) * .97;
-  const wt = new Float32Array(n), wr = new Float32Array(n), wg = new Float32Array(n), wb = new Float32Array(n);
-  let gr = 0, gg = 0, gb = 0, gn = 0;
-  for (let i = 0; i < n; i++) if (Ls[i] > thr) { wt[i] = 1; wr[i] = sd[i * 4] / 255; wg[i] = sd[i * 4 + 1] / 255; wb[i] = sd[i * 4 + 2] / 255; gr += wr[i]; gg += wg[i]; gb += wb[i]; gn++; }
-  gn = gn || 1; const glob = [gr / gn, gg / gn, gb / gn];
+  const px = i => [sd[i * 4] / 255, sd[i * 4 + 1] / 255, sd[i * 4 + 2] / 255], dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+  const edge = []; for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) if (!x || !y || x === sw - 1 || y === sh - 1) edge.push(px(y * sw + x));
+  edge.sort((p, q) => (p[0] + p[1] + p[2]) - (q[0] + q[1] + q[2])); const paper = edge[edge.length >> 1];
   const r = Math.max(4, Math.round(Math.max(sw, sh) * .06));
-  const Bw = blurField(wt, sw, sh, r), Br = blurField(wr, sw, sh, r), Bg = blurField(wg, sw, sh, r), Bb = blurField(wb, sw, sh, r);
-  const bg = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    const f = clamp(Bw[i] * 8, 0, 1), k = Bw[i] > 1e-4 ? 1 / Bw[i] : 0; // few background pixels nearby: lean on the global colour
-    bg[i * 3] = Br[i] * k * f + glob[0] * (1 - f); bg[i * 3 + 1] = Bg[i] * k * f + glob[1] * (1 - f); bg[i * 3 + 2] = Bb[i] * k * f + glob[2] * (1 - f);
-  }
+  const estimate = isBg => { // örtliche Papierfarbe aus den Proben, wo keine sind: Papierfarbe vom Rand
+    const wt = new Float32Array(n), wr = new Float32Array(n), wg = new Float32Array(n), wb = new Float32Array(n);
+    for (let i = 0; i < n; i++) if (isBg(i)) { const p = px(i); wt[i] = 1; wr[i] = p[0]; wg[i] = p[1]; wb[i] = p[2]; }
+    const Bw = blurField(wt, sw, sh, r), Br = blurField(wr, sw, sh, r), Bg = blurField(wg, sw, sh, r), Bb = blurField(wb, sw, sh, r), bg = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const f = clamp(Bw[i] * 8, 0, 1), k = Bw[i] > 1e-4 ? 1 / Bw[i] : 0;
+      bg[i * 3] = Br[i] * k * f + paper[0] * (1 - f); bg[i * 3 + 1] = Bg[i] * k * f + paper[1] * (1 - f); bg[i * 3 + 2] = Bb[i] * k * f + paper[2] * (1 - f); }
+    return bg;
+  };
+  let bg = estimate(i => dist(px(i), paper) < .16);
+  bg = estimate(i => dist(px(i), [bg[i * 3], bg[i * 3 + 1], bg[i * 3 + 2]]) < .08);
   const { width: w, height: h, data: d } = id, fx = sw / w, fy = sh / h;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const sx = clamp((x + .5) * fx - .5, 0, sw - 1.001), sy = clamp((y + .5) * fy - .5, 0, sh - 1.001), x0 = sx | 0, y0 = sy | 0, ax = sx - x0, ay = sy - y0;
     const i00 = (y0 * sw + x0) * 3, i10 = i00 + 3, i01 = i00 + sw * 3, i11 = i01 + 3, o = (y * w + x) * 4;
     const b = [0, 1, 2].map(ch => (bg[i00 + ch] * (1 - ax) + bg[i10 + ch] * ax) * (1 - ay) + (bg[i01 + ch] * (1 - ax) + bg[i11 + ch] * ax) * ay);
     const R = d[o] / 255, G = d[o + 1] / 255, B = d[o + 2] / 255, L = .299 * R + .587 * G + .114 * B, lb = Math.max(.05, .299 * b[0] + .587 * b[1] + .114 * b[2]);
-    const a0 = clamp(Math.max(1 - L / lb, Math.hypot(R - b[0], G - b[1], B - b[2]) / 1.1), 0, 1), a = clamp((a0 - .07) / .5, 0, 1);
+    const a0 = clamp(Math.max(1 - L / lb, Math.hypot(R - b[0], G - b[1], B - b[2]) / 1.1), 0, 1);
+    const a = clamp((a0 - .045) / .955, 0, 1); // nur Papier-Rauschen weg, sonst Deckkraft wie im Bild
     if (a <= 0) { d[o + 3] = 0; continue; }
     const k = 1 / Math.max(a0, .1);
     d[o] = clamp((R - (1 - a0) * b[0]) * k, 0, 1) * 255; d[o + 1] = clamp((G - (1 - a0) * b[1]) * k, 0, 1) * 255; d[o + 2] = clamp((B - (1 - a0) * b[2]) * k, 0, 1) * 255;
