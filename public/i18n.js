@@ -113,10 +113,14 @@ const EN = {
   "Gratis-Credits diesen Monat": "Free credits this month", "Gekaufte Credits": "Purchased credits", "Credits kaufen – bald": "Buy credits – coming soon", "Credits kaufen": "Buy credits", "Deine Gratis-Credits für diesen Monat sind aufgebraucht. Bereits angeprobierte Motive kannst du weiter frei verwenden.": "You’ve used your free credits for this month. Designs you’ve already tried on stay free to use.", "verfügbar": "available", "Unbegrenzt neue Motive": "Unlimited new designs", "Bezahlen kommt bald. 1 Credit = 1 neues Motiv anprobieren, dasselbe Motiv nochmal ist frei.": "Payments are coming soon. 1 credit = try on 1 new design; the same design again is free.", "Name oder Studio hinzufügen": "Add your name or studio", "Nicht angemeldet · Name und Bild erscheinen an geteilten Stencils": "Not signed in · name and picture appear on shared stencils", "Profilbild ändern": "Change profile picture",
   "Name hinzufügen": "Add name", "Nicht angemeldet": "Not signed in", "Name und Bild stehen an geteilten Stencils": "Name and picture appear on shared stencils",
   "Dein Name": "Your name",
+  "Gratis": "Free", "Gekauft": "Purchased", "Neu am": "Refills",
 };
 
 // Texte mit Zahlen/Namen
 const EN_RX = [
+  [/^(\d+) übrig$/, "$1 left"],
+  [/^(\d+) von (\d+)$/, "$1 of $2"],
+  [/^(\d{1,2})\.(\d{1,2})\.$/, (m, d, mo) => new Date(2000, mo - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" })],
   [/^(\d+) von (\d+) Gratis-Credits(?: · (\d+) gekauft)?$/, (m, a, b, t) => `${a} of ${b} free credits${t ? ` · ${t} purchased` : ""}`],
   [/^(\d+) von (\d+) Gratis-Credits diesen Monat$/, "$1 of $2 free credits this month"],
   [/^\+ (\d+) gekauft$/, "+ $1 purchased"],
