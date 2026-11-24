@@ -18,6 +18,7 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: #E9E8E5; color: var(--ink); font: 400 17px/26px "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
   h1, h2, h3, p { margin: 0; font-weight: 400; }
+  h1, h2, h3, .tag { text-wrap: balance; } p { text-wrap: pretty; }
   a { color: inherit; } button { font: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; letter-spacing: inherit; }
 
   /* ===== Textstile ===== */
@@ -91,6 +92,7 @@
   <section class="blk"><h2>Regeln</h2>
     <div class="rules">
       <div class="rule"><b>Eine Schrift, ein Schnitt</b><p>Plus Jakarta Sans Regular für alles, nie kräftiger. Hierarchie nur über Größe, Laufweite und Farbe, nie über Fett oder Kursiv.</p></div>
+      <div class="rule"><b>Text ausbalancieren</b><p>Headlines mit text-wrap: balance (Zeilen etwa gleich lang), Fließtext mit text-wrap: pretty (kein einzelnes Wort allein in der letzten Zeile). Gilt für jede Section.</p></div>
       <div class="rule"><b>Große Schrift = enge Laufweite</b><p>Display −5,5 %, H2 −4,5 %, Fließtext −1 %. Headlines kurz, eine Aussage pro Zeile.</p></div>
       <div class="rule"><b>Rot nur als Fläche</b><p>Rot/Bordeaux-Verlauf für Hero und starke Bänder. Auf Weiß ist Rot nur Akzent (Punkt, Fortschritt), nie für Text.</p></div>
       <div class="rule"><b>Vier Buttons, ein Haupt-CTA pro Fläche</b><p>Weiß, Hellgrau, Dunkelgrau, Schwarz. Auf Rot: Weiß = Haupt, Schwarz = zweite Aktion. Auf Hell: Schwarz = Haupt, Hellgrau = zweite Aktion. Dunkelgrau für dritte Aktionen und auf Bildern.</p></div>
