@@ -3,7 +3,7 @@
 <meta name="robots" content="noindex">
 <title>Stencit Website Styleguide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* ===== Tokens (gleich wie Figma-Variablen „Website“) ===== */
   :root {
@@ -16,8 +16,8 @@
     --ease: cubic-bezier(.22, 1, .36, 1);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: #E9E8E5; color: var(--ink); font: 400 17px/26px "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
-  h1, h2, h3, p { margin: 0; font-weight: 400; }
+  body { margin: 0; background: #E9E8E5; color: var(--ink); font: 500 17px/26px "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p { margin: 0; font-weight: 500; }
   a { color: inherit; } button { font: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; letter-spacing: inherit; }
 
   /* ===== Textstile ===== */
@@ -29,12 +29,12 @@
   .t-lead { font-size: 22px; line-height: 30px; letter-spacing: -.025em; }
   .t-body { font-size: 17px; line-height: 26px; letter-spacing: -.01em; }
   .t-small { font-size: 14px; line-height: 20px; letter-spacing: -.005em; }
-  .t-button { font-size: 16px; line-height: 20px; letter-spacing: -.01em; }
+  .t-button { font-size: 15px; line-height: 20px; letter-spacing: -.01em; }
 
   /* ===== Komponenten ===== */
   .logo { display: inline-flex; color: var(--n-0); } .logo svg { height: 22px; width: auto; display: block; } .logo.schwarz { color: var(--ink); }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: auto; padding: 14px 22px; border-radius: var(--r-voll); text-decoration: none; white-space: nowrap;
-    font-size: 16px; line-height: 20px; transition: transform .4s var(--ease), background-color .2s; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: auto; padding: 12px 20px; border-radius: var(--r-voll); text-decoration: none; white-space: nowrap;
+    font-size: 15px; line-height: 20px; transition: transform .4s var(--ease), background-color .2s; }
   .btn:active { transform: scale(.96); }
   .btn.klein { padding: 9px 16px; font-size: 14px; line-height: 18px; }
   .btn.weiss { background: var(--n-0); color: var(--ink); } .btn.weiss:hover { background: #F2F1EF; }
@@ -53,7 +53,7 @@
   .hero .sub { color: var(--on-dark-dim); }
   .hero .ctas { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-2); }
   .hero .side { max-width: 460px; color: var(--on-dark-dim); }
-  .hero .side b { font-weight: 400; color: var(--n-0); }
+  .hero .side b { font-weight: 500; color: var(--n-0); }
   /* Desktop 1440 × 900 */
   .hero.d { width: 1440px; height: 900px; padding: var(--space-12) var(--space-20) var(--space-20); }
   /* Mobil 390 × 844 */
@@ -67,9 +67,9 @@
   .blk { display: grid; gap: 24px; } .blk > h2 { font-size: 26px; letter-spacing: -.03em; } .blk > p.hint { color: var(--dim); font-size: 14px; margin-top: -14px; }
   .sheet { background: var(--n-0); border-radius: 24px; padding: 32px; }
   .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
-  .sw i { display: block; height: 86px; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--line); } .sw b { display: block; font-weight: 400; font-size: 14px; margin-top: 10px; } .sw small { color: var(--dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .sw i { display: block; height: 86px; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--line); } .sw b { display: block; font-weight: 500; font-size: 14px; margin-top: 10px; } .sw small { color: var(--dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
   .types { display: grid; gap: 22px; } .type { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: baseline; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
-  .type small { color: var(--dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; line-height: 1.6; } .type small b { display: block; font: 400 14px/1.4 "Plus Jakarta Sans"; color: var(--ink); }
+  .type small { color: var(--dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; line-height: 1.6; } .type small b { display: block; font: 500 14px/1.4 "Plus Jakarta Sans"; color: var(--ink); }
   .spaces { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; } .spaces div { display: grid; gap: 8px; justify-items: center; font-size: 12px; color: var(--dim); } .spaces i { display: block; background: var(--accent); border-radius: 4px; width: 24px; }
   .radii { display: flex; gap: 18px; flex-wrap: wrap; } .radii div { display: grid; gap: 8px; justify-items: center; font-size: 12px; color: var(--dim); } .radii i { width: 96px; height: 64px; background: var(--n-150); }
   .stage-red { background: var(--hero-gradient); border-radius: 24px; padding: 32px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
@@ -81,16 +81,16 @@
   .scale { transform-origin: top left; } .wrapd { width: calc(1440px * .7); height: calc(900px * .7); overflow: hidden; border-radius: 18px; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .4); } .wrapd .scale { transform: scale(.7); }
   .wrapm { border-radius: 36px; overflow: hidden; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .4); }
   .rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-  .rule { background: var(--n-0); border-radius: 20px; padding: 22px 24px; display: grid; gap: 6px; } .rule b { font-weight: 400; font-size: 17px; } .rule p { color: var(--dim); font-size: 14px; line-height: 1.5; }
+  .rule { background: var(--n-0); border-radius: 20px; padding: 22px 24px; display: grid; gap: 6px; } .rule b { font-weight: 500; font-size: 17px; } .rule p { color: var(--dim); font-size: 14px; line-height: 1.5; }
 </style></head>
 <body>
 <div class="doc">
   <header><h1 class="title">Website Styleguide</h1>
-    <p class="intro">Gleiche Namen und Werte wie in Figma (Datei „Stencit“, Seite „Website Styleguide“, Variablen „Website“, Textstile „Website/…“). Aufbauend auf dem App-Designsystem: Plus Jakarta Sans Regular, Rot und Bordeaux, runde Knöpfe ohne Glow, weißer Grund.</p></header>
+    <p class="intro">Gleiche Namen und Werte wie in Figma (Datei „Stencit“, Seite „Website Styleguide“, Variablen „Website“, Textstile „Website/…“). Aufbauend auf dem App-Designsystem: Plus Jakarta Sans Medium, Rot und Bordeaux, runde Knöpfe ohne Glow, weißer Grund.</p></header>
 
   <section class="blk"><h2>Regeln</h2>
     <div class="rules">
-      <div class="rule"><b>Eine Schrift, ein Schnitt</b><p>Plus Jakarta Sans Regular für alles. Hierarchie nur über Größe, Laufweite und Farbe, nie über Fett oder Kursiv.</p></div>
+      <div class="rule"><b>Eine Schrift, ein Schnitt</b><p>Plus Jakarta Sans Medium (500) für alles. Hierarchie nur über Größe, Laufweite und Farbe, nie über Fett oder Kursiv.</p></div>
       <div class="rule"><b>Große Schrift = enge Laufweite</b><p>Display −5,5 %, H2 −4,5 %, Fließtext −1 %. Headlines kurz, eine Aussage pro Zeile.</p></div>
       <div class="rule"><b>Rot nur als Fläche</b><p>Rot/Bordeaux-Verlauf für Hero und starke Bänder. Auf Weiß ist Rot nur Akzent (Punkt, Fortschritt), nie für Text.</p></div>
       <div class="rule"><b>Vier Buttons, ein Haupt-CTA pro Fläche</b><p>Weiß, Hellgrau, Dunkelgrau, Schwarz. Auf Rot: Weiß = Haupt, Schwarz = zweite Aktion. Auf Hell: Schwarz = Haupt, Hellgrau = zweite Aktion. Dunkelgrau für dritte Aktionen und auf Bildern.</p></div>
