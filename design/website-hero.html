@@ -73,17 +73,32 @@
     .hero .sub { font-size: 17px; line-height: 25px; }
   }
   .hero h1 span { display: block; white-space: nowrap; }
-  /* ===== Section 2: Definition (GEO) ===== */
+  /* ===== Section 2: Manifest (wie Figma) ===== */
   .tag { display: inline-block; font-size: 14px; line-height: 18px; padding: 7px 14px; border-radius: var(--r-voll); background: var(--n-150); color: var(--ink); }
-  .def { background: var(--n-0); padding: var(--space-40) var(--space-20); display: grid; gap: var(--space-8); justify-items: start; }
-  .def p { max-width: 1120px; font-size: clamp(28px, 3.1vw, 44px); line-height: 1.2; letter-spacing: -.035em; color: var(--dim); }
-  .def p b { font-weight: 400; color: var(--ink); }
-  @media (max-width: 900px) { .def { padding: var(--space-20) var(--space-6); gap: var(--space-6); } .def p { font-size: 24px; line-height: 31px; letter-spacing: -.025em; } }
-  /* ===== Section 3: Manifest ===== */
-  .manifest { background: var(--n-100); padding: var(--space-40) var(--space-20); display: grid; gap: var(--space-8); justify-items: center; text-align: center; }
-  .manifest h2 { font-size: clamp(50px, 6.6vw, 96px); line-height: .96; letter-spacing: -.055em; color: var(--ink); }
-  .manifest p { max-width: 560px; font-size: 22px; line-height: 30px; letter-spacing: -.015em; color: var(--dim); }
-  @media (max-width: 900px) { .manifest { padding: var(--space-30) var(--space-6); gap: var(--space-6); } .manifest h2 { font-size: 50px; line-height: 50px; letter-spacing: -.05em; } .manifest p { font-size: 17px; line-height: 25px; } }
+  .manifest { background: var(--n-0); padding: var(--space-40) var(--space-20); display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(40px, 8vw, 140px); align-items: start; }
+  .manifest .head { display: grid; gap: var(--space-6); justify-items: start; }
+  .manifest h2 { font-size: clamp(40px, 5vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
+  .manifest .text { display: grid; gap: var(--space-6); padding-top: var(--space-12); }
+  .manifest .text p { font-size: 17px; line-height: 26px; color: var(--dim); }
+  .manifest .text p.def { font-size: 22px; line-height: 30px; letter-spacing: -.015em; color: var(--ink); }
+  .shots { justify-self: stretch; position: relative; height: clamp(300px, 34vw, 440px); margin-top: 56px; }
+  .shot { position: absolute; border-radius: 26px; overflow: hidden; box-shadow: 0 30px 60px -30px oklch(20% .05 20 / .45); }
+  .shot.a { left: 0; top: 0; width: min(62%, 420px); aspect-ratio: 4 / 3; background: #161515; }
+  .shot.b { left: min(40%, 270px); top: 30%; width: min(62%, 420px); aspect-ratio: 4 / 3; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 30px 60px -30px oklch(20% .05 20 / .45); }
+  /* Mini-Ansichten aus der App */
+  .ui-sum { position: absolute; inset: 0; padding: 26px; color: #fff; display: grid; align-content: start; gap: 14px; background: linear-gradient(150deg, #2a1418, #120f10 60%); }
+  .ui-sum .big { font-size: clamp(30px, 3.4vw, 42px); letter-spacing: -.04em; line-height: 1; } .ui-sum .small { color: oklch(100% 0 0 / .55); font-size: 14px; }
+  .ui-row { display: flex; justify-content: space-between; font-size: 14px; padding-top: 12px; border-top: 1px solid oklch(100% 0 0 / .1); } .ui-row span:last-child { color: oklch(100% 0 0 / .6); }
+  .ui-sheet { position: absolute; inset: 0; padding: 22px; display: grid; grid-template-rows: auto 1fr auto; gap: 14px; font-size: 13px; color: var(--dim); }
+  .ui-sheet .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: center; justify-items: center; border: 1px dashed oklch(19% .003 75 / .18); border-radius: 12px; padding: 14px; }
+  .ui-sheet .grid i { width: 58%; aspect-ratio: 1; display: block; color: var(--ink); }
+  .ui-sheet .ruler { white-space: nowrap; display: flex; align-items: center; gap: 8px; } .ui-sheet .ruler i { display: block; height: 6px; width: 72px; border: 1.5px solid var(--ink); border-top: 0; }
+  @media (max-width: 900px) {
+    .manifest { grid-template-columns: 1fr; padding: var(--space-20) var(--space-6); gap: var(--space-12); }
+    .manifest h2 { font-size: 38px; line-height: 40px; }
+    .manifest .text { padding-top: 0; } .manifest .text p.def { font-size: 19px; line-height: 27px; }
+    .shots { height: 330px; margin-top: var(--space-8); } .shot.a, .shot.b { width: 78%; } .shot.b { left: 22%; top: 42%; }
+  }
   .next { padding: 120px 24px; color: var(--dim); }
 </style></head>
 <body>
@@ -94,14 +109,22 @@
       <div class="ctas"><a class="btn weiss" href="#">Jetzt ausprobieren</a><a class="btn schwarz" href="#"><svg class="ic" viewBox="0 0 384 512" aria-hidden="true"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>App Store</a></div></div>
   </div>
 </header>
-<section class="def" aria-label="Was ist Stencit?">
-  <span class="tag">Was ist Stencit?</span>
-  <p><b>Stencit ist eine Online-Tattoo-Vorschau.</b> Du legst dein Motiv auf ein Foto deiner Haut und findest die passende Größe und Platzierung. Danach erstellst du daraus ein Stencil in Originalgröße und bekommst eine Übersicht über alles, was für das Tattoo gebraucht wird.</p>
-</section>
-<section class="manifest">
-  <span class="tag" style="background:var(--n-0)">Unser Gedanke</span>
-  <h2>Für immer verdient Zeit.</h2>
-  <p>Ein Tattoo bleibt ein Leben lang. Nimm dir vorher die Zeit, es auf deiner Haut zu sehen, in deiner Größe und an deiner Stelle.</p>
+<section class="manifest" aria-label="Was ist Stencit?">
+  <div class="head">
+    <span class="tag">Was ist Stencit?</span>
+    <h2>Für immer verdient Zeit.</h2>
+        <div class="shots" aria-hidden="true">
+          <div class="shot a"><div class="ui-sum"><span class="small">Zusammenfassung</span><span class="big">8,4 × 6,1 cm</span><span class="small">Unterarm</span>
+            <div class="ui-row"><span>Linien</span><span>3RL · 0,35 mm</span></div><div class="ui-row"><span>Flächen</span><span>9M1</span></div><div class="ui-row"><span>Farbe</span><span>Schwarz</span></div></div></div>
+          <div class="shot b"><div class="ui-sheet"><span>Flash-Sheet · A4 · Originalgröße</span>
+            <div class="grid"><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i></div>
+            <div class="ruler"><i></i>5 cm · mit 100 % drucken</div></div></div>
+        </div>
+  </div>
+  <div class="text">
+    <p class="def">Stencit ist eine Online-Tattoo-Vorschau. Du legst dein Motiv auf ein Foto deiner Haut und findest die passende Größe und Platzierung. Danach erstellst du daraus ein Stencil in Originalgröße und bekommst eine Übersicht über alles, was für das Tattoo gebraucht wird.</p>
+    <p>Ein Tattoo trägst du ein Leben lang. Deshalb verdient es mehr als einen schnellen Entschluss im Studio. Mit Stencit planst du in Ruhe, probierst Stellen und Größen aus und gehst mit einem klaren Bild in deinen Termin.</p>
+  </div>
 </section>
 <p class="next">Hier geht es später mit der nächsten Section weiter.</p>
 </body></html>
