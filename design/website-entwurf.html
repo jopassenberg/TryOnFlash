@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tattoo Vorschau online – Tattoo virtuell anprobieren | Stencit</title>
+<meta name="description" content="Stencit ist eine Online-Tattoo-Vorschau: Motiv auf ein Foto deiner Haut legen, Größe und Platzierung finden, Stencil in Originalgröße erstellen. Kostenlos im Browser.">
+<link rel="canonical" href="https://stencit.com/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Stencit"><meta property="og:url" content="https://stencit.com/">
+<meta property="og:title" content="Stencit – Erst sehen. Dann stechen."><meta property="og:description" content="Die Tattoo-Vorschau für deine Haut. Motiv anprobieren, Größe und Platzierung finden, Stencil erstellen.">
+<meta property="og:image" content="https://stencit.com/img/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Stencit">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/img/favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#730F26">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[
+{"@type":"WebSite","@id":"https://stencit.com/#website","name":"Stencit","alternateName":"Stencit Studio","url":"https://stencit.com/","inLanguage":"de"},
+{"@type":"Organization","@id":"https://stencit.com/#org","name":"Stencit","url":"https://stencit.com/","logo":"https://stencit.com/img/icon-512.png","email":"studio@stencit.com"},
+{"@type":"SoftwareApplication","name":"Stencit","url":"https://stencit.com/studio","applicationCategory":"DesignApplication","operatingSystem":"Web","description":"Online-Tattoo-Vorschau: Motiv auf ein Foto der Haut legen, Größe und Platzierung finden, Stencil in Originalgröße erstellen.","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR","description":"3 Gratis-Credits pro Monat"},"publisher":{"@id":"https://stencit.com/#org"}},
+{"@type":"FAQPage","mainEntity":[]}
+]}</script>
+<style>
+  :root { --ink: oklch(19% .003 75); --n-0: #fff; --n-100: oklch(97% .003 75); --n-150: oklch(94% .003 75); --dim: oklch(48% .005 75); --dim2: oklch(62% .005 75);
+    --accent: #DB1A1D; --bord: #730F26; --line: oklch(19% .003 75 / .1); --ease: cubic-bezier(.22, 1, .36, 1); --pad: clamp(20px, 5.5vw, 80px); --max: 1280px; }
+  * { box-sizing: border-box; } html { scroll-behavior: smooth; overscroll-behavior: none; background: #0e0d0d; }
+  body { margin: 0; background: var(--n-0); color: var(--ink); font: 400 17px/1.5 "Plus Jakarta Sans", system-ui, -apple-system, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { color: inherit; } button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; letter-spacing: inherit; }
+  h1, h2, h3, p { margin: 0; font-weight: 400; } h2 { text-wrap: balance; } p { text-wrap: pretty; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; padding: 0 26px; border-radius: 999px; font-size: 16px; text-decoration: none; white-space: nowrap;
+    transition: transform .4s var(--ease), background-color .2s, color .2s; } .btn:active { transform: scale(.96); }
+  .btn-white { background: #fff; color: var(--ink); } .btn-white:hover { background: oklch(95% .01 30); }
+  .btn-dark { background: var(--ink); color: #fff; } .btn-dark:hover { background: oklch(28% .003 75); }
+  .btn-glass { background: oklch(10% .02 20 / .55); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); } .btn-glass:hover { background: oklch(10% .02 20 / .75); }
+  .btn-soft { background: var(--n-150); color: var(--ink); } .btn-soft:hover { background: oklch(91% .003 75); }
+  .btn-sm { height: 40px; padding: 0 18px; font-size: 15px; }
+  .logo { height: 26px; width: auto; display: block; }
+
+  /* Hero */
+  .hero { position: relative; min-height: 100svh; color: #fff; background: linear-gradient(180deg, #5a0b1d 0%, var(--bord) 22%, #b8161d 70%, var(--accent) 100%); overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+  .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18; mix-blend-mode: soft-light;
+    background: radial-gradient(60% 50% at 80% 20%, #fff 0, transparent 70%), radial-gradient(50% 40% at 10% 90%, #000 0, transparent 70%); }
+  .hero > .wrap { width: 100%; }
+  .nav { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding-top: max(28px, env(safe-area-inset-top)); }
+  .nav a.home { color: #fff; display: inline-flex; }
+  .hero-in { position: relative; z-index: 2; align-self: end; display: grid; grid-template-columns: 1.45fr 1fr; gap: 48px; align-items: end; padding-bottom: clamp(48px, 9vh, 96px); }
+  .hero h1 { font-size: clamp(50px, 7.4vw, 112px); line-height: .94; letter-spacing: -.055em; }
+  .hero h1 .ln { display: block; white-space: nowrap; }
+  .hero .sub { margin-top: 22px; font-size: clamp(19px, 1.9vw, 26px); letter-spacing: -.025em; color: oklch(100% 0 0 / .82); }
+  .hero .ctas { margin-top: 32px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .hero .side { font-size: 17px; line-height: 1.55; color: oklch(100% 0 0 / .82); max-width: 470px; justify-self: end; }
+  .hero .side b { font-weight: 400; color: #fff; }
+
+  /* Abschnitte */
+  section { position: relative; }
+  .sec { padding: clamp(80px, 12vw, 160px) 0; }
+  .eyebrow { font-size: 14px; color: var(--dim); margin-bottom: 18px; }
+  .h2 { font-size: clamp(36px, 4.4vw, 60px); line-height: 1.02; letter-spacing: -.045em; }
+  .lead { font-size: 18px; line-height: 1.55; color: var(--dim); }
+
+  /* Definition + Manifest */
+  .manifest { display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(40px, 8vw, 140px); align-items: start; }
+  .manifest .text { display: grid; gap: 22px; padding-top: 10px; } .manifest .text p:first-child { color: var(--ink); font-size: 20px; letter-spacing: -.02em; }
+  .shots { position: relative; height: clamp(300px, 34vw, 440px); margin-top: 56px; }
+  .shot { position: absolute; border-radius: 26px; overflow: hidden; box-shadow: 0 30px 60px -30px oklch(20% .05 20 / .45); }
+  .shot.a { left: 0; top: 0; width: min(62%, 420px); aspect-ratio: 4 / 3; background: #161515; }
+  .shot.b { left: min(40%, 270px); top: 30%; width: min(62%, 420px); aspect-ratio: 4 / 3; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 30px 60px -30px oklch(20% .05 20 / .45); }
+  /* Mini-Ansichten aus der App */
+  .ui-sum { position: absolute; inset: 0; padding: 26px; color: #fff; display: grid; align-content: start; gap: 14px; background: linear-gradient(150deg, #2a1418, #120f10 60%); }
+  .ui-sum .big { font-size: clamp(30px, 3.4vw, 42px); letter-spacing: -.04em; line-height: 1; } .ui-sum .small { color: oklch(100% 0 0 / .55); font-size: 14px; }
+  .ui-row { display: flex; justify-content: space-between; font-size: 14px; padding-top: 12px; border-top: 1px solid oklch(100% 0 0 / .1); } .ui-row span:last-child { color: oklch(100% 0 0 / .6); }
+  .ui-sheet { position: absolute; inset: 0; padding: 22px; display: grid; grid-template-rows: auto 1fr auto; gap: 14px; font-size: 13px; color: var(--dim); }
+  .ui-sheet .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: center; justify-items: center; border: 1px dashed oklch(19% .003 75 / .18); border-radius: 12px; padding: 14px; }
+  .ui-sheet .grid i { width: 58%; aspect-ratio: 1; display: block; color: var(--ink); }
+  .ui-sheet .ruler { display: flex; align-items: center; gap: 8px; } .ui-sheet .ruler i { display: block; height: 6px; width: 72px; border: 1.5px solid var(--ink); border-top: 0; }
+
+  /* Funktionen */
+  .fn-head { text-align: center; max-width: 720px; margin: 0 auto; display: grid; justify-items: center; gap: 26px; }
+  .switch { display: inline-flex; padding: 5px; border-radius: 999px; background: var(--n-150); position: relative; }
+  .switch button { position: relative; z-index: 1; height: 48px; padding: 0 24px; border-radius: 999px; font-size: 16px; color: var(--dim); transition: color .25s; }
+  .switch button[aria-selected="true"] { color: var(--ink); }
+  .switch .thumb { position: absolute; z-index: 0; top: 5px; bottom: 5px; border-radius: 999px; background: #fff; box-shadow: 0 1px 4px oklch(19% .003 75 / .14); transition: left .45s var(--ease), width .45s var(--ease); }
+  .panel[hidden] { display: none; }
+  .panel-intro { text-align: center; margin: 46px auto 0; max-width: 620px; display: grid; gap: 10px; justify-items: center; }
+  .panel-intro h3 { font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -.04em; line-height: 1.05; }
+  .rail { margin-top: 56px; display: flex; gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 30px max(var(--pad), calc((100vw - var(--max)) / 2 + var(--pad))) 40px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .rail::-webkit-scrollbar { display: none; }
+  .card { flex: none; width: clamp(270px, 28vw, 360px); scroll-snap-align: center; border-radius: 26px; overflow: hidden; background: var(--n-100); transform: rotate(var(--r, 0deg)) translateY(var(--y, 0)); transition: transform .6s var(--ease); }
+  .card:nth-child(4n+1) { --r: -3deg; --y: 18px; } .card:nth-child(4n+2) { --r: 1.5deg; } .card:nth-child(4n+3) { --r: -1deg; --y: 10px; } .card:nth-child(4n+4) { --r: 2.5deg; --y: 22px; }
+  .card:hover { --r: 0deg; --y: 0; }
+  .card .vis { aspect-ratio: 4 / 3; position: relative; display: grid; place-items: center; color: #fff; background: linear-gradient(160deg, var(--bord), var(--accent)); overflow: hidden; }
+  .card .vis .n { position: absolute; left: 22px; top: 18px; font-size: 15px; color: oklch(100% 0 0 / .7); }
+  .card .vis svg { width: 34%; height: auto; }
+  .card.art .vis { background: linear-gradient(160deg, #1b1717, #3a2a2c); }
+  .card .tx { padding: 24px 24px 28px; display: grid; gap: 10px; } .card h4 { margin: 0; font-weight: 400; font-size: 22px; letter-spacing: -.03em; } .card p { font-size: 16px; color: var(--dim); }
+  .rail-nav { display: flex; justify-content: center; gap: 10px; }
+  .arrow { width: 52px; height: 52px; border-radius: 50%; background: var(--n-150); display: grid; place-items: center; transition: background-color .2s, transform .4s var(--ease); } .arrow:hover { background: oklch(91% .003 75); } .arrow:active { transform: scale(.94); }
+  .arrow svg { width: 20px; height: 20px; }
+  .fn-cta { margin-top: 40px; text-align: center; display: grid; justify-items: center; gap: 22px; } .fn-cta p { max-width: 520px; color: var(--dim); }
+
+  /* Gebaut mit Artists (erscheint erst mit echten Zitaten) */
+  .proof { background: linear-gradient(180deg, var(--bord), var(--accent)); color: #fff; }
+
+  /* Preise */
+  .prices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 46px; }
+  .price { border-radius: 28px; padding: 32px; background: var(--n-100); display: grid; gap: 18px; align-content: start; }
+  .price.dark { background: var(--ink); color: #fff; } .price.dark .lead, .price.dark li { color: oklch(100% 0 0 / .65); }
+  .price .tag { justify-self: start; font-size: 13px; padding: 5px 12px; border-radius: 999px; background: #fff; color: var(--ink); } .price.dark .tag { background: oklch(100% 0 0 / .12); color: #fff; }
+  .price .amt { font-size: clamp(40px, 4.4vw, 56px); letter-spacing: -.05em; line-height: 1; } .price .amt small { font-size: 17px; letter-spacing: -.01em; color: var(--dim); margin-left: 6px; }
+  .price ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; } .price li { display: flex; gap: 10px; color: var(--dim); font-size: 16px; }
+  .price li::before { content: ""; flex: none; width: 7px; height: 7px; margin-top: 9px; border-radius: 50%; background: var(--accent); }
+  .price .btn { justify-self: start; margin-top: 6px; }
+  .price-note { margin-top: 22px; color: var(--dim); font-size: 14px; text-align: center; }
+
+  /* FAQ + Fragen */
+  .faq { display: grid; grid-template-columns: 1fr 1.15fr; gap: clamp(40px, 7vw, 110px); align-items: start; }
+  .ask { display: grid; gap: 20px; position: sticky; top: 40px; } .ask .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .qa { border-top: 1px solid var(--line); } .qa:last-child { border-bottom: 1px solid var(--line); }
+  .qa summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 26px 0; font-size: 20px; letter-spacing: -.02em; }
+  .qa summary::-webkit-details-marker { display: none; }
+  .qa summary i { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--n-150); display: grid; place-items: center; transition: transform .4s var(--ease); }
+  .qa summary i svg { width: 16px; height: 16px; } .qa[open] summary i { transform: rotate(45deg); }
+  .qa .ans { padding: 0 56px 28px 0; color: var(--dim); }
+
+  /* Feedback-Formular */
+  .form { margin-top: 70px; border-radius: 30px; background: var(--ink); color: #fff; padding: clamp(28px, 4vw, 48px); display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; }
+  .form h3 { font-size: clamp(30px, 3.2vw, 42px); letter-spacing: -.04em; line-height: 1.05; } .form .lead { color: oklch(100% 0 0 / .6); margin-top: 14px; }
+  .fields { display: grid; gap: 12px; }
+  .kinds { display: flex; flex-wrap: wrap; gap: 8px; } .kinds label { position: relative; } .kinds input { position: absolute; opacity: 0; pointer-events: none; }
+  .kinds span { display: inline-flex; height: 40px; align-items: center; padding: 0 16px; border-radius: 999px; background: oklch(100% 0 0 / .08); color: oklch(100% 0 0 / .75); font-size: 15px; cursor: pointer; transition: background-color .2s, color .2s; }
+  .kinds input:checked + span { background: #fff; color: var(--ink); } .kinds input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
+  .fields textarea, .fields input[type=email] { width: 100%; border: 0; border-radius: 18px; background: oklch(100% 0 0 / .08); color: #fff; font: inherit; font-size: 16px; padding: 16px 18px; outline: none; }
+  .fields textarea { min-height: 130px; resize: vertical; } .fields textarea::placeholder, .fields input::placeholder { color: oklch(100% 0 0 / .4); }
+  .fields textarea:focus, .fields input:focus { background: oklch(100% 0 0 / .12); }
+  .fields .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+  .fields .note { font-size: 13px; color: oklch(100% 0 0 / .5); max-width: 380px; } .fields .note a { color: oklch(100% 0 0 / .75); }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .sent { font-size: 15px; color: #fff; }
+
+  /* Abschluss */
+  .final { text-align: center; display: grid; justify-items: center; gap: 28px; }
+  .final .h2 { max-width: 900px; }
+
+  /* Fußzeile */
+  .ft { background: #0e0d0d; color: #fff; }
+  .ft-in { max-width: var(--max); margin: 0 auto; padding: 56px var(--pad) max(32px, env(safe-area-inset-bottom)); display: grid; gap: 40px; }
+  .ft-top { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: flex-start; } .ft .logo { height: 24px; }
+  .ft-links { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 -12px; }
+  .ft-links a { padding: 7px 12px; border-radius: 999px; color: oklch(100% 0 0 / .7); text-decoration: none; transition: color .2s, background-color .2s; } .ft-links a:hover { color: #fff; background: oklch(100% 0 0 / .09); }
+  .ft-bottom { padding-top: 20px; border-top: 1px solid oklch(100% 0 0 / .1); font-size: 13px; color: oklch(100% 0 0 / .45); }
+
+  /* Einblenden beim Scrollen */
+  .rv { opacity: 0; transform: translateY(24px); transition: opacity .9s var(--ease), transform .9s var(--ease); } .rv.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; } * { transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+  @media (max-width: 900px) {
+    .hero-in { grid-template-columns: 1fr; gap: 28px; } .hero .side { justify-self: start; }
+    .manifest, .faq, .form { grid-template-columns: 1fr; } .ask { position: static; }
+    .prices { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    body { font-size: 16px; } .btn { height: 50px; padding: 0 22px; } .hero .ctas .btn { flex: 1; }
+    .switch button { height: 44px; padding: 0 18px; font-size: 15px; }
+    .card { width: 78vw; } .qa summary { font-size: 18px; } .qa .ans { padding-right: 0; }
+    .shot.a, .shot.b { width: 78%; } .shot.b { left: 22%; top: 24%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero" id="top">
+  <div class="wrap nav">
+    <a class="home" href="/" aria-label="Stencit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" class="logo" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a>
+    <a class="btn btn-glass btn-sm" href="/studio">Zum Studio</a>
+  </div>
+  <div class="wrap hero-in">
+    <div>
+      <h1><span class="ln">Erst sehen.</span> <span class="ln">Dann stechen.</span></h1>
+      <p class="sub">Die Tattoo-Vorschau für deine Haut.</p>
+      <div class="ctas"><a class="btn btn-white" href="/studio">Vorschau starten</a><a class="btn btn-glass" href="#funktionen">So geht's</a></div>
+    </div>
+    <p class="side">Mit Stencit planst du Motiv, Größe und Platzierung in Ruhe, siehst vorher, wie es wirkt, und startest mit einem guten Gefühl in deinen Termin. <b>Und Artists stechen, statt zu erklären.</b></p>
+  </div>
+</header>
+
+<main>
+  <section class="sec" id="was-ist-stencit">
+    <div class="wrap manifest">
+      <div>
+        <p class="eyebrow">Für immer verdient Zeit.</p>
+        <h2 class="h2 rv">Ein Tattoo ist für immer. Die Entscheidung sollte sich auch so anfühlen.</h2>
+        <div class="shots rv" aria-hidden="true">
+          <div class="shot a"><div class="ui-sum"><span class="small">Zusammenfassung</span><span class="big">8,4 × 6,1 cm</span><span class="small">Unterarm</span>
+            <div class="ui-row"><span>Linien</span><span>3RL · 0,35 mm</span></div><div class="ui-row"><span>Flächen</span><span>9M1</span></div><div class="ui-row"><span>Farbe</span><span>Schwarz</span></div></div></div>
+          <div class="shot b"><div class="ui-sheet"><span>Flash-Sheet · A4 · Originalgröße</span>
+            <div class="grid"><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i></div>
+            <div class="ruler"><i></i>5 cm · mit 100 % drucken</div></div></div>
+        </div>
+      </div>
+      <div class="text rv">
+        <p>Stencit ist eine Online-Tattoo-Vorschau. Du legst dein Motiv auf ein Foto deiner Haut und findest die passende Größe und Platzierung. Danach erstellst du daraus ein Stencil in Originalgröße und bekommst eine Übersicht über alles, was für das Tattoo gebraucht wird.</p>
+        <p class="lead">Ein Tattoo trägst du ein Leben lang. Deshalb verdient es mehr als einen schnellen Entschluss im Studio. Mit Stencit planst du in Ruhe, probierst Stellen und Größen aus und gehst mit einem klaren Bild in deinen Termin.</p>
+        <p class="lead">Dein Foto bleibt dabei auf deinem Gerät. Die Vorschau entsteht direkt in deinem Browser.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="funktionen" style="padding-top:0">
+    <div class="wrap fn-head">
+      <p class="eyebrow" style="margin:0">Wofür bist du hier?</p>
+      <h2 class="h2 rv">Stencit hilft dir, egal ob du ein Tattoo planst oder selbst stichst.</h2>
+      <div class="switch" role="tablist" aria-label="Zielgruppe"><span class="thumb"></span>
+        <button role="tab" id="t-you" aria-controls="p-you" aria-selected="true">Für dein Tattoo</button>
+        <button role="tab" id="t-art" aria-controls="p-art" aria-selected="false" tabindex="-1">Für Artists</button>
+      </div>
+    </div>
+
+    <div class="panel" id="p-you" role="tabpanel" aria-labelledby="t-you">
+      <div class="wrap panel-intro"><h3>Probier's an, bevor es bleibt.</h3><p class="lead">Teste dein Motiv auf deiner Haut und geh mit einem klaren Plan zu deinem Termin.</p></div>
+      <div class="rail" tabindex="0" aria-label="Funktionen für dein Tattoo">
+        <article class="card"><div class="vis"><span class="n">01</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></svg></div><div class="tx"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut und sieh direkt, wie es wirkt.</p></div></article>
+        <article class="card"><div class="vis"><span class="n">02</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M11.41 26.59L7.83 23 28 23 28 21 7.83 21 11.41 17.41 10 16 4 22 10 28 11.41 26.59zM28 10L22 4 20.59 5.41 24.17 9 4 9 4 11 24.17 11 20.59 14.59 22 16 28 10z"/></svg></div><div class="tx"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></article>
+        <article class="card"><div class="vis"><span class="n">03</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29.41,21.67,10.34,2.58a2,2,0,0,0-2.83,0L2.59,7.51a2,2,0,0,0,0,2.82L21.66,29.42a2,2,0,0,0,2.83,0l4.92-4.93A2,2,0,0,0,29.41,21.67ZM23.07,28,4,8.92,8.92,4l3.54,3.54-2.13,2.12L11.74,11l2.13-2.12,4.25,4.24-2.13,2.13,1.42,1.41,2.12-2.12,4.25,4.24-2.13,2.13L23,22.61l2.12-2.13L28,23.07Z"/></svg></div><div class="tx"><h4>Größe vergleichen</h4><p>Sieh in Zentimetern, wie groß dein Tattoo wirklich wird, auf der Rundung deiner Haut.</p></div></article>
+        <article class="card"><div class="vis"><span class="n">04</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29.25,6.76a6,6,0,0,0-8.5,0l1.42,1.42a4,4,0,1,1,5.67,5.67l-8,8a4,4,0,1,1-5.67-5.66l1.41-1.42-1.41-1.42-1.42,1.42a6,6,0,0,0,0,8.5A6,6,0,0,0,17,25a6,6,0,0,0,4.27-1.76l8-8A6,6,0,0,0,29.25,6.76Z"/><path d="M4.19,24.82a4,4,0,0,1,0-5.67l8-8a4,4,0,0,1,5.67,0A3.94,3.94,0,0,1,19,14a4,4,0,0,1-1.17,2.85L15.71,19l1.42,1.42,2.12-2.12a6,6,0,0,0-8.51-8.51l-8,8a6,6,0,0,0,0,8.51A6,6,0,0,0,7,28a6.07,6.07,0,0,0,4.28-1.76L9.86,24.82A4,4,0,0,1,4.19,24.82Z"/></svg></div><div class="tx"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></article>
+      </div>
+    </div>
+    <div class="panel" id="p-art" role="tabpanel" aria-labelledby="t-art" hidden>
+      <div class="wrap panel-intro"><h3>Weniger erklären. Mehr stechen.</h3><p class="lead">Plane jedes Tattoo gemeinsam mit deinen Kunden und starte vorbereitet in die Session.</p></div>
+      <div class="rail" tabindex="0" aria-label="Funktionen für Artists">
+        <article class="card art"><div class="vis"><span class="n">01</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29,26H3a1,1,0,0,1-1-1V8A1,1,0,0,1,3,7H9.46l1.71-2.55A1,1,0,0,1,12,4h8a1,1,0,0,1,.83.45L22.54,7H29a1,1,0,0,1,1,1V25A1,1,0,0,1,29,26ZM4,24H28V9H22a1,1,0,0,1-.83-.45L19.46,6H12.54L10.83,8.55A1,1,0,0,1,10,9H4Z"/><path d="M16,22a6,6,0,1,1,6-6A6,6,0,0,1,16,22Zm0-10a4,4,0,1,0,4,4A4,4,0,0,0,16,12Z"/></svg></div><div class="tx"><h4>Kundenvorschau</h4><p>Zeig deinen Kunden ihr Motiv auf ihrer Haut, bevor ihr den Termin festmacht.</p></div></article>
+        <article class="card art"><div class="vis"><span class="n">02</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M28,9H25V3H7V9H4a2,2,0,0,0-2,2V21a2,2,0,0,0,2,2H7v6H25V23h3a2,2,0,0,0,2-2V11A2,2,0,0,0,28,9ZM9,5H23V9H9ZM23,27H9V17H23Zm5-6H25V15H7v6H4V11H28Z"/></svg></div><div class="tx"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv als Flash-Sheet in exakter Größe, gespiegelt, wenn du es brauchst.</p></div></article>
+        <article class="card art"><div class="vis"><span class="n">03</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M25.7,9.3l-7-7A.91.91,0,0,0,18,2H8A2,2,0,0,0,6,4V28a2,2,0,0,0,2,2H24a2,2,0,0,0,2-2V10A.91.91,0,0,0,25.7,9.3ZM18,4.4,23.6,10H18ZM24,28H8V4h8v6a2,2,0,0,0,2,2h6Z"/></svg></div><div class="tx"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen auf einen Blick, damit du vorbereitet anfängst.</p></div></article>
+        <article class="card art"><div class="vis"><span class="n">04</span><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29.25,6.76a6,6,0,0,0-8.5,0l1.42,1.42a4,4,0,1,1,5.67,5.67l-8,8a4,4,0,1,1-5.67-5.66l1.41-1.42-1.41-1.42-1.42,1.42a6,6,0,0,0,0,8.5A6,6,0,0,0,17,25a6,6,0,0,0,4.27-1.76l8-8A6,6,0,0,0,29.25,6.76Z"/><path d="M4.19,24.82a4,4,0,0,1,0-5.67l8-8a4,4,0,0,1,5.67,0A3.94,3.94,0,0,1,19,14a4,4,0,0,1-1.17,2.85L15.71,19l1.42,1.42,2.12-2.12a6,6,0,0,0-8.51-8.51l-8,8a6,6,0,0,0,0,8.51A6,6,0,0,0,7,28a6.07,6.07,0,0,0,4.28-1.76L9.86,24.82A4,4,0,0,1,4.19,24.82Z"/></svg></div><div class="tx"><h4>Vorschau-Links zur Freigabe</h4><p>Schick Entwürfe per Link. Dein Kunde sieht sie auf der eigenen Haut und gibt sie frei.</p></div></article>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="rail-nav"><button class="arrow" data-dir="-1" aria-label="Zurück"><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></svg></button><button class="arrow" data-dir="1" aria-label="Weiter"><svg style="transform:scaleX(-1)" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M14 26L15.41 24.59 7.83 17 28 17 28 15 7.83 15 15.41 7.41 14 6 4 16 14 26z"/></svg></button></div>
+      <div class="fn-cta"><a class="btn btn-dark" href="/studio">Vorschau starten</a></div>
+    </div>
+  </section>
+
+  <!-- Gebaut mit Artists: erscheint, sobald echte Zitate da sind (keine erfundenen Stimmen) -->
+  <section class="sec proof" id="artists" hidden aria-label="Gebaut mit Artists"></section>
+
+  <section class="sec" id="preise" style="background:var(--n-100)">
+    <div class="wrap">
+      <div class="fn-head">
+        <p class="eyebrow" style="margin:0">Preise</p>
+        <h2 class="h2 rv">Fang kostenlos an.</h2>
+        <div class="switch" role="tablist" aria-label="Preise für"><span class="thumb"></span>
+          <button role="tab" id="pt-you" aria-controls="pp-you" aria-selected="true">Für dein Tattoo</button>
+          <button role="tab" id="pt-art" aria-controls="pp-art" aria-selected="false" tabindex="-1">Für Artists</button>
+        </div>
+      </div>
+      <div class="panel" id="pp-you" role="tabpanel" aria-labelledby="pt-you">
+        <div class="prices">
+          <div class="price"><span class="tag">Free</span><div class="amt">0 €<small>für immer</small></div>
+            <ul><li>3 Gratis-Credits jeden Monat</li><li>1 Credit = 1 neues Motiv anprobieren, dasselbe Motiv nochmal ist frei</li><li>Größe, Platzierung und Stencil</li><li>Vorschau per Link teilen</li></ul>
+            <a class="btn btn-dark" href="/studio">Kostenlos starten</a></div>
+          <div class="price dark"><span class="tag">Credit-Pakete</span><div class="amt">Bald</div>
+            <p class="lead">Mehr Motive ausprobieren, wenn du sie brauchst. Ohne Abo, gekaufte Credits verfallen nicht.</p></div>
+        </div>
+      </div>
+      <div class="panel" id="pp-art" role="tabpanel" aria-labelledby="pt-art" hidden>
+        <div class="prices">
+          <div class="price dark"><span class="tag">Artist-Abo</span><div class="amt">Bald</div>
+            <ul><li>Kundenvorschau ohne Credit-Limit</li><li>Stencils und Flash-Sheets in Originalgröße</li><li>Session-Übersicht und Freigabe-Links</li><li>Mit kostenloser Testphase</li></ul></div>
+          <div class="price"><span class="tag">Schon jetzt</span><div class="amt">0 €<small>zum Testen</small></div>
+            <p class="lead">Alle Funktionen kannst du heute schon mit den Gratis-Credits ausprobieren.</p><a class="btn btn-dark" href="/studio">Studio öffnen</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="faq">
+    <div class="wrap faq">
+      <div class="ask rv">
+        <h2 class="h2">Noch Fragen?</h2>
+        <p class="lead">Frage nicht gefunden? Idee für ein neues Feature? Feedback zur App? Erzähl's uns. Wir bauen Stencit gemeinsam mit den Leuten, die es nutzen.</p>
+        <div class="btns"><a class="btn btn-dark btn-sm" href="#schreiben">Schreib uns</a><a class="btn btn-soft btn-sm" href="mailto:studio@stencit.com">studio@stencit.com</a></div>
+      </div>
+      <div class="qas">
+        <details class="qa"><summary>Was ist Stencit?<i><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></svg></i></summary><p class="ans">Stencit ist eine Online-Tattoo-Vorschau. Du legst dein Motiv auf ein Foto deiner Haut und findest die passende Größe und Platzierung. Danach erstellst du daraus ein Stencil in Originalgröße und bekommst eine Übersicht über alles, was für das Tattoo gebraucht wird.</p></details>
+        <details class="qa"><summary>Wird mein Foto hochgeladen?<i><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></svg></i></summary><p class="ans">Nein. Hautscan und Vorschau laufen direkt in deinem Browser. Fotos deiner Haut verlassen dein Gerät nicht.</p></details>
+        <details class="qa"><summary>Was kostet Stencit?<i><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></svg></i></summary><p class="ans">Anprobieren ist kostenlos: Du bekommst jeden Monat 3 Gratis-Credits. Ein Credit reicht für ein neues Motiv, dasselbe Motiv nochmal ist frei. Credit-Pakete ohne Abo und ein Artist-Abo kommen bald.</p></details>
+        <details class="qa"><summary>Wie genau ist die Größe?<i><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></svg></i></summary><p class="ans">Stencit schätzt den Maßstab anhand von Hand, Gesicht oder Körperteil. Für eine exakte Größe hältst du beim Foto eine Karte im Scheckkartenformat neben die Stelle oder trägst die Breite selbst ein.</p></details>
+        <details class="qa"><summary>Brauche ich eine App?<i><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></svg></i></summary><p class="ans">Nein. Stencit läuft im Browser auf Handy und Rechner. Eine iPhone-App ist in Arbeit.</p></details>
+        <details class="qa"><summary>Kann ich das Stencil ausdrucken?<i><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></svg></i></summary><p class="ans">Ja. Du druckst dein Motiv als Flash-Sheet in Originalgröße, mit Maßstab zum Nachprüfen und auf Wunsch gespiegelt.</p></details>
+        <details class="qa"><summary>Woher kommt der Name?<i><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M17 15L17 8 15 8 15 15 8 15 8 17 15 17 15 24 17 24 17 17 24 17 24 15z"/></svg></i></summary><p class="ans">Stencit steht für „Stencil + it“: aus deinem Motiv wird ein Stencil, das wirklich passt.</p></details>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <form class="form rv" id="schreiben" novalidate>
+        <div><h3>Schreib uns.</h3><p class="lead">Frage, Feedback oder ein Feature-Wunsch: Wir lesen alles und antworten, wenn du uns deine E-Mail-Adresse gibst.</p></div>
+        <div class="fields">
+          <div class="kinds" role="radiogroup" aria-label="Worum geht's?">
+            <label><input type="radio" name="kind" value="frage" checked><span>Frage</span></label>
+            <label><input type="radio" name="kind" value="feedback"><span>Feedback</span></label>
+            <label><input type="radio" name="kind" value="feature"><span>Feature-Wunsch</span></label>
+            <label><input type="radio" name="kind" value="sonstiges"><span>Sonstiges</span></label>
+          </div>
+          <textarea name="message" required minlength="3" maxlength="4000" placeholder="Deine Nachricht" aria-label="Deine Nachricht"></textarea>
+          <input type="email" name="email" maxlength="200" placeholder="E-Mail für eine Antwort (optional)" aria-label="E-Mail für eine Antwort (optional)" autocomplete="email">
+          <div class="hp" aria-hidden="true"><label>Firma <input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
+          <div class="row"><p class="note">Wir nutzen deine Angaben nur, um deine Nachricht zu bearbeiten. Mehr in der <a href="/privacy">Datenschutzerklärung</a>.</p>
+            <button class="btn btn-white" type="submit">Senden</button></div>
+          <p class="sent" id="sent" role="status" hidden></p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="sec final">
+    <div class="wrap final">
+      <h2 class="h2 rv">Für immer verdient Zeit.</h2>
+      <p class="lead">Probier dein Motiv aus, bevor es bleibt.</p>
+      <a class="btn btn-dark" href="/studio">Vorschau starten</a>
+    </div>
+  </section>
+</main>
+
+<footer class="ft">
+  <div class="ft-in">
+    <div class="ft-top"><a href="/" aria-label="Stencit" style="color:#fff;display:inline-flex"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" class="logo" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a>
+      <nav class="ft-links" aria-label="Fußzeile"><a href="/studio">Studio</a><a href="#preise">Preise</a><a href="#faq">FAQ</a><a href="/impressum">Impressum</a><a href="/privacy">Datenschutz</a><a href="mailto:studio@stencit.com">Kontakt</a></nav></div>
+    <div class="ft-bottom">© 2026 Stencit</div>
+  </div>
+</footer>
+
+<script>
+  // Schalter "Für dein Tattoo | Für Artists" (beide Inhalte stehen im HTML, nur sichtbar umgeschaltet)
+  document.querySelectorAll(".switch").forEach(sw => {
+    const tabs = [...sw.querySelectorAll("[role=tab]")], thumb = sw.querySelector(".thumb");
+    const place = t => { thumb.style.left = t.offsetLeft + "px"; thumb.style.width = t.offsetWidth + "px"; };
+    const pick = t => { tabs.forEach(b => { const on = b === t; b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1; document.getElementById(b.getAttribute("aria-controls")).hidden = !on; }); place(t); };
+    tabs.forEach((t, i) => { t.onclick = () => pick(t); t.onkeydown = e => { if (e.key === "ArrowRight" || e.key === "ArrowLeft") { const n = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length]; pick(n); n.focus(); } }; });
+    requestAnimationFrame(() => place(tabs.find(t => t.getAttribute("aria-selected") === "true")));
+    addEventListener("resize", () => place(tabs.find(t => t.getAttribute("aria-selected") === "true")));
+  });
+  // Pfeile blättern in der sichtbaren Kartenreihe
+  document.querySelectorAll(".rail-nav .arrow").forEach(b => b.onclick = () => {
+    const rail = [...document.querySelectorAll("#funktionen .panel")].find(p => !p.hidden).querySelector(".rail");
+    rail.scrollBy({ left: +b.dataset.dir * (rail.querySelector(".card").offsetWidth + 22), behavior: "smooth" });
+  });
+  // FAQ als strukturierte Daten aus den sichtbaren Fragen (eine Quelle für Seite und Google)
+  (() => { const s = document.querySelector('script[type="application/ld+json"]'), d = JSON.parse(s.textContent), faq = d["@graph"].find(x => x["@type"] === "FAQPage");
+    faq.mainEntity = [...document.querySelectorAll(".qa")].map(q => ({ "@type": "Question", name: q.querySelector("summary").textContent.trim(), acceptedAnswer: { "@type": "Answer", text: q.querySelector(".ans").textContent.trim() } }));
+    s.textContent = JSON.stringify(d); })();
+  // Einblenden beim Scrollen
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -10% 0px" });
+  document.querySelectorAll(".rv").forEach(el => io.observe(el));
+  // Feedback-Formular: speichert direkt in Supabase (Tabelle feedback, nur Einfügen erlaubt)
+  const SB_URL = "https://ykxrxwprmeeohctyncnf.supabase.co", SB_KEY = "sb_publishable_6TzaVopBtEE0i-526Vr6mg_u3UR4hCW", t0 = Date.now();
+  document.getElementById("schreiben").addEventListener("submit", async e => {
+    e.preventDefault(); const f = e.target, btn = f.querySelector("button[type=submit]"), out = document.getElementById("sent");
+    const msg = f.message.value.trim(), mail = f.email.value.trim();
+    if (f.company.value || Date.now() - t0 < 2500) return; // Bots
+    if (msg.length < 3) { out.hidden = false; out.textContent = "Schreib uns bitte ein paar Worte."; f.message.focus(); return; }
+    if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { out.hidden = false; out.textContent = "Die E-Mail-Adresse sieht nicht richtig aus."; f.email.focus(); return; }
+    btn.disabled = true; btn.textContent = "Sendet …";
+    try {
+      const r = await fetch(SB_URL + "/rest/v1/feedback", { method: "POST", headers: { apikey: SB_KEY, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ kind: f.kind.value, message: msg.slice(0, 4000), email: mail || null, lang: "de", page: "website" }) });
+      if (!r.ok) throw new Error(r.status);
+      f.reset(); out.hidden = false; out.textContent = mail ? "Danke! Wir melden uns bei dir." : "Danke! Deine Nachricht ist angekommen.";
+    } catch { out.hidden = false; out.innerHTML = 'Hat gerade nicht geklappt. Schreib uns gern an <a href="mailto:studio@stencit.com" style="color:#fff">studio@stencit.com</a>.'; }
+    btn.disabled = false; btn.textContent = "Senden";
+  });
+</script>
+</body>
+</html>
