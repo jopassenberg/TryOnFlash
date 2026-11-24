@@ -79,6 +79,11 @@
   .def p { max-width: 1120px; font-size: clamp(28px, 3.1vw, 44px); line-height: 1.2; letter-spacing: -.035em; color: var(--dim); }
   .def p b { font-weight: 400; color: var(--ink); }
   @media (max-width: 900px) { .def { padding: var(--space-20) var(--space-6); gap: var(--space-6); } .def p { font-size: 24px; line-height: 31px; letter-spacing: -.025em; } }
+  /* ===== Section 3: Manifest ===== */
+  .manifest { background: var(--n-100); padding: var(--space-40) var(--space-20); display: grid; gap: var(--space-8); justify-items: center; text-align: center; }
+  .manifest h2 { font-size: clamp(50px, 6.6vw, 96px); line-height: .96; letter-spacing: -.055em; color: var(--ink); }
+  .manifest p { max-width: 560px; font-size: 22px; line-height: 30px; letter-spacing: -.015em; color: var(--dim); }
+  @media (max-width: 900px) { .manifest { padding: var(--space-30) var(--space-6); gap: var(--space-6); } .manifest h2 { font-size: 50px; line-height: 50px; letter-spacing: -.05em; } .manifest p { font-size: 17px; line-height: 25px; } }
   .next { padding: 120px 24px; color: var(--dim); }
 </style></head>
 <body>
@@ -92,6 +97,11 @@
 <section class="def" aria-label="Was ist Stencit?">
   <span class="tag">Was ist Stencit?</span>
   <p><b>Stencit ist eine Online-Tattoo-Vorschau.</b> Du legst dein Motiv auf ein Foto deiner Haut und findest die passende Größe und Platzierung. Danach erstellst du daraus ein Stencil in Originalgröße und bekommst eine Übersicht über alles, was für das Tattoo gebraucht wird.</p>
+</section>
+<section class="manifest">
+  <span class="tag" style="background:var(--n-0)">Unser Gedanke</span>
+  <h2>Für immer verdient Zeit.</h2>
+  <p>Ein Tattoo bleibt ein Leben lang. Nimm dir vorher die Zeit, es auf deiner Haut zu sehen, in deiner Größe und an deiner Stelle.</p>
 </section>
 <p class="next">Hier geht es später mit der nächsten Section weiter.</p>
 </body></html>
