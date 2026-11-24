@@ -124,6 +124,9 @@ const EN = {
   "Über Stellen wischen, die": "Wipe over areas that do", "zum Motiv gehören (Papierrand, Schatten). Sie werden dunkel und sind weg.": "belong to the design (paper edge, shadows). They turn dark and are removed.",
   "Über Stellen malen, die zum Motiv gehören, aber fehlen. Sie werden wieder hell und sind zurück.": "Paint over parts of the design that are missing. They turn light again and are back.",
   "Größe mit dem Regler, zoomen mit zwei Fingern.": "Set the size with the slider, zoom with two fingers.", "nicht": "not",
+  "Entfernen": "Remove", "Zurückholen": "Restore", "Linien schützen": "Protect lines", "Entfernen: wegwischen": "Remove: wipe away", "Zurückholen: drübermalen": "Restore: paint over",
+  "Über alles wischen, was nicht zum Motiv gehört. Mit „Linien schützen“ bleiben Linien und Farbe stehen, nur Papier und Hintergrund gehen weg.": "Wipe over anything that isn’t part of the design. With “Protect lines” on, lines and colour stay – only paper and background go.",
+  "Über blasse Stellen malen, die zum Motiv gehören. Sie kommen wieder.": "Paint over faded parts that belong to the design. They come back.",
 };
 
 // Texte mit Zahlen/Namen

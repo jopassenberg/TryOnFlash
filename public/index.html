@@ -698,7 +698,9 @@
     .size { flex: 1 1 100%; width: auto; }
     .cutbox, .cutbox > .panel { min-width: 0; }
     .cutbox .panel .group:first-child { flex-wrap: wrap; }
-    .cutbox .seg { flex: 1 1 0; width: auto; min-width: 0; } .cut-undo { flex: none; }
+    .cutbox .seg { flex: 1 1 100%; width: auto; min-width: 0; } .cut-undo { flex: none; }
+    .cutbox > .panel .group:first-child { flex-wrap: wrap; row-gap: var(--s2); width: 100%; }
+    .cutbox .cut-protect { flex: none; } .cutbox .size { flex: 1 1 0; min-width: 120px; }
     .cutbox .seg button { flex: 1; justify-content: center; padding: 0 var(--s2); white-space: nowrap; font-size: 13px; }
     .cutbox .panel .group.end { flex-wrap: wrap; }
     .cutbox .panel .group.end > .sw { flex: 1 1 100%; }
@@ -925,6 +927,9 @@
   .info .card-go .ic { width: 18px; height: 18px; }
   .isl-size { cursor: pointer; }
   .cut-note { flex: 1 0 100%; order: 0; margin: 0; padding: 0 var(--s2); font-size: 13px; line-height: 1.45; color: var(--text-2); } .cut-note b { font-weight: 400; color: var(--ink); margin-right: 4px; } .cut-note em { font-style: normal; color: var(--ink); }
+  .cut-protect { height: 36px; padding: 0 14px 0 10px; border-radius: 18px; background: var(--fill); display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); white-space: nowrap; }
+  .cut-protect .dot { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px oklch(19% .003 75 / .3); }
+  .cut-protect[aria-pressed="true"] { color: var(--ink); } .cut-protect[aria-pressed="true"] .dot { box-shadow: inset 0 0 0 5px var(--ink); }
 </style>
 <style id="pageSize">@page { size: 210mm 297mm; margin: 0; }</style>
 </head>
@@ -1074,10 +1079,11 @@
         <div class="group">
           <div class="seg" id="cutTools">
             <button data-tool="lasso" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg>Lasso</button>
-            <button data-tool="erase" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg>Radierer</button>
-            <button data-tool="paint" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-paint-brush"/></svg>Pinsel</button>
+            <button data-tool="erase" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg>Entfernen</button>
+            <button data-tool="paint" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-paint-brush"/></svg>Zurückholen</button>
           </div>
           <button class="btn soft icon cut-undo" id="cutUndo2" title="Rückgängig" aria-label="Rückgängig" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+          <button class="cut-protect" id="cutProtect" aria-pressed="true" hidden><span class="dot"></span>Linien schützen</button>
           <label class="size" id="cutSizeWrap" hidden><i class="fillbar"></i><span class="val" id="cutSizeVal">30</span><input type="range" id="cutSize" min="3" max="100" value="30" aria-label="Pinselgröße"></label>
         </div>
         <p class="cut-note" id="cutNote"></p>
@@ -2093,12 +2099,12 @@ $("#motifInput").onchange = e => { e.target.files[0] && loadMotif(e.target.files
 // fingers or trackpad scroll.
 const cutC = $("#cutCanvas"), cutG = cutC.getContext("2d"), cutStage = $("#cutStage");
 const CUT = { img: null, ink: null, mask: null, hasMask: false, comp: null, dirty: true, bg: true, opaque: true, tool: "lasso",
-  size: 30, zoom: 1, px: 0, py: 0, fit: 1, hist: [], path: null, drawing: false, last: null, hover: null, raf: 0, ptrs: new Map(), pinch: null };
-const HINT = { lasso: "Lasso: ums Motiv fahren", erase: "Radierer: wegwischen", paint: "Pinsel: zurückmalen" };
+  size: 30, protectOn: true, zoom: 1, px: 0, py: 0, fit: 1, hist: [], path: null, drawing: false, last: null, hover: null, raf: 0, ptrs: new Map(), pinch: null };
+const HINT = { lasso: "Lasso: ums Motiv fahren", erase: "Entfernen: wegwischen", paint: "Zurückholen: drübermalen" };
 const TOOL_NOTE = {
   lasso: "<b>Lasso</b> Mit dem Finger einmal ums Motiv fahren. Alles innerhalb bleibt, der Rest wird ausgeblendet.",
-  erase: "<b>Radierer</b> Über Stellen wischen, die <em>nicht</em> zum Motiv gehören (Papierrand, Schatten). Sie werden dunkel und sind weg.",
-  paint: "<b>Pinsel</b> Über Stellen malen, die zum Motiv gehören, aber fehlen. Sie werden wieder hell und sind zurück." };
+  erase: "<b>Entfernen</b> Über alles wischen, was nicht zum Motiv gehört. Mit „Linien schützen“ bleiben Linien und Farbe stehen, nur Papier und Hintergrund gehen weg.",
+  paint: "<b>Zurückholen</b> Über blasse Stellen malen, die zum Motiv gehören. Sie kommen wieder." };
 const canvasOf = (w, h) => Object.assign(document.createElement("canvas"), { width: w, height: h });
 function loadMotif(file) {
   const img = new Image(), url = URL.createObjectURL(file);
@@ -2132,15 +2138,27 @@ function isOpaque(c) { const d = c.getContext("2d").getImageData(0, 0, c.width, 
 const trace = (g, P, dx = 0, dy = 0) => { g.moveTo(P[0].x - dx, P[0].y - dy); for (let i = 1; i < P.length; i++) g.lineTo(P[i].x - dx, P[i].y - dy); };
 function setTool(t) {
   CUT.tool = t; document.querySelectorAll("#cutTools button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tool === t));
-  $("#cutSizeWrap").hidden = t === "lasso"; $("#cutHint").textContent = HINT[t];
+  $("#cutSizeWrap").hidden = t === "lasso"; $("#cutProtect").hidden = t !== "erase"; $("#cutHint").textContent = HINT[t];
   $("#cutNote").innerHTML = TOOL_NOTE[t] + (t === "lasso" ? "" : " Größe mit dem Regler, zoomen mit zwei Fingern.");
   cutC.style.cursor = t === "lasso" ? "crosshair" : "none";
 }
+$("#cutProtect").onclick = () => { CUT.protectOn = !CUT.protectOn; $("#cutProtect").setAttribute("aria-pressed", CUT.protectOn); };
 document.querySelectorAll("#cutTools button").forEach(b => b.onclick = () => setTool(b.dataset.tool));
 $("#cutSize").oninput = e => { CUT.size = +e.target.value; sizeFill(); CUT.sizeAt = performance.now(); };
 function sizeFill() { const i = $("#cutSize"); $("#cutSizeWrap").style.setProperty("--p", ((i.value - i.min) / (i.max - i.min) * 100) + "%"); $("#cutSizeVal").textContent = i.value; }
 sizeFill();
-const brushPx = () => Math.max(CUT.img.width, CUT.img.height) * CUT.size / 100 * .12;
+// Pinselgröße bleibt auf dem Bildschirm gleich, egal wie weit man hineinzoomt (Regler 3–100 → ca. 10–100 px)
+const brushPx = () => (8 + CUT.size * .92) / (CUT.fit * CUT.zoom);
+// "Linien schützen": beim Entfernen bleiben Linien und Farbe stehen, nur Papier/Hintergrund geht weg.
+// Schutzmaske = Deckkraft der Tinte (aus "Hintergrund entfernen") verstärkt; bei PNGs mit Transparenz das Motiv selbst.
+function protectMask() {
+  const src = inkOf(), W = CUT.mask.width, H = CUT.mask.height;
+  if (CUT.protect && CUT.protectSrc === src && CUT.protect.width === W) return CUT.protect;
+  const c = canvasOf(W, H), g = c.getContext("2d"); g.drawImage(src, 0, 0, W, H);
+  g.globalCompositeOperation = "source-in"; g.fillStyle = "#fff"; g.fillRect(0, 0, W, H); g.globalCompositeOperation = "source-over";
+  for (let i = 0; i < 3; i++) g.drawImage(c, 0, 0); // schwache Tinte zählt schon als Linie
+  CUT.protectSrc = src; return (CUT.protect = c);
+}
 
 // view transform: the canvas is fitted into the stage, then zoomed and panned with CSS
 function fitCut() {
@@ -2249,21 +2267,13 @@ function drawCut() {
     const cg = CUT.comp.getContext("2d"); cg.globalCompositeOperation = "source-over"; cg.clearRect(0, 0, W, H);
     cg.drawImage(source(), 0, 0);
     if (CUT.hasMask) { cg.globalCompositeOperation = "destination-in"; cg.drawImage(CUT.mask, 0, 0); }
-    if (CUT.hasMask) { // Schleier: alles außerhalb der Auswahl dunkel abgedeckt, die Auswahl selbst bleibt frei
-      const v = CUT.veil && CUT.veil.width === W && CUT.veil.height === H ? CUT.veil : (CUT.veil = canvasOf(W, H)), vg = v.getContext("2d");
-      vg.globalCompositeOperation = "source-over"; vg.clearRect(0, 0, W, H); vg.fillStyle = "rgba(10,10,10,.72)"; vg.fillRect(0, 0, W, H);
-      vg.globalCompositeOperation = "destination-out"; vg.drawImage(CUT.mask, 0, 0);
-      const lit = CUT.lit && CUT.lit.width === W && CUT.lit.height === H ? CUT.lit : (CUT.lit = canvasOf(W, H)), lg = lit.getContext("2d"); // Auswahl: neutrale helle Fläche
-      lg.globalCompositeOperation = "source-over"; lg.clearRect(0, 0, W, H); lg.drawImage(CUT.mask, 0, 0); lg.globalCompositeOperation = "source-in"; lg.fillStyle = "rgba(255,255,255,.55)"; lg.fillRect(0, 0, W, H);
-      vg.globalCompositeOperation = "source-over"; vg.drawImage(lit, 0, 0);
-    }
     CUT.dirty = false;
   }
   g.clearRect(0, 0, W, H);
-  // Live sehen, was ausgewählt ist: Auswahl hell, außerhalb dunkler Schleier, darüber das Ergebnis.
-  // Pinsel und Radierer verändern das sofort sichtbar (auch auf durchsichtigem Hintergrund).
+  // Man sieht das Ergebnis genau so, wie es benutzt wird. Entfernte Teile bleiben als blasser Geist sichtbar,
+  // damit man weiß, wo man etwas zurückholen kann.
   const lassoing = CUT.drawing && CUT.tool === "lasso" && CUT.path?.length > 2;
-  if (CUT.hasMask && !lassoing) g.drawImage(CUT.veil, 0, 0);
+  if (CUT.hasMask && !lassoing) { g.save(); g.globalAlpha = .2; g.drawImage(source(), 0, 0); g.restore(); }
   if (lassoing) { // beim Umfahren: die Fläche innen hell, außen dunkel – so sieht man schon vorher, was ausgewählt wird
     g.save(); g.beginPath(); g.rect(0, 0, W, H); trace(g, CUT.path); g.closePath(); g.fillStyle = "rgba(10,10,10,.6)"; g.fill("evenodd");
     g.beginPath(); trace(g, CUT.path); g.closePath(); g.fillStyle = "rgba(255,255,255,.4)"; g.fill(); g.restore();
@@ -2309,12 +2319,25 @@ function undo() {
 }
 $("#cutUndo").onclick = $("#cutUndo2").onclick = undo;
 const undoState = () => { const none = !CUT.hist.length; $("#cutUndo").disabled = $("#cutUndo2").disabled = none; };
+// Weicher Pinsel: runde Stempel mit sanftem Rand entlang der Bewegung, erst auf eine Strich-Ebene, dann auf die Maske.
 function brushTo(p) {
-  const mg = CUT.mask.getContext("2d"), a = CUT.last || p;
-  mg.globalCompositeOperation = CUT.tool === "erase" ? "destination-out" : "source-over";
-  mg.strokeStyle = mg.fillStyle = "#fff"; mg.lineWidth = brushPx(); mg.lineCap = mg.lineJoin = "round";
-  mg.beginPath(); mg.moveTo(a.x, a.y); mg.lineTo(p.x + .01, p.y); mg.stroke();
-  mg.globalCompositeOperation = "source-over"; CUT.last = p; CUT.dirty = true;
+  const a = CUT.last || p, r = brushPx() / 2, W = CUT.mask.width, H = CUT.mask.height;
+  const st = CUT.stroke && CUT.stroke.width === W && CUT.stroke.height === H ? CUT.stroke : (CUT.stroke = canvasOf(W, H)), sg = st.getContext("2d");
+  const x0 = Math.max(0, Math.floor(Math.min(a.x, p.x) - r - 2)), y0 = Math.max(0, Math.floor(Math.min(a.y, p.y) - r - 2));
+  const x1 = Math.min(W, Math.ceil(Math.max(a.x, p.x) + r + 2)), y1 = Math.min(H, Math.ceil(Math.max(a.y, p.y) + r + 2)), bw = x1 - x0, bh = y1 - y0;
+  if (bw <= 0 || bh <= 0) { CUT.last = p; return; }
+  sg.clearRect(x0, y0, bw, bh);
+  const dist = Math.hypot(p.x - a.x, p.y - a.y), n = Math.max(1, Math.ceil(dist / (r * .25)));
+  for (let i = CUT.last ? 1 : 0; i <= n; i++) {
+    const x = a.x + (p.x - a.x) * i / n, y = a.y + (p.y - a.y) * i / n, grd = sg.createRadialGradient(x, y, r * .7, x, y, r);
+    grd.addColorStop(0, "rgba(255,255,255,1)"); grd.addColorStop(1, "rgba(255,255,255,0)"); sg.fillStyle = grd;
+    sg.beginPath(); sg.arc(x, y, r, 0, 7); sg.fill();
+  }
+  const erase = CUT.tool === "erase";
+  // nur der kleine Bereich um den Strich wird verrechnet (flüssig auch bei großen Bildern auf dem Handy)
+  if (erase && CUT.protectOn) { sg.globalCompositeOperation = "destination-out"; sg.drawImage(protectMask(), x0, y0, bw, bh, x0, y0, bw, bh); sg.globalCompositeOperation = "source-over"; }
+  const mg = CUT.mask.getContext("2d"); mg.globalCompositeOperation = erase ? "destination-out" : "source-over"; mg.drawImage(st, x0, y0, bw, bh, x0, y0, bw, bh); mg.globalCompositeOperation = "source-over";
+  CUT.last = p; CUT.dirty = true;
 }
 const cutPt = e => { const b = cutC.getBoundingClientRect(); return { x: (e.clientX - b.left) * cutC.width / b.width, y: (e.clientY - b.top) * cutC.height / b.height }; };
 function startPinchCut() {
