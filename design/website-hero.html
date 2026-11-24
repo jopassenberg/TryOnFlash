@@ -99,6 +99,18 @@
     .manifest .text { padding-top: 0; } .manifest .text p.def { font-size: 19px; line-height: 27px; }
     .shots { height: 330px; margin-top: var(--space-8); } .shot.a, .shot.b { width: 78%; } .shot.b { left: 22%; top: 42%; }
   }
+  /* Karten: nebeneinander, eckig, ohne Schatten, keine Überdeckung */
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); height: auto; }
+  .shot, .shot.a, .shot.b { position: relative; left: auto; top: auto; width: auto; aspect-ratio: 3 / 4; border-radius: 0; box-shadow: none; }
+  .shot.b { background: var(--n-100); }
+  .ui-sum { background: #161515; }
+  .ui-sheet .grid { border-radius: 0; }
+  @media (max-width: 900px) { .shots { grid-template-columns: 1fr; height: auto; } .shot, .shot.a, .shot.b { width: auto; left: auto; top: auto; aspect-ratio: 4 / 3; } }
+  .shot, .shot.a, .shot.b { aspect-ratio: auto; overflow: visible; }
+  .ui-sum, .ui-sheet { position: relative; inset: auto; height: 100%; box-sizing: border-box; }
+  .ui-sum .big { font-size: clamp(24px, 2.6vw, 42px); white-space: nowrap; }
+  .ui-sheet .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 900px) { .shot, .shot.a, .shot.b { aspect-ratio: auto; } .ui-sum .big { font-size: 34px; } }
   .next { padding: 120px 24px; color: var(--dim); }
 </style></head>
 <body>
