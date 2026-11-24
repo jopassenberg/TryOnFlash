@@ -251,7 +251,7 @@ $("#lbTry").onclick = async () => {
     rq.onsuccess = () => { const tx = rq.result.transaction("handoff", "readwrite"); tx.objectStore("handoff").put({ buf: bin.buffer, type: current.type, name: current.name || "Flash" }, "flash"); tx.oncomplete = res; tx.onerror = rej; };
     rq.onerror = rej;
   });
-  location.href = "/studio";
+  location.href = "/";
 };
 load();
 </script>

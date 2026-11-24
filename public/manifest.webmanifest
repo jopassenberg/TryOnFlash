@@ -3,7 +3,7 @@
   "short_name": "Stencit",
   "description": "Tattoos vor dem Stechen anprobieren.",
   "lang": "de",
-  "start_url": "/studio",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",

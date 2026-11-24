@@ -178,18 +178,3 @@ drop policy if exists "eigene Dateien aendern" on storage.objects;
 create policy "eigene Dateien aendern" on storage.objects for update using (bucket_id in ('stencils', 'avatars') and (storage.foldername(name))[1] = auth.uid()::text);
 drop policy if exists "eigene Dateien loeschen" on storage.objects;
 create policy "eigene Dateien loeschen" on storage.objects for delete using (bucket_id in ('stencils', 'avatars') and (storage.foldername(name))[1] = auth.uid()::text);
-
--- Website: Kontakt-/Feedback-Formular („Schreib uns“). Nur Einfügen erlaubt, Lesen nur mit Service-Rolle (später Admin Center).
-create table if not exists public.feedback (
-  id bigint generated always as identity primary key,
-  created_at timestamptz not null default now(),
-  kind text not null check (kind in ('frage','feedback','feature','sonstiges')),
-  message text not null check (char_length(message) between 3 and 4000),
-  email text check (email is null or char_length(email) <= 200),
-  lang text check (lang is null or char_length(lang) <= 5),
-  page text check (page is null or char_length(page) <= 40),
-  status text not null default 'offen'
-);
-alter table public.feedback enable row level security;
-drop policy if exists "feedback insert" on public.feedback;
-create policy "feedback insert" on public.feedback for insert to anon, authenticated with check (status = 'offen');
