@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Stencit Website Styleguide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* ===== Tokens (gleich wie Figma-Variablen „Website“) ===== */
+  :root {
+    --bordeaux-deep: #5A0B1D; --bordeaux: #730F26; --accent: #DB1A1D;
+    --n-0: #FFFFFF; --n-100: #F7F6F4; --n-150: #EFEEEC; --ink: #1C1B1A; --black: #0E0D0D;
+    --dim: #6B6966; --on-dark-dim: rgb(255 255 255 / .82); --glass-dark: rgb(26 10 12 / .55); --line: rgb(28 27 26 / .1);
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px; --space-20: 80px; --space-30: 120px; --space-40: 160px;
+    --r-s: 12px; --r-m: 20px; --r-l: 28px; --r-voll: 999px;
+    --hero-gradient: linear-gradient(180deg, var(--bordeaux-deep) 0%, var(--bordeaux) 24%, #B8161D 72%, var(--accent) 100%);
+    --ease: cubic-bezier(.22, 1, .36, 1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E8E5; color: var(--ink); font: 400 17px/26px "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p { margin: 0; font-weight: 400; }
+  a { color: inherit; } button { font: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; letter-spacing: inherit; }
+
+  /* ===== Textstile ===== */
+  .t-display { font-size: 96px; line-height: 92px; letter-spacing: -.055em; }
+  .t-display-m { font-size: 50px; line-height: 50px; letter-spacing: -.05em; }
+  .t-h2 { font-size: 60px; line-height: 62px; letter-spacing: -.045em; }
+  .t-h2-m { font-size: 38px; line-height: 40px; letter-spacing: -.04em; }
+  .t-h3 { font-size: 40px; line-height: 42px; letter-spacing: -.04em; }
+  .t-lead { font-size: 22px; line-height: 30px; letter-spacing: -.025em; }
+  .t-body { font-size: 17px; line-height: 26px; letter-spacing: -.01em; }
+  .t-small { font-size: 14px; line-height: 20px; letter-spacing: -.005em; }
+  .t-button { font-size: 16px; line-height: 20px; letter-spacing: -.01em; }
+
+  /* ===== Komponenten ===== */
+  .logo { display: inline-flex; color: var(--n-0); } .logo svg { height: 28px; width: auto; display: block; } .logo.schwarz { color: var(--ink); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: 52px; padding: 0 26px; border-radius: var(--r-voll); text-decoration: none; white-space: nowrap;
+    font-size: 16px; line-height: 20px; transition: transform .4s var(--ease), background-color .2s; }
+  .btn:active { transform: scale(.96); }
+  .btn.klein { height: 40px; padding: 0 18px; font-size: 14px; }
+  .btn.weiss { background: var(--n-0); color: var(--ink); } .btn.weiss:hover { background: #F6EDEC; }
+  .btn.dunkel { background: var(--ink); color: var(--n-0); } .btn.dunkel:hover { background: #33312F; }
+  .btn.glas { background: var(--glass-dark); color: var(--n-0); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); } .btn.glas:hover { background: rgb(26 10 12 / .75); }
+  .btn.hell { background: var(--n-150); color: var(--ink); } .btn.hell:hover { background: #E4E3E0; }
+  .nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+
+  /* ===== Hero (aus Komponenten) ===== */
+  .hero { position: relative; overflow: hidden; color: var(--n-0); background: var(--hero-gradient); display: flex; flex-direction: column; }
+  .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .16; mix-blend-mode: soft-light;
+    background: radial-gradient(60% 50% at 82% 18%, #fff 0, transparent 70%), radial-gradient(50% 40% at 8% 92%, #000 0, transparent 70%); }
+  .hero > * { position: relative; z-index: 1; }
+  .hero .bottom { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-12); }
+  .hero .copy { display: grid; gap: var(--space-6); }
+  .hero .sub { color: var(--on-dark-dim); }
+  .hero .ctas { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-2); }
+  .hero .side { max-width: 460px; color: var(--on-dark-dim); }
+  .hero .side b { font-weight: 400; color: var(--n-0); }
+  /* Desktop 1440 × 900 */
+  .hero.d { width: 1440px; height: 900px; padding: var(--space-12) var(--space-20) var(--space-20); }
+  /* Mobil 390 × 844 */
+  .hero.m { width: 390px; height: 844px; padding: var(--space-6) var(--space-6) var(--space-12); }
+  .hero.m .bottom { flex-direction: column; align-items: stretch; gap: var(--space-8); }
+  .hero.m .ctas .btn { flex: 1; }
+
+  /* ===== Doku-Rahmen ===== */
+  .doc { max-width: 1600px; margin: 0 auto; padding: 56px 40px 120px; display: grid; gap: 72px; }
+  .doc h1.title { font-size: 48px; line-height: 1; letter-spacing: -.045em; } .doc .intro { color: var(--dim); max-width: 760px; margin-top: 12px; }
+  .blk { display: grid; gap: 24px; } .blk > h2 { font-size: 26px; letter-spacing: -.03em; } .blk > p.hint { color: var(--dim); font-size: 14px; margin-top: -14px; }
+  .sheet { background: var(--n-0); border-radius: 24px; padding: 32px; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+  .sw i { display: block; height: 86px; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--line); } .sw b { display: block; font-weight: 400; font-size: 14px; margin-top: 10px; } .sw small { color: var(--dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .types { display: grid; gap: 22px; } .type { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: baseline; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+  .type small { color: var(--dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; line-height: 1.6; } .type small b { display: block; font: 400 14px/1.4 "Plus Jakarta Sans"; color: var(--ink); }
+  .spaces { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; } .spaces div { display: grid; gap: 8px; justify-items: center; font-size: 12px; color: var(--dim); } .spaces i { display: block; background: var(--accent); border-radius: 4px; width: 24px; }
+  .radii { display: flex; gap: 18px; flex-wrap: wrap; } .radii div { display: grid; gap: 8px; justify-items: center; font-size: 12px; color: var(--dim); } .radii i { width: 96px; height: 64px; background: var(--n-150); }
+  .stage-red { background: var(--hero-gradient); border-radius: 24px; padding: 32px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .stage-light { background: var(--n-0); border-radius: 24px; padding: 32px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .label { color: var(--dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; width: 100%; }
+  .stage-red .label { color: rgb(255 255 255 / .7); }
+  .frames { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+  .frame { display: grid; gap: 12px; } .frame .cap { font-size: 13px; color: var(--dim); }
+  .scale { transform-origin: top left; } .wrapd { width: calc(1440px * .7); height: calc(900px * .7); overflow: hidden; border-radius: 18px; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .4); } .wrapd .scale { transform: scale(.7); }
+  .wrapm { border-radius: 36px; overflow: hidden; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .4); }
+  .rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .rule { background: var(--n-0); border-radius: 20px; padding: 22px 24px; display: grid; gap: 6px; } .rule b { font-weight: 400; font-size: 17px; } .rule p { color: var(--dim); font-size: 14px; line-height: 1.5; }
+</style></head>
+<body>
+<div class="doc">
+  <header><h1 class="title">Website Styleguide</h1>
+    <p class="intro">Gleiche Namen und Werte wie in Figma (Datei „Stencit“, Seite „Website Styleguide“, Variablen „Website“, Textstile „Website/…“). Aufbauend auf dem App-Designsystem: Plus Jakarta Sans Regular, Rot und Bordeaux, runde Knöpfe ohne Glow, weißer Grund.</p></header>
+
+  <section class="blk"><h2>Regeln</h2>
+    <div class="rules">
+      <div class="rule"><b>Eine Schrift, ein Schnitt</b><p>Plus Jakarta Sans Regular für alles. Hierarchie nur über Größe, Laufweite und Farbe, nie über Fett oder Kursiv.</p></div>
+      <div class="rule"><b>Große Schrift = enge Laufweite</b><p>Display −5,5 %, H2 −4,5 %, Fließtext −1 %. Headlines kurz, eine Aussage pro Zeile.</p></div>
+      <div class="rule"><b>Rot nur als Fläche</b><p>Rot/Bordeaux-Verlauf für Hero und starke Bänder. Auf Weiß ist Rot nur Akzent (Punkt, Fortschritt), nie für Text.</p></div>
+      <div class="rule"><b>Ein Haupt-CTA pro Fläche</b><p>Auf Rot: Weiß = Haupt, Glas = zweite Aktion. Auf Hell: Dunkel = Haupt, Hell = zweite Aktion.</p></div>
+      <div class="rule"><b>Abstände aus der Skala</b><p>Nur 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 80 · 120 · 160. Sections 120–160 Desktop, 80 Mobil. Seitenrand 80 Desktop, 24 Mobil.</p></div>
+      <div class="rule"><b>Alles rund</b><p>Knöpfe und Schalter voll rund, Karten 28, kleine Flächen 20, Felder 12. Keine Rahmen, Flächen statt Linien.</p></div>
+    </div></section>
+
+  <section class="blk"><h2>Farben</h2>
+    <div class="sheet swatches">
+      <div class="sw"><i style="background:var(--bordeaux-deep)"></i><b>marke/bordeaux-tief</b><small>#5A0B1D</small></div>
+      <div class="sw"><i style="background:var(--bordeaux)"></i><b>marke/bordeaux</b><small>#730F26</small></div>
+      <div class="sw"><i style="background:var(--accent)"></i><b>marke/rot</b><small>#DB1A1D</small></div>
+      <div class="sw"><i style="background:var(--hero-gradient)"></i><b>Verlauf Hero</b><small>tief → bordeaux → rot</small></div>
+      <div class="sw"><i style="background:var(--n-0)"></i><b>neutral/weiss</b><small>#FFFFFF</small></div>
+      <div class="sw"><i style="background:var(--n-100)"></i><b>neutral/100</b><small>#F7F6F4</small></div>
+      <div class="sw"><i style="background:var(--n-150)"></i><b>neutral/150</b><small>#EFEEEC</small></div>
+      <div class="sw"><i style="background:var(--ink)"></i><b>neutral/tinte</b><small>#1C1B1A</small></div>
+      <div class="sw"><i style="background:var(--black)"></i><b>neutral/schwarz</b><small>#0E0D0D</small></div>
+      <div class="sw"><i style="background:var(--dim)"></i><b>text/gedimmt</b><small>#6B6966</small></div>
+      <div class="sw"><i style="background:var(--accent)"><span style="display:block;height:100%;border-radius:16px;background:var(--glass-dark)"></span></i><b>glas/dunkel</b><small>#1A0A0C · 55 %</small></div>
+    </div></section>
+
+  <section class="blk"><h2>Text</h2>
+    <div class="sheet types">
+      <div class="type"><small><b>Display</b>96 / 92 · −5,5 %</small><span class="t-display">Erst sehen.</span></div>
+      <div class="type"><small><b>Display Mobil</b>50 / 50 · −5 %</small><span class="t-display-m">Erst sehen.</span></div>
+      <div class="type"><small><b>H2</b>60 / 62 · −4,5 %</small><span class="t-h2">Für immer verdient Zeit.</span></div>
+      <div class="type"><small><b>H2 Mobil</b>38 / 40 · −4 %</small><span class="t-h2-m">Für immer verdient Zeit.</span></div>
+      <div class="type"><small><b>H3</b>40 / 42 · −4 %</small><span class="t-h3">Probier's an, bevor es bleibt.</span></div>
+      <div class="type"><small><b>Lead</b>22 / 30 · −2,5 %</small><span class="t-lead">Die Tattoo-Vorschau für deine Haut.</span></div>
+      <div class="type"><small><b>Body</b>17 / 26 · −1 %</small><span class="t-body">Mit Stencit planst du Motiv, Größe und Platzierung in Ruhe und startest mit einem guten Gefühl in deinen Termin.</span></div>
+      <div class="type" style="border:0;padding:0"><small><b>Klein</b>14 / 20 · −0,5 %</small><span class="t-small">Dein Foto bleibt auf deinem Gerät.</span></div>
+    </div></section>
+
+  <section class="blk"><h2>Abstände und Radien</h2>
+    <div class="sheet" style="display:grid;gap:32px">
+      <div class="spaces">
+        <div><i style="height:4px"></i>4</div><div><i style="height:8px"></i>8</div><div><i style="height:12px"></i>12</div><div><i style="height:16px"></i>16</div><div><i style="height:24px"></i>24</div><div><i style="height:32px"></i>32</div><div><i style="height:48px"></i>48</div><div><i style="height:64px"></i>64</div><div><i style="height:80px"></i>80</div><div><i style="height:120px"></i>120</div><div><i style="height:160px"></i>160</div>
+      </div>
+      <div class="radii"><div><i style="border-radius:12px"></i>s · 12</div><div><i style="border-radius:20px"></i>m · 20</div><div><i style="border-radius:28px"></i>l · 28</div><div><i style="border-radius:999px;width:140px"></i>voll</div></div>
+    </div></section>
+
+  <section class="blk"><h2>Komponenten</h2>
+    <div class="stage-red"><span class="label">Logo · Farbe=Weiß</span><a class="logo" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a>
+      <span class="label">Button auf Rot · Weiß (Haupt) · Glas (zweite Aktion) · Groß / Klein</span>
+      <a class="btn weiss" href="#">Vorschau starten</a><a class="btn glas" href="#">So geht's</a><a class="btn weiss klein" href="#">Vorschau starten</a><a class="btn glas klein" href="#">Zum Studio</a></div>
+    <div class="stage-light"><span class="label">Logo · Farbe=Schwarz</span><a class="logo schwarz" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a>
+      <span class="label">Button auf Hell · Dunkel (Haupt) · Hell (zweite Aktion) · Groß / Klein</span>
+      <a class="btn dunkel" href="#">Vorschau starten</a><a class="btn hell" href="#">Mehr erfahren</a><a class="btn dunkel klein" href="#">Vorschau starten</a><a class="btn hell klein" href="#">Zum Studio</a></div>
+    <div class="stage-red" style="display:block"><span class="label" style="display:block;margin-bottom:16px">Navigation · Logo Weiß + Button Glas Klein</span>
+      <div class="nav"><a class="logo" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a><a class="btn glas klein" href="#">Zum Studio</a></div></div>
+  </section>
+
+  <section class="blk"><h2>Hero</h2><p class="hint">Aus den Komponenten zusammengesetzt: Navigation oben, unten links Display + Lead + zwei Buttons, unten rechts Body. Desktop 1440 × 900 (hier 70 %), Mobil 390 × 844.</p>
+    <div class="frames">
+      <div class="frame"><div class="wrapd"><div class="scale">
+        <header class="hero d">
+          <div class="nav"><a class="logo" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a><a class="btn glas klein" href="#">Zum Studio</a></div>
+          <div class="bottom">
+            <div class="copy"><h1 class="t-display">Erst sehen.<br>Dann stechen.</h1><p class="t-lead sub">Die Tattoo-Vorschau für deine Haut.</p>
+              <div class="ctas"><a class="btn weiss" href="#">Vorschau starten</a><a class="btn glas" href="#">So geht's</a></div></div>
+            <p class="t-body side">Mit Stencit planst du Motiv, Größe und Platzierung in Ruhe, siehst vorher, wie es wirkt, und startest mit einem guten Gefühl in deinen Termin. <b>Und Artists stechen, statt zu erklären.</b></p>
+          </div>
+        </header></div></div><span class="cap">Hero · Desktop</span></div>
+      <div class="frame"><div class="wrapm">
+        <header class="hero m">
+          <div class="nav"><a class="logo" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a><a class="btn glas klein" href="#">Zum Studio</a></div>
+          <div class="bottom">
+            <div class="copy"><h1 class="t-display-m">Erst sehen.<br>Dann stechen.</h1><p class="t-lead sub" style="font-size:19px;line-height:26px">Die Tattoo-Vorschau für deine Haut.</p>
+              <div class="ctas"><a class="btn weiss" href="#">Vorschau starten</a><a class="btn glas" href="#">So geht's</a></div></div>
+            <p class="t-small side" style="font-size:15px;line-height:22px">Mit Stencit planst du Motiv, Größe und Platzierung in Ruhe und startest mit einem guten Gefühl in deinen Termin. <b>Und Artists stechen, statt zu erklären.</b></p>
+          </div>
+        </header></div><span class="cap">Hero · Mobil</span></div>
+    </div>
+  </section>
+</div>
+</body></html>
