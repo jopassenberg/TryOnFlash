@@ -113,24 +113,30 @@
   .switch button:active { transform: scale(.97); }
   /* weißer Knopf gleitet mit leichtem Nachfedern zum aktiven Tab und streckt sich dabei kurz */
   .switch .thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: var(--r-voll); background: var(--n-0);
-    transition: transform .6s cubic-bezier(.3, 1.45, .45, 1); }
+    transition: transform .5s cubic-bezier(.3, 1.12, .5, 1); }
   .switch[data-i="1"] .thumb { transform: translateX(100%); }
   .switch .thumb.move { animation: stretch .45s cubic-bezier(.3, 0, .3, 1); }
-  @keyframes stretch { 40% { scale: 1.12 .92; } }
-  /* neuer Tab blendet weich ein */
-  .panel:not([hidden]) { animation: panelIn .6s cubic-bezier(.2, .8, .2, 1); }
-  @keyframes panelIn { from { opacity: 0; translate: 0 16px; } }
+  @keyframes stretch { 40% { scale: 1.04 .98; } }
+  /* Satz unter den Karten wechselt weich */
+  .fn .foot p.swap { animation: panelIn .6s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes panelIn { from { opacity: 0; translate: 0 10px; } }
   /* Bühne: Karten auf einem flachen Bogen (Drehpunkt weit unten), mit Abstand, ohne Überlappung */
   .arc { --w: 290px; --gap: 24px; --r: 5200px; position: relative; height: 470px; margin-top: var(--space-16); touch-action: pan-y; }
   .card { position: absolute; left: 50%; top: 20px; width: var(--w); margin-left: calc(var(--w) / -2); transform-origin: 50% var(--r);
-    transform: rotate(calc(var(--o, 0) * var(--step))); transition: transform 1s cubic-bezier(.6, 0, .2, 1); will-change: transform; text-align: left; background: var(--n-100);
-    border-radius: 0 0 var(--r-s) var(--r-s); overflow: hidden; } /* nur unten abgerundet */
+    transform: rotate(calc(var(--o, 0) * var(--step))); transition: transform 1s cubic-bezier(.6, 0, .2, 1); will-change: transform; text-align: left; perspective: 1400px; }
+  /* Wendekarte: vorne „Für dein Tattoo“, hinten „Für Artists“; Flächen nur unten abgerundet */
+  .flip { position: relative; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.45, 0, .2, 1); }
+  .fn[data-tab="1"] .flip { transform: rotateY(180deg); }
+  .face { background: var(--n-100); border-radius: 0 0 var(--r-s) var(--r-s); overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .face.back { position: absolute; inset: 0; transform: rotateY(180deg); }
   .card .img { aspect-ratio: 3 / 2; }
   .card .txt { padding: var(--space-6); display: grid; gap: var(--space-2); height: 190px; box-sizing: border-box; align-content: start; }
   .card h4 { margin: 0; font-weight: 400; font-size: 20px; line-height: 26px; letter-spacing: -.02em; color: var(--ink); }
   .card p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
   .card.c1 .img { background: var(--hero-gradient); } .card.c2 .img { background: var(--black); }
+  .card.c1 .back .img { background: var(--black); } .card.c2 .back .img { background: var(--hero-gradient); }
   .card.c3 .img { background: var(--dark-grey); } .card.c4 .img { background: linear-gradient(180deg, #5A0B1D, #730F26); }
+  .card.c3 .back .img { background: linear-gradient(180deg, #5A0B1D, #730F26); } .card.c4 .back .img { background: var(--dark-grey); }
   .card.off { visibility: hidden; }
   .arc:not(.ready) .card { transition: none; } /* beim Laden nicht einfliegen */
   .arrows { display: flex; justify-content: center; gap: var(--space-3); margin-top: var(--space-4); }
@@ -170,46 +176,28 @@
     <p>Ein Tattoo trägst du ein Leben lang. Deshalb verdient es mehr als einen schnellen Entschluss im Studio. Mit Stencit planst du in Ruhe, probierst Stellen und Größen aus und gehst mit einem klaren Bild in deinen Termin.</p>
   </div>
 </section>
-<section class="fn" aria-label="Funktionen">
+<section class="fn" aria-label="Funktionen" data-tab="0">
   <div class="head">
     <h2>Stencit hilft dir, egal ob du ein Tattoo planst oder selbst stichst.</h2>
-    <div class="switch" role="tablist" data-i="0"><span class="thumb" aria-hidden="true"></span><button role="tab" aria-selected="true" aria-controls="fn-tattoo">Für dein Tattoo</button><button role="tab" aria-selected="false" aria-controls="fn-artists">Für Artists</button></div>
+    <div class="switch" role="tablist" data-i="0"><span class="thumb" aria-hidden="true"></span><button role="tab" aria-selected="true" aria-controls="fn-panel">Für dein Tattoo</button><button role="tab" aria-selected="false" aria-controls="fn-panel">Für Artists</button></div>
   </div>
-  <div class="panel" id="fn-tattoo" role="tabpanel">
+  <div class="panel" id="fn-panel" role="tabpanel">
     <div class="arc" aria-roledescription="Karussell">
-      <article class="card c1"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></article>
-      <article class="card c2"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></article>
-      <article class="card c3"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></article>
-      <article class="card c4"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></article>
-      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></article>
-      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></article>
-      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></article>
-      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></article>
-      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></article>
-      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></article>
-      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></article>
-      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></article>
+      <article class="card c1"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></div></div></article>
+      <article class="card c2"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></div></div></article>
+      <article class="card c3"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></div></div></article>
+      <article class="card c4"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></div></div></article>
+      <article class="card c1" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></div></div></article>
+      <article class="card c2" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></div></div></article>
+      <article class="card c3" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></div></div></article>
+      <article class="card c4" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></div></div></article>
+      <article class="card c1" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></div></div></article>
+      <article class="card c2" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></div></div></article>
+      <article class="card c3" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></div></div></article>
+      <article class="card c4" aria-hidden="true"><div class="flip"><div class="face front"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></div><div class="face back"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></div></div></article>
     </div>
     <div class="arrows"><button class="prev" aria-label="Zurück"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M14 26l1.41-1.41L7.83 17H28v-2H7.83l7.58-7.59L14 6 4 16l10 10z"/></svg></button><button class="next-btn" aria-label="Weiter"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M18 6l-1.43 1.393L24.15 15H4v2h20.15l-7.58 7.573L18 26l10-10L18 6z"/></svg></button></div>
-    <div class="foot"><p>Teste dein Motiv auf deiner Haut und geh mit einem klaren Plan zu deinem Termin.</p><a class="btn schwarz klein" href="#">Jetzt ausprobieren</a></div>
-  </div>
-  <div class="panel" id="fn-artists" role="tabpanel" hidden>
-    <div class="arc" aria-roledescription="Karussell">
-      <article class="card c1"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></article>
-      <article class="card c2"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></article>
-      <article class="card c3"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></article>
-      <article class="card c4"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></article>
-      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></article>
-      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></article>
-      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></article>
-      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></article>
-      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></article>
-      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></article>
-      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></article>
-      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></article>
-    </div>
-    <div class="arrows"><button class="prev" aria-label="Zurück"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M14 26l1.41-1.41L7.83 17H28v-2H7.83l7.58-7.59L14 6 4 16l10 10z"/></svg></button><button class="next-btn" aria-label="Weiter"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M18 6l-1.43 1.393L24.15 15H4v2h20.15l-7.58 7.573L18 26l10-10L18 6z"/></svg></button></div>
-    <div class="foot"><p>Plane jedes Tattoo gemeinsam mit deinen Kunden und starte vorbereitet in die Session.</p><a class="btn schwarz klein" href="#">Jetzt ausprobieren</a></div>
+    <div class="foot"><p data-t0="Teste dein Motiv auf deiner Haut und geh mit einem klaren Plan zu deinem Termin." data-t1="Plane jedes Tattoo gemeinsam mit deinen Kunden und starte vorbereitet in die Session.">Teste dein Motiv auf deiner Haut und geh mit einem klaren Plan zu deinem Termin.</p><a class="btn schwarz klein" href="#">Jetzt ausprobieren</a></div>
   </div>
 </section>
 <p class="next">Hier geht es später mit der nächsten Section weiter.</p>
@@ -241,15 +229,18 @@ document.querySelectorAll('.panel').forEach(panel => {
   arc.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); x0 = null; });
   render(); requestAnimationFrame(() => requestAnimationFrame(() => arc.classList.add('ready')));
 });
-// Switch: beide Tabs stehen im HTML, es wird nur umgeschaltet
+// Switch: Karten wenden sich nacheinander von links nach rechts (beide Seiten stehen im HTML)
 document.querySelectorAll('.switch').forEach(sw => {
-  const tabs = [...sw.querySelectorAll('[role=tab]')], thumb = sw.querySelector('.thumb');
+  const fn = sw.closest('.fn'), tabs = [...sw.querySelectorAll('[role=tab]')], thumb = sw.querySelector('.thumb'), foot = fn.querySelector('.foot p');
   tabs.forEach((t, i) => t.onclick = () => {
     if (sw.dataset.i == i) return;
     sw.dataset.i = i;
     thumb.classList.remove('move'); void thumb.offsetWidth; thumb.classList.add('move');
-    tabs.forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); document.getElementById(b.getAttribute('aria-controls')).hidden = !on; });
-    dispatchEvent(new Event('resize'));
+    tabs.forEach(b => b.setAttribute('aria-selected', b === t));
+    // Verzögerung nach Position auf dem Bogen: links zuerst
+    fn.querySelectorAll('.card').forEach(c => { const o = +c.style.getPropertyValue('--o') || 0; c.querySelector('.flip').style.transitionDelay = Math.max(0, o + 3) * 70 + 'ms'; });
+    fn.dataset.tab = i;
+    foot.textContent = foot.dataset['t' + i]; foot.classList.remove('swap'); void foot.offsetWidth; foot.classList.add('swap');
   });
 });
 </script>
