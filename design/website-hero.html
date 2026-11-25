@@ -75,7 +75,7 @@
   /* ===== Section 2: Manifest (wie Figma) ===== */
   .manifest { background: var(--n-0); padding: var(--space-40) var(--space-20); display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(40px, 8vw, 140px); align-items: start; }
   .manifest .head { display: grid; gap: var(--space-16); }
-  .manifest h2 { font-size: clamp(40px, 5vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
+  .manifest h2 { font-size: clamp(38px, 4.95vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
   .manifest .text { display: grid; gap: var(--space-6); padding-top: var(--space-3); }
   /* Fließtext einheitlich: Body 17/26, Textfarbe mit 70 % Deckkraft */
   .manifest .text p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
@@ -105,14 +105,15 @@
   /* ===== Section 3: Funktionen mit Switch und Bogen-Karussell ===== */
   .fn { background: var(--n-0); padding: var(--space-30) 0; overflow: clip; text-align: center; }
   .fn .head { display: grid; justify-items: center; gap: var(--space-8); padding: 0 var(--space-6); }
-  .fn h2 { max-width: 760px; font-size: clamp(40px, 5vw, 64px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
+  .fn h2 { max-width: 820px; font-size: clamp(38px, 4.95vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
   .switch { display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: var(--r-voll); background: var(--n-150); }
   .switch button { border: 0; background: transparent; font: inherit; font-size: 15px; line-height: 20px; padding: 9px 18px; border-radius: var(--r-voll); color: var(--dim); cursor: pointer; transition: background-color .25s, color .25s; }
   .switch button[aria-selected="true"] { background: var(--n-0); color: var(--ink); }
   /* Bühne: Karten auf einem flachen Bogen (Drehpunkt weit unten), mit Abstand, ohne Überlappung */
   .arc { --w: 290px; --gap: 24px; --r: 5200px; position: relative; height: 470px; margin-top: var(--space-16); touch-action: pan-y; }
   .card { position: absolute; left: 50%; top: 20px; width: var(--w); margin-left: calc(var(--w) / -2); transform-origin: 50% var(--r);
-    transform: rotate(calc(var(--o, 0) * var(--step))); transition: transform .8s cubic-bezier(.22,.8,.2,1); text-align: left; background: var(--n-100); }
+    transform: rotate(calc(var(--o, 0) * var(--step))); transition: transform 1s cubic-bezier(.6, 0, .2, 1); will-change: transform; text-align: left; background: var(--n-100);
+    border-radius: 0 0 var(--r-s) var(--r-s); overflow: hidden; } /* nur unten abgerundet */
   .card .img { aspect-ratio: 3 / 2; }
   .card .txt { padding: var(--space-6); display: grid; gap: var(--space-2); height: 190px; box-sizing: border-box; align-content: start; }
   .card h4 { margin: 0; font-weight: 400; font-size: 20px; line-height: 26px; letter-spacing: -.02em; color: var(--ink); }
@@ -129,7 +130,7 @@
   .fn .foot p { max-width: 520px; font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
   @media (max-width: 900px) {
     .fn { padding: var(--space-20) 0; }
-    .fn h2 { font-size: 38px; line-height: 40px; }
+    .fn h2 { font-size: 38px; line-height: 40px; letter-spacing: -.045em; }
     .arc { --w: 270px; --gap: 16px; --r: 2600px; height: 450px; margin-top: var(--space-12); }
     .card .txt { padding: var(--space-4) var(--space-4) var(--space-6); height: 190px; }
   }
