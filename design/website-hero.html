@@ -17,7 +17,7 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: #E9E8E5; color: var(--ink); font: 400 17px/26px "Plus Jakarta Sans", system-ui, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
   h1, h2, h3, p { margin: 0; font-weight: 400; }
-  h1, h2, h3, .tag { text-wrap: balance; } p { text-wrap: pretty; }
+  h1, h2, h3 { text-wrap: balance; } p { text-wrap: pretty; }
   a { color: inherit; } button { font: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; letter-spacing: inherit; }
 
   /* ===== Textstile ===== */
@@ -53,7 +53,6 @@
   .hero .copy { display: grid; gap: var(--space-6); }
   .hero .sub { color: var(--on-dark-dim); }
   .hero .ctas { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-2); }
-  .hero .tag { justify-self: start; font-size: 14px; line-height: 18px; padding: 7px 14px; border-radius: var(--r-voll); background: rgb(255 255 255 / .12); color: var(--n-0); margin-bottom: calc(-1 * var(--space-2)); }
   .hero .sub { max-width: 560px; }
   /* Desktop 1440 × 900 */
   .hero.d { width: 1440px; height: 900px; padding: var(--space-12) var(--space-20) var(--space-20); }
@@ -74,67 +73,55 @@
   }
   .hero h1 span { display: block; white-space: nowrap; }
   /* ===== Section 2: Manifest (wie Figma) ===== */
-  .tag { display: inline-block; font-size: 14px; line-height: 18px; padding: 7px 14px; border-radius: var(--r-voll); background: var(--n-150); color: var(--ink); }
   .manifest { background: var(--n-0); padding: var(--space-40) var(--space-20); display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(40px, 8vw, 140px); align-items: start; }
-  .manifest .head { display: grid; gap: var(--space-6); justify-items: start; }
+  .manifest .head { display: grid; gap: var(--space-16); }
   .manifest h2 { font-size: clamp(40px, 5vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
-  .manifest .text { display: grid; gap: var(--space-6); padding-top: var(--space-12); }
-  .manifest .text p { font-size: 17px; line-height: 26px; color: var(--dim); }
-  .manifest .text p.def { font-size: 22px; line-height: 30px; letter-spacing: -.015em; color: var(--ink); }
-  .shots { justify-self: stretch; position: relative; height: clamp(300px, 34vw, 440px); margin-top: 56px; }
-  .shot { position: absolute; border-radius: 26px; overflow: hidden; box-shadow: 0 30px 60px -30px oklch(20% .05 20 / .45); }
-  .shot.a { left: 0; top: 0; width: min(62%, 420px); aspect-ratio: 4 / 3; background: #161515; }
-  .shot.b { left: min(40%, 270px); top: 30%; width: min(62%, 420px); aspect-ratio: 4 / 3; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 30px 60px -30px oklch(20% .05 20 / .45); }
-  /* Mini-Ansichten aus der App */
-  .ui-sum { position: absolute; inset: 0; padding: 26px; color: #fff; display: grid; align-content: start; gap: 14px; background: linear-gradient(150deg, #2a1418, #120f10 60%); }
-  .ui-sum .big { font-size: clamp(30px, 3.4vw, 42px); letter-spacing: -.04em; line-height: 1; } .ui-sum .small { color: oklch(100% 0 0 / .55); font-size: 14px; }
-  .ui-row { display: flex; justify-content: space-between; font-size: 14px; padding-top: 12px; border-top: 1px solid oklch(100% 0 0 / .1); } .ui-row span:last-child { color: oklch(100% 0 0 / .6); }
-  .ui-sheet { position: absolute; inset: 0; padding: 22px; display: grid; grid-template-rows: auto 1fr auto; gap: 14px; font-size: 13px; color: var(--dim); }
-  .ui-sheet .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: center; justify-items: center; border: 1px dashed oklch(19% .003 75 / .18); border-radius: 12px; padding: 14px; }
-  .ui-sheet .grid i { width: 58%; aspect-ratio: 1; display: block; color: var(--ink); }
-  .ui-sheet .ruler { white-space: nowrap; display: flex; align-items: center; gap: 8px; } .ui-sheet .ruler i { display: block; height: 6px; width: 72px; border: 1.5px solid var(--ink); border-top: 0; }
+  .manifest .text { display: grid; gap: var(--space-6); padding-top: var(--space-3); }
+  /* Fließtext einheitlich: Body 17/26, Textfarbe mit 70 % Deckkraft */
+  .manifest .text p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
+  /* Bilder 3:2, untereinander versetzt, ohne Überdeckung */
+  .shots { display: grid; gap: var(--space-4); }
+  .shot { width: 72%; aspect-ratio: 3 / 2; overflow: hidden; }
+  .shot.b { margin-left: 28%; }
+  .ui-sum { height: 100%; box-sizing: border-box; padding: clamp(18px, 2vw, 28px); background: #161515; color: var(--n-0); display: flex; flex-direction: column; justify-content: space-between; }
+  .ui-sum .small { display: block; font-size: 13px; line-height: 18px; color: rgb(255 255 255 / .55); }
+  .ui-sum .big { display: block; margin-top: 6px; font-size: clamp(28px, 3vw, 44px); line-height: 1; letter-spacing: -.04em; white-space: nowrap; }
+  .ui-rows { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: var(--space-4); border-top: 1px solid rgb(255 255 255 / .14); padding-top: 14px; font-size: 13px; line-height: 18px; }
+  .ui-rows span { display: block; color: rgb(255 255 255 / .55); } .ui-rows b { font-weight: 400; white-space: nowrap; }
+  .ui-sheet { height: 100%; box-sizing: border-box; padding: clamp(18px, 2vw, 28px); background: var(--n-100); display: grid; grid-template-rows: auto 1fr auto; gap: 12px; font-size: 13px; line-height: 18px; color: var(--dim); }
+  .ui-sheet .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; justify-items: center; border: 1px dashed rgb(28 27 26 / .2); }
+  .ui-sheet .grid i { width: 40%; max-width: 56px; aspect-ratio: 1; display: block; color: var(--ink); } .ui-sheet .grid svg { width: 100%; height: 100%; display: block; }
+  .ui-sheet .ruler { display: flex; align-items: center; gap: 8px; white-space: nowrap; } .ui-sheet .ruler i { display: block; height: 6px; width: 72px; border: 1.5px solid var(--ink); border-top: 0; }
   @media (max-width: 900px) {
     .manifest { grid-template-columns: 1fr; padding: var(--space-20) var(--space-6); gap: var(--space-12); }
+    .manifest .head { gap: var(--space-12); }
     .manifest h2 { font-size: 38px; line-height: 40px; }
-    .manifest .text { padding-top: 0; } .manifest .text p.def { font-size: 19px; line-height: 27px; }
-    .shots { height: 330px; margin-top: var(--space-8); } .shot.a, .shot.b { width: 78%; } .shot.b { left: 22%; top: 42%; }
+    .manifest .text { padding-top: 0; }
+    .shot { width: 86%; } .shot.b { margin-left: 14%; }
+    .ui-rows { gap: var(--space-2); font-size: 12px; } .ui-sheet { font-size: 12px; }
   }
-  /* Karten: nebeneinander, eckig, ohne Schatten, keine Überdeckung */
-  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); height: auto; }
-  .shot, .shot.a, .shot.b { position: relative; left: auto; top: auto; width: auto; aspect-ratio: 3 / 4; border-radius: 0; box-shadow: none; }
-  .shot.b { background: var(--n-100); }
-  .ui-sum { background: #161515; }
-  .ui-sheet .grid { border-radius: 0; }
-  @media (max-width: 900px) { .shots { grid-template-columns: 1fr; height: auto; } .shot, .shot.a, .shot.b { width: auto; left: auto; top: auto; aspect-ratio: 4 / 3; } }
-  .shot, .shot.a, .shot.b { aspect-ratio: auto; overflow: visible; }
-  .ui-sum, .ui-sheet { position: relative; inset: auto; height: 100%; box-sizing: border-box; }
-  .ui-sum .big { font-size: clamp(24px, 2.6vw, 42px); white-space: nowrap; }
-  .ui-sheet .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  @media (max-width: 900px) { .shot, .shot.a, .shot.b { aspect-ratio: auto; } .ui-sum .big { font-size: 34px; } }
   .next { padding: 120px 24px; color: var(--dim); }
 </style></head>
 <body>
 <header class="hero">
   <div class="nav"><a class="logo" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4194 834" role="img" aria-label="Stencit"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/><path transform="translate(1129.85,0)" d="M339 12Q268 12 210.0 -15.0Q152 -42 112.0 -87.5Q72 -133 55 -188L127 -215Q153 -139 208.0 -99.5Q263 -60 339 -60Q387 -60 423.5 -75.5Q460 -91 480.0 -119.0Q500 -147 500 -184Q500 -239 470.0 -269.0Q440 -299 384 -315L250 -355Q171 -378 128.5 -432.0Q86 -486 86 -555Q86 -614 115.0 -659.5Q144 -705 194.5 -731.0Q245 -757 309 -757Q376 -757 429.5 -732.5Q483 -708 520.0 -668.0Q557 -628 573 -579L503 -551Q479 -617 428.5 -651.0Q378 -685 310 -685Q267 -685 234.5 -670.0Q202 -655 184.0 -627.0Q166 -599 166 -561Q166 -515 195.0 -478.5Q224 -442 284 -424L402 -389Q490 -363 535.0 -314.0Q580 -265 580 -191Q580 -131 549.5 -85.5Q519 -40 464.5 -14.0Q410 12 339 12Z M878 6Q806 6 767.0 -36.0Q728 -78 728 -156V-461H629V-536H654Q688 -536 708.0 -558.5Q728 -581 728 -615V-660H803V-536H921V-461H803V-156Q803 -129 811.0 -108.5Q819 -88 838.5 -76.0Q858 -64 891 -64Q899 -64 910.0 -65.0Q921 -66 929 -67V0Q917 3 902.0 4.5Q887 6 878 6Z M1235 12Q1160 12 1099.5 -24.5Q1039 -61 1004.0 -125.0Q969 -189 969 -270Q969 -351 1003.0 -413.5Q1037 -476 1095.5 -512.0Q1154 -548 1227 -548Q1285 -548 1330.5 -526.5Q1376 -505 1408.0 -468.5Q1440 -432 1457.0 -386.5Q1474 -341 1474 -293Q1474 -283 1473.0 -270.5Q1472 -258 1470 -245H1017V-315H1427L1391 -285Q1400 -340 1378.5 -383.5Q1357 -427 1317.0 -452.5Q1277 -478 1227 -478Q1177 -478 1134.5 -452.0Q1092 -426 1068.0 -379.5Q1044 -333 1049 -269Q1044 -205 1069.5 -157.5Q1095 -110 1139.5 -84.0Q1184 -58 1235 -58Q1294 -58 1334.0 -86.0Q1374 -114 1399 -156L1463 -122Q1447 -86 1414.0 -55.5Q1381 -25 1335.5 -6.5Q1290 12 1235 12Z M1556 0V-536H1631V-432L1614 -436Q1634 -488 1679.5 -518.0Q1725 -548 1785 -548Q1842 -548 1887.5 -522.0Q1933 -496 1959.5 -450.5Q1986 -405 1986 -348V0H1911V-319Q1911 -368 1893.5 -402.0Q1876 -436 1844.5 -454.5Q1813 -473 1772 -473Q1731 -473 1699.0 -454.5Q1667 -436 1649.0 -401.5Q1631 -367 1631 -319V0Z M2324 12Q2245 12 2185.0 -25.0Q2125 -62 2091.0 -125.5Q2057 -189 2057 -269Q2057 -349 2091.0 -412.0Q2125 -475 2185.0 -511.5Q2245 -548 2324 -548Q2374 -548 2418.0 -530.0Q2462 -512 2496.0 -481.5Q2530 -451 2547 -411L2479 -376Q2459 -419 2418.0 -446.0Q2377 -473 2324 -473Q2271 -473 2228.5 -446.5Q2186 -420 2161.5 -373.5Q2137 -327 2137 -268Q2137 -210 2161.5 -163.5Q2186 -117 2228.5 -90.0Q2271 -63 2324 -63Q2377 -63 2417.5 -90.0Q2458 -117 2479 -162L2547 -125Q2530 -86 2496.0 -55.0Q2462 -24 2418.0 -6.0Q2374 12 2324 12Z M2629 0V-536H2704V0ZM2629 -635V-745H2704V-635Z M3013 6Q2941 6 2902.0 -36.0Q2863 -78 2863 -156V-461H2764V-536H2789Q2823 -536 2843.0 -558.5Q2863 -581 2863 -615V-660H2938V-536H3056V-461H2938V-156Q2938 -129 2946.0 -108.5Q2954 -88 2973.5 -76.0Q2993 -64 3026 -64Q3034 -64 3045.0 -65.0Q3056 -66 3064 -67V0Q3052 3 3037.0 4.5Q3022 6 3013 6Z" fill="currentColor"/></g></svg></a><a class="btn schwarz klein" href="#">Zum Studio</a></div>
   <div class="bottom">
-    <div class="copy"><span class="tag">Die Tattoo-Vorschau für deine Haut</span><h1><span>Erst sehen.</span><span>Dann stechen.</span></h1><p class="t-lead sub">Plane Motiv, Größe und Platzierung in Ruhe und sieh vorher, wie es wirkt. So startest du mit einem guten Gefühl in deinen Termin.</p>
+    <div class="copy"><h1><span>Erst sehen.</span><span>Dann stechen.</span></h1><p class="t-lead sub">Plane Motiv, Größe und Platzierung in Ruhe und sieh vorher, wie es wirkt. So startest du mit einem guten Gefühl in deinen Termin.</p>
       <div class="ctas"><a class="btn weiss" href="#">Jetzt ausprobieren</a><a class="btn schwarz" href="#"><svg class="ic" viewBox="0 0 384 512" aria-hidden="true"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>App Store</a></div></div>
   </div>
 </header>
 <section class="manifest" aria-label="Was ist Stencit?">
   <div class="head">
-    <span class="tag">Was ist Stencit?</span>
     <h2>Für immer verdient Zeit.</h2>
         <div class="shots" aria-hidden="true">
-          <div class="shot a"><div class="ui-sum"><span class="small">Zusammenfassung</span><span class="big">8,4 × 6,1 cm</span><span class="small">Unterarm</span>
-            <div class="ui-row"><span>Linien</span><span>3RL · 0,35 mm</span></div><div class="ui-row"><span>Flächen</span><span>9M1</span></div><div class="ui-row"><span>Farbe</span><span>Schwarz</span></div></div></div>
+          <div class="shot a"><div class="ui-sum"><div><span class="small">Zusammenfassung · Unterarm</span><span class="big">8,4 × 6,1 cm</span></div><div class="ui-rows"><div><span>Linien</span><b>3RL · 0,35 mm</b></div><div><span>Flächen</span><b>9M1</b></div><div><span>Farbe</span><b>Schwarz</b></div></div></div></div>
           <div class="shot b"><div class="ui-sheet"><span>Flash-Sheet · A4 · Originalgröße</span>
             <div class="grid"><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i></div>
             <div class="ruler"><i></i>5 cm · mit 100 % drucken</div></div></div>
         </div>
   </div>
   <div class="text">
-    <p class="def">Stencit ist eine Online-Tattoo-Vorschau. Du legst dein Motiv auf ein Foto deiner Haut und findest die passende Größe und Platzierung. Danach erstellst du daraus ein Stencil in Originalgröße und bekommst eine Übersicht über alles, was für das Tattoo gebraucht wird.</p>
+    <p>Stencit ist eine Online-Tattoo-Vorschau. Du legst dein Motiv auf ein Foto deiner Haut und findest die passende Größe und Platzierung. Danach erstellst du daraus ein Stencil in Originalgröße und bekommst eine Übersicht über alles, was für das Tattoo gebraucht wird.</p>
     <p>Ein Tattoo trägst du ein Leben lang. Deshalb verdient es mehr als einen schnellen Entschluss im Studio. Mit Stencit planst du in Ruhe, probierst Stellen und Größen aus und gehst mit einem klaren Bild in deinen Termin.</p>
   </div>
 </section>
