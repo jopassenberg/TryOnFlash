@@ -129,14 +129,11 @@
   .fn[data-tab="1"] .flip { transform: rotateY(180deg); }
   .face { background: var(--n-100); border-radius: 0 0 var(--r-s) var(--r-s); overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
   .face.back { position: absolute; inset: 0; transform: rotateY(180deg); }
-  .card .img { aspect-ratio: 3 / 2; }
+  /* Bildfläche: Verlauf Nachtblau → Taubenblau → fast Weiß, mit feinem Rauschen (wie Figma-Fill + Noise) */
+  .card .img { aspect-ratio: 3 / 2; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), linear-gradient(180deg, #0A0A3C 0%, #6A7AA6 52%, #E8EBF6 100%); }
   .card .txt { padding: var(--space-6); display: grid; gap: var(--space-2); height: 190px; box-sizing: border-box; align-content: start; }
   .card h4 { margin: 0; font-weight: 400; font-size: 20px; line-height: 26px; letter-spacing: -.02em; color: var(--ink); }
   .card p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
-  .card.c1 .img { background: var(--hero-gradient); } .card.c2 .img { background: var(--black); }
-  .card.c1 .back .img { background: var(--black); } .card.c2 .back .img { background: var(--hero-gradient); }
-  .card.c3 .img { background: var(--dark-grey); } .card.c4 .img { background: linear-gradient(180deg, #5A0B1D, #730F26); }
-  .card.c3 .back .img { background: linear-gradient(180deg, #5A0B1D, #730F26); } .card.c4 .back .img { background: var(--dark-grey); }
   .card.off { visibility: hidden; }
   .arc:not(.ready) .card { transition: none; } /* beim Laden nicht einfliegen */
   .arrows { display: flex; justify-content: center; gap: var(--space-3); margin-top: var(--space-4); }
