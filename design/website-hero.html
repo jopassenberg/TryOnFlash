@@ -183,7 +183,7 @@
   @media (prefers-reduced-motion: reduce) { .band .blobs, .band .blobs i { animation: none; } }
   .slider { position: relative; z-index: 1; padding: 0 var(--space-20); }
   .slides { display: flex; gap: var(--space-12); transition: transform .9s cubic-bezier(.6, 0, .2, 1); touch-action: pan-y; }
-  .quote { flex: 0 0 min(820px, 72%); display: grid; grid-template-columns: 36% 1fr; min-height: 400px; border-radius: var(--r-s) var(--r-s) 0 var(--r-s); overflow: hidden; /* oben beide + unten links rund */ transition: opacity .9s cubic-bezier(.6, 0, .2, 1); }
+  .quote { flex: 0 0 min(820px, 72%); display: grid; grid-template-columns: 36% 1fr; min-height: 400px; border-radius: 0 var(--r-s) var(--r-s) 0; overflow: hidden; /* nur rechts rund, links eckig */ transition: opacity .9s cubic-bezier(.6, 0, .2, 1); }
   .quote:not(.on) { opacity: .35; }
   .quote .ph { background: var(--black); }
   .quote figure { margin: 0; background: var(--n-0); padding: var(--space-10, 40px); display: grid; align-content: center; gap: var(--space-6); }
