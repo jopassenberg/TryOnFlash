@@ -80,15 +80,17 @@
   /* Fließtext einheitlich: Body 17/26, Textfarbe mit 70 % Deckkraft */
   .manifest .text p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
   /* Bilder 3:2, untereinander versetzt, ohne Überdeckung */
-  .shots { display: grid; gap: var(--space-4); }
+  .shots { display: block; }
   .shot { width: 72%; aspect-ratio: 3 / 2; overflow: hidden; }
-  .shot.b { margin-left: 28%; }
+  .shot { position: relative; } .shot.a { z-index: 2; }
+  /* überlappend: die dunkle Karte liegt oben und deckt nur die leere obere Ecke des Flash-Sheets ab */
+  .shot.b { margin-left: 28%; margin-top: -6%; }
   .ui-sum { height: 100%; box-sizing: border-box; padding: clamp(18px, 2vw, 28px); background: #161515; color: var(--n-0); display: flex; flex-direction: column; justify-content: space-between; }
   .ui-sum .small { display: block; font-size: 13px; line-height: 18px; color: rgb(255 255 255 / .55); }
   .ui-sum .big { display: block; margin-top: 6px; font-size: clamp(28px, 3vw, 44px); line-height: 1; letter-spacing: -.04em; white-space: nowrap; }
   .ui-rows { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: var(--space-4); border-top: 1px solid rgb(255 255 255 / .14); padding-top: 14px; font-size: 13px; line-height: 18px; }
   .ui-rows span { display: block; color: rgb(255 255 255 / .55); } .ui-rows b { font-weight: 400; white-space: nowrap; }
-  .ui-sheet { height: 100%; box-sizing: border-box; padding: clamp(18px, 2vw, 28px); background: var(--n-100); display: grid; grid-template-rows: auto 1fr auto; gap: 12px; font-size: 13px; line-height: 18px; color: var(--dim); }
+  .ui-sheet { height: 100%; box-sizing: border-box; padding: clamp(18px, 2vw, 28px); background: var(--n-100); display: grid; grid-template-rows: 1fr auto; gap: 12px; font-size: 13px; line-height: 18px; color: var(--dim); }
   .ui-sheet .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; justify-items: center; border: 1px dashed rgb(28 27 26 / .2); }
   .ui-sheet .grid i { width: 40%; max-width: 56px; aspect-ratio: 1; display: block; color: var(--ink); } .ui-sheet .grid svg { width: 100%; height: 100%; display: block; }
   .ui-sheet .ruler { display: flex; align-items: center; gap: 8px; white-space: nowrap; } .ui-sheet .ruler i { display: block; height: 6px; width: 72px; border: 1.5px solid var(--ink); border-top: 0; }
@@ -97,7 +99,7 @@
     .manifest .head { gap: var(--space-12); }
     .manifest h2 { font-size: 38px; line-height: 40px; }
     .manifest .text { padding-top: 0; }
-    .shot { width: 86%; } .shot.b { margin-left: 14%; }
+    .shot { width: 86%; } .shot.b { margin-left: 14%; margin-top: -6%; }
     .ui-rows { gap: var(--space-2); font-size: 12px; } .ui-sheet { font-size: 12px; }
   }
   .next { padding: 120px 24px; color: var(--dim); }
@@ -115,9 +117,9 @@
     <h2>Für immer verdient Zeit.</h2>
         <div class="shots" aria-hidden="true">
           <div class="shot a"><div class="ui-sum"><div><span class="small">Zusammenfassung · Unterarm</span><span class="big">8,4 × 6,1 cm</span></div><div class="ui-rows"><div><span>Linien</span><b>3RL · 0,35 mm</b></div><div><span>Flächen</span><b>9M1</b></div><div><span>Farbe</span><b>Schwarz</b></div></div></div></div>
-          <div class="shot b"><div class="ui-sheet"><span>Flash-Sheet · A4 · Originalgröße</span>
+          <div class="shot b"><div class="ui-sheet">
             <div class="grid"><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i><i><svg viewBox="0 0 834.4 834.4" aria-hidden="true"><g transform="translate(0,789.70)"><circle cx="417.20" cy="-697.63" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="742.33" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="647.10" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-47.37" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-142.60" r="92.07" fill="currentColor"/><circle cx="92.07" cy="-372.50" r="92.07" fill="currentColor"/><circle cx="187.30" cy="-602.40" r="92.07" fill="currentColor"/><circle cx="417.20" cy="-372.50" r="92.07" fill="currentColor"/></g></svg></i></div>
-            <div class="ruler"><i></i>5 cm · mit 100 % drucken</div></div></div>
+            <div class="ruler"><i></i>5 cm · A4 · Originalgröße</div></div></div>
         </div>
   </div>
   <div class="text">
