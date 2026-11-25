@@ -75,7 +75,7 @@
   /* ===== Section 2: Manifest (wie Figma) ===== */
   .manifest { background: var(--n-0); padding: var(--space-40) var(--space-20); display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(40px, 8vw, 140px); align-items: start; }
   .manifest .head { display: grid; gap: var(--space-16); }
-  .manifest h2 { font-size: clamp(38px, 4.95vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
+  .manifest h2 { font-size: clamp(30px, 3.7vw, 54px); line-height: 1.04; letter-spacing: -.045em; color: var(--ink); }
   .manifest .text { display: grid; gap: var(--space-6); padding-top: var(--space-3); }
   /* Fließtext einheitlich: Body 17/26, Textfarbe mit 70 % Deckkraft */
   .manifest .text p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
@@ -97,7 +97,7 @@
   @media (max-width: 900px) {
     .manifest { grid-template-columns: 1fr; padding: var(--space-20) var(--space-6); gap: var(--space-12); }
     .manifest .head { gap: var(--space-12); }
-    .manifest h2 { font-size: 38px; line-height: 40px; }
+    .manifest h2 { font-size: 30px; line-height: 33px; letter-spacing: -.035em; }
     .manifest .text { padding-top: 0; }
     .shot { width: 86%; } .shot.b { margin-left: 14%; margin-top: -6%; }
     .ui-rows { gap: var(--space-2); font-size: 12px; } .ui-sheet { font-size: 12px; }
@@ -105,10 +105,21 @@
   /* ===== Section 3: Funktionen mit Switch und Bogen-Karussell ===== */
   .fn { background: var(--n-0); padding: var(--space-30) 0; overflow: clip; text-align: center; }
   .fn .head { display: grid; justify-items: center; gap: var(--space-8); padding: 0 var(--space-6); }
-  .fn h2 { max-width: 820px; font-size: clamp(38px, 4.95vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
-  .switch { display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: var(--r-voll); background: var(--n-150); }
+  .fn h2 { max-width: 640px; font-size: clamp(30px, 3.7vw, 54px); line-height: 1.04; letter-spacing: -.045em; color: var(--ink); }
+  .switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: var(--r-voll); background: var(--n-150); }
   .switch button { border: 0; background: transparent; font: inherit; font-size: 15px; line-height: 20px; padding: 9px 18px; border-radius: var(--r-voll); color: var(--dim); cursor: pointer; transition: background-color .25s, color .25s; }
-  .switch button[aria-selected="true"] { background: var(--n-0); color: var(--ink); }
+  .switch button { position: relative; z-index: 1; transition: color .35s; }
+  .switch button[aria-selected="true"] { color: var(--ink); }
+  .switch button:active { transform: scale(.97); }
+  /* weißer Knopf gleitet mit leichtem Nachfedern zum aktiven Tab und streckt sich dabei kurz */
+  .switch .thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: var(--r-voll); background: var(--n-0);
+    transition: transform .6s cubic-bezier(.3, 1.45, .45, 1); }
+  .switch[data-i="1"] .thumb { transform: translateX(100%); }
+  .switch .thumb.move { animation: stretch .45s cubic-bezier(.3, 0, .3, 1); }
+  @keyframes stretch { 40% { scale: 1.12 .92; } }
+  /* neuer Tab blendet weich ein */
+  .panel:not([hidden]) { animation: panelIn .6s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes panelIn { from { opacity: 0; translate: 0 16px; } }
   /* Bühne: Karten auf einem flachen Bogen (Drehpunkt weit unten), mit Abstand, ohne Überlappung */
   .arc { --w: 290px; --gap: 24px; --r: 5200px; position: relative; height: 470px; margin-top: var(--space-16); touch-action: pan-y; }
   .card { position: absolute; left: 50%; top: 20px; width: var(--w); margin-left: calc(var(--w) / -2); transform-origin: 50% var(--r);
@@ -130,7 +141,7 @@
   .fn .foot p { max-width: 520px; font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
   @media (max-width: 900px) {
     .fn { padding: var(--space-20) 0; }
-    .fn h2 { font-size: 38px; line-height: 40px; letter-spacing: -.045em; }
+    .fn h2 { font-size: 30px; line-height: 33px; letter-spacing: -.035em; }
     .arc { --w: 270px; --gap: 16px; --r: 2600px; height: 450px; margin-top: var(--space-12); }
     .card .txt { padding: var(--space-4) var(--space-4) var(--space-6); height: 190px; }
   }
@@ -162,7 +173,7 @@
 <section class="fn" aria-label="Funktionen">
   <div class="head">
     <h2>Stencit hilft dir, egal ob du ein Tattoo planst oder selbst stichst.</h2>
-    <div class="switch" role="tablist"><button role="tab" aria-selected="true" aria-controls="fn-tattoo">Für dein Tattoo</button><button role="tab" aria-selected="false" aria-controls="fn-artists">Für Artists</button></div>
+    <div class="switch" role="tablist" data-i="0"><span class="thumb" aria-hidden="true"></span><button role="tab" aria-selected="true" aria-controls="fn-tattoo">Für dein Tattoo</button><button role="tab" aria-selected="false" aria-controls="fn-artists">Für Artists</button></div>
   </div>
   <div class="panel" id="fn-tattoo" role="tabpanel">
     <div class="arc" aria-roledescription="Karussell">
@@ -231,8 +242,15 @@ document.querySelectorAll('.panel').forEach(panel => {
   render(); requestAnimationFrame(() => requestAnimationFrame(() => arc.classList.add('ready')));
 });
 // Switch: beide Tabs stehen im HTML, es wird nur umgeschaltet
-document.querySelectorAll('.switch [role=tab]').forEach(t => t.onclick = () => {
-  document.querySelectorAll('.switch [role=tab]').forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); document.getElementById(b.getAttribute('aria-controls')).hidden = !on; }); dispatchEvent(new Event('resize'));
+document.querySelectorAll('.switch').forEach(sw => {
+  const tabs = [...sw.querySelectorAll('[role=tab]')], thumb = sw.querySelector('.thumb');
+  tabs.forEach((t, i) => t.onclick = () => {
+    if (sw.dataset.i == i) return;
+    sw.dataset.i = i;
+    thumb.classList.remove('move'); void thumb.offsetWidth; thumb.classList.add('move');
+    tabs.forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); document.getElementById(b.getAttribute('aria-controls')).hidden = !on; });
+    dispatchEvent(new Event('resize'));
+  });
 });
 </script>
 </body></html>
