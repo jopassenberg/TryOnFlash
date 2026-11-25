@@ -103,41 +103,35 @@
     .ui-rows { gap: var(--space-2); font-size: 12px; } .ui-sheet { font-size: 12px; }
   }
   /* ===== Section 3: Funktionen mit Switch und Bogen-Karussell ===== */
-  .fn { background: var(--n-100); padding: var(--space-40) 0 0; overflow: clip; text-align: center; }
-  .fn .head { display: grid; justify-items: center; gap: var(--space-6); padding: 0 var(--space-6); }
-  .fn h2 { font-size: clamp(40px, 5vw, 72px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
-  .fn p.body { max-width: 560px; font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
-  .switch { display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: var(--r-voll); background: var(--n-150); margin-top: var(--space-4); }
-  .switch button { border: 0; background: transparent; font: inherit; font-size: 16px; line-height: 20px; padding: 12px 22px; border-radius: var(--r-voll); color: var(--ink); cursor: pointer; transition: background-color .25s, color .25s; }
-  .switch button[aria-selected="true"] { background: var(--black); color: var(--n-0); }
-  .fn .tabhead { display: grid; justify-items: center; gap: var(--space-4); margin-top: var(--space-16); padding: 0 var(--space-6); }
-  .fn h3 { font-size: clamp(30px, 3vw, 40px); line-height: 1.05; letter-spacing: -.04em; color: var(--ink); }
-  /* Bühne: Karten liegen auf einem großen Kreis (Drehpunkt weit unten), unten deckt ein weißer Bogen ab */
-  .arc { --w: 300px; --h: 400px; --r: 1300px; --step: 16.5deg; position: relative; height: calc(var(--h) + 200px); margin-top: var(--space-16); touch-action: pan-y; }
-  .arc::after { content: ""; position: absolute; left: 50%; top: calc(var(--h) + 90px); width: calc(var(--r) * 2.6); height: calc(var(--r) * 2.6); transform: translateX(-50%); border-radius: 50%; background: var(--n-0); z-index: 20; }
-  .card { position: absolute; left: 50%; top: 40px; width: var(--w); height: var(--h); margin-left: calc(var(--w) / -2); transform-origin: 50% var(--r);
-    transform: rotate(calc(var(--o, 0) * var(--step))); transition: transform .7s cubic-bezier(.22,.8,.2,1), opacity .4s; text-align: left;
-    display: flex; flex-direction: column; justify-content: space-between; padding: 28px; box-sizing: border-box; }
-  .card .nr { align-self: flex-end; font-size: 40px; line-height: 1; letter-spacing: -.04em; }
-  .card h4 { margin: 0 0 10px; font-weight: 400; font-size: 26px; line-height: 30px; letter-spacing: -.03em; text-wrap: balance; }
-  .card p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; opacity: .7; }
-  .card.c1 { background: var(--hero-gradient); color: var(--n-0); } .card.c2 { background: var(--black); color: var(--n-0); }
-  .card.c3 { background: var(--n-0); color: var(--ink); } .card.c4 { background: var(--dark-grey); color: var(--n-0); }
-  .card.off { opacity: 0; }
-  .card.left .nr { align-self: flex-start; } /* Nummer immer auf der Außenseite, nie unter der Mittelkarte */
-  .arrows { position: relative; z-index: 21; display: flex; justify-content: center; gap: var(--space-3); margin-top: -120px; padding-bottom: var(--space-30); }
-  .arrows button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--black); color: var(--n-0); display: grid; place-items: center; cursor: pointer; transition: background-color .2s, transform .4s var(--ease); }
-  .arrows button:hover { background: var(--accent); } .arrows button:active { transform: scale(.94); }
+  .fn { background: var(--n-0); padding: var(--space-30) 0; overflow: clip; text-align: center; }
+  .fn .head { display: grid; justify-items: center; gap: var(--space-8); padding: 0 var(--space-6); }
+  .fn h2 { max-width: 760px; font-size: clamp(40px, 5vw, 64px); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
+  .switch { display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: var(--r-voll); background: var(--n-150); }
+  .switch button { border: 0; background: transparent; font: inherit; font-size: 15px; line-height: 20px; padding: 9px 18px; border-radius: var(--r-voll); color: var(--dim); cursor: pointer; transition: background-color .25s, color .25s; }
+  .switch button[aria-selected="true"] { background: var(--n-0); color: var(--ink); }
+  /* Bühne: Karten auf einem flachen Bogen (Drehpunkt weit unten), mit Abstand, ohne Überlappung */
+  .arc { --w: 290px; --gap: 24px; --r: 5200px; position: relative; height: 470px; margin-top: var(--space-16); touch-action: pan-y; }
+  .card { position: absolute; left: 50%; top: 20px; width: var(--w); margin-left: calc(var(--w) / -2); transform-origin: 50% var(--r);
+    transform: rotate(calc(var(--o, 0) * var(--step))); transition: transform .8s cubic-bezier(.22,.8,.2,1); text-align: left; background: var(--n-100); }
+  .card .img { aspect-ratio: 3 / 2; }
+  .card .txt { padding: var(--space-6); display: grid; gap: var(--space-2); height: 190px; box-sizing: border-box; align-content: start; }
+  .card h4 { margin: 0; font-weight: 400; font-size: 20px; line-height: 26px; letter-spacing: -.02em; color: var(--ink); }
+  .card p { font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
+  .card.c1 .img { background: var(--hero-gradient); } .card.c2 .img { background: var(--black); }
+  .card.c3 .img { background: var(--dark-grey); } .card.c4 .img { background: linear-gradient(180deg, #5A0B1D, #730F26); }
+  .card.off { visibility: hidden; }
+  .arc:not(.ready) .card { transition: none; } /* beim Laden nicht einfliegen */
+  .arrows { display: flex; justify-content: center; gap: var(--space-3); margin-top: var(--space-4); }
+  .arrows button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--n-150); color: var(--ink); display: grid; place-items: center; cursor: pointer; transition: background-color .2s, transform .4s var(--ease); }
+  .arrows button:hover { background: #E4E3E0; } .arrows button:active { transform: scale(.94); }
   .arrows svg { width: 18px; height: 18px; }
+  .fn .foot { display: grid; justify-items: center; gap: var(--space-6); margin-top: var(--space-12); padding: 0 var(--space-6); }
+  .fn .foot p { max-width: 520px; font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
   @media (max-width: 900px) {
-    .fn { padding-top: var(--space-20); }
+    .fn { padding: var(--space-20) 0; }
     .fn h2 { font-size: 38px; line-height: 40px; }
-    .switch button { font-size: 15px; padding: 11px 18px; }
-    .fn .tabhead { margin-top: var(--space-12); }
-    .fn h3 { font-size: 28px; line-height: 32px; }
-    .arc { --w: 250px; --h: 340px; --r: 900px; --step: 20deg; margin-top: var(--space-12); }
-    .card { padding: 22px; } .card .nr { font-size: 32px; } .card h4 { font-size: 22px; line-height: 26px; } .card p { font-size: 15px; line-height: 22px; }
-    .arrows { padding-bottom: var(--space-20); }
+    .arc { --w: 270px; --gap: 16px; --r: 2600px; height: 450px; margin-top: var(--space-12); }
+    .card .txt { padding: var(--space-4) var(--space-4) var(--space-6); height: 190px; }
   }
   .next { padding: 120px 24px; color: var(--dim); }
 </style></head>
@@ -166,37 +160,44 @@
 </section>
 <section class="fn" aria-label="Funktionen">
   <div class="head">
-    <h2>Wofür bist du hier?</h2>
-    <p class="body">Stencit hilft dir, egal ob du ein Tattoo planst oder selbst stichst.</p>
+    <h2>Stencit hilft dir, egal ob du ein Tattoo planst oder selbst stichst.</h2>
     <div class="switch" role="tablist"><button role="tab" aria-selected="true" aria-controls="fn-tattoo">Für dein Tattoo</button><button role="tab" aria-selected="false" aria-controls="fn-artists">Für Artists</button></div>
   </div>
   <div class="panel" id="fn-tattoo" role="tabpanel">
-    <div class="tabhead"><h3>Probier's an, bevor es bleibt.</h3><p class="body">Teste dein Motiv auf deiner Haut und geh mit einem klaren Plan zu deinem Termin.</p></div>
     <div class="arc" aria-roledescription="Karussell">
-      <article class="card c1"><div><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div><span class="nr">01</span></article>
-      <article class="card c2"><div><h4>Platzierung finden</h4><p>Verschieb, dreh und biege das Motiv, bis es an der richtigen Stelle sitzt.</p></div><span class="nr">02</span></article>
-      <article class="card c3"><div><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div><span class="nr">03</span></article>
-      <article class="card c4"><div><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link an dein Studio.</p></div><span class="nr">04</span></article>
-      <article class="card c1" aria-hidden="true"><div><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div><span class="nr">01</span></article>
-      <article class="card c2" aria-hidden="true"><div><h4>Platzierung finden</h4><p>Verschieb, dreh und biege das Motiv, bis es an der richtigen Stelle sitzt.</p></div><span class="nr">02</span></article>
-      <article class="card c3" aria-hidden="true"><div><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div><span class="nr">03</span></article>
-      <article class="card c4" aria-hidden="true"><div><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link an dein Studio.</p></div><span class="nr">04</span></article>
+      <article class="card c1"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></article>
+      <article class="card c2"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></article>
+      <article class="card c3"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></article>
+      <article class="card c4"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></article>
+      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></article>
+      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></article>
+      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></article>
+      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></article>
+      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Virtuell anprobieren</h4><p>Leg dein Motiv auf ein Foto deiner Haut oder direkt ins Kamerabild.</p></div></article>
+      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Platzierung finden</h4><p>Verschieben, drehen, skalieren: Vergleich verschiedene Stellen, bis es sich richtig anfühlt.</p></div></article>
+      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Größe vergleichen</h4><p>Sieh in echten Zentimetern, wie groß es auf deinem Körper wird.</p></div></article>
+      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Mit deinem Artist teilen</h4><p>Schick deine Vorschau per Link, damit dein Artist genau weiß, was du willst.</p></div></article>
     </div>
     <div class="arrows"><button class="prev" aria-label="Zurück"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M14 26l1.41-1.41L7.83 17H28v-2H7.83l7.58-7.59L14 6 4 16l10 10z"/></svg></button><button class="next-btn" aria-label="Weiter"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M18 6l-1.43 1.393L24.15 15H4v2h20.15l-7.58 7.573L18 26l10-10L18 6z"/></svg></button></div>
+    <div class="foot"><p>Teste dein Motiv auf deiner Haut und geh mit einem klaren Plan zu deinem Termin.</p><a class="btn schwarz klein" href="#">Jetzt ausprobieren</a></div>
   </div>
   <div class="panel" id="fn-artists" role="tabpanel" hidden>
-    <div class="tabhead"><h3>Weniger erklären. Mehr stechen.</h3><p class="body">Plane jedes Tattoo gemeinsam mit deinen Kunden und starte vorbereitet in die Session.</p></div>
     <div class="arc" aria-roledescription="Karussell">
-      <article class="card c1"><div><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div><span class="nr">01</span></article>
-      <article class="card c2"><div><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div><span class="nr">02</span></article>
-      <article class="card c3"><div><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div><span class="nr">03</span></article>
-      <article class="card c4"><div><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div><span class="nr">04</span></article>
-      <article class="card c1" aria-hidden="true"><div><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div><span class="nr">01</span></article>
-      <article class="card c2" aria-hidden="true"><div><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div><span class="nr">02</span></article>
-      <article class="card c3" aria-hidden="true"><div><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div><span class="nr">03</span></article>
-      <article class="card c4" aria-hidden="true"><div><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div><span class="nr">04</span></article>
+      <article class="card c1"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></article>
+      <article class="card c2"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></article>
+      <article class="card c3"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></article>
+      <article class="card c4"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></article>
+      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></article>
+      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></article>
+      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></article>
+      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></article>
+      <article class="card c1" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Kundenvorschau</h4><p>Zeig das Motiv direkt auf der Haut deiner Kunden, bevor ihr startet.</p></div></article>
+      <article class="card c2" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Stencils in Originalgröße</h4><p>Druck das Motiv im richtigen Maß als Stencil aus.</p></div></article>
+      <article class="card c3" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Session-Übersicht</h4><p>Nadeln, Farben und Notizen für jedes Tattoo an einem Ort.</p></div></article>
+      <article class="card c4" aria-hidden="true"><div class="img"></div><div class="txt"><h4>Vorschau-Links zur Freigabe</h4><p>Lass deine Kunden das Motiv per Link freigeben.</p></div></article>
     </div>
     <div class="arrows"><button class="prev" aria-label="Zurück"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M14 26l1.41-1.41L7.83 17H28v-2H7.83l7.58-7.59L14 6 4 16l10 10z"/></svg></button><button class="next-btn" aria-label="Weiter"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M18 6l-1.43 1.393L24.15 15H4v2h20.15l-7.58 7.573L18 26l10-10L18 6z"/></svg></button></div>
+    <div class="foot"><p>Plane jedes Tattoo gemeinsam mit deinen Kunden und starte vorbereitet in die Session.</p><a class="btn schwarz klein" href="#">Jetzt ausprobieren</a></div>
   </div>
 </section>
 <p class="next">Hier geht es später mit der nächsten Section weiter.</p>
@@ -207,12 +208,17 @@ document.querySelectorAll('.panel').forEach(panel => {
   let active = 0;
   const off = i => ((i - active) % n + n + n / 2) % n - n / 2;
   const prev = cards.map(() => null);
+  // Winkel je Karte so, dass auf dem Bogen genau Kartenbreite + Abstand dazwischen liegt
+  function step() { const cs = getComputedStyle(arc), w = parseFloat(cs.getPropertyValue('--w')), g = parseFloat(cs.getPropertyValue('--gap')), r = parseFloat(cs.getPropertyValue('--r'));
+    const h = arc.querySelector('.card').offsetHeight || 340; // Unterkante liegt näher am Drehpunkt: dort muss der Abstand noch stimmen
+    arc.style.setProperty('--step', (2 * Math.asin((w + g) / 2 / (r - h))) + 'rad'); }
+  addEventListener('resize', step); step();
   function render() {
     cards.forEach((c, i) => {
       const o = off(i);
       // Karte springt von einem Ende zum anderen: ohne Animation umsetzen
       if (prev[i] !== null && Math.abs(o - prev[i]) > 1) { c.style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => c.style.transition = '')); }
-      c.style.setProperty('--o', o); c.classList.toggle('off', Math.abs(o) > 3); c.classList.toggle('left', o < 0); c.style.zIndex = 10 - Math.abs(o); prev[i] = o;
+      c.style.setProperty('--o', o); c.classList.toggle('off', Math.abs(o) > n / 2 - 1); prev[i] = o;
     });
   }
   const go = d => { active = (active + d + n) % n; render(); };
@@ -221,11 +227,11 @@ document.querySelectorAll('.panel').forEach(panel => {
   let x0 = null;
   arc.addEventListener('pointerdown', e => { x0 = e.clientX; });
   arc.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); x0 = null; });
-  render();
+  render(); requestAnimationFrame(() => requestAnimationFrame(() => arc.classList.add('ready')));
 });
 // Switch: beide Tabs stehen im HTML, es wird nur umgeschaltet
 document.querySelectorAll('.switch [role=tab]').forEach(t => t.onclick = () => {
-  document.querySelectorAll('.switch [role=tab]').forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); document.getElementById(b.getAttribute('aria-controls')).hidden = !on; });
+  document.querySelectorAll('.switch [role=tab]').forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); document.getElementById(b.getAttribute('aria-controls')).hidden = !on; }); dispatchEvent(new Event('resize'));
 });
 </script>
 </body></html>
