@@ -125,21 +125,21 @@
   .card { position: absolute; left: 50%; top: 20px; width: var(--w); margin-left: calc(var(--w) / -2); transform-origin: 50% var(--r);
     transform: rotate(calc(var(--o, 0) * var(--step))); transition: transform 1s cubic-bezier(.6, 0, .2, 1); will-change: transform; text-align: left; perspective: 1400px; }
   /* Wendekarte: vorne „Für dein Tattoo“, hinten „Für Artists“; Flächen nur unten abgerundet */
-  /* Karte als flacher Block, 8 px dick: Vorder- und Rückseite je 4 px vor/hinter der Mitte, dazu zwei schmale Seitenkanten.
+  /* Karte als flacher Block, 4 px dick: Vorder- und Rückseite je 2 px vor/hinter der Mitte, dazu zwei schmale Seitenkanten.
      Seitliche Karten drehen sich leicht zur Mitte (--tilt), so sieht man ganz dezent die Kante. */
-  .flip { --tilt: calc(var(--o, 0) * -4deg); position: relative; transform-style: preserve-3d; transform: translateZ(-4px) rotateY(var(--tilt));
+  .flip { --tilt: calc(var(--o, 0) * -4deg); position: relative; transform-style: preserve-3d; transform: translateZ(-2px) rotateY(var(--tilt));
     transition: transform 1s cubic-bezier(.6, 0, .2, 1); }
-  .fn[data-tab="1"] .flip { transform: translateZ(-4px) rotateY(calc(var(--tilt) + 180deg)); }
-  .face { background: var(--n-100); border-radius: 0 0 var(--r-s) var(--r-s); overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(4px); }
-  .face.back { position: absolute; inset: 0; transform: rotateY(180deg) translateZ(4px); }
-  .edge { position: absolute; top: 0; bottom: 6px; width: 8px; border-radius: 0 0 4px 4px;
+  .fn[data-tab="1"] .flip { transform: translateZ(-2px) rotateY(calc(var(--tilt) + 180deg)); }
+  .face { background: var(--n-100); border-radius: 0 0 var(--r-s) var(--r-s); overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(2px); }
+  .face.back { position: absolute; inset: 0; transform: rotateY(180deg) translateZ(2px); }
+  .edge { position: absolute; top: 0; bottom: 6px; width: 4px; border-radius: 0 0 2px 2px;
     background: linear-gradient(180deg, #08082E 0, #55638C calc(var(--w) * .35), #C9CEDC calc(var(--w) * 2 / 3), #E2E1DE calc(var(--w) * 2 / 3)); }
-  .edge.r { right: -4px; transform: rotateY(90deg); } .edge.l { left: -4px; transform: rotateY(-90deg); }
+  .edge.r { right: -2px; transform: rotateY(90deg); } .edge.l { left: -2px; transform: rotateY(-90deg); }
   /* Wenden: Karte hebt sich in der Mitte der Drehung leicht an, dreht minimal über und setzt sich weich ab */
-  @keyframes toBack { 0% { transform: translateZ(-4px) rotateY(var(--tilt)); } 50% { transform: translateZ(32px) rotateY(calc(var(--tilt) + 90deg)); }
-    82% { transform: translateZ(0) rotateY(calc(var(--tilt) + 186deg)); } 100% { transform: translateZ(-4px) rotateY(calc(var(--tilt) + 180deg)); } }
-  @keyframes toFront { 0% { transform: translateZ(-4px) rotateY(calc(var(--tilt) + 180deg)); } 50% { transform: translateZ(32px) rotateY(calc(var(--tilt) + 90deg)); }
-    82% { transform: translateZ(0) rotateY(calc(var(--tilt) - 6deg)); } 100% { transform: translateZ(-4px) rotateY(var(--tilt)); } }
+  @keyframes toBack { 0% { transform: translateZ(-2px) rotateY(var(--tilt)); } 50% { transform: translateZ(32px) rotateY(calc(var(--tilt) + 90deg)); }
+    82% { transform: translateZ(0) rotateY(calc(var(--tilt) + 186deg)); } 100% { transform: translateZ(-2px) rotateY(calc(var(--tilt) + 180deg)); } }
+  @keyframes toFront { 0% { transform: translateZ(-2px) rotateY(calc(var(--tilt) + 180deg)); } 50% { transform: translateZ(32px) rotateY(calc(var(--tilt) + 90deg)); }
+    82% { transform: translateZ(0) rotateY(calc(var(--tilt) - 6deg)); } 100% { transform: translateZ(-2px) rotateY(var(--tilt)); } }
   /* Bildfläche: Verlauf Nachtblau → Taubenblau → fast Weiß, mit feinem Rauschen (wie Figma-Fill + Noise) */
   .card .img { aspect-ratio: 3 / 2; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), linear-gradient(180deg, #0A0A3C 0%, #6A7AA6 52%, #E8EBF6 100%); }
   .card .txt { padding: var(--space-6); display: grid; gap: var(--space-2); height: 190px; box-sizing: border-box; align-content: start; }
@@ -248,7 +248,7 @@ document.querySelectorAll('.switch').forEach(sw => {
     // Verzögerung nach Position auf dem Bogen: links zuerst
     fn.querySelectorAll('.card').forEach(c => { const o = +c.style.getPropertyValue('--o') || 0, f = c.querySelector('.flip');
       f.style.animation = 'none'; void f.offsetWidth;
-      f.style.animation = (i ? 'toBack' : 'toFront') + ' 1.05s cubic-bezier(.55, 0, .25, 1) ' + Math.max(0, o + 3) * 80 + 'ms both';
+      f.style.animation = (i ? 'toBack' : 'toFront') + ' .8s cubic-bezier(.45, 0, .2, 1) ' + Math.max(0, o + 3) * 70 + 'ms both';
       f.onanimationend = () => { f.style.animation = ''; }; });
     fn.dataset.tab = i;
     foot.textContent = foot.dataset['t' + i]; foot.classList.remove('swap'); void foot.offsetWidth; foot.classList.add('swap');
