@@ -246,9 +246,12 @@ document.querySelectorAll('.switch').forEach(sw => {
     thumb.classList.remove('move'); void thumb.offsetWidth; thumb.classList.add('move');
     tabs.forEach(b => b.setAttribute('aria-selected', b === t));
     // Verzögerung nach Position auf dem Bogen: links zuerst
-    fn.querySelectorAll('.card').forEach(c => { const o = +c.style.getPropertyValue('--o') || 0, f = c.querySelector('.flip');
+    // Welle: Verzögerung nach der echten Position auf dem Bildschirm, links 0 ms, rechts 420 ms
+    const W = innerWidth;
+    fn.querySelectorAll('.card').forEach(c => { const f = c.querySelector('.flip'), r = c.getBoundingClientRect();
+      const x = Math.min(1, Math.max(0, (r.left + r.width / 2) / W)), delay = Math.round(x * 420);
       f.style.animation = 'none'; void f.offsetWidth;
-      f.style.animation = (i ? 'toBack' : 'toFront') + ' .8s cubic-bezier(.45, 0, .2, 1) ' + Math.max(0, o + 3) * 70 + 'ms both';
+      f.style.animation = (i ? 'toBack' : 'toFront') + ' .8s cubic-bezier(.45, 0, .2, 1) ' + delay + 'ms both';
       f.onanimationend = () => { f.style.animation = ''; }; });
     fn.dataset.tab = i;
     foot.textContent = foot.dataset['t' + i]; foot.classList.remove('swap'); void foot.offsetWidth; foot.classList.add('swap');
