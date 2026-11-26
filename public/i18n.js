@@ -29,7 +29,7 @@ const EN = {
   "Kein Arm erkannt – Arm größer und gut beleuchtet ins Bild": "No arm found – fill the frame with your arm in good light",
   "zu wenig Speicher": "not enough memory", "Download fehlgeschlagen": "download failed",
   "Modell laden": "Loading model", "Modelle laden": "Loading models", "Tiefe berechnen": "Depth", "Haut erkennen": "Skin", "3D-Modell": "3D model", "Maßstab": "Scale",
-  "Tiefe": "Depth", "Haut-Modell": "Skin model", "Haut aufräumen": "Skin cleanup", "Hand/Pose": "Hand/pose", "Scan-Ende": "Scan end", "Motiv platzieren": "Placing design",
+  "Tiefe": "Depth", "Tiefen-Modell bereit …": "Depth model ready …", "Die Größe des Motivs ist noch nicht bekannt. Platziere es zuerst auf der Haut.": "The size of the design is not known yet. Place it on the skin first.", "Haut & Körper": "Skin & body", "Hautfläche": "Skin area", "Haut-Modell": "Skin model", "Haut aufräumen": "Skin cleanup", "Hand/Pose": "Hand/pose", "Scan-Ende": "Scan end", "Motiv platzieren": "Placing design",
   // Platzieren / Dock
   "Motiv hinzufügen": "Add a design", "Ziehen, zwei Finger drehen und zoomen": "Drag, two fingers to rotate and zoom",
   "Motiv tauschen": "Swap design", "Motiv tauschen oder hinzufügen": "Swap or add a design", "Neues Foto": "New photo", "Zurück zum Platzieren": "Back to placing",
@@ -193,6 +193,8 @@ function tr(s) {
   if (v == null) for (const [rx, rep] of EN_RX) { if (!rx.test(k)) continue; const r = k.replace(rx, rep); if (r && r !== "null") { v = r; break; } }
   return v == null || v === k ? null : s.replace(k, v);
 }
+// Für Text, der nicht im DOM steht (z. B. auf ein Canvas gezeichnet)
+export function trText(s) { return getLang() === "en" ? (tr(s) ?? s) : s; }
 const ATTRS = ["aria-label", "placeholder", "title", "alt"];
 function trNode(n) {
   if (n.nodeType === 3) { const p = n.parentNode; if (!p || /^(SCRIPT|STYLE|TEXTAREA)$/.test(p.nodeName) || p.isContentEditable) return; const v = tr(n.data); if (v != null) n.data = v; return; }
@@ -220,3 +222,6 @@ export function startI18n() {
 }
 // für Texte, die nicht im DOM landen (z. B. confirm/alert, Canvas)
 export const t = s => (getLang() === "en" ? tr(s) ?? s : s);
+
+EN_RX.push([/^Das Motiv ist mit (.+) zu klein zum Drucken\.$/, (m, d) => `At ${d} the design is too small to print.`]);
+EN_RX.push([/^Das Motiv ist (.+) groß und passt nicht auf (\S+)\. Wähl A3 oder Querformat\.$/, (m, d, p) => `The design is ${d} and does not fit on ${p}. Choose A3 or landscape.`]);
