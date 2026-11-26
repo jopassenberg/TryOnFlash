@@ -64,7 +64,7 @@ const EN = {
     "Your flashes are encrypted on this device. The key lives only in the link – our server never sees the images. Everything is deleted when it expires.",
   "Link erstellen": "Create link", "Verschlüsselt …": "Encrypting …", "Nochmal versuchen": "Try again", "Link ist bereit": "Link is ready", "Kopieren": "Copy",
   "Link kopieren": "Copy link", "Senden": "Send", "Link beenden": "End link",
-  "Teilen ist auf dem Server noch nicht eingerichtet.": "Sharing isn’t set up on the server yet.", "Zu groß für einen Link. Wähle weniger Flashes.": "Too large for one link. Choose fewer flashes.",
+  "Teilen ist auf dem Server noch nicht eingerichtet.": "Sharing isn’t set up on the server yet.", "Zu viele Links in kurzer Zeit. Bitte kurz warten.": "Too many links in a short time. Please wait a moment.", "Zu groß für einen Link. Wähle weniger Flashes.": "Too large for one link. Choose fewer flashes.",
   "Gültig, bis du ihn beendest (unter „Geteilte Links“).": "Valid until you end it (under “Shared links”).", "Flashes von deinem Artist": "Flashes from your artist",
   "Name und Profilbild": "Name and profile picture", "Erscheinen als kleiner Tag an deinen Stencils": "Shown as a small tag on your stencils",
   "Als Tag an deinen Stencils, tippen zum Ändern": "Shown as a tag on your stencils, tap to edit", "Dein Name oder Studio": "Your name or studio", "Profilbild wählen": "Choose profile picture",

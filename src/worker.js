@@ -72,6 +72,11 @@ const PRIVATE = { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer",
 async function share(req, env, url) {
   if (!env.SHARES) return json({ error: "not_configured" }, 503);
   const id = url.pathname.split("/")[3] || "";
+  // Rate Limit für alles, was schreibt (neuer Link, Vorschau): pro IP-Adresse, siehe wrangler.jsonc
+  if (req.method === "POST" && env.SHARE_LIMIT) {
+    const { success } = await env.SHARE_LIMIT.limit({ key: req.headers.get("cf-connecting-ip") || "unknown" }).catch(() => ({ success: true }));
+    if (!success) return json({ error: "rate_limited" }, 429);
+  }
   if (req.method === "POST" && !id) {
     const ttl = Number(url.searchParams.get("ttl"));
     if (!url.searchParams.has("ttl") || !(ttl in TTLS)) return json({ error: "bad_ttl" }, 400);

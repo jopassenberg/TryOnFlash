@@ -3797,7 +3797,7 @@ function shareSheet() {
       if (prev) { link.title = $("#ogTitle").value.trim(); await sendPreview(link, link.title, $("#ogDesc").value.trim(), ogC); }
       linkReady(link); }
     catch (e) { go.disabled = false; go.textContent = "Nochmal versuchen";
-      sheetError(e.message === "not_configured" ? "Teilen ist auf dem Server noch nicht eingerichtet." : e.message === "too_large" ? "Zu groß für einen Link. Wähle weniger Flashes." : `Link konnte nicht erstellt werden. Bitte nochmal versuchen. (${e.message || e})`); console.warn("share", e); }
+      sheetError(e.message === "not_configured" ? "Teilen ist auf dem Server noch nicht eingerichtet." : e.message === "too_large" ? "Zu groß für einen Link. Wähle weniger Flashes." : e.message === "rate_limited" ? "Zu viele Links in kurzer Zeit. Bitte kurz warten." : `Link konnte nicht erstellt werden. Bitte nochmal versuchen. (${e.message || e})`); console.warn("share", e); }
   };
 }
 function sheetError(msg) { let el = $("#flSheet .err"); if (!el) { el = document.createElement("div"); el.className = "err dim"; el.style.color = "oklch(80% .12 40)"; $("#flSheet .sheet").append(el); } el.textContent = msg; }
@@ -4254,7 +4254,7 @@ function maybeWaitlist() {
 /* ---------- Konto (Supabase): Anmeldung per E-Mail-Link, Motiv-Kontingent, gesicherte Stencils ---------- */
 // Der Publishable Key ist öffentlich (gehört in die App); was jeder sehen/ändern darf, regeln die Datenbank-Policies.
 const SB_URL = "https://ykxrxwprmeeohctyncnf.supabase.co", SB_KEY = "sb_publishable_6TzaVopBtEE0i-526Vr6mg_u3UR4hCW";
-const SUPABASE = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
+const SUPABASE = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm";
 const ACC = { user: null, profile: null, freeLeft: null, tokens: 0, synced: false, sentTo: "" };
 const FREE_MOTIFS = 3, FREE_STENCILS = 3;
 // Google: Web-Client-ID aus der Google Cloud Console (öffentlich). Leer = Knopf ausgeblendet.

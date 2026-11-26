@@ -178,3 +178,23 @@ drop policy if exists "eigene Dateien aendern" on storage.objects;
 create policy "eigene Dateien aendern" on storage.objects for update using (bucket_id in ('stencils', 'avatars') and (storage.foldername(name))[1] = auth.uid()::text);
 drop policy if exists "eigene Dateien loeschen" on storage.objects;
 create policy "eigene Dateien loeschen" on storage.objects for delete using (bucket_id in ('stencils', 'avatars') and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ---------- Absicherung (Sicherheits-Check 26.11.2026) ----------
+-- Einmal im SQL Editor ausführen. „not valid“ = gilt für alle neuen/geänderten Zeilen, bestehende bleiben unangetastet.
+-- 1) Uploads begrenzen: nur Bilder, höchstens 15 MB (Stencils) bzw. 5 MB (Profilbilder)
+update storage.buckets set file_size_limit = 15728640, allowed_mime_types = array['image/*'] where id = 'stencils';
+update storage.buckets set file_size_limit = 5242880,  allowed_mime_types = array['image/*'] where id = 'avatars';
+-- 2) Textfelder mit sinnvoller Höchstlänge (verhindert, dass jemand riesige Texte speichert)
+alter table public.profiles drop constraint if exists profiles_name_len;
+alter table public.profiles add constraint profiles_name_len check (char_length(name) <= 100) not valid;
+alter table public.stencils drop constraint if exists stencils_text_len;
+alter table public.stencils add constraint stencils_text_len check (char_length(name) <= 200 and char_length(coalesce(style, '')) <= 60
+  and char_length(coalesce(motif_hash, '')) <= 128 and pg_column_size(pos) <= 4096) not valid;
+alter table public.motif_uses drop constraint if exists motif_uses_hash_len;
+alter table public.motif_uses add constraint motif_uses_hash_len check (char_length(motif_hash) <= 128) not valid;
+-- 3) Hilfsfunktion nur intern: niemand soll von außen abfragen können, ob ein Konto bezahlt
+revoke execute on function public.is_paid(uuid) from public, anon, authenticated;
+-- Trigger-Funktionen sind nicht direkt aufrufbar, trotzdem sauber sperren
+revoke execute on function public.limit_free_stencils() from public, anon, authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.use_motif(text) from anon; -- nur angemeldete Konten
