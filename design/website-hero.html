@@ -204,6 +204,37 @@
     .quote figure { padding: var(--space-6); }
     .dots { padding: var(--space-6) var(--space-6) 0; }
   }
+  /* ===== Section 5: FAQ ===== */
+  .faq { background: var(--n-0); padding: var(--space-40) var(--space-20); display: grid; grid-template-columns: 1fr 1fr; gap: clamp(40px, 8vw, 140px); align-items: start; }
+  .faq .intro { display: grid; gap: var(--space-6); justify-items: start; }
+  .faq h2 { font-size: clamp(30px, 3.7vw, 54px); line-height: 1.04; letter-spacing: -.045em; color: var(--ink); }
+  .faq .intro p { max-width: 440px; font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7); }
+  .faq .intro .ctas { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+  .faq .pic { justify-self: stretch; margin: var(--space-16) 0 0 calc(-1 * var(--space-20)); aspect-ratio: 3 / 2; background: var(--black); }
+  /* Akkordeon: immer nur eine Antwort offen; die Liste reserviert vorab Platz für die längste Antwort,
+     damit die Seite beim Auf- und Zuklappen nicht länger/kürzer wird und nichts springt */
+  .acc { border-top: 1px solid var(--line); overflow-anchor: none; }
+  .acc .item { border-bottom: 1px solid var(--line); }
+  .acc h3 { margin: 0; }
+  .acc button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); padding: var(--space-6) 0; border: 0; background: none;
+    font: inherit; font-size: 20px; line-height: 26px; letter-spacing: -.02em; color: var(--ink); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .acc button span { text-wrap: balance; }
+  .acc button svg { flex: none; width: 20px; height: 20px; transition: transform .45s cubic-bezier(.3, 0, .2, 1); }
+  .acc button[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .acc button:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 4px; }
+  .acc .panel-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.3, 0, .2, 1); }
+  .acc .panel-a > div { overflow: hidden; }
+  .acc .panel-a p { padding: 0 var(--space-12) var(--space-6) 0; font-size: 17px; line-height: 26px; letter-spacing: -.01em; color: rgb(28 27 26 / .7);
+    opacity: 0; transform: translateY(-6px); transition: opacity .3s, transform .45s cubic-bezier(.3, 0, .2, 1); }
+  .acc .item.open .panel-a { grid-template-rows: 1fr; }
+  .acc .item.open .panel-a p { opacity: 1; transform: none; transition-delay: .08s; }
+  @media (prefers-reduced-motion: reduce) { .acc .panel-a, .acc .panel-a p, .acc button svg { transition: none; } }
+  @media (max-width: 900px) {
+    .faq { grid-template-columns: 1fr; padding: var(--space-20) var(--space-6); gap: var(--space-12); }
+    .faq .pic { display: none; }
+    .acc button { font-size: 18px; line-height: 24px; padding: var(--space-5, 20px) 0; }
+    .acc .panel-a p { padding-right: 0; }
+  }
   .next { padding: 120px 24px; color: var(--dim); }
 </style></head>
 <body>
@@ -263,6 +294,22 @@
       <article class="quote"><div class="ph" aria-hidden="true"></div><figure><blockquote>„Die Größe stimmt, bevor die Nadel überhaupt läuft.“</blockquote><figcaption>Platzhalter · Name, Studio, Stadt</figcaption></figure></article>
     </div></div>
     <div class="dots"><button aria-label="Zitat 1" aria-current="true"></button><button aria-label="Zitat 2"></button><button aria-label="Zitat 3"></button></div>
+  </div>
+</section>
+<section class="faq" aria-label="Häufige Fragen">
+  <div class="intro">
+    <h2>Noch Fragen?</h2>
+    <p>Frage nicht gefunden? Idee für ein neues Feature? Feedback zur App? Erzähl's uns. Wir bauen Stencit gemeinsam mit den Leuten, die es nutzen.</p>
+    <div class="ctas"><a class="btn hellgrau klein" href="#">Uns kontaktieren</a><a class="btn schwarz klein" href="#">Wünsche</a></div>
+    <div class="pic" aria-hidden="true"></div>
+  </div>
+  <div class="acc">
+    <div class="item"><h3><button id="faq-q0" aria-expanded="false" aria-controls="faq-a0"><span>Was kostet Stencit?</span><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"/></svg></button></h3><div class="panel-a" id="faq-a0" role="region" aria-labelledby="faq-q0"><div><p>Du kannst Stencit kostenlos ausprobieren. Für mehr Motive kaufst du Credits, ganz ohne Abo. Für Artists gibt es ein Abo mit Testphase.</p></div></div></div>
+    <div class="item"><h3><button id="faq-q1" aria-expanded="false" aria-controls="faq-a1"><span>Wie genau ist die Größe?</span><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"/></svg></button></h3><div class="panel-a" id="faq-a1" role="region" aria-labelledby="faq-q1"><div><p>Stencit misst an Anhaltspunkten im Bild, etwa an deinem Gesicht oder deiner Hand. Am genauesten wird es, wenn du eine Karte im Scheckkartenformat neben die Stelle hältst.</p></div></div></div>
+    <div class="item"><h3><button id="faq-q2" aria-expanded="false" aria-controls="faq-a2"><span>Brauche ich eine App?</span><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"/></svg></button></h3><div class="panel-a" id="faq-a2" role="region" aria-labelledby="faq-q2"><div><p>Nein. Stencit läuft direkt im Browser, auf dem Handy und am Computer.</p></div></div></div>
+    <div class="item"><h3><button id="faq-q3" aria-expanded="false" aria-controls="faq-a3"><span>Kann ich mein eigenes Motiv hochladen?</span><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"/></svg></button></h3><div class="panel-a" id="faq-a3" role="region" aria-labelledby="faq-q3"><div><p>Ja. Lade ein Bild deines Motivs hoch, Stencit entfernt den Hintergrund und legt es auf deine Haut.</p></div></div></div>
+    <div class="item"><h3><button id="faq-q4" aria-expanded="false" aria-controls="faq-a4"><span>Wie teile ich die Vorschau mit meinem Artist?</span><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"/></svg></button></h3><div class="panel-a" id="faq-a4" role="region" aria-labelledby="faq-q4"><div><p>Über einen Link, den du direkt aus Stencit verschickst. Dein Artist sieht Motiv, Größe und Stelle ohne eigenes Konto.</p></div></div></div>
+    <div class="item"><h3><button id="faq-q5" aria-expanded="false" aria-controls="faq-a5"><span>Was passiert mit meinen Fotos?</span><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"/></svg></button></h3><div class="panel-a" id="faq-a5" role="region" aria-labelledby="faq-q5"><div><p>Platzhalter: Dieser Text folgt, sobald Verarbeitung und Speicherung der Fotos final geklärt sind.</p></div></div></div>
   </div>
 </section>
 <p class="next">Hier geht es später mit der nächsten Section weiter.</p>
@@ -329,6 +376,21 @@ document.querySelectorAll('.proof').forEach(sec => {
   track.addEventListener('pointerdown', e => x0 = e.clientX);
   track.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); x0 = null; });
   addEventListener('resize', () => show(i));
+});
+// FAQ-Akkordeon: eine Antwort offen, Platz vorab reserviert (kein Springen der Seite)
+document.querySelectorAll('.acc').forEach(acc => {
+  const items = [...acc.querySelectorAll('.item')];
+  function reserve() { // geschlossene Höhe + längste Antwort
+    acc.style.minHeight = '';
+    const closed = items.reduce((h, it) => h + it.querySelector('h3').offsetHeight + 1, 1);
+    const longest = Math.max(...items.map(it => it.querySelector('.panel-a p').scrollHeight));
+    acc.style.minHeight = closed + longest + 'px';
+  }
+  items.forEach(it => it.querySelector('button').onclick = () => {
+    const open = !it.classList.contains('open');
+    items.forEach(o => { o.classList.toggle('open', o === it && open); o.querySelector('button').setAttribute('aria-expanded', o === it && open); });
+  });
+  addEventListener('resize', reserve); document.fonts.ready.then(reserve); reserve();
 });
 </script>
 </body></html>
