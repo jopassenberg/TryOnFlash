@@ -4286,7 +4286,8 @@ async function acctInit() {
   const c = await sb(); if (!c) return;
   const { data } = await c.auth.getSession(); await setUser(data.session?.user || null);
   c.auth.onAuthStateChange((ev, session) => { setUser(session?.user || null).then(() => {
-    if (ev === "SIGNED_IN") { ACC.synced = false; if (!$("#flashesView").hidden) loadFlashes(); if ($("#acctSheet").innerHTML && !ACC.verifying) acctSheet(); }
+    // Nach dem Anmelden das Anmelde-Fenster nur schließen (nicht neu öffnen): angemeldet gehört alles ins Konto-Panel
+    if (ev === "SIGNED_IN") { ACC.synced = false; if (!$("#flashesView").hidden) loadFlashes(); const sh = $("#acctSheet"); if (sh.querySelector(".sheet") && !sh.classList.contains("out") && !ACC.verifying) closeSheet(sh); }
   }); });
 }
 async function setUser(u) {
@@ -4390,6 +4391,8 @@ function otpInput(code, close) {
 }
 async function acctSheet(reason = "") {
   const box = $("#acctSheet"), close = () => closeSheet(box);
+  // Angemeldet: das alte schwarze Konto-Fenster nicht mehr zeigen, sondern das aktuelle Konto-Panel
+  if (ACC.user) { if (box.querySelector(".sheet")) close(); if (reason === "quota") status("Deine Gratis-Credits für diesen Monat sind aufgebraucht.", "err"); openPanel(); return; }
   let html;
   if (!ACC.user) {
     const title = reason === "limit" ? "Kostenlos weitermachen" : "Anmelden", lead = reason === "limit"
