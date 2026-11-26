@@ -529,6 +529,10 @@
   .ib-dark .ic { width: 16px; height: 16px; }
   .needle { position: absolute; z-index: 4; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: radial-gradient(circle, #ff6a5a, #DB1A1D 70%);
     box-shadow: 0 0 0 3px oklch(56.8% .221 27.7 / .28), 0 0 0 8px oklch(56.8% .221 27.7 / .1), 0 0 14px 2px oklch(56.8% .221 27.7 / .35); pointer-events: none; }
+  .skin-edit { position: absolute; z-index: 4; left: 50%; bottom: 14px; translate: -50% 0; border: 0; border-radius: 999px; padding: 9px 16px; font: inherit; font-size: 14px; line-height: 18px;
+    background: rgb(14 13 13 / .86); color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .38s var(--spring), background-color .2s; }
+  .skin-edit.on { background: #fff; color: #141414; }
+  .skin-edit:active { transform: scale(.95); }
   .compare { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; cursor: ew-resize; pointer-events: auto; }
   .compare::after { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: #fff; }
 
@@ -969,6 +973,7 @@
         <canvas id="overlay"></canvas>
         <div class="compare" id="compare" hidden></div>
         <div class="needle" id="needle" hidden></div>
+        <button class="skin-edit" id="skinEdit" hidden>Haut anpassen</button>
       </div>
       <div class="status" id="status" hidden data-s="idle"><span class="dot"></span><span id="statusText"></span></div>
       <div class="island" id="island" data-mode="hidden">
@@ -1262,7 +1267,7 @@ function levels(c) {
 function usePhoto(img) {
   closeCam();
   S.photo = scaled(img, RENDER_MAX); S.proc = levels(scaled(img, PROC_MAX)); S.geo = levels(scaled(img, GEO_MAX));
-  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = S.body = S.hands = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null; skinViewCanvas = null;
+  S.disp = S.dispN = S.skin = S.height = S.relief = S.mesh = S.ink = S.lum = S.chroma = S.scale = S.summary = S.body = S.hands = null; S.inked = null; infoKey = ""; S.anchor = null; depthCanvas = null; skinViewCanvas = null; S.seg = null; SKE.regions = null; SKE.on = false;
   view.width = S.photo.width; view.height = S.photo.height;
   $("#drop").hidden = true; $("#viewWrap").hidden = false;
   fitView(); S.view = "photo"; syncViews(); redraw();
@@ -1532,8 +1537,15 @@ async function analyse() {
   let stage = "Modell laden"; // named in the error message, so a failure points at its step
   try {
     sayAt = 0; await say("Scan wird vorbereitet …");
-    // Handy: nacheinander laden, nie zwei Modelle gleichzeitig im Speicher
-    const segP = MOBILE ? null : segment().catch(e => (console.warn("segment", e), null)); // Rechner: läuft parallel
+    // Haut zuerst (dauert unter einer Sekunde): Ist kaum Haut im Bild, gleich fragen statt erst nach dem ganzen Scan
+    S.pw = S.geo.width; S.ph = S.geo.height;
+    await say("Sucht die Hautfläche …"); mark("Haut-Modell"); stage = "Haut erkennen";
+    const sm = await segment().catch(e => (console.warn("segment", e), null)); S.seg = sm; S.skin = sm ? skinMask(sm) : null;
+    if (!S.skin || coverage(S.skin) < 0.03) {
+      if (!(await lowSkinAsk())) { scanStop(); ss.set("stencit-busy", null); backToStart(); return; }
+      await say("Sucht die Haut über die Tiefe …");
+    }
+    stage = "Modell laden";
     await say(depthWarm ? "Tiefen-Modell bereit …" : "Lädt das Tiefen-Modell …"); await warmDepth();
     await say("Misst die Tiefe …"); stage = "Tiefe berechnen"; mark("Tiefe");
     const out = await depthRun(S.geo);
@@ -1543,8 +1555,6 @@ async function analyse() {
     // Phones: free each model as soon as it is done, so the next one fits into memory (iOS reloads the
     // page when it runs out). Desktop keeps them for the next photo.
     if (MOBILE) { depthFree(); depthWarm = null; } // Worker beenden: der ganze Modell-Speicher ist wieder frei
-    await say("Sucht die Hautfläche …"); mark("Haut-Modell");
-    const sm = await (segP || segment().catch(e => (console.warn("segment", e), null))); S.skin = sm ? skinMask(sm) : null;
     if (!S.skin || coverage(S.skin) < 0.03) S.skin = depthMask(S.disp);
     // Hand und Körper schon hier: die Fingerlücken dürfen beim Aufräumen nicht zuwachsen
     stage = "Hand/Körper"; await say("Sucht Hand und Körper …"); mark("Hand/Pose");
@@ -1558,6 +1568,7 @@ async function analyse() {
     stage = "Maßstab"; await say("Misst die Größe …"); S.scale = computeScale(S.body);
     mark("Scan-Ende"); await say("Fast fertig …"); await scanFinish();
     S.anchor = { x: S.armCenter.x, y: S.armCenter.y }; S.rot = S.axis * 180 / Math.PI - 90;
+    depthCanvas = null; skinViewCanvas = null; SKE.regions = null; // Ansichten mit dem fertigen Ergebnis neu aufbauen
     S.view = "photo"; syncViews(); setStep(3); redraw();
     mark("Motiv platzieren");
     if (S.restore) await sessionApply();
@@ -2061,7 +2072,7 @@ function drawMesh3D(ctx, sx, sy, R, alpha, ring) {
 }
 
 /* ---------- views ---------- */
-document.querySelectorAll("#views button").forEach(b => b.onclick = () => { S.view = b.dataset.view; syncViews(); redraw(); });
+document.querySelectorAll("#views button").forEach(b => b.onclick = async () => { if (SKE.on && b.dataset.view !== "skin") await skinEdit(false); S.view = b.dataset.view; syncViews(); redraw(); });
 function syncViews() { document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === S.view)); $("#views").hidden = !S.disp; }
 let depthCanvas = null;
 // Markenverlauf für Tiefe und 3D: fast Schwarz → Bordeaux → Rot → helles Lachsrot für Lichter
@@ -2117,6 +2128,111 @@ function skinViewImage() {
   g.fillStyle = "rgba(14,13,13,.82)"; g.beginPath(); g.roundRect(14 * u, 14 * u, tw + 2 * px, ph, ph / 2); g.fill();
   g.fillStyle = "#fff"; g.textBaseline = "middle"; g.fillText(txt, 14 * u + px, 14 * u + ph / 2);
   return (skinViewCanvas = c);
+}
+
+// Frühe Warnung: kaum Haut erkannt. Trotzdem scannen (die Tiefe sucht dann die nächste große Fläche) oder neues Foto.
+function lowSkinAsk() {
+  return new Promise(res => {
+    const box = $("#acctSheet"), done = v => { closeSheet(box); res(v); };
+    openSheet(box, `<div class="sheet-bg"></div><div class="sheet" role="dialog" aria-label="Kaum Haut erkannt">${sheetHead("Kaum Haut erkannt")}
+      <p class="dim" style="margin:0">Geh näher an die Stelle heran, sorg für mehr Licht und halte die Haut frei von Kleidung. Du kannst auch trotzdem scannen und die Haut danach antippen.</p>
+      <div class="stack"><button class="btn primary wide" id="lsNew">Neues Foto</button><button class="btn ghost wide" id="lsGo">Trotzdem scannen</button></div></div>`);
+    box.querySelector("[data-close]").onclick = () => done(true);
+    $("#lsNew").onclick = () => done(false); $("#lsGo").onclick = () => done(true);
+  });
+}
+
+// Haut nachbessern durch Antippen: Stencit schlägt mögliche Hautflächen vor (Modell unsicher, nahe Fläche aus der
+// Tiefe, typische Hautfarbe). Rot = zählt als Haut, weiß umrandet = Vorschlag. Antippen schaltet um, „Fertig“ rechnet neu.
+const SKE = { on: false, regions: null, lab: null, canvas: null, changed: false };
+function upsample(a, cw, ch) {
+  const m = new Float32Array(S.pw * S.ph);
+  for (let y = 0; y < S.ph; y++) for (let x = 0; x < S.pw; x++) {
+    const fx = clamp((x + .5) * cw / S.pw - .5, 0, cw - 1.001), fy = clamp((y + .5) * ch / S.ph - .5, 0, ch - 1.001), x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i = y0 * cw + x0;
+    m[y * S.pw + x] = (a[i] * (1 - ax) + a[i + 1] * ax) * (1 - ay) + (a[i + cw] * (1 - ax) + a[i + cw + 1] * ax) * ay;
+  }
+  return m;
+}
+function skinRegions() {
+  const w = S.pw, h = S.ph, n = w * h, base = new Uint8Array(n), cand = new Uint8Array(n);
+  for (let i = 0; i < n; i++) base[i] = S.skin[i] > .5;
+  const raw = S.seg ? upsample(S.seg.masks.skin.map((v, i) => Math.max(v, S.seg.masks.face ? S.seg.masks.face[i] : 0)), S.seg.cw, S.seg.ch) : null;
+  // Vorschlag nur, wo die Farbe nach Haut aussieht (dazu Modell oder Tiefe als Hinweis) oder das Modell fast sicher ist
+  const C = chroma(), dm = S.disp ? depthMask(S.disp) : null;
+  const skinCol = i => { const cr = C[i * 2], cb = C[i * 2 + 1]; return cr > 131 && cr < 185 && cb > 62 && cb < 132 && cr - 128 > (128 - cb) * .35; }; // warmer Hautton, nicht grau
+  for (let i = 0; i < n; i++) if (!base[i] && (skinCol(i) || (raw && raw[i] > .35) || (dm && dm[i] > .5 && raw && raw[i] > .1))) cand[i] = 1;
+  const lab = new Int32Array(n), regions = [];
+  const grow = (src, isBase, minA) => {
+    for (let s = 0; s < n; s++) {
+      if (!src[s] || lab[s]) continue;
+      const id = regions.length + 1, px = [s]; lab[s] = id;
+      for (let k = 0; k < px.length; k++) { const i = px[k], x = i % w;
+        for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1]) if (j >= 0 && src[j] && !lab[j]) { lab[j] = id; px.push(j); } }
+      if (px.length < minA * n) { for (const i of px) lab[i] = -1; continue; } // zu klein: weder Vorschlag noch Fläche
+      regions.push({ px: Int32Array.from(px), base: isBase, on: isBase });
+    }
+  };
+  grow(base, true, .001); grow(cand, false, .004);
+  // höchstens 14 Vorschläge, die größten zuerst
+  const sug = regions.filter(r => !r.base).sort((a, b) => b.px.length - a.px.length);
+  for (const r of sug.slice(14)) { for (const i of r.px) lab[i] = -1; r.px = new Int32Array(0); }
+  SKE.lab = lab; SKE.regions = regions; SKE.changed = false;
+}
+function skinEditImage() {
+  if (SKE.canvas) return SKE.canvas;
+  const W = S.photo.width, H = S.photo.height, c = canvasOf(W, H), g = c.getContext("2d"), w = S.pw, lab = SKE.lab, R = SKE.regions;
+  g.filter = "grayscale(1) brightness(.55) contrast(.9)"; g.drawImage(S.photo, 0, 0); g.filter = "none";
+  const m = canvasOf(S.pw, S.ph), mg = m.getContext("2d"), id = mg.createImageData(S.pw, S.ph), d = id.data;
+  for (let i = 0; i < lab.length; i++) {
+    const l = lab[i]; if (l <= 0) continue; const r = R[l - 1], x = i % w;
+    const edge = (x < w - 1 && lab[i + 1] !== l) || (x > 0 && lab[i - 1] !== l) || (i >= w && lab[i - w] !== l) || (i + w < lab.length && lab[i + w] !== l);
+    if (r.on) { d[i * 4] = 219; d[i * 4 + 1] = 26; d[i * 4 + 2] = 29; d[i * 4 + 3] = edge ? 255 : 150; if (edge) { d[i * 4] = 255; d[i * 4 + 1] = 214; d[i * 4 + 2] = 200; } }
+    else if (edge) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = 235; }
+    else { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = 40; }
+  }
+  mg.putImageData(id, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(m, 0, 0, W, H);
+  return (SKE.canvas = c);
+}
+function skinEditTap(e) {
+  const r = view.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * S.pw), y = Math.floor((e.clientY - r.top) / r.height * S.ph);
+  if (x < 0 || y < 0 || x >= S.pw || y >= S.ph) return;
+  // genau getroffen oder die nächste Fläche im Umkreis (Fingerbreite)
+  let l = SKE.lab[y * S.pw + x];
+  if (l <= 0) { const rad = Math.round(S.pw / 30); let best = Infinity;
+    for (let dy = -rad; dy <= rad; dy += 2) for (let dx = -rad; dx <= rad; dx += 2) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= S.pw || yy >= S.ph) continue;
+      const v = SKE.lab[yy * S.pw + xx], dd = dx * dx + dy * dy; if (v > 0 && dd < best) { best = dd; l = v; } } }
+  if (!(l > 0)) return;
+  const reg = SKE.regions[l - 1]; reg.on = !reg.on; SKE.changed = true; SKE.canvas = null; navigator.vibrate?.(8); redraw();
+}
+async function skinEdit(on) {
+  if (on && (S.step !== 3 || !S.skin)) return; // nur nach dem Scan
+  if (on) {
+    if (!SKE.regions) { status("Sucht mögliche Hautflächen …"); await frame(); skinRegions(); }
+    SKE.on = true; SKE.canvas = null; status("Flächen antippen: rot = Haut", "ok");
+  } else {
+    SKE.on = false; SKE.canvas = null;
+    if (SKE.changed) {
+      status("Rechnet die Haut neu …"); await frame();
+      const bin = new Float32Array(S.pw * S.ph);
+      for (const r of SKE.regions) if (r.on) for (const i of r.px) bin[i] = 1;
+      // unveränderte Flächen behalten ihre weiche Kante, neue bekommen eine saubere Kante am Foto entlang
+      const soft = refineMask(bin), old = S.skin;
+      S.skin = new Float32Array(bin.length);
+      for (const r of SKE.regions) if (r.on) for (const i of r.px) S.skin[i] = r.base ? Math.max(old[i], .51) : Math.max(soft[i], .51);
+      for (let i = 0; i < bin.length; i++) if (!bin[i]) S.skin[i] = Math.min(soft[i], .49); // nur weicher Übergang am Rand
+      try { refineDepth(); buildGeometry(); buildMesh(); S.scale = computeScale(S.body); }
+      catch (e) { console.warn("skin edit", e); status(/Kein Arm/.test(String(e.message)) ? "Zu wenig Haut ausgewählt" : "Neu rechnen hat nicht geklappt", "err"); }
+      depthCanvas = null; skinViewCanvas = null; SKE.regions = null; S.inked = null;
+      if (!S.anchor || !skinAt(S.anchor.x, S.anchor.y)) S.anchor = { x: S.armCenter.x, y: S.armCenter.y };
+      status("Haut aktualisiert", "ok"); setTimeout(() => status(""), 1800);
+    } else status("");
+  }
+  syncSkinEdit(); redraw();
+}
+function syncSkinEdit() {
+  const b = $("#skinEdit"); if (!b) return;
+  b.hidden = !(S.view === "skin" && S.step === 3 && S.skin);
+  b.textContent = SKE.on ? "Fertig" : "Haut anpassen"; b.classList.toggle("on", SKE.on);
 }
 
 /* ---------- 3 · Motif: upload, lasso cutout, background removal ---------- */
@@ -2992,6 +3108,8 @@ function redraw() {
   } else if (S.view === "depth" && S.disp) {
     vctx.drawImage(depthImage(), 0, 0, view.width, view.height);
     if (S.step === 3 && S.motif && S.anchor) previewTattoo();
+  } else if (S.view === "skin" && S.skin && SKE.on) {
+    vctx.drawImage(skinEditImage(), 0, 0, view.width, view.height); syncSkinEdit(); drawGizmo(); return; // beim Anpassen kein Motiv
   } else if (S.view === "skin" && S.skin) {
     vctx.drawImage(skinViewImage(), 0, 0, view.width, view.height);
     if (S.step === 3 && S.motif && S.anchor) previewTattoo();
@@ -3000,7 +3118,7 @@ function redraw() {
     if (S.view === "mesh" && S.mesh) { vctx.fillStyle = "rgba(8,9,8,.62)"; vctx.fillRect(0, 0, view.width, view.height); drawMesh3D(vctx, 1, 1, Infinity, 1, false); }
     if (S.step === 3 && S.motif && S.anchor) previewTattoo();
   }
-  drawGizmo();
+  syncSkinEdit(); drawGizmo();
 }
 function previewTattoo() {
   const k = Math.min(1, PREVIEW_MAX / Math.max(S.photo.width, S.photo.height));
@@ -3041,6 +3159,9 @@ function startPinch() {
   pinch = { d: Math.hypot(b.x - a.x, b.y - a.y) || 1, ang: Math.atan2(b.y - a.y, b.x - a.x), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2,
     size: S.sizeCm, rot: S.rot, ax: S.anchor.x, ay: S.anchor.y };
 }
+$("#skinEdit").onclick = () => skinEdit(!SKE.on);
+// Beim Haut-Anpassen gehören Tipps auf das Bild den Flächen, nicht dem Motiv
+$("#viewWrap").addEventListener("pointerdown", e => { if (!SKE.on || e.target.closest("#skinEdit")) return; e.stopPropagation(); e.preventDefault(); skinEditTap(e); }, true);
 view.addEventListener("pointerdown", e => {
   if (S.step !== 3 || !S.motif) return;
   try { view.setPointerCapture(e.pointerId); } catch {}
